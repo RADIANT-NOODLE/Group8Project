@@ -2,25 +2,24 @@ import { useState } from 'react';
 import FormField from '../components/FormField.jsx';
 import SubmitButton from '../components/SubmitButton.jsx';
 import ValoraLogo from '../components/ValoraLogo.jsx';
-import { AppLink } from '../router/Router.jsx';
+import { useAuth } from '../auth/index.js';
+import { getLoginErrorMessage } from '../auth/authErrorMessages.js';
+import { AppLink, navigate } from '../router/Router.jsx';
 import { validateEmail } from '../utils/validation.js';
 
-const INITIAL_VALUES = { email: '', password: '', remember_me: false };
+const INITIAL_VALUES = { email: '', password: '' };
 
 export default function LoginPage() {
+  const { login, isLoading } = useAuth();
   const [values, setValues] = useState(INITIAL_VALUES);
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [formError, setFormError] = useState('');
 
   function updateField(event) {
-    const { name, value, type, checked } = event.target;
-    setValues((current) => ({
-      ...current,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    const { name, value } = event.target;
+    setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: '' }));
-    setMessage('');
+    setFormError('');
   }
 
   function validate() {
@@ -35,15 +34,18 @@ export default function LoginPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage('');
+    setFormError('');
 
     if (!validate()) return;
 
-    // Client validation only — API wiring comes later
-    setIsLoading(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 700));
-    setIsLoading(false);
-    setMessage('Looks good. Auth API not connected yet.');
+    try {
+      await login(values.email.trim(), values.password);
+      setValues((current) => ({ ...current, password: '' }));
+      navigate('/app', { replace: true });
+    } catch (error) {
+      setValues((current) => ({ ...current, password: '' }));
+      setFormError(getLoginErrorMessage(error));
+    }
   }
 
   return (
@@ -63,9 +65,9 @@ export default function LoginPage() {
             <p className="lead">Secure access to your VALORA account.</p>
 
             <form className="auth-form" noValidate onSubmit={handleSubmit}>
-              {message && (
-                <div className="form-message form-message-success" role="status">
-                  {message}
+              {formError && (
+                <div className="form-message form-message-error" role="alert">
+                  {formError}
                 </div>
               )}
 
@@ -78,6 +80,7 @@ export default function LoginPage() {
                 error={errors.email}
                 placeholder="name@example.com"
                 autoComplete="email"
+                required
               />
 
               <FormField
@@ -89,22 +92,9 @@ export default function LoginPage() {
                 error={errors.password}
                 placeholder="Enter your password"
                 autoComplete="current-password"
+                required
               />
 
-              <div className="form-extras">
-                <label className="remember-me">
-                  <input
-                    type="checkbox"
-                    name="remember_me"
-                    checked={values.remember_me}
-                    onChange={updateField}
-                  />
-                  <span>Remember me</span>
-                </label>
-                <AppLink to="/login" className="forgot-link">
-                  Forgot password?
-                </AppLink>
-              </div>
 
               <SubmitButton isLoading={isLoading} loadingLabel="Signing in…">
                 Sign in

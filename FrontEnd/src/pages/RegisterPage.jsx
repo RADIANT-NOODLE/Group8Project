@@ -2,7 +2,9 @@ import { useState } from 'react';
 import FormField from '../components/FormField.jsx';
 import SubmitButton from '../components/SubmitButton.jsx';
 import ValoraLogo from '../components/ValoraLogo.jsx';
-import { AppLink } from '../router/Router.jsx';
+import { useAuth } from '../auth/index.js';
+import { getRegistrationErrorMessage } from '../auth/authErrorMessages.js';
+import { AppLink, navigate } from '../router/Router.jsx';
 import {
   validateEmail,
   validateRegistrationPassword,
@@ -25,16 +27,16 @@ const INITIAL_VALUES = {
 };
 
 export default function RegisterPage() {
+  const { register, isLoading } = useAuth();
   const [values, setValues] = useState(INITIAL_VALUES);
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [formError, setFormError] = useState('');
 
   function updateField(event) {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: '' }));
-    setMessage('');
+    setFormError('');
   }
 
   function validate() {
@@ -52,21 +54,24 @@ export default function RegisterPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage('');
+    setFormError('');
 
     if (!validate()) return;
 
-    // Client validation only — API wiring comes later
-    setIsLoading(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 700));
-    setIsLoading(false);
-    setValues((current) => ({
-      ...current,
-      first_name: current.first_name.trim(),
-      last_name: current.last_name.trim(),
-      email: current.email.trim().toLowerCase(),
-    }));
-    setMessage('Looks good. Auth API not connected yet.');
+    try {
+      await register({
+        first_name: values.first_name.trim(),
+        last_name: values.last_name.trim(),
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+        role: values.role,
+      });
+      setValues((current) => ({ ...current, password: '' }));
+      navigate('/app', { replace: true });
+    } catch (error) {
+      setValues((current) => ({ ...current, password: '' }));
+      setFormError(getRegistrationErrorMessage(error));
+    }
   }
 
   return (
@@ -86,9 +91,9 @@ export default function RegisterPage() {
             <p className="lead">Secure access to your VALORA account.</p>
 
             <form className="auth-form" noValidate onSubmit={handleSubmit}>
-              {message && (
-                <div className="form-message form-message-success" role="status">
-                  {message}
+              {formError && (
+                <div className="form-message form-message-error" role="alert">
+                  {formError}
                 </div>
               )}
 
@@ -101,6 +106,7 @@ export default function RegisterPage() {
                   error={errors.first_name}
                   placeholder="Your name"
                   autoComplete="given-name"
+                  required
                 />
 
                 <FormField
@@ -111,6 +117,7 @@ export default function RegisterPage() {
                   error={errors.last_name}
                   placeholder="Surname"
                   autoComplete="family-name"
+                  required
                 />
               </div>
 
@@ -123,6 +130,7 @@ export default function RegisterPage() {
                 error={errors.email}
                 placeholder="name@example.com"
                 autoComplete="email"
+                required
               />
 
               <FormField
@@ -134,10 +142,12 @@ export default function RegisterPage() {
                 error={errors.password}
                 placeholder="At least 8 characters"
                 autoComplete="new-password"
+                required
               />
 
               <fieldset
                 className="role-fieldset"
+                aria-required="true"
                 aria-describedby={errors.role ? 'role-error' : undefined}
               >
                 <legend>Your Role</legend>

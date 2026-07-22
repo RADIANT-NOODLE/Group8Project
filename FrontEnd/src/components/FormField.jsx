@@ -9,6 +9,7 @@ export default function FormField({
   placeholder,
   autoComplete,
   hint,
+  required = false,
 }) {
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
@@ -26,6 +27,8 @@ export default function FormField({
         onBlur={onBlur}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        required={required}
+        aria-required={required}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
       />
