@@ -74,8 +74,6 @@ npm run test:phase6
 npm run test:phase7
 ```
 
-The completed FE-01–FE-10 sign-off is in `FRONTEND_ACCEPTANCE_CHECKLIST.md`.
-
 ## Demo flow
 
 1. Open `/register` and create a mock account.
