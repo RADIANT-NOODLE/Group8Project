@@ -1,27 +1,27 @@
 # please check code, was not able to run in  VS on my side - Kai
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
-from sqlalchemy import Numeric
+from sqlalchemy.orm import relationship
 
 from app.shared.database import Base
 
-class Complaints(Base):
+class Complaint(Base):
     __tablename__ = "complaints"
 
     complaint_id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
     unit_id = Column(Integer, nullable=False)
 
     category = Column(String(50), nullable=False)
 
-    description = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False)
 
     is_anonymous = Column(Boolean, default=False)
 
-    status = Column(String(20), default="Pending")
+    status = Column(String(20), default="submitted")
 
     assigned_to = Column(String(100), nullable=True)
 
@@ -30,4 +30,3 @@ class Complaints(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
-    
