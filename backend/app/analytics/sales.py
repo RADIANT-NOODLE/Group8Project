@@ -1,17 +1,17 @@
 # please check code, was not able to run in  VS on my side - Kai
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
-from sqlalchemy import Numeric
+from sqlalchemy.orm import relationship
 
 from app.shared.database import Base
 
-class Sales(Base):
+class Sale(Base):
     __tablename__ = "sales"
 
     sale_id = Column(Integer, primary_key=True, index=True)
 
-    unit_id = Column(Integer, nullable=False)
+    unit_id = Column(Integer, ForeignKey("properties.unit_id", ondelete="CASCADE"), nullable=False)
 
     price = Column(Numeric(12, 2), nullable=False)
 
