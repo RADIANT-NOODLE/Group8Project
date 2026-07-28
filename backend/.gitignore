@@ -6,6 +6,7 @@ __pycache__/
 .coverage
 
 # Kai code
+#python
 __pycache__/
 *.pyc
 *.pyo
