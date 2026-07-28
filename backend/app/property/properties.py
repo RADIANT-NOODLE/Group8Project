@@ -1,8 +1,8 @@
 # please check code, was not able to run in  VS on my side - Kai
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
-from math import numeric
+from sqlalchemy.orm import relationship
 
 from app.shared.database import Base
 
@@ -11,15 +11,15 @@ class Property(Base):
 
     unit_id = Column(Integer, primary_key=True, index=True)
 
-    unit_no = Column(String(10), nullable=False) # please check this line for anything missing
+    unit_no = Column(String(10), nullable=False, unique=True) # please check this line for anything missing
 
-    complex_name = Column(String(255), unique=True, nullable=False)
+    complex_name = Column(String(255), nullable=False)
 
     street_address = Column(String(255), nullable=False)
 
-    surburb = Column(String(255), nullable=True)
+    suburb = Column(String(255), nullable=True)
 
-    size_m2 = Column(numeric(8, 2), nullable=True)
+    size_m2 = Column(Numeric(8, 2), nullable=True)
 
     bedrooms = Column(Integer, nullable=True)
 
@@ -28,3 +28,4 @@ class Property(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(),onupdate=func.now())
+
