@@ -1,21 +1,21 @@
 # please check code, was not able to run in  VS on my side - Kai
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
-from sqlalchemy import Numeric
+from sqlalchemy.orm import relationship
 
 from app.shared.database import Base
 
-class Announcements(Base):
+class Announcement(Base):
     __tablename__ = "announcements"
 
     announcement_id = Column(Integer, primary_key=True, index=True)
 
-    title = Column(String(100), nullable=False)
+    title = Column(String(255), nullable=False)
 
-    message = Column(String(500), nullable=False)
+    message = Column(Text, nullable=False)
 
-    created_by = Column(Integer, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
     expires_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
