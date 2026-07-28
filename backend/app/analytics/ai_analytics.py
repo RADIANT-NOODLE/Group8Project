@@ -1,17 +1,17 @@
 # please check code, was not able to run in  VS on my side - Kai
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
-from sqlalchemy import Numeric
+from sqlalchemy.orm import relationship
 
 from app.shared.database import Base
 
-class ai_analytics(Base):
+class AIAnalytic(Base):
     __tablename__ = "ai_analytics"
 
     analytics_id = Column(Integer, primary_key=True, index=True)
 
-    property_id = Column(Integer, nullable=False)
+    property_id = Column(Integer, ForeignKey("properties.unit_id", ondelete="SET NULL"), nullable=False)
 
     predicted_market_value = Column(Numeric(12, 2), nullable=True)
 
@@ -31,7 +31,7 @@ class ai_analytics(Base):
 
     inference_time_ms = Column(Integer, nullable=True)
 
-    input_features_used = Column(String(500), nullable=True)
+    input_features_used = Column(Text, nullable=True)
 
     is_validated = Column(Boolean, default=False)
 
