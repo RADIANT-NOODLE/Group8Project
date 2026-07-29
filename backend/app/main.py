@@ -10,7 +10,8 @@ from app.shared.config import get_settings
 
 # Import database and models
 from app.database import engine, Base, get_db # -kai
-from app.models import User, Property, Complaint # -kai
+from app.routes import complaints_router, users_router, properties_router, providers_router, sales_router, reviews_router, listings_router, announcements_router, work_orders_router, ai_analytics_router, sessions_router, login_attempts_router
+# -kai
 
 
 # 1. Initialize logging before doing anything else
@@ -44,7 +45,7 @@ app.add_middleware(
 async def startup_event():
     logger.info(f"Starting VALORA API in {settings.ENVIRONMENT} mode.")
 
-# 7. Endpoints - kai
+# 7. root and health Endpoints - kai
 @app.get("/")
 def root():
     return {
@@ -58,41 +59,15 @@ def health_check():
     return {"status": "ok", "environment": settings.ENVIRONMENT}
 
 # API endpoints - kai
-@app.get("/api/test/users")
-def test_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return {"count": len(users), "users": users}
-
-@app.get("/api/complaints")
-def get_all_complaints(db: Session = Depends(get_db)):
-    """
-    Fetch all complaints from the database.
-    """
-    complaints = db.query(Complaint).all()
-    return {
-        "count": len(complaints),
-        "complaints": complaints
-    }
-
-class ComplaintCreate(BaseModel):
-    user_id: int
-    unit_id: int
-    category: str
-    description: str
-
-@app.post("/api/complaints")
-def create_complaint(complaint: ComplaintCreate, db: Session = Depends(get_db)):
-    """
-    Create a new complaint in the database.
-    """
-    new_complaint = Complaint(
-        user_id=complaint.user_id,
-        unit_id=complaint.unit_id,
-        category=complaint.category,
-        description=complaint.description
-        status="submitted"  # Default status for new complaints
-    )
-    db.add(new_complaint)
-    db.commit()
-    db.refresh(new_complaint)
-    return {"message": "Complaint created successfully", "complaint": new_complaint}
+app.include_router(complaints_router)
+app.include_router(users_router)
+app.include_router(properties_router)
+app.include_router(providers_router)
+app.include_router(sales_router)
+app.include_router(reviews_router)
+app.include_router(listings_router)
+app.include_router(announcements_router)
+app.include_router(work_orders_router)
+app.include_router(ai_analytics_router)
+app.include_router(sessions_router)
+app.include_router(login_attempts_router)
