@@ -90,6 +90,7 @@ def create_complaint(complaint: ComplaintCreate, db: Session = Depends(get_db)):
         unit_id=complaint.unit_id,
         category=complaint.category,
         description=complaint.description
+        status="submitted"  # Default status for new complaints
     )
     db.add(new_complaint)
     db.commit()
