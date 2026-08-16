@@ -1,0 +1,498 @@
+# AISHWARIYA'S CODE
+
+
+# App.jsx
+import './App.css'
+
+function App() {
+  return (
+    <div className="app">
+
+      {/* Navigation Bar */}
+      <nav className="navbar">
+
+        <div className="logo">
+          VALORA
+        </div>
+
+        <div className="nav-links">
+          <a href="#" className="active">HOME</a>
+          <a href="#">PROPERTIES</a>
+          <a href="#">VALUATION</a>
+          <a href="#">COMMUNITY</a>
+          <a href="#">ABOUT</a>
+        </div>
+
+        <div className="nav-buttons">
+          <button className="login-btn">LOG IN</button>
+          <button className="register-btn">REGISTER</button>
+        </div>
+
+      </nav>
+
+      {/* Hero Section */}
+      <section className="hero">
+
+        <div className="hero-content">
+
+          <h1>
+            PROPERTY INTELLIGENCE.<br />
+            BETTER COMMUNITIES.<br />
+            <span>SMARTER DECISIONS.</span>
+          </h1>
+
+          <p>
+            VALORA combines property listings, AI-powered property insights
+            and community management tools for South African gated
+            communities and residential complexes.
+          </p>
+
+          <div className="hero-buttons">
+            <button className="primary-btn">
+              EXPLORE PROPERTIES
+            </button>
+
+            <button className="secondary-btn">
+              GET AI VALUATION
+            </button>
+          </div>
+
+          <p className="login-text">
+            Already a member? <a href="#">Log in →</a>
+          </p>
+
+        </div>
+
+      </section>
+
+      {/* Main Features */}
+      <section className="features">
+        
+        <div className="feature-card">
+          <div className="feature-icon">🏠</div>
+          <div>
+            <h3>PROPERTY</h3>
+            <h4>Find Properties</h4>
+            <p>
+              Search properties within the community and explore available listings.
+            </p>
+            <a href="#">Explore Properties →</a>
+          </div>
+        </div>
+        
+        <div className="feature-card">
+          <div className="feature-icon">📊</div>
+          <div>
+            <h3>INTELLIGENCE</h3>
+            <h4>Understand Value</h4>
+            <p>
+              Use AI-powered valuation, growth scores, rental yield and 10-year ROI
+              to make informed decisions.
+            </p>
+            <a href="#">Try AI Valuation →</a>
+          </div>
+        </div>
+        
+        <div className="feature-card">
+          <div className="feature-icon">👥</div>
+          
+          <div>
+            <h3>COMMUNITY</h3>
+            <h4>Connect & Manage</h4>
+            <p>
+              Report issues, track complaints, find verified service providers and
+              stay updated with HOA news.
+            </p>
+            <a href="#">Explore Community →</a>
+          </div>
+        </div>
+      
+      </section>
+
+      {/* PROPERTY INTELLIGENCE SECTION */}
+      <section className="intelligence-section">
+
+        <div className="intelligence-content">
+
+          <div className="intelligence-text">
+            <p className="section-label">PROPERTY INTELLIGENCE</p>
+
+            <h2>
+              Know the value.
+              <br />
+              Understand the future.
+            </h2>
+
+            <p>
+              VALORA combines property data with AI-powered insights to help
+              buyers, investors and estate agents make smarter property decisions.
+            </p>
+
+            <div className="intelligence-features">
+
+              <div>
+                <h3>AI Valuation</h3>
+                <p>Get an estimated property value based on local property data.</p>
+              </div>
+
+              <div>
+                <h3>Growth Score</h3>
+                <p>Understand the potential growth of the surrounding area.</p>
+              </div>
+
+              <div>
+                <h3>Rental Yield</h3>
+                <p>Estimate potential rental returns from your property.</p>
+              </div>
+
+              <div>
+                <h3>10-Year ROI</h3>
+                <p>Explore projected long-term investment returns.</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+            {/* PROPERTY LISTINGS SECTION */}
+      <section className="property-listings">
+
+        <div className="listings-header">
+          <div>
+            <p className="section-label">EXPLORE PROPERTIES</p>
+
+            <h2>Find a place that fits your furure.</h2>
+
+            <p>
+              Explore properties within the community and discover the information
+              you need to make a smarter decision.
+            </p>
+          </div>
+
+          <a href="#" className="view-all">
+            View All Properties
+          </a>
+        </div>
+
+        <div className="property-cards">
+
+          {/* Property 1 */}
+          <div className="property-card">
+            <img src="/property_building.png" alt="Property in VALORA community"/>
+
+            <div className="property-card-content">
+
+              <p className="property-type">FOR SALE</p>
+
+              <h3>Modern Family Home</h3>
+
+              <p className="property-location">
+                VALORA Community
+              </p>
+
+              <div className="property-details">
+                <span>3 Beds</span>
+                <span>2 Baths</span>
+                <span>120 m^2</span>
+              </div>
+
+              <div className="property-bottom">
+                <strong>R1,850,000</strong>
+
+                <buttom>View Property</buttom>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Property 2 */}
+        </div>
+      
+      </section>
+
+    </div>
+  )
+}
+
+export default App
+
+
+# App.css
+/* GENERAL */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: white;
+  color: #111;
+}
+
+.app {
+  width: 100%;
+}
+
+
+/* NAVIGATION BAR */
+
+.navbar {
+  height: 72px;
+  background: #0756c9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 50px;
+  color: white;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 35px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nav-links a.active {
+  border-bottom: 2px solid white;
+  padding-bottom: 8px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.login-btn,
+.register-btn {
+  padding: 12px 25px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-btn {
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+}
+
+.register-btn {
+  background: white;
+  color: #0756c9;
+  border: 1px solid white;
+}
+
+
+/* HERO SECTION */
+
+.hero {
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+
+  background:
+    linear-gradient(
+      to right,
+      rgba(255,255,255,1) 0%,
+      rgba(255,255,255,0.97) 38%,
+      rgba(255,255,255,0.70) 60%,
+      rgba(255,255,255,0.1) 100%
+    ),
+    url("/property_building.png");
+
+  background-size: cover;
+  background-position: center right;
+}
+
+.hero-content {
+  max-width: 650px;
+  padding: 60px 50px;
+  text-align: left;
+}
+
+.hero h1 {
+  font-size: 44px;
+  line-height: 1.05;
+  margin-bottom: 25px;
+  font-weight: 800;
+  color: #111111;
+}
+
+.hero h1 span {
+  color: #0756c9;
+}
+
+.hero p {
+  font-size: 17px;
+  line-height: 1.6;
+  margin-bottom: 25px;
+  max-width: 560px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 14px 25px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #0756c9;
+  color: white;
+  border: 2px solid #0756c9;
+}
+
+.secondary-btn {
+  background: white;
+  color: #0756c9;
+  border: 2px solid #0756c9;
+}
+
+.login-text {
+  font-size: 14px !important;
+}
+
+.login-text a {
+  color: #0756c9;
+  font-weight: 700;
+}
+
+.features {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 40px 60px;
+  background: white;
+}
+
+.feature-card {
+  flex: 1;
+  padding: 20px;
+  text-align: center;
+}
+
+.feature-icon {
+  width: 55px;
+  height: 55px;
+  background: #0756c9;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 15px;
+}
+
+.feature-card h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.feature-card h4 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.feature-card p {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.feature-card a {
+  color: #0756c9;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Property Intelligence Section */
+.intelligence-section {
+  padding: 80px 60px;
+  background: #f5f8fc;
+}
+
+.intelligence-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.intelligence-text {
+  max-width: 850px;
+}
+
+.section-label {
+  color: #0756c9;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 15px;
+}
+
+.intelligence-text h2 {
+  font-size: 38px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  color: #111111;
+}
+
+.intelligence-text > p {
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 700px;
+  margin-bottom: 35px;
+}
+
+.intelligence-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.intelligence-features > div {
+  background: white;
+  padding: 25px;
+  border-radius: 6px;
+  border: 1px solid #e1e7ef;
+}
+
+.intelligence-features h3 {
+  color: #0756c9;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.intelligence-features p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555555;
+}
