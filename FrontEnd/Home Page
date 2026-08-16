@@ -158,7 +158,7 @@ function App() {
 
       </section>
 
-            {/* PROPERTY LISTINGS SECTION */}
+      {/* Property Listings Section */}
       <section className="property-listings">
 
         <div className="listings-header">
@@ -203,7 +203,7 @@ function App() {
               <div className="property-bottom">
                 <strong>R1,850,000</strong>
 
-                <buttom>View Property</buttom>
+                <button>View Property</button>
               </div>
 
             </div>
@@ -211,6 +211,66 @@ function App() {
           </div>
 
           {/* Property 2 */}
+          <div className="property-card">
+
+            <img src="/property_building.png" alt="Property in VALORA community"/>
+
+            <div className="property-card-content">
+
+              <p className="property-type">FOR SALE</p>
+
+              <h3>Contemporary Townhouse</h3>
+
+              <p className="property-location">
+                VALORA Community
+              </p>
+
+              <div className="property-details">
+                <span>2 Beds</span>
+                <span>2 Baths</span>
+                <span>95 m^2</span>
+              </div>
+
+              <div className="property-bottom">
+                <strong>R1,450,000</strong>
+
+                <button>View Property</button>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Property 3 */}
+          <div className="property-card">
+
+            <img src="/property_building.png" alt="Property in VALORA community"/>
+
+            <div className="property-card-content">
+              <p className="property-type">FOR SALE</p>
+
+              <h3>Spacious Garden Home</h3>
+
+              <p className="property-location">
+                VALORA Community
+              </p>
+
+              <div className="property-details">
+                <span>4 Beds</span>
+                <span>3 Baths</span>
+                <span>165 m^2</span>
+              </div>
+
+              <div className="property-bottom">
+                <strong>R2,250,000</strong>
+
+                <button>View Property</button>
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
       
       </section>
@@ -495,4 +555,130 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: #555555;
+}
+
+
+/* Property Listings Section */
+.property-listings {
+  padding: 80px 60px;
+  background: white;
+}
+
+.listings-header {
+  max-width: 1200px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 40px;
+}
+
+.listings-header h2 {
+  font-size: 38px;
+  line-height: 1.2;
+  margin-bottom: 15px;
+  color: #111111;
+}
+
+.listings-header > div > p:last-child {
+  max-width: 650px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #555555;
+}
+
+.view-all {
+  color: #0756c9;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.view-all:hover {
+  text-decoration: underline;
+}
+
+
+/* Property Cards */
+.property-cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px
+}
+
+.property-card {
+  background: white;
+  border: 1px solid #e1e7ef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.property-card img {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  display: block;
+}
+
+.property-card-content {
+  padding: 22px;
+}
+
+.property-type {
+  color: #0756c9;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.property-card h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.property-location {
+  color: #666666;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.property-details {
+  display: flex;
+  gap: 15px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 13px;
+  color: #555555;
+}
+
+.property-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding-top: 18px;
+}
+
+.property-bottom strong {
+  font-size: 18px;
+  color: #111111;
+}
+
+.property-bottom button {
+  background: #0756c9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.property-bottom button:hover {
+  background: #0648a8;
 }
