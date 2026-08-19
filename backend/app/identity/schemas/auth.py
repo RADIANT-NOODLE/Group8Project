@@ -28,7 +28,7 @@ class TokenResponse(BaseModel):
 # --- User schemas ---
 
 class UserResponse(BaseModel):
-    user_id: int
+    user_id: int = Field(..., serialization_alias="id")
     email: str
     full_name: str
     role: str
@@ -36,7 +36,7 @@ class UserResponse(BaseModel):
     email_verified: bool
     hoa_approved: bool
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True, "populate_by_name": True}
 
 
 class AuthResponse(BaseModel):
