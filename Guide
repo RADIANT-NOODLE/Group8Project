@@ -3,7 +3,7 @@ You will need
 - Docker Desktop running
 
 2. Get the latest project
-git clone <YOUR-GITHUB-REPOSITORY-URL>
+git clone "https://github.com/RADIANT-NOODLE/Group8Project.git"
 cd Group8Project 
 but if you already cloned it git pull is fine
 
