@@ -8,7 +8,7 @@ cd Group8Project
 but if you already cloned it git pull is fine
 
 3. Start Valora
-Go to the root folder  (Group8Project)
+Go to the backend folder  
 run this command in your terminal:
     docker compose up -d --build
 then wait for the containers to finish building.
