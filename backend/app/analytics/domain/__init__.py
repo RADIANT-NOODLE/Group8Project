@@ -1,0 +1,2 @@
+# analytics domain package
+

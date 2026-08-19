@@ -1,0 +1,2 @@
+# community schemas package
+

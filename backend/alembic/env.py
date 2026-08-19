@@ -21,8 +21,8 @@ from os.path import abspath, dirname
 # Add the backend directory to sys.path so app modules can be imported
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
-from app.shared.config import get_settings
-from app.shared.database import Base
+from app.core.config import get_settings
+from app.db.database import Base
 
 settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
