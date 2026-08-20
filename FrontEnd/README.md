@@ -1,6 +1,5 @@
 # VALORA Frontend
 
-This folder contains VALORA login, registration, and a simple protected dashboard.
 
 ## Current status
 
