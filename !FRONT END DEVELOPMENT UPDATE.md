@@ -2,11 +2,11 @@
 
 ## Completed
 
-- Built and tested login, registration, validation, protected `/app`, sessions, roles, and logout.
-- Added mock authentication so frontend work could continue without backend auth.
-- Added an API-ready auth service for switching from mock mode to the real backend.
-- All 23 frontend automated tests pass.
+- Login, registration, roles, validation, logout, and the protected `/app` page are working.
+- Registration and login now connect to the FastAPI backend and PostgreSQL database.
+- Real registration, database storage, login, and protected profile access were tested successfully.
+- Frontend tests and the production build pass.
 
-## Why I stopped
+## Current design
 
-The frontend-only authentication work is complete. I stopped at the integration point because the backend does not yet provide working authentication endpoints. Mock mode remains enabled while I wait for the backend team.
+Login and registration are keeping the previously approved design for now. Once the home page and dashboard work is complete, the full visual design can be reviewed together.

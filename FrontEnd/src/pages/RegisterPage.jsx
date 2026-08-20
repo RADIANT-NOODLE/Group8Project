@@ -1,22 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import AuthFrame from '../components/AuthFrame.jsx';
 import FormField from '../components/FormField.jsx';
 import SubmitButton from '../components/SubmitButton.jsx';
-import ValoraLogo from '../components/ValoraLogo.jsx';
 import { useAuth } from '../auth/index.js';
 import { getRegistrationErrorMessage } from '../auth/authErrorMessages.js';
-import { AppLink, navigate } from '../router/Router.jsx';
+import { VALORA_ROLE_OPTIONS } from '../config/roles.js';
+import { navigate } from '../router/Router.jsx';
 import {
   validateEmail,
   validateRegistrationPassword,
   validateRequired,
 } from '../utils/validation.js';
-
-const ROLES = [
-  { value: 'resident', label: 'Resident' },
-  { value: 'investor', label: 'Investor' },
-  { value: 'estate_agent', label: 'Agent' },
-  { value: 'hoa_admin', label: 'HOA' },
-];
 
 const INITIAL_VALUES = {
   first_name: '',
@@ -26,8 +20,19 @@ const INITIAL_VALUES = {
   role: '',
 };
 
+function validateRegistration(values) {
+  return {
+    first_name: validateRequired(values.first_name, 'First name'),
+    last_name: validateRequired(values.last_name, 'Last name'),
+    email: validateEmail(values.email),
+    password: validateRegistrationPassword(values.password),
+    role: values.role ? '' : 'Choose the role that best matches how you will use VALORA.',
+  };
+}
+
 export default function RegisterPage() {
   const { register, isLoading } = useAuth();
+  const formMessageRef = useRef(null);
   const [values, setValues] = useState(INITIAL_VALUES);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -39,24 +44,23 @@ export default function RegisterPage() {
     setFormError('');
   }
 
-  function validate() {
-    const nextErrors = {
-      first_name: validateRequired(values.first_name, 'First name'),
-      last_name: validateRequired(values.last_name, 'Last name'),
-      email: validateEmail(values.email),
-      password: validateRegistrationPassword(values.password),
-      role: values.role ? '' : 'Select a role.',
-    };
-
-    setErrors(nextErrors);
-    return !Object.values(nextErrors).some(Boolean);
+  function focusFirstInvalidField(nextErrors) {
+    const firstInvalidField = Object.keys(nextErrors).find((field) => nextErrors[field]);
+    if (firstInvalidField) {
+      globalThis.setTimeout(() => document.getElementById(firstInvalidField)?.focus(), 0);
+    }
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+    const nextErrors = validateRegistration(values);
+    setErrors(nextErrors);
     setFormError('');
 
-    if (!validate()) return;
+    if (Object.values(nextErrors).some(Boolean)) {
+      focusFirstInvalidField(nextErrors);
+      return;
+    }
 
     try {
       await register({
@@ -71,121 +75,118 @@ export default function RegisterPage() {
     } catch (error) {
       setValues((current) => ({ ...current, password: '' }));
       setFormError(getRegistrationErrorMessage(error));
+      globalThis.setTimeout(() => formMessageRef.current?.focus(), 0);
     }
   }
 
+  const roleDescribedBy = errors.role ? 'role-error' : undefined;
+
   return (
-    <main className="page-shell">
-      <section className="auth-card form-card register-card" aria-labelledby="register-title">
-        <div className="card-sidebar">
-          <ValoraLogo />
-          <div className="sidebar-content">
-            <h2 className="sidebar-heading">Get started<br />with VALORA</h2>
-            <p className="sidebar-tagline">A private hub for property insight and community life.</p>
-          </div>
+    <AuthFrame
+      variant="register"
+      formId="register-form"
+      eyebrow="CREATE YOUR ACCOUNT"
+      title="Start your VALORA profile."
+      lead="Share the essentials, choose your perspective, and continue to your personal VALORA space."
+      visualEyebrow="A LOCAL PERSPECTIVE"
+      visualTitle="Begin with a clearer point of view."
+      visualCopy="Choose the role that reflects how you take part in your local property and community life today."
+      switchPrompt="Already have an account?"
+      switchLabel="Sign in"
+      switchTo="/login"
+    >
+      <form id="register-form" className="auth-form registration-form" noValidate onSubmit={handleSubmit} aria-labelledby="register-form-title">
+        {formError && (
+          <p ref={formMessageRef} className="form-message form-message-error" role="alert" tabIndex={-1}>
+            {formError}
+          </p>
+        )}
+
+        <div className="form-row">
+          <FormField
+            id="first_name"
+            label="First Name"
+            value={values.first_name}
+            onChange={updateField}
+            error={errors.first_name}
+            placeholder="Your name"
+            autoComplete="given-name"
+            required
+          />
+          <FormField
+            id="last_name"
+            label="Last Name"
+            value={values.last_name}
+            onChange={updateField}
+            error={errors.last_name}
+            placeholder="Surname"
+            autoComplete="family-name"
+            required
+          />
         </div>
 
-        <div className="card-form-panel">
-          <div className="card-content form-content">
-            <h1 id="register-title">Create account</h1>
-            <p className="lead">Secure access to your VALORA account.</p>
+        <FormField
+          id="email"
+          label="Email"
+          type="email"
+          value={values.email}
+          onChange={updateField}
+          error={errors.email}
+          placeholder="name@example.com"
+          autoComplete="email"
+          required
+        />
 
-            <form className="auth-form" noValidate onSubmit={handleSubmit}>
-              {formError && (
-                <div className="form-message form-message-error" role="alert">
-                  {formError}
-                </div>
-              )}
+        <FormField
+          id="password"
+          label="Password"
+          type="password"
+          value={values.password}
+          onChange={updateField}
+          error={errors.password}
+          placeholder="At least 8 characters"
+          autoComplete="new-password"
+          required
+        />
 
-              <div className="form-row">
-                <FormField
-                  id="first_name"
-                  label="First Name"
-                  value={values.first_name}
+        <fieldset
+          className="registration-role-fieldset"
+          aria-describedby={roleDescribedBy}
+          aria-invalid={Boolean(errors.role)}
+          aria-required="true"
+        >
+          <legend>Your Role</legend>
+
+          <div className="role-options role-options-detailed">
+            {VALORA_ROLE_OPTIONS.map((role) => (
+              <label key={role.value} htmlFor={role.value} className={`role-option role-option-detailed ${values.role === role.value ? 'option-selected' : ''}`}>
+                <input
+                  id={role.value}
+                  type="radio"
+                  name="role"
+                  value={role.value}
+                  checked={values.role === role.value}
                   onChange={updateField}
-                  error={errors.first_name}
-                  placeholder="Your name"
-                  autoComplete="given-name"
-                  required
+                  aria-describedby={roleDescribedBy}
                 />
-
-                <FormField
-                  id="last_name"
-                  label="Last Name"
-                  value={values.last_name}
-                  onChange={updateField}
-                  error={errors.last_name}
-                  placeholder="Surname"
-                  autoComplete="family-name"
-                  required
-                />
-              </div>
-
-              <FormField
-                id="email"
-                label="Email"
-                type="email"
-                value={values.email}
-                onChange={updateField}
-                error={errors.email}
-                placeholder="name@example.com"
-                autoComplete="email"
-                required
-              />
-
-              <FormField
-                id="password"
-                label="Password"
-                type="password"
-                value={values.password}
-                onChange={updateField}
-                error={errors.password}
-                placeholder="At least 8 characters"
-                autoComplete="new-password"
-                required
-              />
-
-              <fieldset
-                className="role-fieldset"
-                aria-required="true"
-                aria-describedby={errors.role ? 'role-error' : undefined}
-              >
-                <legend>Your Role</legend>
-                <div className="role-options">
-                  {ROLES.map((role) => (
-                    <label
-                      key={role.value}
-                      className={`role-option ${values.role === role.value ? 'role-option-selected' : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="role"
-                        value={role.value}
-                        checked={values.role === role.value}
-                        onChange={updateField}
-                      />
-                      <span>{role.label}</span>
-                    </label>
-                  ))}
-                </div>
-                {errors.role && (
-                  <span id="role-error" className="field-error" role="alert">
-                    {errors.role}
-                  </span>
-                )}
-              </fieldset>
-
-              <SubmitButton isLoading={isLoading} loadingLabel="Creating account…">
-                Create account
-              </SubmitButton>
-            </form>
-
-            <p className="auth-switch">
-              Already have an account? <AppLink to="/login">Sign in</AppLink>
-            </p>
+                <span className="role-option-copy">
+                  <strong>{role.label}</strong>
+                </span>
+              </label>
+            ))}
           </div>
-        </div>
-      </section>
-    </main>
+
+          {errors.role && (
+            <span id="role-error" className="field-error" role="alert">
+              {errors.role}
+            </span>
+          )}
+        </fieldset>
+
+        <SubmitButton isLoading={isLoading} loadingLabel="Creating your account…">
+          Create your account
+        </SubmitButton>
+      </form>
+    </AuthFrame>
   );
 }

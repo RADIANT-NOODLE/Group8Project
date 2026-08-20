@@ -34,7 +34,7 @@ async function loadFrontendEnv() {
     VITE_API_BASE_URL:
       process.env.VITE_API_BASE_URL || fileValues.VITE_API_BASE_URL || 'http://localhost:8000',
     VITE_USE_MOCK_AUTH:
-      process.env.VITE_USE_MOCK_AUTH || fileValues.VITE_USE_MOCK_AUTH || 'true',
+      process.env.VITE_USE_MOCK_AUTH || fileValues.VITE_USE_MOCK_AUTH || 'false',
   };
 }
 

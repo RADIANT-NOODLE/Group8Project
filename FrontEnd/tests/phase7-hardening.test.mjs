@@ -19,7 +19,6 @@ const buttonSource = await readFile(new URL('../src/components/SubmitButton.jsx'
 const contextSource = await readFile(new URL('../src/auth/AuthContext.jsx', import.meta.url), 'utf8');
 const routerSource = await readFile(new URL('../src/router/Router.jsx', import.meta.url), 'utf8');
 const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-const checklist = await readFile(new URL('../FRONTEND_ACCEPTANCE_CHECKLIST.md', import.meta.url), 'utf8');
 
 test('auth failures map to consistent user-facing messages', () => {
   assert.equal(getLoginErrorMessage({ code: 'INVALID_CREDENTIALS' }), AUTH_MESSAGES.invalidCredentials);
@@ -82,12 +81,9 @@ test('programmatic navigation cannot outrun router subscription', () => {
   assert.match(routerSource, /addEventListener\(ROUTE_CHANGE_EVENT, updatePath\)/);
 });
 
-test('README and FE-01 through FE-10 checklist are complete', () => {
+test('README provides the group setup and verification commands', () => {
+  assert.match(readme, /docker compose up -d --build db api/);
   assert.match(readme, /npm run dev/);
-  assert.match(readme, /VITE_USE_MOCK_AUTH=true/);
-  assert.match(readme, /npm run test/);
-  for (let number = 1; number <= 10; number += 1) {
-    const id = `FE-${String(number).padStart(2, '0')}`;
-    assert.match(checklist, new RegExp(`- \\[x\\] \\*\\*${id}\\*\\*`));
-  }
+  assert.match(readme, /npm (run )?test/);
+  assert.match(readme, /npm run build/);
 });
