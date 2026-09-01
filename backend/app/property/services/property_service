@@ -1,0 +1,32 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import NotFoundException
+from app.property.models.property import Property
+from app.property.repositories.property_repository import PropertyRepository
+from app.property.schemas.property import PaginatedPropertiesResponse, PropertyResponse
+
+
+class PropertyService:
+    def __init__(self, db: AsyncSession) -> None:
+        self._repo = PropertyRepository(db)
+
+    async def list_properties(self, *, page: int, page_size: int) -> PaginatedPropertiesResponse:
+        offset = (page - 1) * page_size
+        properties = await self._repo.get_all(offset=offset, limit=page_size)
+        total = await self._repo.count()
+        return PaginatedPropertiesResponse(
+            count=total,
+            page=page,
+            page_size=page_size,
+            properties=[PropertyResponse.model_validate(p) for p in properties],
+        )
+
+    async def get_property(self, unit_id: int) -> PropertyResponse:
+        property_ = await self._get_or_404(unit_id)
+        return PropertyResponse.model_validate(property_)
+
+    async def _get_or_404(self, unit_id: int) -> Property:
+        property_ = await self._repo.get_by_id(unit_id)
+        if property_ is None:
+            raise NotFoundException(f"Property with id {unit_id} was not found.")
+        return property_
