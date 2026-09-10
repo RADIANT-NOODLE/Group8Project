@@ -12,7 +12,7 @@ export default function Valuation() {
     function calculateValuation(event) {
         event.preventDefault();
 
-        if (!location.trim() || !propertySize || propertySize <= 0) {
+        if (!location.trim() || !propertySize || Number(propertySize) <= 0) {
             alert("Please enter a property location and valid property size.");
             return;
         }
@@ -90,7 +90,10 @@ export default function Valuation() {
 
                 <div className="logo-area">
 
-                    <h1>VALORA</h1>
+                    <img
+                        src="/ValoraLogo.jpeg"
+                        alt="VALORA Logo"
+                    />
 
                     <p>
                         Property Intelligence
@@ -98,6 +101,8 @@ export default function Valuation() {
 
                 </div>
 
+
+                {/* SIDEBAR NAVIGATION */}
 
                 <nav className="side-nav">
 
@@ -135,6 +140,8 @@ export default function Valuation() {
                 </nav>
 
 
+                {/* LOGOUT */}
+
                 <div className="logout-area">
 
                     <a href="/">
@@ -149,6 +156,8 @@ export default function Valuation() {
             {/* MAIN CONTENT */}
 
             <main className="dashboard-main">
+
+                {/* TOP BAR */}
 
                 <div className="top-bar">
 
@@ -166,6 +175,8 @@ export default function Valuation() {
 
                 </div>
 
+
+                {/* VALUATION CONTENT */}
 
                 <div className="valuation-layout">
 
@@ -192,6 +203,8 @@ export default function Valuation() {
 
                         <form onSubmit={calculateValuation}>
 
+                            {/* LOCATION */}
+
                             <label>
                                 Property Location
                             </label>
@@ -205,6 +218,8 @@ export default function Valuation() {
                                 }
                             />
 
+
+                            {/* PROPERTY TYPE */}
 
                             <label>
                                 Property Type
@@ -232,6 +247,8 @@ export default function Valuation() {
                             </select>
 
 
+                            {/* PROPERTY SIZE */}
+
                             <label>
                                 Property Size (m²)
                             </label>
@@ -245,6 +262,8 @@ export default function Valuation() {
                                 }
                             />
 
+
+                            {/* BEDROOMS */}
 
                             <label>
                                 Bedrooms
@@ -280,6 +299,8 @@ export default function Valuation() {
                             </select>
 
 
+                            {/* MONTHLY RENT */}
+
                             <label>
                                 Estimated Monthly Rental (Optional)
                             </label>
@@ -293,6 +314,8 @@ export default function Valuation() {
                                 }
                             />
 
+
+                            {/* BUTTON */}
 
                             <button type="submit">
                                 Analyse Property
@@ -326,6 +349,8 @@ export default function Valuation() {
 
                         <div id="valuationResult">
 
+                            {/* EMPTY STATE */}
+
                             {!result && (
 
                                 <div className="empty-result">
@@ -347,6 +372,8 @@ export default function Valuation() {
 
                             )}
 
+
+                            {/* RESULTS */}
 
                             {result && (
 
@@ -375,6 +402,8 @@ export default function Valuation() {
 
                                     <div className="valuation-metrics">
 
+                                        {/* RENTAL YIELD */}
+
                                         <div className="valuation-metric">
 
                                             <span>
@@ -391,6 +420,8 @@ export default function Valuation() {
 
                                         </div>
 
+
+                                        {/* 10 YEAR GROWTH */}
 
                                         <div className="valuation-metric">
 
@@ -409,6 +440,8 @@ export default function Valuation() {
                                         </div>
 
 
+                                        {/* 10 YEAR VALUE */}
+
                                         <div className="valuation-metric">
 
                                             <span>
@@ -425,6 +458,8 @@ export default function Valuation() {
 
                                         </div>
 
+
+                                        {/* INVESTMENT OUTLOOK */}
 
                                         <div className="valuation-metric">
 
@@ -445,7 +480,7 @@ export default function Valuation() {
                                     </div>
 
 
-                                    {/* ROI */}
+                                    {/* ROI / INVESTMENT PROJECTION */}
 
                                     <div className="roi-box">
 
@@ -470,7 +505,7 @@ export default function Valuation() {
                                     </div>
 
 
-                                    {/* NOTE */}
+                                    {/* VALORA NOTE */}
 
                                     <div className="valuation-note">
 
