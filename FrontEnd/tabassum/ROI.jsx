@@ -35,6 +35,7 @@ export default function ROI() {
 
         const annualRentalIncome = rent * 12;
         const annualExpenses = expenses * 12;
+
         const netAnnualRentalIncome =
             annualRentalIncome - annualExpenses;
 
@@ -98,7 +99,7 @@ export default function ROI() {
 
                 <nav className="side-nav">
 
-                    <a href="/">
+                    <a href="/dashboard">
                         🏠 Dashboard
                     </a>
 
@@ -577,4 +578,3 @@ export default function ROI() {
         </div>
     );
 }
-
