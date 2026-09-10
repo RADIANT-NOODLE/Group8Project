@@ -61,8 +61,12 @@ function Providers() {
 
     const filteredProviders = providers.filter((provider) => {
         const matchesSearch =
-            provider.name.toLowerCase().includes(search.toLowerCase()) ||
-            provider.categoryName.toLowerCase().includes(search.toLowerCase());
+            provider.name
+                .toLowerCase()
+                .includes(search.toLowerCase()) ||
+            provider.categoryName
+                .toLowerCase()
+                .includes(search.toLowerCase());
 
         const matchesCategory =
             category === "all" || provider.category === category;
@@ -82,9 +86,19 @@ function Providers() {
             <aside className="sidebar">
 
                 <div className="logo-area">
-                    <h1>VALORA</h1>
-                    <p>Property Intelligence</p>
+
+                    {/* VALORA LOGO IMAGE */}
+                    <img
+                        src="/ValoraLogo.jpeg"
+                        alt="VALORA Logo"
+                    />
+
+                    <p>
+                        Property Intelligence
+                    </p>
+
                 </div>
+
 
                 <nav className="side-nav">
 
@@ -104,7 +118,10 @@ function Providers() {
                         🏘 Complaints
                     </a>
 
-                    <a href="/providers" className="active">
+                    <a
+                        href="/providers"
+                        className="active"
+                    >
                         🔧 Service Providers
                     </a>
 
@@ -118,10 +135,13 @@ function Providers() {
 
                 </nav>
 
+
                 <div className="logout-area">
+
                     <a href="/">
                         🚪 Logout
                     </a>
+
                 </div>
 
             </aside>
@@ -133,11 +153,15 @@ function Providers() {
                 <div className="top-bar">
 
                     <div>
-                        <h2>Service Provider Directory 🔧</h2>
+
+                        <h2>
+                            Service Provider Directory 🔧
+                        </h2>
 
                         <p>
                             Find trusted professionals for your property.
                         </p>
+
                     </div>
 
                 </div>
@@ -146,7 +170,9 @@ function Providers() {
                 {/* SEARCH */}
                 <section className="dashboard-panel provider-search">
 
-                    <h3>Find a Service Provider</h3>
+                    <h3>
+                        Find a Service Provider
+                    </h3>
 
                     <p>
                         Search by name or service category.
@@ -158,12 +184,16 @@ function Providers() {
                             type="text"
                             placeholder="Search providers..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) =>
+                                setSearch(e.target.value)
+                            }
                         />
 
                         <select
                             value={category}
-                            onChange={(e) => setCategory(e.target.value)}
+                            onChange={(e) =>
+                                setCategory(e.target.value)
+                            }
                         >
 
                             <option value="all">
@@ -236,7 +266,9 @@ function Providers() {
                                 <button
                                     className="contact-provider"
                                     onClick={() =>
-                                        showProviderNumber(provider.number)
+                                        showProviderNumber(
+                                            provider.number
+                                        )
                                     }
                                 >
                                     Contact Provider
@@ -249,10 +281,16 @@ function Providers() {
                     ) : (
 
                         <div className="no-providers">
-                            <h3>No providers found</h3>
+
+                            <h3>
+                                No providers found
+                            </h3>
+
                             <p>
-                                Try another search or service category.
+                                Try another search or service
+                                category.
                             </p>
+
                         </div>
 
                     )}
@@ -272,7 +310,9 @@ function Providers() {
 
                             <button
                                 className="close-modal"
-                                onClick={() => setShowModal(false)}
+                                onClick={() =>
+                                    setShowModal(false)
+                                }
                             >
                                 ×
                             </button>
@@ -286,8 +326,8 @@ function Providers() {
                             </h2>
 
                             <p>
-                                You can contact this service provider
-                                using the number below.
+                                You can contact this service
+                                provider using the number below.
                             </p>
 
                             <div className="provider-number">
@@ -296,7 +336,9 @@ function Providers() {
 
                             <button
                                 className="modal-contact-button"
-                                onClick={() => setShowModal(false)}
+                                onClick={() =>
+                                    setShowModal(false)
+                                }
                             >
                                 Done
                             </button>
