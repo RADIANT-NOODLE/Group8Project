@@ -1,0 +1,681 @@
+/* =========================================================
+   VALORA LOGIN & REGISTER
+   RESPONSIVE / FULL SCREEN
+   PRIMARY COLOUR: #563F6B
+   ========================================================= */
+
+
+/* =========================================================
+   GLOBAL AUTH SIZING
+   ========================================================= */
+
+.auth-page {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+
+    background: #f5f3f7;
+    color: #222222;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   AUTH CARD
+   ========================================================= */
+
+.auth-card {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    background: #ffffff;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   LEFT SIDE / AUTH SIDEBAR
+   ========================================================= */
+
+.auth-sidebar {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 40px;
+
+    background: linear-gradient(
+        180deg,
+        #563F6B 0%,
+        #463256 100%
+    );
+
+    color: #ffffff;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.auth-logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.auth-logo img {
+    width: 125px;
+    height: auto;
+    display: block;
+}
+
+
+/* =========================================================
+   SIDEBAR CONTENT
+   ========================================================= */
+
+.auth-sidebar-content {
+    max-width: 500px;
+
+    margin: auto 0;
+}
+
+.auth-eyebrow {
+    margin: 0 0 12px;
+
+    color: #ddd2e5;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.auth-sidebar h1 {
+    margin: 0 0 16px;
+
+    color: #ffffff;
+
+    font-size: clamp(32px, 3.5vw, 50px);
+    line-height: 1.05;
+
+    letter-spacing: -0.03em;
+}
+
+.auth-sidebar-content > p:last-child {
+    max-width: 470px;
+
+    margin: 0;
+
+    color: #e4dfe8;
+
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   RIGHT SIDE / FORM PANEL
+   ========================================================= */
+
+.auth-form-panel {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px 50px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   FORM CONTENT
+   ========================================================= */
+
+.auth-form-content {
+    width: 100%;
+    max-width: 520px;
+
+    max-height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-form-content h2 {
+    margin: 0;
+
+    color: #222222;
+
+    font-size: 32px;
+    line-height: 1.1;
+
+    letter-spacing: -0.025em;
+}
+
+.auth-lead {
+    max-width: 500px;
+
+    margin: 8px 0 0;
+
+    color: #777777;
+
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   ERROR MESSAGE
+   ========================================================= */
+
+.auth-error {
+    margin-top: 14px;
+
+    padding: 10px 14px;
+
+    color: #8b2e2e;
+    background: #fceeee;
+
+    border: 1px solid #e7bcbc;
+    border-radius: 8px;
+
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.auth-form-content form {
+    display: grid;
+
+    gap: 12px;
+
+    margin-top: 18px;
+}
+
+
+/* =========================================================
+   FORM FIELDS
+   ========================================================= */
+
+.auth-field {
+    display: grid;
+    gap: 5px;
+}
+
+.auth-field label,
+.auth-role > label {
+    color: #555555;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.auth-field input {
+    width: 100%;
+
+    min-height: 42px;
+
+    padding: 9px 12px;
+
+    color: #222222;
+    background: #ffffff;
+
+    border: 1px solid #d6d1da;
+    border-radius: 8px;
+
+    outline: none;
+
+    font: inherit;
+    font-size: 14px;
+
+    transition: 0.15s ease;
+}
+
+.auth-field input::placeholder {
+    color: #999999;
+}
+
+.auth-field input:hover {
+    border-color: #b7adbf;
+}
+
+.auth-field input:focus {
+    border-color: #563F6B;
+
+    box-shadow:
+        0 0 0 3px rgba(86, 63, 107, 0.15);
+}
+
+
+/* =========================================================
+   FIRST + LAST NAME
+   ========================================================= */
+
+.auth-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   ROLE OPTIONS
+   ========================================================= */
+
+.auth-role {
+    display: grid;
+    gap: 6px;
+}
+
+.role-options {
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 8px;
+}
+
+.role-option {
+    position: relative;
+
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px;
+
+    color: #777777;
+    background: #ffffff;
+
+    border: 1px solid #d6d1da;
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: center;
+
+    transition: 0.15s ease;
+}
+
+.role-option:hover {
+    border-color: #563F6B;
+    color: #563F6B;
+}
+
+.role-option input {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    opacity: 0;
+}
+
+.role-option.selected {
+    color: #563F6B;
+
+    background: #f1edf3;
+
+    border-color: #563F6B;
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+   ========================================================= */
+
+.auth-submit {
+    width: 100%;
+
+    min-height: 44px;
+
+    margin-top: 2px;
+
+    padding: 9px 16px;
+
+    color: #ffffff;
+
+    background: #563F6B;
+
+    border: 2px solid #563F6B;
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 750;
+
+    transition: 0.15s ease;
+}
+
+.auth-submit:hover {
+    background: #463256;
+    border-color: #463256;
+
+    transform: translateY(-1px);
+}
+
+.auth-submit:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+.auth-switch {
+    margin: 12px 0 0;
+
+    color: #777777;
+
+    font-size: 13px;
+
+    text-align: center;
+}
+
+.auth-switch a {
+    color: #563F6B;
+
+    font-weight: 750;
+
+    text-decoration: none;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+.auth-home-link {
+    margin: 8px 0 0;
+
+    text-align: center;
+}
+
+.auth-home-link a {
+    color: #888888;
+
+    font-size: 12px;
+
+    text-decoration: none;
+}
+
+.auth-home-link a:hover {
+    color: #563F6B;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .auth-card {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-sidebar {
+        display: none;
+    }
+
+    .auth-form-panel {
+        width: 100%;
+        height: 100%;
+
+        min-height: 100vh;
+        min-height: 100dvh;
+
+        padding: 25px;
+    }
+
+    .auth-form-content {
+        max-width: 500px;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .auth-form-panel {
+        padding: 15px;
+    }
+
+    .auth-form-content {
+        max-width: 100%;
+    }
+
+    .auth-form-content h2 {
+        font-size: 26px;
+    }
+
+    .auth-lead {
+        font-size: 13px;
+    }
+
+    .auth-form-content form {
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .auth-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .auth-field {
+        gap: 4px;
+    }
+
+    .auth-field label,
+    .auth-role > label {
+        font-size: 10px;
+    }
+
+    .auth-field input {
+        min-height: 40px;
+
+        padding: 8px 10px;
+
+        font-size: 13px;
+    }
+
+    .role-options {
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+    }
+
+    .role-option {
+        min-height: 40px;
+        padding: 7px;
+
+        font-size: 12px;
+    }
+
+    .auth-submit {
+        min-height: 42px;
+        font-size: 13px;
+    }
+
+    .auth-switch {
+        margin-top: 9px;
+        font-size: 12px;
+    }
+
+    .auth-home-link {
+        margin-top: 6px;
+    }
+
+    .auth-home-link a {
+        font-size: 11px;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL / SHORT SCREENS
+   ========================================================= */
+
+@media (max-height: 700px) {
+
+    .auth-form-panel {
+        padding: 10px 20px;
+    }
+
+    .auth-form-content h2 {
+        font-size: 23px;
+    }
+
+    .auth-lead {
+        margin-top: 4px;
+        font-size: 12px;
+    }
+
+    .auth-form-content form {
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .auth-field {
+        gap: 3px;
+    }
+
+    .auth-field label,
+    .auth-role > label {
+        font-size: 9px;
+    }
+
+    .auth-field input {
+        min-height: 35px;
+        padding: 6px 9px;
+        font-size: 12px;
+    }
+
+    .role-options {
+        gap: 5px;
+    }
+
+    .role-option {
+        min-height: 35px;
+        padding: 5px;
+        font-size: 11px;
+    }
+
+    .auth-submit {
+        min-height: 37px;
+        padding: 7px;
+        font-size: 12px;
+    }
+
+    .auth-switch {
+        margin-top: 6px;
+        font-size: 11px;
+    }
+
+    .auth-home-link {
+        margin-top: 4px;
+    }
+
+    .auth-home-link a {
+        font-size: 10px;
+    }
+}
+
+
+/* =========================================================
+   EXTREMELY SHORT SCREENS
+   ========================================================= */
+
+@media (max-height: 600px) {
+
+    .auth-form-panel {
+        padding: 6px 15px;
+    }
+
+    .auth-form-content h2 {
+        font-size: 20px;
+    }
+
+    .auth-lead {
+        display: none;
+    }
+
+    .auth-form-content form {
+        gap: 5px;
+        margin-top: 7px;
+    }
+
+    .auth-field input {
+        min-height: 32px;
+        padding: 5px 8px;
+    }
+
+    .role-option {
+        min-height: 32px;
+        padding: 4px;
+    }
+
+    .auth-submit {
+        min-height: 34px;
+    }
+
+    .auth-switch {
+        margin-top: 4px;
+    }
+
+    .auth-home-link {
+        margin-top: 2px;
+    }
+}
+
+
+/* =========================================================
+   PREVENT HORIZONTAL OVERFLOW
+   ========================================================= */
+
+.auth-page *,
+.auth-card * {
+    max-width: 100%;
+}
