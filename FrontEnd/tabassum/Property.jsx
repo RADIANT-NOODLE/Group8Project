@@ -1,6 +1,28 @@
 import { useState } from "react";
 
 export default function Property() {
+
+    /* =========================================
+       GET LOGGED-IN USER
+    ========================================= */
+
+    const storedUser = localStorage.getItem("valoraUser");
+
+    const user = storedUser
+        ? JSON.parse(storedUser)
+        : {
+            firstName: "VALORA",
+            lastName: "User",
+            role: "Property Owner"
+        };
+
+    const role = user.role || "Property Owner";
+
+
+    /* =========================================
+       PROPERTY EDITING
+    ========================================= */
+
     const [editing, setEditing] = useState(false);
 
     const [property, setProperty] = useState({
@@ -17,17 +39,17 @@ export default function Property() {
         bathrooms: 1
     });
 
-    function togglePropertyEdit() {
-        if (editing) {
-            setForm(property);
-        } else {
-            setForm(property);
-        }
 
+    function togglePropertyEdit() {
+
+        setForm(property);
         setEditing(!editing);
+
     }
 
+
     function handleChange(event) {
+
         const { name, value } = event.target;
 
         setForm((previous) => ({
@@ -39,9 +61,12 @@ export default function Property() {
                     ? Number(value)
                     : value
         }));
+
     }
 
+
     function savePropertyDetails(event) {
+
         event.preventDefault();
 
         if (
@@ -50,8 +75,10 @@ export default function Property() {
             form.bedrooms <= 0 ||
             form.bathrooms <= 0
         ) {
+
             alert("Please enter valid property details.");
             return;
+
         }
 
         setProperty({
@@ -61,18 +88,63 @@ export default function Property() {
         setEditing(false);
 
         alert("Property details updated successfully.");
+
     }
+
+
+    /* =========================================
+       ROLE TITLES
+    ========================================= */
+
+    let pageTitle = "My Property 🏡";
+    let pageDescription = "Manage and view your property information.";
+    let propertyLabel = "MY PROPERTY";
+
+
+    if (role === "Investor") {
+
+        pageTitle = "Properties 📊";
+        pageDescription =
+            "View properties you are interested in and analyse their investment potential.";
+        propertyLabel = "INVESTMENT PROPERTY";
+
+    }
+
+    if (role === "Estate Agent") {
+
+        pageTitle = "My Listings 🏡";
+        pageDescription =
+            "Manage your property listings and listing information.";
+        propertyLabel = "PROPERTY LISTING";
+
+    }
+
+    if (role === "HOA") {
+
+        pageTitle = "Community Properties 🏘";
+        pageDescription =
+            "View property information within the VALORA community.";
+        propertyLabel = "COMMUNITY PROPERTY";
+
+    }
+
 
     return (
         <div className="dashboard-layout">
 
-            {/* SIDEBAR */}
+
+            {/* =========================================
+                SIDEBAR
+            ========================================= */}
 
             <aside className="sidebar">
 
                 <div className="logo-area">
 
-                    <h1>VALORA</h1>
+                    <img
+                        src="/ValoraLogo.jpeg"
+                        alt="VALORA Logo"
+                    />
 
                     <p>
                         Property Intelligence
@@ -83,32 +155,38 @@ export default function Property() {
 
                 <nav className="side-nav">
 
-                    <a href="/">
+                    <a href="/dashboard">
                         🏠 Dashboard
                     </a>
+
 
                     <a
                         href="/property"
                         className="active"
                     >
-                        🏡 My Property
+                        🏡 Property
                     </a>
+
 
                     <a href="/valuation">
                         🤖 AI Valuation
                     </a>
 
+
                     <a href="/complaints">
                         🏘 Complaints
                     </a>
+
 
                     <a href="/providers">
                         🔧 Service Providers
                     </a>
 
+
                     <a href="/announcements">
                         📢 Announcements
                     </a>
+
 
                     <a href="/profile">
                         👤 My Profile
@@ -128,22 +206,27 @@ export default function Property() {
             </aside>
 
 
-            {/* MAIN CONTENT */}
+            {/* =========================================
+                MAIN CONTENT
+            ========================================= */}
 
             <main className="dashboard-main">
 
-                {/* TOP BAR */}
+
+                {/* =========================================
+                    TOP BAR
+                ========================================= */}
 
                 <div className="top-bar">
 
                     <div>
 
                         <h2>
-                            My Property 🏡
+                            {pageTitle}
                         </h2>
 
                         <p>
-                            Manage and view your property information.
+                            {pageDescription}
                         </p>
 
                     </div>
@@ -151,7 +234,9 @@ export default function Property() {
                 </div>
 
 
-                {/* PROPERTY HEADER */}
+                {/* =========================================
+                    PROPERTY HEADER
+                ========================================= */}
 
                 <section className="property-header-card">
 
@@ -163,7 +248,7 @@ export default function Property() {
                     <div className="property-header-info">
 
                         <span className="property-label">
-                            MY PROPERTY
+                            {propertyLabel}
                         </span>
 
 
@@ -186,7 +271,9 @@ export default function Property() {
                 </section>
 
 
-                {/* PROPERTY STATS */}
+                {/* =========================================
+                    PROPERTY STATS
+                ========================================= */}
 
                 <section className="property-stats">
 
@@ -260,7 +347,9 @@ export default function Property() {
                 </section>
 
 
-                {/* PROPERTY DETAILS */}
+                {/* =========================================
+                    PROPERTY DETAILS
+                ========================================= */}
 
                 <section className="dashboard-panel property-details-panel">
 
@@ -273,13 +362,15 @@ export default function Property() {
                             </h3>
 
                             <p>
-                                Information about your property.
+                                Information about this property.
                             </p>
 
                         </div>
 
 
-                        {!editing && (
+                        {(role === "Property Owner" ||
+                          role === "Buyer") &&
+                          !editing && (
 
                             <button
                                 type="button"
@@ -294,7 +385,9 @@ export default function Property() {
                     </div>
 
 
-                    {/* NORMAL DETAILS */}
+                    {/* =========================================
+                        NORMAL DETAILS
+                    ========================================= */}
 
                     {!editing && (
 
@@ -386,7 +479,9 @@ export default function Property() {
                     )}
 
 
-                    {/* EDIT FORM */}
+                    {/* =========================================
+                        EDIT FORM
+                    ========================================= */}
 
                     {editing && (
 
@@ -469,7 +564,9 @@ export default function Property() {
                 </section>
 
 
-                {/* FINANCIAL OVERVIEW */}
+                {/* =========================================
+                    FINANCIAL / INVESTMENT OVERVIEW
+                ========================================= */}
 
                 <section className="dashboard-panel property-financial-panel">
 
@@ -478,11 +575,13 @@ export default function Property() {
                         <div>
 
                             <h3>
-                                Investment Overview 📊
+                                {role === "Investor"
+                                    ? "Property Valuation & Investment 📊"
+                                    : "Investment Overview 📊"}
                             </h3>
 
                             <p>
-                                Your property's current financial indicators.
+                                Current property financial indicators.
                             </p>
 
                         </div>
@@ -504,7 +603,7 @@ export default function Property() {
                             </strong>
 
                             <small>
-                                VALORA estimate
+                                VALORA AI estimate
                             </small>
 
                         </div>
@@ -565,7 +664,9 @@ export default function Property() {
                 </section>
 
 
-                {/* PROPERTY ACTIONS */}
+                {/* =========================================
+                    ROLE-SPECIFIC PROPERTY ACTIONS
+                ========================================= */}
 
                 <section className="dashboard-panel">
 
@@ -588,49 +689,226 @@ export default function Property() {
 
                     <div className="property-actions">
 
-                        <a href="/valuation">
 
-                            🤖
+                        {/* PROPERTY OWNER / BUYER */}
 
-                            <strong>
-                                Analyse Property
-                            </strong>
+                        {(role === "Property Owner" ||
+                          role === "Buyer") && (
 
-                            <span>
-                                View AI valuation
-                            </span>
+                            <>
 
-                        </a>
+                                <a href="/valuation">
 
+                                    🤖
 
-                        <a href="/complaints">
+                                    <strong>
+                                        Analyse Property
+                                    </strong>
 
-                            🏘
+                                    <span>
+                                        View AI valuation
+                                    </span>
 
-                            <strong>
-                                Report Issue
-                            </strong>
-
-                            <span>
-                                Submit a complaint
-                            </span>
-
-                        </a>
+                                </a>
 
 
-                        <a href="/providers">
+                                <a href="/complaints">
 
-                            🔧
+                                    🏘
 
-                            <strong>
-                                Find Provider
-                            </strong>
+                                    <strong>
+                                        Report Issue
+                                    </strong>
 
-                            <span>
-                                Find a service provider
-                            </span>
+                                    <span>
+                                        Submit a complaint
+                                    </span>
 
-                        </a>
+                                </a>
+
+
+                                <a href="/providers">
+
+                                    🔧
+
+                                    <strong>
+                                        Find Provider
+                                    </strong>
+
+                                    <span>
+                                        Find a service provider
+                                    </span>
+
+                                </a>
+
+                            </>
+
+                        )}
+
+
+                        {/* INVESTOR */}
+
+                        {role === "Investor" && (
+
+                            <>
+
+                                <a href="/valuation">
+
+                                    🤖
+
+                                    <strong>
+                                        Property Valuation
+                                    </strong>
+
+                                    <span>
+                                        AI valuation and growth score
+                                    </span>
+
+                                </a>
+
+
+                                <a href="/roi">
+
+                                    📈
+
+                                    <strong>
+                                        10-Year ROI
+                                    </strong>
+
+                                    <span>
+                                        View investment forecast
+                                    </span>
+
+                                </a>
+
+
+                                <a href="/complaints">
+
+                                    📊
+
+                                    <strong>
+                                        Complaint Trends
+                                    </strong>
+
+                                    <span>
+                                        View property complaint trends
+                                    </span>
+
+                                </a>
+
+                            </>
+
+                        )}
+
+
+                        {/* ESTATE AGENT */}
+
+                        {role === "Estate Agent" && (
+
+                            <>
+
+                                <a href="/valuation">
+
+                                    🤖
+
+                                    <strong>
+                                        AI Valuation
+                                    </strong>
+
+                                    <span>
+                                        Justify listing prices
+                                    </span>
+
+                                </a>
+
+
+                                <a href="/property">
+
+                                    🏡
+
+                                    <strong>
+                                        Manage Listings
+                                    </strong>
+
+                                    <span>
+                                        Add and manage property listings
+                                    </span>
+
+                                </a>
+
+
+                                <a href="/profile">
+
+                                    👤
+
+                                    <strong>
+                                        Agent Profile
+                                    </strong>
+
+                                    <span>
+                                        Manage your agent information
+                                    </span>
+
+                                </a>
+
+                            </>
+
+                        )}
+
+
+                        {/* HOA */}
+
+                        {role === "HOA" && (
+
+                            <>
+
+                                <a href="/complaints">
+
+                                    🏘
+
+                                    <strong>
+                                        Resident Complaints
+                                    </strong>
+
+                                    <span>
+                                        Manage community complaints
+                                    </span>
+
+                                </a>
+
+
+                                <a href="/providers">
+
+                                    🔧
+
+                                    <strong>
+                                        Service Providers
+                                    </strong>
+
+                                    <span>
+                                        Manage community providers
+                                    </span>
+
+                                </a>
+
+
+                                <a href="/announcements">
+
+                                    📢
+
+                                    <strong>
+                                        Community Announcements
+                                    </strong>
+
+                                    <span>
+                                        Manage community notices
+                                    </span>
+
+                                </a>
+
+                            </>
+
+                        )}
 
                     </div>
 
