@@ -73,9 +73,19 @@ function Announcements() {
       <aside className="sidebar">
 
         <div className="logo-area">
-          <h1>VALORA</h1>
-          <p>Property Intelligence</p>
+
+          {/* VALORA LOGO IMAGE */}
+          <img
+            src="/ValoraLogo.jpeg"
+            alt="VALORA Logo"
+          />
+
+          <p>
+            Property Intelligence
+          </p>
+
         </div>
+
 
         <nav className="side-nav">
 
@@ -99,7 +109,10 @@ function Announcements() {
             🔧 Service Providers
           </a>
 
-          <a href="/announcements" className="active">
+          <a
+            href="/announcements"
+            className="active"
+          >
             📢 Announcements
           </a>
 
@@ -108,6 +121,7 @@ function Announcements() {
           </a>
 
         </nav>
+
 
         <div className="logout-area">
 
@@ -133,7 +147,9 @@ function Announcements() {
 
           <div>
 
-            <h2>HOA Announcements 📢</h2>
+            <h2>
+              HOA Announcements 📢
+            </h2>
 
             <p>
               Stay updated with your community.
@@ -149,7 +165,9 @@ function Announcements() {
 
           <div>
 
-            <h3>Community Updates</h3>
+            <h3>
+              Community Updates
+            </h3>
 
             <p>
               Search and filter the latest announcements.
