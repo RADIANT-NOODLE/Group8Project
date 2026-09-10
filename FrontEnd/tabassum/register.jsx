@@ -27,48 +27,79 @@ function Register() {
   }
 
   function handleSubmit(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      role,
-    } = formData;
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    role,
+  } = formData;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password ||
-      !role
-    ) {
-      setError("Please complete all registration fields.");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    // Save the user's basic details
-    localStorage.setItem(
-      "valoraUser",
-      JSON.stringify({
-        firstName,
-        lastName,
-        email,
-        role,
-      })
-    );
-
-    localStorage.setItem("valoraLoggedIn", "true");
-
-    // Send the new user to your dashboard
-    navigate("/dashboard");
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password ||
+    !role
+  ) {
+    setError("Please complete all registration fields.");
+    return;
   }
+
+  if (password.length < 8) {
+    setError("Password must be at least 8 characters.");
+    return;
+  }
+
+  // Get existing VALORA users
+  const existingUsers =
+    JSON.parse(localStorage.getItem("valoraUsers")) || [];
+
+  // Check if email already exists
+  const emailExists = existingUsers.some(
+    (user) =>
+      user.email.toLowerCase() === email.toLowerCase()
+  );
+
+  if (emailExists) {
+    setError(
+      "An account with this email address already exists."
+    );
+    return;
+  }
+
+  // Create new pending registration
+  const newUser = {
+    id: Date.now(),
+    firstName,
+    lastName,
+    email,
+    password,
+    role,
+    status: "Pending",
+    rejectionReason: "",
+  };
+
+  // Add new user to the existing users
+  const updatedUsers = [
+    ...existingUsers,
+    newUser,
+  ];
+
+  localStorage.setItem(
+    "valoraUsers",
+    JSON.stringify(updatedUsers)
+  );
+
+  // Remove old login session information
+  localStorage.removeItem("valoraLoggedIn");
+  localStorage.removeItem("valoraUserEmail");
+
+  // Go to pending registration page
+  navigate("/registration-pending");
+}
 
   return (
     <div className="auth-page">
@@ -80,7 +111,10 @@ function Register() {
         <div className="auth-sidebar">
 
           <div className="auth-logo">
-            VALORA
+            <img
+              src="/ValoraLogo.jpeg"
+              alt="VALORA Logo"
+            />
           </div>
 
           <div className="auth-sidebar-content">
@@ -227,53 +261,34 @@ function Register() {
 
                 <div className="role-options">
 
+                  {/* RESIDENT */}
+
                   <label
                     className={
-                      formData.role === "Property Owner"
+                      formData.role === "Resident"
                         ? "role-option selected"
                         : "role-option"
                     }
                   >
+
                     <input
                       type="radio"
                       name="role"
-                      value="Property Owner"
+                      value="Resident"
                       checked={
-                        formData.role === "Property Owner"
+                        formData.role === "Resident"
                       }
                       onChange={handleChange}
                     />
 
                     <span>
-                      Property Owner
+                      Resident
                     </span>
 
                   </label>
 
 
-                  <label
-                    className={
-                      formData.role === "Buyer"
-                        ? "role-option selected"
-                        : "role-option"
-                    }
-                  >
-                    <input
-                      type="radio"
-                      name="role"
-                      value="Buyer"
-                      checked={
-                        formData.role === "Buyer"
-                      }
-                      onChange={handleChange}
-                    />
-
-                    <span>
-                      Buyer
-                    </span>
-
-                  </label>
-
+                  {/* INVESTOR */}
 
                   <label
                     className={
@@ -282,6 +297,7 @@ function Register() {
                         : "role-option"
                     }
                   >
+
                     <input
                       type="radio"
                       name="role"
@@ -299,25 +315,55 @@ function Register() {
                   </label>
 
 
+                  {/* ESTATE AGENT */}
+
                   <label
                     className={
-                      formData.role === "HOA"
+                      formData.role === "Estate Agent"
                         ? "role-option selected"
                         : "role-option"
                     }
                   >
+
                     <input
                       type="radio"
                       name="role"
-                      value="HOA"
+                      value="Estate Agent"
                       checked={
-                        formData.role === "HOA"
+                        formData.role === "Estate Agent"
                       }
                       onChange={handleChange}
                     />
 
                     <span>
-                      HOA
+                      Estate Agent
+                    </span>
+
+                  </label>
+
+
+                  {/* HOA ADMIN */}
+
+                  <label
+                    className={
+                      formData.role === "HOA Admin"
+                        ? "role-option selected"
+                        : "role-option"
+                    }
+                  >
+
+                    <input
+                      type="radio"
+                      name="role"
+                      value="HOA Admin"
+                      checked={
+                        formData.role === "HOA Admin"
+                      }
+                      onChange={handleChange}
+                    />
+
+                    <span>
+                      HOA Admin
                     </span>
 
                   </label>
@@ -327,11 +373,13 @@ function Register() {
               </div>
 
 
+              {/* SUBMIT */}
+
               <button
                 type="submit"
                 className="auth-submit"
               >
-                Create your account
+                Submit registration
               </button>
 
             </form>
@@ -339,6 +387,7 @@ function Register() {
 
             <p className="auth-switch">
               Already have an account?{" "}
+
               <Link to="/login">
                 Sign in
               </Link>
@@ -346,9 +395,11 @@ function Register() {
 
 
             <p className="auth-home-link">
+
               <Link to="/">
                 ← Back to homepage
               </Link>
+
             </p>
 
           </div>
