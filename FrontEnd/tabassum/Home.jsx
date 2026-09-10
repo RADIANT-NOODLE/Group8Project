@@ -12,26 +12,29 @@ function Home() {
       <nav className="navbar">
 
         <div className="logo">
-          VALORA
+          <img
+            src="/ValoraLogo.jpeg"
+            alt="VALORA Logo"
+          />
         </div>
 
         <div className="nav-links">
 
-          <Link to="/" className="active">
+          <a href="#home" className="active">
             HOME
-          </Link>
+          </a>
 
-          <Link to="/property">
+          <a href="#properties">
             PROPERTIES
-          </Link>
+          </a>
 
-          <Link to="/valuation">
+          <a href="#valuation">
             VALUATION
-          </Link>
+          </a>
 
-          <Link to="/announcements">
+          <a href="#community">
             COMMUNITY
-          </Link>
+          </a>
 
           <a href="#about">
             ABOUT
@@ -61,10 +64,13 @@ function Home() {
 
 
       {/* ================================
-          HERO SECTION
+          HOME / HERO SECTION
       ================================= */}
 
-      <section className="hero">
+      <section
+        className="hero"
+        id="home"
+      >
 
         <div className="hero-content">
 
@@ -85,15 +91,17 @@ function Home() {
 
           <div className="hero-buttons">
 
+            {/* Login required */}
             <Link
-              to="/property"
+              to="/login"
               className="primary-btn"
             >
               EXPLORE PROPERTIES
             </Link>
 
+            {/* Login required */}
             <Link
-              to="/valuation"
+              to="/login"
               className="secondary-btn"
             >
               GET AI VALUATION
@@ -119,6 +127,8 @@ function Home() {
 
       <section className="features">
 
+        {/* PROPERTY */}
+
         <div className="feature-card">
 
           <div className="feature-icon">
@@ -140,7 +150,8 @@ function Home() {
               and explore available listings.
             </p>
 
-            <Link to="/property">
+            {/* Login required */}
+            <Link to="/login">
               Explore Properties →
             </Link>
 
@@ -148,6 +159,8 @@ function Home() {
 
         </div>
 
+
+        {/* INTELLIGENCE */}
 
         <div className="feature-card">
 
@@ -171,7 +184,8 @@ function Home() {
               informed decisions.
             </p>
 
-            <Link to="/valuation">
+            {/* Login required */}
+            <Link to="/login">
               Try AI Valuation →
             </Link>
 
@@ -179,6 +193,8 @@ function Home() {
 
         </div>
 
+
+        {/* COMMUNITY */}
 
         <div className="feature-card">
 
@@ -202,103 +218,10 @@ function Home() {
               updated with HOA news.
             </p>
 
-            <Link to="/announcements">
+            {/* Login required */}
+            <Link to="/login">
               Explore Community →
             </Link>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================================
-          PROPERTY INTELLIGENCE
-      ================================= */}
-
-      <section className="intelligence-section">
-
-        <div className="intelligence-content">
-
-          <div className="intelligence-text">
-
-            <p className="section-label">
-              PROPERTY INTELLIGENCE
-            </p>
-
-            <h2>
-              Know the value.
-              <br />
-              Understand the future.
-            </h2>
-
-            <p>
-              VALORA combines property data with
-              AI-powered insights to help buyers,
-              investors and estate agents make smarter
-              property decisions.
-            </p>
-
-
-            <div className="intelligence-features">
-
-              <div>
-
-                <h3>
-                  AI Valuation
-                </h3>
-
-                <p>
-                  Get an estimated property value based
-                  on local property data.
-                </p>
-
-              </div>
-
-
-              <div>
-
-                <h3>
-                  Growth Score
-                </h3>
-
-                <p>
-                  Understand the potential growth of
-                  the surrounding area.
-                </p>
-
-              </div>
-
-
-              <div>
-
-                <h3>
-                  Rental Yield
-                </h3>
-
-                <p>
-                  Estimate potential rental returns
-                  from your property.
-                </p>
-
-              </div>
-
-
-              <div>
-
-                <h3>
-                  10-Year ROI
-                </h3>
-
-                <p>
-                  Explore projected long-term
-                  investment returns.
-                </p>
-
-              </div>
-
-            </div>
 
           </div>
 
@@ -311,7 +234,10 @@ function Home() {
           PROPERTY LISTINGS
       ================================= */}
 
-      <section className="property-listings">
+      <section
+        className="property-listings"
+        id="properties"
+      >
 
         <div className="listings-header">
 
@@ -333,8 +259,9 @@ function Home() {
 
           </div>
 
+          {/* Login required */}
           <Link
-            to="/property"
+            to="/login"
             className="view-all"
           >
             View All Properties
@@ -344,7 +271,6 @@ function Home() {
 
 
         <div className="property-cards">
-
 
           {/* PROPERTY 1 */}
 
@@ -391,8 +317,9 @@ function Home() {
                   R1,850,000
                 </strong>
 
+                {/* Login required */}
                 <Link
-                  to="/property"
+                  to="/login"
                   className="property-view-button"
                 >
                   View Property
@@ -450,8 +377,9 @@ function Home() {
                   R1,450,000
                 </strong>
 
+                {/* Login required */}
                 <Link
-                  to="/property"
+                  to="/login"
                   className="property-view-button"
                 >
                   View Property
@@ -509,8 +437,9 @@ function Home() {
                   R2,250,000
                 </strong>
 
+                {/* Login required */}
                 <Link
-                  to="/property"
+                  to="/login"
                   className="property-view-button"
                 >
                   View Property
@@ -528,12 +457,113 @@ function Home() {
 
 
       {/* ================================
+          PROPERTY INTELLIGENCE / VALUATION
+      ================================= */}
+
+      <section
+        className="intelligence-section"
+        id="valuation"
+      >
+
+        <div className="intelligence-content">
+
+          <div className="intelligence-text">
+
+            <p className="section-label">
+              PROPERTY INTELLIGENCE
+            </p>
+
+            <h2>
+              Know the value.
+              <br />
+              Understand the future.
+            </h2>
+
+            <p>
+              VALORA combines property data with
+              AI-powered insights to help buyers,
+              investors and estate agents make smarter
+              property decisions.
+            </p>
+
+            <div className="intelligence-features">
+
+              <div>
+
+                <h3>
+                  AI Valuation
+                </h3>
+
+                <p>
+                  Get an estimated property value based
+                  on local property data.
+                </p>
+
+              </div>
+
+              <div>
+
+                <h3>
+                  Growth Score
+                </h3>
+
+                <p>
+                  Understand the potential growth of
+                  the surrounding area.
+                </p>
+
+              </div>
+
+              <div>
+
+                <h3>
+                  Rental Yield
+                </h3>
+
+                <p>
+                  Estimate potential rental returns
+                  from your property.
+                </p>
+
+              </div>
+
+              <div>
+
+                <h3>
+                  10-Year ROI
+                </h3>
+
+                <p>
+                  Explore projected long-term
+                  investment returns.
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* Login required */}
+            <Link
+              to="/login"
+              className="primary-btn"
+            >
+              GET AI VALUATION
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================================
           COMMUNITY
       ================================= */}
 
       <section
         className="community-section"
-        id="about"
+        id="community"
       >
 
         <div className="community-content">
@@ -557,7 +587,6 @@ function Home() {
               platform.
             </p>
 
-
             <div className="community-features">
 
               <div className="community-feature">
@@ -573,7 +602,6 @@ function Home() {
 
               </div>
 
-
               <div className="community-feature">
 
                 <h3>
@@ -587,7 +615,6 @@ function Home() {
 
               </div>
 
-
               <div className="community-feature">
 
                 <h3>
@@ -600,7 +627,6 @@ function Home() {
                 </p>
 
               </div>
-
 
               <div className="community-feature">
 
@@ -617,6 +643,14 @@ function Home() {
               </div>
 
             </div>
+
+            {/* Login required */}
+            <Link
+              to="/login"
+              className="primary-btn"
+            >
+              EXPLORE COMMUNITY
+            </Link>
 
           </div>
 
@@ -655,7 +689,6 @@ function Home() {
 
 
           <div className="steps">
-
 
             <div className="step">
 
@@ -731,13 +764,45 @@ function Home() {
 
             </div>
 
-
           </div>
 
         </div>
 
       </section>
 
+
+      {/* ================================
+          ABOUT
+      ================================= */}
+
+      <section
+        className="about-section"
+        id="about"
+      >
+
+        <div className="about-content">
+
+          <p className="section-label">
+            ABOUT VALORA
+          </p>
+
+          <h2>
+            Smarter property decisions.
+            <br />
+            Stronger communities.
+          </h2>
+
+          <p>
+            VALORA is a property intelligence and
+            community management platform designed
+            to bring property information, intelligent
+            analysis and community services together
+            in one place.
+          </p>
+
+        </div>
+
+      </section>
 
     </div>
   );
