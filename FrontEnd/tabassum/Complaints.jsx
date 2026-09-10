@@ -12,9 +12,10 @@ export default function Complaints() {
             category: "Security",
             priority: "High",
             date: "18 Aug 2026",
-            status: "Pending"
+            status: "Submitted"
         }
     ]);
+
 
     function submitComplaint(event) {
 
@@ -31,25 +32,37 @@ export default function Complaints() {
             `VAL-${String(complaints.length + 1).padStart(3, "0")}`;
 
         const newComplaint = {
+
             id: newId,
+
             category: category,
+
+            description: description,
+
             priority: priority,
+
             date: new Date().toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric"
             }),
-            status: "Pending"
+
+            status: "Submitted"
         };
+
 
         setComplaints([
             ...complaints,
             newComplaint
         ]);
 
+
         setDescription("");
+
         setCategory("Security");
+
         setPriority("Low");
+
 
         alert("Complaint submitted successfully.");
     }
@@ -57,14 +70,34 @@ export default function Complaints() {
 
     const totalComplaints = complaints.length;
 
-    const pendingComplaints =
+
+    const submittedComplaints =
         complaints.filter(
-            complaint => complaint.status === "Pending"
+            complaint => complaint.status === "Submitted"
         ).length;
+
+
+    const acknowledgedComplaints =
+        complaints.filter(
+            complaint => complaint.status === "Acknowledged"
+        ).length;
+
+
+    const inProgressComplaints =
+        complaints.filter(
+            complaint => complaint.status === "In Progress"
+        ).length;
+
 
     const resolvedComplaints =
         complaints.filter(
             complaint => complaint.status === "Resolved"
+        ).length;
+
+
+    const cancelledComplaints =
+        complaints.filter(
+            complaint => complaint.status === "Cancelled"
         ).length;
 
 
@@ -78,7 +111,10 @@ export default function Complaints() {
 
                 <div className="logo-area">
 
-                    <h1>VALORA</h1>
+                    <img
+                        src="/ValoraLogo.jpeg"
+                        alt="VALORA Logo"
+                    />
 
                     <p>
                         Property Intelligence
@@ -89,7 +125,7 @@ export default function Complaints() {
 
                 <nav className="side-nav">
 
-                    <a href="/">
+                    <a href="/dashboard">
                         🏠 Dashboard
                     </a>
 
@@ -99,12 +135,6 @@ export default function Complaints() {
 
                     <a href="/valuation">
                         🤖 AI Valuation
-                    </a>
-
-                    <a
-                        href="/roi"
-                    >
-                        📈 10-Year ROI
                     </a>
 
                     <a
@@ -318,11 +348,37 @@ export default function Complaints() {
                             <div>
 
                                 <span>
-                                    Pending
+                                    Submitted
                                 </span>
 
                                 <strong>
-                                    {pendingComplaints}
+                                    {submittedComplaints}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Acknowledged
+                                </span>
+
+                                <strong>
+                                    {acknowledgedComplaints}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    In Progress
+                                </span>
+
+                                <strong>
+                                    {inProgressComplaints}
                                 </strong>
 
                             </div>
@@ -336,6 +392,19 @@ export default function Complaints() {
 
                                 <strong>
                                     {resolvedComplaints}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Cancelled
+                                </span>
+
+                                <strong>
+                                    {cancelledComplaints}
                                 </strong>
 
                             </div>
@@ -450,7 +519,19 @@ export default function Complaints() {
 
                                         <td>
 
-                                            <span className="status-pending">
+                                            <span
+                                                className={
+                                                    complaint.status === "Resolved"
+                                                        ? "status-resolved"
+                                                        : complaint.status === "Cancelled"
+                                                        ? "status-cancelled"
+                                                        : complaint.status === "In Progress"
+                                                        ? "status-progress"
+                                                        : complaint.status === "Acknowledged"
+                                                        ? "status-acknowledged"
+                                                        : "status-submitted"
+                                                }
+                                            >
 
                                                 {complaint.status}
 
@@ -465,6 +546,118 @@ export default function Complaints() {
                             </tbody>
 
                         </table>
+
+                    </div>
+
+                </section>
+
+
+                {/* COMPLAINT STATUS FLOW */}
+
+                <section className="dashboard-panel">
+
+                    <div className="panel-heading">
+
+                        <div>
+
+                            <h3>
+                                Complaint Status
+                            </h3>
+
+                            <p>
+                                Your complaint progresses through the following stages.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="complaint-status-flow">
+
+                        <div className="complaint-status-step">
+
+                            <span>
+                                01
+                            </span>
+
+                            <strong>
+                                Submitted
+                            </strong>
+
+                            <p>
+                                Complaint has been submitted by the resident.
+                            </p>
+
+                        </div>
+
+
+                        <div className="complaint-status-step">
+
+                            <span>
+                                02
+                            </span>
+
+                            <strong>
+                                Acknowledged
+                            </strong>
+
+                            <p>
+                                Complaint has been received and acknowledged.
+                            </p>
+
+                        </div>
+
+
+                        <div className="complaint-status-step">
+
+                            <span>
+                                03
+                            </span>
+
+                            <strong>
+                                In Progress
+                            </strong>
+
+                            <p>
+                                The complaint is currently being investigated or addressed.
+                            </p>
+
+                        </div>
+
+
+                        <div className="complaint-status-step">
+
+                            <span>
+                                04
+                            </span>
+
+                            <strong>
+                                Resolved
+                            </strong>
+
+                            <p>
+                                The issue has been resolved.
+                            </p>
+
+                        </div>
+
+
+                        <div className="complaint-status-step">
+
+                            <span>
+                                05
+                            </span>
+
+                            <strong>
+                                Cancelled
+                            </strong>
+
+                            <p>
+                                The complaint has been cancelled.
+                            </p>
+
+                        </div>
 
                     </div>
 
