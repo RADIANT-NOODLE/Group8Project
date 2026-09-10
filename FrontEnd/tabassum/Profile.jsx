@@ -64,9 +64,15 @@ function Profile() {
 
         <div className="logo-area">
 
-          <h1>VALORA</h1>
+          {/* VALORA LOGO IMAGE */}
+          <img
+            src="/ValoraLogo.jpeg"
+            alt="VALORA Logo"
+          />
 
-          <p>Property Intelligence</p>
+          <p>
+            Property Intelligence
+          </p>
 
         </div>
 
@@ -97,7 +103,10 @@ function Profile() {
             📢 Announcements
           </a>
 
-          <a href="/profile" className="active">
+          <a
+            href="/profile"
+            className="active"
+          >
             👤 My Profile
           </a>
 
@@ -129,7 +138,9 @@ function Profile() {
 
           <div>
 
-            <h2>My Profile 👤</h2>
+            <h2>
+              My Profile 👤
+            </h2>
 
             <p>
               Manage your VALORA account information.
@@ -175,7 +186,9 @@ function Profile() {
 
             <div>
 
-              <h3>Personal Information</h3>
+              <h3>
+                Personal Information
+              </h3>
 
               <p>
                 Your account details.
@@ -271,7 +284,9 @@ function Profile() {
               <input
                 type="text"
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                onChange={(e) =>
+                  setEditName(e.target.value)
+                }
               />
 
 
@@ -282,7 +297,9 @@ function Profile() {
               <input
                 type="email"
                 value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
+                onChange={(e) =>
+                  setEditEmail(e.target.value)
+                }
               />
 
 
@@ -293,7 +310,9 @@ function Profile() {
               <input
                 type="text"
                 value={editPhone}
-                onChange={(e) => setEditPhone(e.target.value)}
+                onChange={(e) =>
+                  setEditPhone(e.target.value)
+                }
               />
 
 
@@ -331,7 +350,9 @@ function Profile() {
 
             <div>
 
-              <h3>Account Settings</h3>
+              <h3>
+                Account Settings
+              </h3>
 
               <p>
                 Manage your VALORA preferences.
@@ -343,7 +364,6 @@ function Profile() {
 
 
           <div className="settings-list">
-
 
             {/* COMMUNITY NOTIFICATIONS */}
 
@@ -459,7 +479,9 @@ function Profile() {
 
             <div>
 
-              <h3>Security</h3>
+              <h3>
+                Security
+              </h3>
 
               <p>
                 Keep your account secure.
