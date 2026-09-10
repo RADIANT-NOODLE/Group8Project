@@ -19,11 +19,79 @@ function Login() {
       return;
     }
 
-    // Save a simple login session
-    localStorage.setItem("valoraLoggedIn", "true");
-    localStorage.setItem("valoraUserEmail", email);
+    // Get all registered VALORA users
+    const users =
+      JSON.parse(localStorage.getItem("valoraUsers")) || [];
 
-    // Go to your existing VALORA dashboard
+    // Find the account using the email address
+    const user = users.find(
+      (registeredUser) =>
+        registeredUser.email.toLowerCase() ===
+        email.toLowerCase()
+    );
+
+    // No account found
+    if (!user) {
+      setError(
+        "No VALORA account was found with this email address. Please register first."
+      );
+      return;
+    }
+
+    // Check password
+    if (user.password !== password) {
+      setError("Incorrect password.");
+      return;
+    }
+
+    // Check account status
+    if (user.status === "Pending") {
+      setError(
+        "Account Pending Approval: Your registration is still being reviewed by the Head Administrator."
+      );
+      return;
+    }
+
+    if (user.status === "Rejected") {
+      setError(
+        user.rejectionReason
+          ? `Registration Rejected: ${user.rejectionReason}`
+          : "Registration Rejected: Your account request was not approved."
+      );
+      return;
+    }
+
+    // Only approved users can log in
+    if (user.status !== "Approved") {
+      setError(
+        "Your account is not currently authorised to access VALORA."
+      );
+      return;
+    }
+
+    // Save approved login session
+    localStorage.setItem(
+      "valoraLoggedIn",
+      "true"
+    );
+
+    localStorage.setItem(
+      "valoraUserEmail",
+      user.email
+    );
+
+    localStorage.setItem(
+      "valoraUser",
+      JSON.stringify(user)
+    );
+
+    // Head Admin gets their own dashboard
+    if (user.role === "Head Admin") {
+      navigate("/head-admin");
+      return;
+    }
+
+    // All other approved users go to their role dashboard
     navigate("/dashboard");
   }
 
@@ -33,10 +101,16 @@ function Login() {
       <div className="auth-card">
 
         {/* LEFT SIDE */}
+
         <div className="auth-sidebar">
 
           <div className="auth-logo">
-            VALORA
+
+            <img
+              src="/ValoraLogo.jpeg"
+              alt="VALORA Logo"
+            />
+
           </div>
 
           <div className="auth-sidebar-content">
@@ -63,6 +137,7 @@ function Login() {
 
 
         {/* RIGHT SIDE */}
+
         <div className="auth-form-panel">
 
           <div className="auth-form-content">
@@ -100,7 +175,9 @@ function Login() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
                   placeholder="name@example.com"
                   autoComplete="email"
                 />
@@ -118,7 +195,9 @@ function Login() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
                   placeholder="Enter your password"
                   autoComplete="current-password"
                 />
@@ -138,6 +217,7 @@ function Login() {
 
             <p className="auth-switch">
               New to VALORA?{" "}
+
               <Link to="/register">
                 Create an account
               </Link>
@@ -145,9 +225,11 @@ function Login() {
 
 
             <p className="auth-home-link">
+
               <Link to="/">
                 ← Back to homepage
               </Link>
+
             </p>
 
           </div>
