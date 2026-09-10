@@ -28,3 +28,7 @@ from app.providers.models.review import Review  # noqa: F401
 
 # Analytics domain
 from app.analytics.models.ai_analytic import AIAnalytic  # noqa: F401
+
+# Contact domain
+from app.contact.models.contact_message import ContactMessage  # noqa: F401
+
