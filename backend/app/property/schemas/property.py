@@ -21,3 +21,13 @@ class PaginatedPropertiesResponse(BaseModel):
     page: int
     page_size: int
     properties: list[PropertyResponse]
+
+
+class PropertyCreate(BaseModel):
+    unit_no: str = Field(..., min_length=1, max_length=10)
+    complex_name: str = Field(..., min_length=1, max_length=255)
+    street_address: str = Field(..., min_length=1, max_length=255)
+    suburb: str | None = Field(default=None, max_length=255)
+    size_m2: Decimal | None = Field(default=None, gt=0, max_digits=8, decimal_places=2)
+    bedrooms: int | None = Field(default=None, ge=0)
+    bathrooms: int | None = Field(default=None, ge=0)
