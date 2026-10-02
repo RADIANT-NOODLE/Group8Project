@@ -1,5 +1,18 @@
 # providers schemas package
-from .service_provider import PaginatedProvidersResponse, ServiceProviderResponse
+from .review import PaginatedReviewsResponse, ReviewCreate, ReviewResponse
+from .service_provider import (
+    PaginatedProvidersResponse,
+    ServiceProviderCreate,
+    ServiceProviderResponse,
+    ServiceProviderUpdate,
+)
 
-__all__ = ["ServiceProviderResponse", "PaginatedProvidersResponse"]
-
+__all__ = [
+    "ServiceProviderResponse",
+    "ServiceProviderCreate",
+    "ServiceProviderUpdate",
+    "PaginatedProvidersResponse",
+    "ReviewCreate",
+    "ReviewResponse",
+    "PaginatedReviewsResponse",
+]
