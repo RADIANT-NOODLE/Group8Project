@@ -1,2 +1,0 @@
-# analytics schemas package
-
