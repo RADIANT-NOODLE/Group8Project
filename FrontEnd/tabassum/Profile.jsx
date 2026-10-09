@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
+import "./Profile.css";
 
 function Profile() {
+
   const [editing, setEditing] = useState(false);
 
   const [name, setName] = useState("Tabassum");
@@ -15,28 +18,123 @@ function Profile() {
   const [propertyUpdates, setPropertyUpdates] = useState(true);
   const [complaintNotifications, setComplaintNotifications] = useState(true);
 
-  const handleLogout = () => {
-    window.location.href = "/";
+
+  /*
+  =========================================================
+  PROFESSIONAL SVG ICON
+  =========================================================
+  */
+
+  const Icon = ({ type, size = 20 }) => {
+
+    const commonProps = {
+      width: size,
+      height: size,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "1.8",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true",
+    };
+
+    switch (type) {
+
+      case "edit":
+        return (
+          <svg {...commonProps}>
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4L16.5 3.5z" />
+          </svg>
+        );
+
+      case "notifications":
+        return (
+          <svg {...commonProps}>
+            <path d="M18 9a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+            <path d="M10 21h4" />
+          </svg>
+        );
+
+      case "updates":
+        return (
+          <svg {...commonProps}>
+            <path d="M4 19V5" />
+            <path d="M4 19h16" />
+            <path d="M7 15l4-4 3 2 5-6" />
+          </svg>
+        );
+
+      case "security":
+        return (
+          <svg {...commonProps}>
+            <path d="M12 3l7 3v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6l7-3z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+        );
+
+      case "logout":
+        return (
+          <svg {...commonProps}>
+            <path d="M10 4H5v16h5" />
+            <path d="M14 8l4 4-4 4" />
+            <path d="M18 12H9" />
+          </svg>
+        );
+
+      default:
+        return null;
+    }
   };
 
+
+  /*
+  =========================================================
+  EDIT PROFILE
+  =========================================================
+  */
+
   const handleEdit = () => {
+
     setEditName(name);
     setEditEmail(email);
     setEditPhone(phone);
+
     setEditing(true);
   };
 
+
+  /*
+  =========================================================
+  CANCEL EDIT
+  =========================================================
+  */
+
   const handleCancel = () => {
+
     setEditing(false);
   };
 
+
+  /*
+  =========================================================
+  SAVE PROFILE
+  =========================================================
+  */
+
   const saveProfile = () => {
+
     if (
       editName.trim() === "" ||
       editEmail.trim() === "" ||
       editPhone.trim() === ""
     ) {
-      alert("Please complete all profile fields.");
+
+      alert(
+        "Please complete all profile fields."
+      );
+
       return;
     }
 
@@ -46,100 +144,64 @@ function Profile() {
 
     setEditing(false);
 
-    alert("Profile updated successfully.");
+    alert(
+      "Profile updated successfully."
+    );
   };
 
+
+  /*
+  =========================================================
+  CHANGE PASSWORD
+  =========================================================
+  */
+
   const changePassword = () => {
+
     alert(
       "Password change functionality will be connected to the authentication system."
     );
   };
 
+
+  /*
+  =========================================================
+  PAGE
+  =========================================================
+  */
+
   return (
-    <div className="dashboard-layout">
 
-      {/* SIDEBAR */}
+    <div className="resident-profile-layout">
 
-      <aside className="sidebar">
+      {/* =================================================
+          SHARED VALORA SIDEBAR
+          ================================================= */}
 
-        <div className="logo-area">
-
-          {/* VALORA LOGO IMAGE */}
-          <img
-            src="/ValoraLogo.jpeg"
-            alt="VALORA Logo"
-          />
-
-          <p>
-            Property Intelligence
-          </p>
-
-        </div>
+      <DashboardSidebar />
 
 
-        <nav className="side-nav">
+      {/* =================================================
+          MAIN CONTENT
+          ================================================= */}
 
-          <a href="/dashboard">
-            🏠 Dashboard
-          </a>
-
-          <a href="/property">
-            🏡 My Property
-          </a>
-
-          <a href="/valuation">
-            🤖 AI Valuation
-          </a>
-
-          <a href="/complaints">
-            🏘 Complaints
-          </a>
-
-          <a href="/providers">
-            🔧 Service Providers
-          </a>
-
-          <a href="/announcements">
-            📢 Announcements
-          </a>
-
-          <a
-            href="/profile"
-            className="active"
-          >
-            👤 My Profile
-          </a>
-
-        </nav>
+      <main className="resident-profile-main">
 
 
-        <div className="logout-area">
+        {/* =================================================
+            TOP BAR
+            ================================================= */}
 
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              handleLogout();
-            }}
-          >
-            🚪 Logout
-          </a>
-
-        </div>
-
-      </aside>
-
-
-      {/* MAIN CONTENT */}
-
-      <main className="dashboard-main">
-
-        <div className="top-bar">
+        <header className="resident-profile-topbar">
 
           <div>
 
+            <p className="resident-profile-eyebrow">
+              ACCOUNT
+            </p>
+
             <h2>
-              My Profile 👤
+              My Profile
             </h2>
 
             <p>
@@ -148,24 +210,26 @@ function Profile() {
 
           </div>
 
-        </div>
+        </header>
 
 
-        {/* PROFILE HEADER */}
+        {/* =================================================
+            PROFILE HEADER
+            ================================================= */}
 
-        <section className="profile-header-card">
+        <section className="resident-profile-header-card">
 
-          <div className="profile-avatar">
+          <div className="resident-profile-avatar">
             {name.charAt(0).toUpperCase()}
           </div>
 
-          <div className="profile-header-info">
+          <div className="resident-profile-header-info">
 
             <span>
               VALORA MEMBER
             </span>
 
-            <h1 id="profileName">
+            <h1>
               {name}
             </h1>
 
@@ -178,11 +242,13 @@ function Profile() {
         </section>
 
 
-        {/* PERSONAL INFORMATION */}
+        {/* =================================================
+            PERSONAL INFORMATION
+            ================================================= */}
 
-        <section className="dashboard-panel">
+        <section className="resident-profile-panel">
 
-          <div className="panel-heading">
+          <div className="resident-profile-panel-heading">
 
             <div>
 
@@ -201,10 +267,19 @@ function Profile() {
 
               <button
                 type="button"
-                className="edit-profile-button"
+                className="resident-profile-edit-button"
                 onClick={handleEdit}
               >
-                ✏️ Edit Profile
+
+                <Icon
+                  type="edit"
+                  size={17}
+                />
+
+                <span>
+                  Edit Profile
+                </span>
+
               </button>
 
             )}
@@ -212,13 +287,12 @@ function Profile() {
           </div>
 
 
-          {/* VIEW PROFILE */}
-
           {!editing ? (
 
-            <div className="profile-details-grid">
+            <div className="resident-profile-details-grid">
 
-              <div>
+
+              <div className="resident-profile-detail">
 
                 <span>
                   Full Name
@@ -231,7 +305,7 @@ function Profile() {
               </div>
 
 
-              <div>
+              <div className="resident-profile-detail">
 
                 <span>
                   Email Address
@@ -244,7 +318,7 @@ function Profile() {
               </div>
 
 
-              <div>
+              <div className="resident-profile-detail">
 
                 <span>
                   Phone Number
@@ -257,7 +331,7 @@ function Profile() {
               </div>
 
 
-              <div>
+              <div className="resident-profile-detail">
 
                 <span>
                   Account Type
@@ -269,71 +343,88 @@ function Profile() {
 
               </div>
 
+
             </div>
 
           ) : (
 
-            /* EDIT PROFILE */
-
-            <div className="profile-edit-form">
-
-              <label>
-                Full Name
-              </label>
-
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) =>
-                  setEditName(e.target.value)
-                }
-              />
+            <div className="resident-profile-edit-form">
 
 
-              <label>
-                Email Address
-              </label>
+              <div className="resident-profile-form-field">
 
-              <input
-                type="email"
-                value={editEmail}
-                onChange={(e) =>
-                  setEditEmail(e.target.value)
-                }
-              />
+                <label htmlFor="profile-name">
+                  Full Name
+                </label>
 
+                <input
+                  id="profile-name"
+                  type="text"
+                  value={editName}
+                  onChange={(event) =>
+                    setEditName(event.target.value)
+                  }
+                />
 
-              <label>
-                Phone Number
-              </label>
-
-              <input
-                type="text"
-                value={editPhone}
-                onChange={(e) =>
-                  setEditPhone(e.target.value)
-                }
-              />
+              </div>
 
 
-              <div className="profile-edit-buttons">
+              <div className="resident-profile-form-field">
+
+                <label htmlFor="profile-email">
+                  Email Address
+                </label>
+
+                <input
+                  id="profile-email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(event) =>
+                    setEditEmail(event.target.value)
+                  }
+                />
+
+              </div>
+
+
+              <div className="resident-profile-form-field">
+
+                <label htmlFor="profile-phone">
+                  Phone Number
+                </label>
+
+                <input
+                  id="profile-phone"
+                  type="text"
+                  value={editPhone}
+                  onChange={(event) =>
+                    setEditPhone(event.target.value)
+                  }
+                />
+
+              </div>
+
+
+              <div className="resident-profile-edit-buttons">
 
                 <button
                   type="button"
+                  className="resident-profile-save-button"
                   onClick={saveProfile}
                 >
                   Save Changes
                 </button>
 
-
                 <button
                   type="button"
+                  className="resident-profile-cancel-button"
                   onClick={handleCancel}
                 >
                   Cancel
                 </button>
 
               </div>
+
 
             </div>
 
@@ -342,11 +433,13 @@ function Profile() {
         </section>
 
 
-        {/* ACCOUNT SETTINGS */}
+        {/* =================================================
+            ACCOUNT SETTINGS
+            ================================================= */}
 
-        <section className="dashboard-panel profile-settings-panel">
+        <section className="resident-profile-panel resident-profile-settings-panel">
 
-          <div className="panel-heading">
+          <div className="resident-profile-panel-heading">
 
             <div>
 
@@ -363,36 +456,52 @@ function Profile() {
           </div>
 
 
-          <div className="settings-list">
+          <div className="resident-profile-settings-list">
+
 
             {/* COMMUNITY NOTIFICATIONS */}
 
-            <div className="setting-item">
+            <div className="resident-profile-setting-item">
 
-              <div>
+              <div className="resident-profile-setting-info">
 
-                <strong>
-                  📢 Community Notifications
-                </strong>
+                <div className="resident-profile-setting-icon">
 
-                <span>
-                  Receive important HOA announcements.
-                </span>
+                  <Icon
+                    type="notifications"
+                    size={19}
+                  />
+
+                </div>
+
+                <div>
+
+                  <strong>
+                    Community Notifications
+                  </strong>
+
+                  <span>
+                    Receive important HOA announcements.
+                  </span>
+
+                </div>
 
               </div>
 
 
-              <label className="toggle">
+              <label className="resident-profile-toggle">
 
                 <input
                   type="checkbox"
                   checked={notifications}
-                  onChange={(e) =>
-                    setNotifications(e.target.checked)
+                  onChange={(event) =>
+                    setNotifications(
+                      event.target.checked
+                    )
                   }
                 />
 
-                <span className="toggle-slider"></span>
+                <span className="resident-profile-toggle-slider"></span>
 
               </label>
 
@@ -401,32 +510,47 @@ function Profile() {
 
             {/* PROPERTY UPDATES */}
 
-            <div className="setting-item">
+            <div className="resident-profile-setting-item">
 
-              <div>
+              <div className="resident-profile-setting-info">
 
-                <strong>
-                  📊 Property Updates
-                </strong>
+                <div className="resident-profile-setting-icon">
 
-                <span>
-                  Receive updates about your property.
-                </span>
+                  <Icon
+                    type="updates"
+                    size={19}
+                  />
+
+                </div>
+
+                <div>
+
+                  <strong>
+                    Property Updates
+                  </strong>
+
+                  <span>
+                    Receive updates about your property.
+                  </span>
+
+                </div>
 
               </div>
 
 
-              <label className="toggle">
+              <label className="resident-profile-toggle">
 
                 <input
                   type="checkbox"
                   checked={propertyUpdates}
-                  onChange={(e) =>
-                    setPropertyUpdates(e.target.checked)
+                  onChange={(event) =>
+                    setPropertyUpdates(
+                      event.target.checked
+                    )
                   }
                 />
 
-                <span className="toggle-slider"></span>
+                <span className="resident-profile-toggle-slider"></span>
 
               </label>
 
@@ -435,47 +559,65 @@ function Profile() {
 
             {/* COMPLAINT NOTIFICATIONS */}
 
-            <div className="setting-item">
+            <div className="resident-profile-setting-item">
 
-              <div>
+              <div className="resident-profile-setting-info">
 
-                <strong>
-                  🔔 Complaint Notifications
-                </strong>
+                <div className="resident-profile-setting-icon">
 
-                <span>
-                  Receive updates when complaints change status.
-                </span>
+                  <Icon
+                    type="notifications"
+                    size={19}
+                  />
+
+                </div>
+
+                <div>
+
+                  <strong>
+                    Complaint Notifications
+                  </strong>
+
+                  <span>
+                    Receive updates when complaints change status.
+                  </span>
+
+                </div>
 
               </div>
 
 
-              <label className="toggle">
+              <label className="resident-profile-toggle">
 
                 <input
                   type="checkbox"
                   checked={complaintNotifications}
-                  onChange={(e) =>
-                    setComplaintNotifications(e.target.checked)
+                  onChange={(event) =>
+                    setComplaintNotifications(
+                      event.target.checked
+                    )
                   }
                 />
 
-                <span className="toggle-slider"></span>
+                <span className="resident-profile-toggle-slider"></span>
 
               </label>
 
             </div>
+
 
           </div>
 
         </section>
 
 
-        {/* SECURITY */}
+        {/* =================================================
+            SECURITY
+            ================================================= */}
 
-        <section className="dashboard-panel">
+        <section className="resident-profile-panel">
 
-          <div className="panel-heading">
+          <div className="resident-profile-panel-heading">
 
             <div>
 
@@ -492,26 +634,46 @@ function Profile() {
           </div>
 
 
-          <div className="security-actions">
+          <div className="resident-profile-security-actions">
+
 
             <button
               type="button"
               onClick={changePassword}
             >
-              🔐 Change Password
+
+              <Icon
+                type="security"
+                size={18}
+              />
+
+              Change Password
+
             </button>
 
 
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={() => {
+                localStorage.removeItem("valoraUser");
+                window.location.href = "/";
+              }}
             >
-              🚪 Log Out
+
+              <Icon
+                type="logout"
+                size={18}
+              />
+
+              Log Out
+
             </button>
+
 
           </div>
 
         </section>
+
 
       </main>
 
