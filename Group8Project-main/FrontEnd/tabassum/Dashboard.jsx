@@ -1,1298 +1,146 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
-import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
-import "./Dashboard.css";
+function Dashboard({ role }) {
 
+  // Get the logged-in user's details
+  const storedUser = JSON.parse(
+    localStorage.getItem("valoraUser")
+  );
 
-/*
-=========================================================
-GET CURRENT USER
-=========================================================
-*/
+  const userName = storedUser
+    ? `${storedUser.firstName} ${storedUser.lastName}`
+    : "VALORA User";
 
-function getCurrentUser() {
+  const userRole = role || storedUser?.role || "Resident";
 
-  const storedUser =
-    localStorage.getItem("valoraUser");
+  const handleLogout = () => {
+    localStorage.removeItem("valoraLoggedIn");
+    localStorage.removeItem("valoraUser");
+    localStorage.removeItem("valoraUserEmail");
 
-  if (!storedUser) {
-    return null;
-  }
-
-  try {
-
-    const user =
-      JSON.parse(storedUser);
-
-    /*
-    -------------------------------------------------------
-    NORMALISE LEGACY ROLES
-    -------------------------------------------------------
-    */
-
-    let role = user.role;
-
-    if (
-      role === "HOA" ||
-      role === "HOA Admin"
-    ) {
-      role = "HOA Admin";
-    }
-
-    if (
-      role === "Administrator"
-    ) {
-      role = "HOA Admin";
-    }
-
-    if (
-      role === "Property Owner"
-    ) {
-      role = "Resident";
-    }
-
-    if (
-      role === "Buyer"
-    ) {
-      role = "Investor";
-    }
-
-    const firstName =
-      user.firstName ||
-      user.first_name ||
-      "";
-
-    const lastName =
-      user.lastName ||
-      user.last_name ||
-      "";
-
-    const fullName =
-      `${firstName} ${lastName}`.trim() ||
-      user.name ||
-      "VALORA User";
-
-    const initials =
-      `${firstName.charAt(0)}${lastName.charAt(0)}`
-        .toUpperCase() ||
-      fullName
-        .split(" ")
-        .map((name) => name.charAt(0))
-        .join("")
-        .substring(0, 2)
-        .toUpperCase();
-
-    return {
-      ...user,
-      role,
-      firstName,
-      lastName,
-      fullName,
-      initials,
-    };
-
-  } catch (error) {
-
-    console.error(
-      "Unable to read VALORA user:",
-      error
-    );
-
-    return null;
-  }
-}
-
-
-/*
-=========================================================
-ICON COMPONENT
-=========================================================
-
-Professional SVG icons.
-=========================================================
-*/
-
-function Icon({
-  name,
-  size = 18,
-}) {
-
-  const commonProps = {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "1.8",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    "aria-hidden": "true",
+    window.location.href = "/";
   };
 
-  switch (name) {
 
-    case "dashboard":
-      return (
-        <svg {...commonProps}>
-          <rect
-            x="3"
-            y="3"
-            width="7"
-            height="7"
-            rx="1"
-          />
-          <rect
-            x="14"
-            y="3"
-            width="7"
-            height="7"
-            rx="1"
-          />
-          <rect
-            x="3"
-            y="14"
-            width="7"
-            height="7"
-            rx="1"
-          />
-          <rect
-            x="14"
-            y="14"
-            width="7"
-            height="7"
-            rx="1"
-          />
-        </svg>
-      );
+  /* =====================================================
+     RESIDENT DASHBOARD
+     ===================================================== */
 
-    case "property":
-      return (
-        <svg {...commonProps}>
-          <path d="M3 10.5 12 3l9 7.5" />
-          <path d="M5.5 9.5V21h13V9.5" />
-          <path d="M9 21v-6h6v6" />
-        </svg>
-      );
-
-    case "request":
-      return (
-        <svg {...commonProps}>
-          <rect
-            x="4"
-            y="3"
-            width="16"
-            height="18"
-            rx="2"
-          />
-          <path d="M8 7h8" />
-          <path d="M8 11h8" />
-          <path d="M8 15h4" />
-          <path d="M16 14v5" />
-          <path d="M13.5 16.5h5" />
-        </svg>
-      );
-
-    case "complaint":
-      return (
-        <svg {...commonProps}>
-          <path d="M12 3 21 6v6c0 5-3.5 8-9 9-5.5-1-9-4-9-9V6l9-3Z" />
-          <path d="M12 8v5" />
-          <path d="M12 16h.01" />
-        </svg>
-      );
-
-    case "maintenance":
-      return (
-        <svg {...commonProps}>
-          <path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.2 2.2-2.8-.8-.8-2.8 2.8-2.2Z" />
-        </svg>
-      );
-
-    case "announcement":
-      return (
-        <svg {...commonProps}>
-          <path d="M4 11v2a2 2 0 0 0 2 2h2l3 5h2l-1.5-5H14l6 3V6l-6 3H6a2 2 0 0 0-2 2Z" />
-          <path d="M20 9v6" />
-        </svg>
-      );
-
-    case "profile":
-      return (
-        <svg {...commonProps}>
-          <circle
-            cx="12"
-            cy="8"
-            r="4"
-          />
-          <path d="M4 21c.8-4 3.4-6 8-6s7.2 2 8 6" />
-        </svg>
-      );
-
-    case "logout":
-      return (
-        <svg {...commonProps}>
-          <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
-          <path d="M14 8l4 4-4 4" />
-          <path d="M18 12H9" />
-        </svg>
-      );
-
-    case "residents":
-      return (
-        <svg {...commonProps}>
-          <circle
-            cx="9"
-            cy="8"
-            r="3"
-          />
-          <path d="M3 20c.6-3.5 2.5-5 6-5s5.4 1.5 6 5" />
-          <circle
-            cx="17"
-            cy="9"
-            r="2.5"
-          />
-          <path d="M16 15c2.8.2 4.4 1.7 5 4" />
-        </svg>
-      );
-
-    case "registration":
-      return (
-        <svg {...commonProps}>
-          <rect
-            x="4"
-            y="3"
-            width="16"
-            height="18"
-            rx="2"
-          />
-          <path d="M8 8h8" />
-          <path d="M8 12h5" />
-          <path d="m8 16 2 2 5-5" />
-        </svg>
-      );
-
-    case "approval":
-      return (
-        <svg {...commonProps}>
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-          />
-          <path d="m8 12 2.5 2.5L16 9" />
-        </svg>
-      );
-
-    case "analytics":
-      return (
-        <svg {...commonProps}>
-          <path d="M4 19V5" />
-          <path d="M4 19h16" />
-          <path d="m7 15 3-4 3 2 5-6" />
-        </svg>
-      );
-
-    case "listing":
-      return (
-        <svg {...commonProps}>
-          <rect
-            x="4"
-            y="3"
-            width="16"
-            height="18"
-            rx="2"
-          />
-          <path d="M8 7h8" />
-          <path d="M8 11h8" />
-          <path d="M8 15h5" />
-          <path d="M8 18h3" />
-        </svg>
-      );
-
-    case "inquiry":
-      return (
-        <svg {...commonProps}>
-          <path d="M4 5h16v12H8l-4 4V5Z" />
-          <path d="M8 9h8" />
-          <path d="M8 13h5" />
-        </svg>
-      );
-
-    case "roi":
-      return (
-        <svg {...commonProps}>
-          <path d="M5 19 19 5" />
-          <circle
-            cx="7"
-            cy="7"
-            r="2.5"
-          />
-          <circle
-            cx="17"
-            cy="17"
-            r="2.5"
-          />
-        </svg>
-      );
-
-    case "valuation":
-      return (
-        <svg {...commonProps}>
-          <path d="M4 19h16" />
-          <path d="M6 16V8" />
-          <path d="M10 16V5" />
-          <path d="M14 16v-6" />
-          <path d="M18 16v-9" />
-        </svg>
-      );
-
-    case "agent":
-      return (
-        <svg {...commonProps}>
-          <circle
-            cx="12"
-            cy="8"
-            r="3.5"
-          />
-          <path d="M5 21c.8-4.2 3.1-6.5 7-6.5s6.2 2.3 7 6.5" />
-          <path d="M8 4.5 9.5 3h5L16 4.5" />
-        </svg>
-      );
-
-    default:
-      return null;
-  }
-}
-
-
-/*
-=========================================================
-RESIDENT DASHBOARD
-=========================================================
-*/
-
-function ResidentDashboard({
-  user,
-}) {
-
-  return (
+  const ResidentDashboard = () => (
     <>
+      <section className="stat-cards">
 
-      <div className="main-dashboard-header">
-
-        <div>
-
-          <span className="main-dashboard-header-eyebrow">
-            RESIDENT PORTAL
-          </span>
-
-          <h1>
-            Welcome back, {user.firstName || "Resident"}
-          </h1>
-
-          <p>
-            Manage your property and community activity.
-          </p>
-
-        </div>
-
-        <div className="main-dashboard-header-user">
-
-          <div className="main-dashboard-header-avatar">
-            {user.initials}
+        <div className="stat-card">
+          <span className="stat-icon">🏠</span>
+          <div>
+            <p>Property Value</p>
+            <h3>R1.02M</h3>
+            <small>Current AI estimate</small>
           </div>
-
         </div>
 
-      </div>
+        <div className="stat-card">
+          <span className="stat-icon">🤖</span>
+          <div>
+            <p>AI Valuation</p>
+            <h3>7.1%</h3>
+            <small>Estimated rental yield</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">📋</span>
+          <div>
+            <p>Complaints</p>
+            <h3>1</h3>
+            <small>Active complaint</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">📢</span>
+          <div>
+            <p>Announcements</p>
+            <h3>3</h3>
+            <small>Community updates</small>
+          </div>
+        </div>
+
+      </section>
 
 
-      {/* =================================================
-          STATS
-      ================================================= */}
+      <section className="dashboard-grid">
 
-      <div className="main-dashboard-stats-grid">
+        {/* MY PROPERTY */}
 
-        <div className="main-dashboard-stat-card">
+        <div className="dashboard-panel large-panel">
 
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="property"
-                size={20}
-              />
+          <div className="panel-heading">
+            <div>
+              <h3>My Property</h3>
+              <p>Your property information</p>
             </div>
 
-            <span className="main-dashboard-stat-label">
-              My Property
-            </span>
-
+            <a href="/property">
+              View
+            </a>
           </div>
 
-          <div className="main-dashboard-stat-number">
-            {user.myProperty ? "1" : "0"}
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="complaint"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Complaints
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="maintenance"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Maintenance
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="announcement"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Announcements
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* =================================================
-          CONTENT
-      ================================================= */}
-
-      <div className="main-dashboard-content-grid">
-
-        {/* =================================================
-            MY PROPERTY
-        ================================================= */}
-
-        <div className="main-dashboard-card">
-
-          <div className="main-dashboard-card-header">
+          <div className="property-summary">
 
             <div>
-
-              <h2>
-                My Property
-              </h2>
-
-              <p>
-                Property information linked to your account.
-              </p>
-
-            </div>
-
-            <Link
-              to="/property"
-              className="main-dashboard-view-all"
-            >
-              View Property
-            </Link>
-
-          </div>
-
-
-          {user.myProperty ? (
-
-            <div className="main-dashboard-property-summary">
-
-              <div className="main-dashboard-property-summary-icon">
-
-                <Icon
-                  name="property"
-                  size={24}
-                />
-
-              </div>
-
-              <div className="main-dashboard-property-summary-content">
-
-                <strong>
-                  {user.myProperty}
-                </strong>
-
-                <span>
-                  Your registered property
-                </span>
-
-              </div>
-
-              <span className="main-dashboard-property-status">
-                Registered
-              </span>
-
-            </div>
-
-          ) : (
-
-            <div className="main-dashboard-empty-state">
-
-              <div className="main-dashboard-empty-icon">
-
-                <Icon
-                  name="property"
-                  size={28}
-                />
-
-              </div>
-
-              <h3>
-                No property linked yet
-              </h3>
-
-              <p>
-                Your property will appear here once it
-                has been linked to your account.
-              </p>
-
-            </div>
-
-          )}
-
-        </div>
-
-
-        {/* =================================================
-            PROPERTY REQUEST
-        ================================================= */}
-
-        <div className="main-dashboard-card main-dashboard-request-card">
-
-          <div className="main-dashboard-request-content">
-
-            <div className="main-dashboard-request-icon">
-
-              <Icon
-                name="request"
-                size={26}
-              />
-
+              <span>Property Type</span>
+              <strong>Apartment</strong>
             </div>
 
             <div>
-
-              <h2>
-                Want to sell or rent your property?
-              </h2>
-
-              <p>
-                Submit a request to the HOA for review.
-              </p>
-
-              <Link
-                to="/request-to-sell"
-                className="main-dashboard-primary-button"
-              >
-                Request to Sell/Rent
-              </Link>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            QUICK ACTIONS
-        ================================================= */}
-
-        <div className="main-dashboard-card main-dashboard-quick-actions-card">
-
-          <div className="main-dashboard-card-header">
-
-            <div>
-
-              <h2>
-                Quick Actions
-              </h2>
-
-              <p>
-                Common resident actions.
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div className="main-dashboard-quick-actions">
-
-            <Link
-              to="/complaints"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="complaint"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Complaints
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/maintenance"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="maintenance"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Maintenance
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/announcements"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="announcement"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Announcements
-              </span>
-
-            </Link>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </>
-  );
-}
-
-
-/*
-=========================================================
-INVESTOR DASHBOARD
-=========================================================
-*/
-
-function InvestorDashboard({
-  user,
-}) {
-
-  return (
-    <>
-
-      <div className="main-dashboard-header">
-
-        <div>
-
-          <span className="main-dashboard-header-eyebrow">
-            INVESTOR PORTAL
-          </span>
-
-          <h1>
-            Welcome back, {user.firstName || "Investor"}
-          </h1>
-
-          <p>
-            Review properties, valuations and investment
-            opportunities.
-          </p>
-
-        </div>
-
-        <div className="main-dashboard-header-user">
-
-          <div className="main-dashboard-header-avatar">
-            {user.initials}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-stats-grid">
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="property"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Properties
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            {user.myProperty ? "1" : "0"}
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="roi"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              ROI Analysis
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="request"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Sell/Rent
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="announcement"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Announcements
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-content-grid">
-
-        <div className="main-dashboard-card">
-
-          <div className="main-dashboard-card-header">
-
-            <div>
-
-              <h2>
-                My Properties
-              </h2>
-
-              <p>
-                Properties linked to your investment profile.
-              </p>
-
-            </div>
-
-            <Link
-              to="/property"
-              className="main-dashboard-view-all"
-            >
-              View Properties
-            </Link>
-
-          </div>
-
-
-          {user.myProperty ? (
-
-            <div className="main-dashboard-property-summary">
-
-              <div className="main-dashboard-property-summary-icon">
-
-                <Icon
-                  name="property"
-                  size={24}
-                />
-
-              </div>
-
-              <div className="main-dashboard-property-summary-content">
-
-                <strong>
-                  {user.myProperty}
-                </strong>
-
-                <span>
-                  Investment property
-                </span>
-
-              </div>
-
-            </div>
-
-          ) : (
-
-            <div className="main-dashboard-empty-state">
-
-              <div className="main-dashboard-empty-icon">
-
-                <Icon
-                  name="property"
-                  size={28}
-                />
-
-              </div>
-
-              <h3>
-                No property linked yet
-              </h3>
-
-              <p>
-                Properties associated with your account
-                will appear here.
-              </p>
-
-            </div>
-
-          )}
-
-        </div>
-
-
-        <div className="main-dashboard-card main-dashboard-request-card">
-
-          <div className="main-dashboard-request-content">
-
-            <div className="main-dashboard-request-icon">
-
-              <Icon
-                name="request"
-                size={26}
-              />
-
+              <span>Bedrooms</span>
+              <strong>2</strong>
             </div>
 
             <div>
-
-              <h2>
-                Sell or rent a property
-              </h2>
-
-              <p>
-                Submit a request to the HOA for review.
-              </p>
-
-              <Link
-                to="/request-to-sell"
-                className="main-dashboard-primary-button"
-              >
-                Sell/Rent Property
-              </Link>
-
+              <span>Size</span>
+              <strong>85 m²</strong>
             </div>
-
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-card main-dashboard-quick-actions-card">
-
-          <div className="main-dashboard-card-header">
 
             <div>
-
-              <h2>
-                Investment Tools
-              </h2>
-
-              <p>
-                Review your investment information.
-              </p>
-
+              <span>Location</span>
+              <strong>Parlock</strong>
             </div>
 
           </div>
 
-
-          <div className="main-dashboard-quick-actions">
-
-            <Link
-              to="/roi"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="roi"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                ROI & Valuation
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/property"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="property"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Properties
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/announcements"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="announcement"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Announcements
-              </span>
-
-            </Link>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </>
-  );
-}
-
-
-/*
-=========================================================
-ESTATE AGENT DASHBOARD
-=========================================================
-*/
-
-function AgentDashboard({
-  user,
-}) {
-
-  return (
-    <>
-
-      <div className="main-dashboard-header">
-
-        <div>
-
-          <span className="main-dashboard-header-eyebrow">
-            ESTATE AGENT PORTAL
-          </span>
-
-          <h1>
-            Welcome back, {user.firstName || "Agent"}
-          </h1>
-
-          <p>
-            Manage assigned listings and property inquiries.
-          </p>
-
-        </div>
-
-        <div className="main-dashboard-header-user">
-
-          <div className="main-dashboard-header-avatar">
-            {user.initials}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-stats-grid">
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="listing"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              My Listings
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
         </div>
 
 
-        <div className="main-dashboard-stat-card">
+        {/* AI VALUATION */}
 
-          <div className="main-dashboard-stat-top">
+        <div className="dashboard-panel">
 
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="inquiry"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Inquiries
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="approval"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Pending Approval
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="property"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Available Units
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            8
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-content-grid">
-
-        <div className="main-dashboard-card">
-
-          <div className="main-dashboard-card-header">
+          <div className="panel-heading">
 
             <div>
-
-              <h2>
-                My Listings
-              </h2>
-
-              <p>
-                Properties assigned to you by the HOA.
-              </p>
-
+              <h3>AI Valuation</h3>
+              <p>Current property estimate</p>
             </div>
 
-            <Link
-              to="/agent-listings"
-              className="main-dashboard-view-all"
-            >
-              View Listings
-            </Link>
+            <a href="/valuation">
+              View
+            </a>
 
           </div>
 
+          <div className="announcement-preview">
 
-          <div className="main-dashboard-empty-state">
+            <h4>Estimated Value</h4>
 
-            <div className="main-dashboard-empty-icon">
-
-              <Icon
-                name="listing"
-                size={28}
-              />
-
-            </div>
-
-            <h3>
-              No assigned listings yet
-            </h3>
+            <strong className="dashboard-value">
+              R1,020,000
+            </strong>
 
             <p>
-              Approved property requests assigned to you
-              will appear here.
+              Use VALORA's AI-powered valuation tools
+              to understand your property's estimated value.
             </p>
 
           </div>
@@ -1300,37 +148,32 @@ function AgentDashboard({
         </div>
 
 
-        <div className="main-dashboard-card main-dashboard-request-card">
+        {/* COMPLAINTS */}
 
-          <div className="main-dashboard-request-content">
+        <div className="dashboard-panel">
 
-            <div className="main-dashboard-request-icon">
+          <div className="panel-heading">
 
-              <Icon
-                name="inquiry"
-                size={26}
-              />
+            <div>
+              <h3>Complaints</h3>
+              <p>Track your reported issues</p>
+            </div>
 
+            <a href="/complaints">
+              View
+            </a>
+
+          </div>
+
+          <div className="complaint-status">
+
+            <div className="status-circle">
+              1
             </div>
 
             <div>
-
-              <h2>
-                Property Inquiries
-              </h2>
-
-              <p>
-                Review enquiries from interested buyers
-                and renters.
-              </p>
-
-              <Link
-                to="/agent-inquiries"
-                className="main-dashboard-primary-button"
-              >
-                View Inquiries
-              </Link>
-
+              <strong>Security Issue</strong>
+              <p>In Progress</p>
             </div>
 
           </div>
@@ -1338,764 +181,1043 @@ function AgentDashboard({
         </div>
 
 
-        <div className="main-dashboard-card main-dashboard-quick-actions-card">
+        {/* SERVICE PROVIDERS */}
 
-          <div className="main-dashboard-card-header">
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
 
             <div>
-
-              <h2>
-                Quick Actions
-              </h2>
-
-              <p>
-                Manage your estate agent activities.
-              </p>
-
+              <h3>Service Providers</h3>
+              <p>Find trusted community services</p>
             </div>
 
+            <a href="/providers">
+              View
+            </a>
+
           </div>
 
+          <div className="quick-actions">
 
-          <div className="main-dashboard-quick-actions">
+            <a href="/providers">
+              🔧 Find a Provider
+            </a>
 
-            <Link
-              to="/agent-listings"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="listing"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                My Listings
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/agent-inquiries"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="inquiry"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Inquiries
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/announcements"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="announcement"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Announcements
-              </span>
-
-            </Link>
+            <a href="/providers">
+              ⭐ View Ratings
+            </a>
 
           </div>
 
         </div>
 
-      </div>
 
-    </>
-  );
-}
+        {/* ANNOUNCEMENTS */}
 
+        <div className="dashboard-panel">
 
-/*
-=========================================================
-HOA ADMIN DASHBOARD
-=========================================================
-*/
-
-function HOADashboard({
-  user,
-}) {
-
-  return (
-    <>
-
-      <div className="main-dashboard-header">
-
-        <div>
-
-          <span className="main-dashboard-header-eyebrow">
-            HOA ADMIN PORTAL
-          </span>
-
-          <h1>
-            Welcome back, {user.firstName || "Administrator"}
-          </h1>
-
-          <p>
-            Manage residents, property activity and
-            community operations.
-          </p>
-
-        </div>
-
-        <div className="main-dashboard-header-user">
-
-          <div className="main-dashboard-header-avatar">
-            {user.initials}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-stats-grid">
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-
-              <Icon
-                name="registration"
-                size={20}
-              />
-
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Registration Requests
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-
-              <Icon
-                name="request"
-                size={20}
-              />
-
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Property Requests
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-
-              <Icon
-                name="approval"
-                size={20}
-              />
-
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Listing Approvals
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-
-              <Icon
-                name="complaint"
-                size={20}
-              />
-
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Complaints
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-content-grid">
-
-        {/* =================================================
-            PROPERTY REQUESTS
-        ================================================= */}
-
-        <div className="main-dashboard-card main-dashboard-request-card">
-
-          <div className="main-dashboard-request-content">
-
-            <div className="main-dashboard-request-icon">
-
-              <Icon
-                name="request"
-                size={26}
-              />
-
-            </div>
+          <div className="panel-heading">
 
             <div>
-
-              <h2>
-                Property Requests
-              </h2>
-
-              <p>
-                Review requests from residents and
-                investors who want to sell or rent their
-                units.
-              </p>
-
-              <Link
-                to="/property-requests"
-                className="main-dashboard-primary-button"
-              >
-                Review Property Requests
-              </Link>
-
+              <h3>Community Announcements</h3>
+              <p>Latest HOA updates</p>
             </div>
+
+            <a href="/announcements">
+              View All
+            </a>
 
           </div>
 
-        </div>
+          <div className="announcement-preview">
 
-
-        {/* =================================================
-            PROPERTY APPROVALS
-        ================================================= */}
-
-        <div className="main-dashboard-card main-dashboard-request-card">
-
-          <div className="main-dashboard-request-content">
-
-            <div className="main-dashboard-request-icon">
-
-              <Icon
-                name="approval"
-                size={26}
-              />
-
-            </div>
-
-            <div>
-
-              <h2>
-                Property Approvals
-              </h2>
-
-              <p>
-                Review listing information and photos
-                submitted by estate agents.
-              </p>
-
-              <Link
-                to="/property-approvals"
-                className="main-dashboard-primary-button"
-              >
-                Review Approvals
-              </Link>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            QUICK ACTIONS
-        ================================================= */}
-
-        <div className="main-dashboard-card main-dashboard-quick-actions-card">
-
-          <div className="main-dashboard-card-header">
-
-            <div>
-
-              <h2>
-                Quick Actions
-              </h2>
-
-              <p>
-                Manage important community activities.
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div className="main-dashboard-quick-actions">
-
-            <Link
-              to="/property-requests"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="request"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Property Requests
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/property-approvals"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="approval"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Property Approvals
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/resident-directory"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="residents"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Residents
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/community-analytics"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="analytics"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Community Analytics
-              </span>
-
-            </Link>
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            COMMUNITY MANAGEMENT
-        ================================================= */}
-
-        <div className="main-dashboard-card">
-
-          <div className="main-dashboard-card-header">
-
-            <div>
-
-              <h2>
-                Community Management
-              </h2>
-
-              <p>
-                Manage the development and its residents.
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div className="main-dashboard-quick-actions">
-
-            <Link
-              to="/resident-directory"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="residents"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Resident Directory
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/resident-complaints"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="complaint"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Complaints
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/maintenance"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="maintenance"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Maintenance
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/community-announcements"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="announcement"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Announcements
-              </span>
-
-            </Link>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </>
-  );
-}
-
-
-/*
-=========================================================
-MAIN DASHBOARD
-=========================================================
-*/
-
-function Dashboard({
-  role,
-}) {
-
-  const user =
-    getCurrentUser();
-
-
-  /*
-  -------------------------------------------------------
-  SAFETY
-  -------------------------------------------------------
-  */
-
-  if (!user) {
-
-    return (
-      <div className="main-dashboard-layout">
-
-        <main className="main-dashboard-main">
-
-          <div className="main-dashboard-empty-state">
-
-            <div className="main-dashboard-empty-icon">
-
-              <Icon
-                name="profile"
-                size={30}
-              />
-
-            </div>
-
-            <h3>
-              User information unavailable
-            </h3>
+            <h4>🔧 Scheduled Maintenance</h4>
 
             <p>
-              Please log in again to continue.
+              Maintenance work will be carried out
+              in the community this Saturday.
+            </p>
+
+            <small>
+              Posted 18 August 2026
+            </small>
+
+          </div>
+
+        </div>
+
+      </section>
+    </>
+  );
+
+
+  /* =====================================================
+     INVESTOR DASHBOARD
+     ===================================================== */
+
+  const InvestorDashboard = () => (
+    <>
+      <section className="stat-cards">
+
+        <div className="stat-card">
+          <span className="stat-icon">🏠</span>
+          <div>
+            <p>Properties</p>
+            <h3>4</h3>
+            <small>Properties of interest</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">💰</span>
+          <div>
+            <p>Rental Yield</p>
+            <h3>7.1%</h3>
+            <small>Average estimated yield</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">📈</span>
+          <div>
+            <p>10-Year ROI</p>
+            <h3>25%</h3>
+            <small>Projected return</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">📊</span>
+          <div>
+            <p>Growth Score</p>
+            <h3>82/100</h3>
+            <small>Community growth score</small>
+          </div>
+        </div>
+
+      </section>
+
+
+      <section className="dashboard-grid">
+
+        {/* PROPERTIES */}
+
+        <div className="dashboard-panel large-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Properties</h3>
+              <p>Properties you are interested in</p>
+            </div>
+
+            <a href="/property">
+              View All
+            </a>
+
+          </div>
+
+          <div className="property-summary">
+
+            <div>
+              <span>Property</span>
+              <strong>Modern Apartment</strong>
+            </div>
+
+            <div>
+              <span>Value</span>
+              <strong>R1.02M</strong>
+            </div>
+
+            <div>
+              <span>Yield</span>
+              <strong>7.1%</strong>
+            </div>
+
+            <div>
+              <span>Growth</span>
+              <strong>82/100</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* PROPERTY VALUATION */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Property Valuation</h3>
+              <p>Investment metrics</p>
+            </div>
+
+            <a href="/valuation">
+              Analyse
+            </a>
+
+          </div>
+
+          <div className="quick-actions">
+
+            <a href="/valuation">
+              🤖 AI Valuation
+            </a>
+
+            <a href="/roi">
+              📈 10-Year ROI
+            </a>
+
+            <a href="/valuation">
+              💰 Rental Yield
+            </a>
+
+            <a href="/valuation">
+              📊 Growth Score
+            </a>
+
+          </div>
+
+        </div>
+
+
+        {/* COMPLAINT TRENDS */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Complaint Trends</h3>
+              <p>Community property insights</p>
+            </div>
+
+            <a href="/complaints">
+              View
+            </a>
+
+          </div>
+
+          <div className="announcement-preview">
+
+            <h4>Complaint Activity</h4>
+
+            <p>
+              12 complaints recorded across the
+              selected properties this month.
+            </p>
+
+            <small>
+              Trend: Stable
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* INVESTMENT REPORT */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Investment Report</h3>
+              <p>Property investment analysis</p>
+            </div>
+
+          </div>
+
+          <div className="quick-actions">
+
+            <a href="/roi">
+              📄 View Investment Metrics
+            </a>
+
+            <a href="/roi">
+              ⬇ Download Report
+            </a>
+
+          </div>
+
+        </div>
+
+
+        {/* SALES HISTORY */}
+
+        <div className="dashboard-panel large-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Sales History</h3>
+              <p>Historical unit sales data</p>
+            </div>
+
+          </div>
+
+          <div className="property-summary">
+
+            <div>
+              <span>Last Sale</span>
+              <strong>R980,000</strong>
+            </div>
+
+            <div>
+              <span>Date</span>
+              <strong>12 Jun 2026</strong>
+            </div>
+
+            <div>
+              <span>Previous Sale</span>
+              <strong>R920,000</strong>
+            </div>
+
+            <div>
+              <span>Growth</span>
+              <strong>6.5%</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+    </>
+  );
+
+
+  /* =====================================================
+     ESTATE AGENT DASHBOARD
+     ===================================================== */
+
+  const EstateAgentDashboard = () => (
+    <>
+      <section className="stat-cards">
+
+        <div className="stat-card">
+          <span className="stat-icon">🏠</span>
+          <div>
+            <p>My Listings</p>
+            <h3>12</h3>
+            <small>Total listings</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">🟢</span>
+          <div>
+            <p>Active</p>
+            <h3>8</h3>
+            <small>Active listings</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">⏳</span>
+          <div>
+            <p>Pending</p>
+            <h3>2</h3>
+            <small>Pending listings</small>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">👥</span>
+          <div>
+            <p>Inquiries</p>
+            <h3>18</h3>
+            <small>Buyer inquiries</small>
+          </div>
+        </div>
+
+      </section>
+
+
+      <section className="dashboard-grid">
+
+        {/* MY LISTINGS */}
+
+        <div className="dashboard-panel large-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>My Listings</h3>
+              <p>Manage your property listings</p>
+            </div>
+
+            <a href="/agent-listings">
+              View All
+            </a>
+
+          </div>
+
+          <div className="property-summary">
+
+            <div>
+              <span>Active</span>
+              <strong>8</strong>
+            </div>
+
+            <div>
+              <span>Pending</span>
+              <strong>2</strong>
+            </div>
+
+            <div>
+              <span>Sold</span>
+              <strong>1</strong>
+            </div>
+
+            <div>
+              <span>Not Available</span>
+              <strong>1</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* EDIT LISTINGS */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Edit Listings</h3>
+              <p>Add or update properties</p>
+            </div>
+
+          </div>
+
+          <div className="quick-actions">
+
+            <a href="/agent-listings">
+              ➕ Add New Listing
+            </a>
+
+            <a href="/agent-edit-listings">
+              ✏️ Edit Listing
+            </a>
+
+            <a href="/agent-edit-listings">
+              🗑 Delete Listing
+            </a>
+
+          </div>
+
+        </div>
+
+
+        {/* INQUIRY LOG */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Inquiry Log</h3>
+              <p>Buyer and investor interest</p>
+            </div>
+
+            <a href="/agent-inquiries">
+              View
+            </a>
+
+          </div>
+
+          <div className="announcement-preview">
+
+            <h4>18 Active Inquiries</h4>
+
+            <p>
+              Buyers and investors have shown interest
+              in your listed properties.
+            </p>
+
+            <small>
+              Listing interactions are being tracked.
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* AI VALUATION */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>AI Valuation</h3>
+              <p>Support your listing prices</p>
+            </div>
+
+            <a href="/valuation">
+              Open
+            </a>
+
+          </div>
+
+          <div className="announcement-preview">
+
+            <h4>🤖 Property Valuation</h4>
+
+            <p>
+              Use AI-powered estimates to support
+              property pricing when working with sellers.
             </p>
 
           </div>
 
-        </main>
+        </div>
 
-      </div>
-    );
-  }
-
-
-  /*
-  -------------------------------------------------------
-  DETERMINE ROLE
-  -------------------------------------------------------
-  */
-
-  let normalizedRole =
-    role || user.role;
+      </section>
+    </>
+  );
 
 
-  if (
-    normalizedRole === "HOA" ||
-    normalizedRole === "HOA Admin"
-  ) {
+  /* =====================================================
+     HOA ADMIN DASHBOARD
+     ===================================================== */
 
-    normalizedRole = "HOA Admin";
+  const HOAAdminDashboard = () => (
+    <>
+      <section className="stat-cards">
 
-  }
+        <div className="stat-card">
+          <span className="stat-icon">👥</span>
+          <div>
+            <p>Residents</p>
+            <h3>148</h3>
+            <small>Registered residents</small>
+          </div>
+        </div>
 
-  if (
-    normalizedRole === "Administrator"
-  ) {
+        <div className="stat-card">
+          <span className="stat-icon">📋</span>
+          <div>
+            <p>Complaints</p>
+            <h3>12</h3>
+            <small>Active complaints</small>
+          </div>
+        </div>
 
-    normalizedRole = "HOA Admin";
+        <div className="stat-card">
+          <span className="stat-icon">🔧</span>
+          <div>
+            <p>Providers</p>
+            <h3>24</h3>
+            <small>Verified providers</small>
+          </div>
+        </div>
 
-  }
+        <div className="stat-card">
+          <span className="stat-icon">📢</span>
+          <div>
+            <p>Announcements</p>
+            <h3>5</h3>
+            <small>Published notices</small>
+          </div>
+        </div>
 
-  if (
-    normalizedRole === "Property Owner"
-  ) {
-
-    normalizedRole = "Resident";
-
-  }
-
-  if (
-    normalizedRole === "Buyer"
-  ) {
-
-    normalizedRole = "Investor";
-
-  }
+      </section>
 
 
-  /*
-  -------------------------------------------------------
-  ROLE CONTENT
-  -------------------------------------------------------
-  */
+      <section className="dashboard-grid">
+
+        {/* RESIDENT DIRECTORY */}
+
+        <div className="dashboard-panel large-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Resident Directory</h3>
+              <p>Registered community residents</p>
+            </div>
+
+            <a href="/resident-directory">
+              Manage
+            </a>
+
+          </div>
+
+          <div className="property-summary">
+
+            <div>
+              <span>Total Residents</span>
+              <strong>148</strong>
+            </div>
+
+            <div>
+              <span>Occupied Units</span>
+              <strong>136</strong>
+            </div>
+
+            <div>
+              <span>Available Units</span>
+              <strong>12</strong>
+            </div>
+
+            <div>
+              <span>Community</span>
+              <strong>VALORA</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* RESIDENT COMPLAINTS */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Resident Complaints</h3>
+              <p>Manage community complaints</p>
+            </div>
+
+            <a href="/resident-complaints">
+              Manage
+            </a>
+
+          </div>
+
+          <div className="complaint-status">
+
+            <div className="status-circle">
+              12
+            </div>
+
+            <div>
+              <strong>Active Complaints</strong>
+              <p>Requires administration review</p>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* MAINTENANCE & PROVIDERS */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Maintenance & Service Providers</h3>
+              <p>Manage verified providers</p>
+            </div>
+
+            <a href="/maintenance">
+              Manage
+            </a>
+
+          </div>
+
+          <div className="quick-actions">
+
+            <a href="/maintenance">
+              🔧 Maintenance
+            </a>
+
+            <a href="/providers">
+              ✅ Verify Providers
+            </a>
+
+            <a href="/maintenance">
+              ➕ Add Maintenance Request
+            </a>
+
+          </div>
+
+        </div>
+
+
+        {/* ANNOUNCEMENTS */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Community Announcements</h3>
+              <p>Create and manage notices</p>
+            </div>
+
+            <a href="/community-announcements">
+              Manage
+            </a>
+
+          </div>
+
+          <div className="quick-actions">
+
+            <a href="/community-announcements">
+              ➕ Create Announcement
+            </a>
+
+            <a href="/community-announcements">
+              ✏️ Edit Announcement
+            </a>
+
+            <a href="/community-announcements">
+              🗑 Delete Announcement
+            </a>
+
+          </div>
+
+        </div>
+
+
+        {/* AI TRAINING DATA */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>AI Training Data</h3>
+              <p>Manage historical sales data</p>
+            </div>
+
+          </div>
+
+          <div className="quick-actions">
+
+            <a href="/ai-training-data">
+              📊 View Training Data
+            </a>
+
+            <a href="/ai-training-data">
+              ⬆ Upload Sales Data
+            </a>
+
+          </div>
+
+        </div>
+
+
+        {/* COMMUNITY ANALYTICS */}
+
+        <div className="dashboard-panel">
+
+          <div className="panel-heading">
+
+            <div>
+              <h3>Community Analytics</h3>
+              <p>Community performance reports</p>
+            </div>
+
+            <a href="/community-analytics">
+              View
+            </a>
+
+          </div>
+
+          <div className="property-summary">
+
+            <div>
+              <span>Complaints</span>
+              <strong>12</strong>
+            </div>
+
+            <div>
+              <span>Avg Resolution</span>
+              <strong>2.4 days</strong>
+            </div>
+
+            <div>
+              <span>Provider Rating</span>
+              <strong>4.6/5</strong>
+            </div>
+
+            <div>
+              <span>Satisfaction</span>
+              <strong>91%</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+    </>
+  );
+
+
+  /* =====================================================
+     SELECT DASHBOARD
+     ===================================================== */
 
   let dashboardContent;
 
+  switch (userRole) {
 
-  if (
-    normalizedRole === "Resident"
-  ) {
+    case "Resident":
+      dashboardContent = <ResidentDashboard />;
+      break;
 
-    dashboardContent = (
-      <ResidentDashboard
-        user={user}
-      />
-    );
+    case "Investor":
+      dashboardContent = <InvestorDashboard />;
+      break;
 
-  }
+    case "Estate Agent":
+      dashboardContent = <EstateAgentDashboard />;
+      break;
 
-  else if (
-    normalizedRole === "Investor"
-  ) {
+    case "HOA Admin":
+      dashboardContent = <HOAAdminDashboard />;
+      break;
 
-    dashboardContent = (
-      <InvestorDashboard
-        user={user}
-      />
-    );
-
-  }
-
-  else if (
-    normalizedRole === "Estate Agent"
-  ) {
-
-    dashboardContent = (
-      <AgentDashboard
-        user={user}
-      />
-    );
-
-  }
-
-  else if (
-    normalizedRole === "HOA Admin"
-  ) {
-
-    dashboardContent = (
-      <HOADashboard
-        user={user}
-      />
-    );
-
-  }
-
-  else {
-
-    dashboardContent = (
-      <ResidentDashboard
-        user={user}
-      />
-    );
+    default:
+      dashboardContent = <ResidentDashboard />;
 
   }
 
 
   return (
-
-    <div className="main-dashboard-layout">
+    <div className="dashboard-layout">
 
       {/* =================================================
-          SHARED DASHBOARD SIDEBAR
-          
-          IMPORTANT:
-          This is now the SAME sidebar used by
-          Maintenance and the other dashboard pages.
-      ================================================= */}
+          SIDEBAR
+          ================================================= */}
 
-      <DashboardSidebar
-        suppliedUser={user}
-      />
+      <aside className="sidebar">
+
+        <div className="logo-area">
+
+          <img
+            src="/ValoraLogo.jpeg"
+            alt="VALORA Logo"
+          />
+
+          <p>
+            Property Intelligence
+          </p>
+
+        </div>
 
 
-      <main className="main-dashboard-main">
+        <nav className="side-nav">
+
+          {/* DASHBOARD HEADING — NOT A BUTTON */}
+
+          <div className="nav-heading">
+            DASHBOARD
+          </div>
+
+
+          {/* RESIDENT */}
+
+          {userRole === "Resident" && (
+            <>
+              <a href="/property">
+                🏡 My Property
+              </a>
+
+              <a href="/valuation">
+                🤖 AI Valuation
+              </a>
+
+              <a href="/complaints">
+                🏘 Complaints
+              </a>
+
+              <a href="/providers">
+                🔧 Service Providers
+              </a>
+
+              <a href="/announcements">
+                📢 Announcements
+              </a>
+
+              <a href="/profile">
+                👤 My Profile
+              </a>
+            </>
+          )}
+
+
+          {/* INVESTOR */}
+
+          {userRole === "Investor" && (
+            <>
+              <a href="/property">
+                🏠 Properties
+              </a>
+
+              <a href="/valuation">
+                🤖 Property Valuation
+              </a>
+
+              <a href="/complaints">
+                📊 Complaint Trends
+              </a>
+
+              <a href="/roi">
+                📄 Investment Report
+              </a>
+
+              <a href="/property">
+                📈 Sales History
+              </a>
+
+              <a href="/profile">
+                👤 My Profile
+              </a>
+            </>
+          )}
+
+
+          {/* ESTATE AGENT */}
+
+          {userRole === "Estate Agent" && (
+            <>
+              <a href="/agent-listings">
+                🏠 My Listings
+              </a>
+
+              <a href="/agent-edit-listings">
+                ✏️ Edit Listings
+              </a>
+
+              <a href="/agent-inquiries">
+                👥 Inquiry Log
+              </a>
+
+              <a href="/valuation">
+                🤖 AI Valuation
+              </a>
+
+              <a href="/profile">
+                👤 My Profile
+              </a>
+            </>
+          )}
+
+
+          {/* HOA ADMIN */}
+
+          {userRole === "HOA Admin" && (
+            <>
+              <a href="/resident-directory">
+                👥 Resident Directory
+              </a>
+
+              <a href="/resident-complaints">
+                📋 Resident Complaints
+              </a>
+
+              <a href="/maintenance">
+                🔧 Maintenance
+              </a>
+
+              <a href="/community-announcements">
+                📢 Community Announcements
+              </a>
+
+              <a href="/ai-training-data">
+                🤖 AI Training Data
+              </a>
+
+              <a href="/community-analytics">
+                📊 Community Analytics
+              </a>
+
+              <a href="/profile">
+                👤 My Profile
+              </a>
+            </>
+          )}
+
+        </nav>
+
+
+        <div className="logout-area">
+
+          <a
+            href="/"
+            onClick={(event) => {
+              event.preventDefault();
+              handleLogout();
+            }}
+          >
+            🚪 Logout
+          </a>
+
+        </div>
+
+      </aside>
+
+
+      {/* =================================================
+          MAIN DASHBOARD
+          ================================================= */}
+
+      <main className="dashboard-main">
+
+        <div className="top-bar">
+
+          <div>
+
+            <h2>
+              Good day, <span>{userName}</span> 👋
+            </h2>
+
+            <p>
+              {userRole === "Resident" &&
+                "Here's your property and community overview."}
+
+              {userRole === "Investor" &&
+                "Here's your investment and property overview."}
+
+              {userRole === "Estate Agent" &&
+                "Here's an overview of your property listings."}
+
+              {userRole === "HOA Admin" &&
+                "Here's your community management overview."}
+            </p>
+
+          </div>
+
+
+          <div className="profile-small">
+
+            <div className="profile-circle">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+
+            <span>
+              {userRole}
+            </span>
+
+          </div>
+
+        </div>
+
 
         {dashboardContent}
 
       </main>
 
     </div>
-
   );
 }
-
 
 export default Dashboard;

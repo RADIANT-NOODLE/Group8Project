@@ -1,6 +1,4 @@
 import { useState } from "react";
-import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
-import "./Complaints.css";
 
 export default function Complaints() {
 
@@ -8,51 +6,16 @@ export default function Complaints() {
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState("Low");
 
-    const [complaintImage, setComplaintImage] = useState(null);
-
     const [complaints, setComplaints] = useState([
         {
             id: "VAL-001",
             category: "Security",
             priority: "High",
             date: "18 Aug 2026",
-            status: "Submitted",
-            image: null
+            status: "Submitted"
         }
     ]);
 
-
-    /* =========================================================
-       IMAGE UPLOAD
-    ========================================================= */
-
-    function handleImageUpload(event) {
-
-        const file = event.target.files[0];
-
-        if (!file) {
-            return;
-        }
-
-        if (!file.type.startsWith("image/")) {
-            alert("Please upload an image file.");
-            return;
-        }
-
-        const imageUrl = URL.createObjectURL(file);
-
-        setComplaintImage(imageUrl);
-    }
-
-
-    function removeComplaintImage() {
-        setComplaintImage(null);
-    }
-
-
-    /* =========================================================
-       SUBMIT COMPLAINT
-    ========================================================= */
 
     function submitComplaint(event) {
 
@@ -84,9 +47,7 @@ export default function Complaints() {
                 year: "numeric"
             }),
 
-            status: "Submitted",
-
-            image: complaintImage
+            status: "Submitted"
         };
 
 
@@ -97,40 +58,42 @@ export default function Complaints() {
 
 
         setDescription("");
+
         setCategory("Security");
+
         setPriority("Low");
-        setComplaintImage(null);
 
 
         alert("Complaint submitted successfully.");
     }
 
 
-    /* =========================================================
-       COMPLAINT STATISTICS
-    ========================================================= */
-
     const totalComplaints = complaints.length;
+
 
     const submittedComplaints =
         complaints.filter(
             complaint => complaint.status === "Submitted"
         ).length;
 
+
     const acknowledgedComplaints =
         complaints.filter(
             complaint => complaint.status === "Acknowledged"
         ).length;
+
 
     const inProgressComplaints =
         complaints.filter(
             complaint => complaint.status === "In Progress"
         ).length;
 
+
     const resolvedComplaints =
         complaints.filter(
             complaint => complaint.status === "Resolved"
         ).length;
+
 
     const cancelledComplaints =
         complaints.filter(
@@ -138,48 +101,82 @@ export default function Complaints() {
         ).length;
 
 
-    /* =========================================================
-       SVG ICONS
-    ========================================================= */
-
-    const CameraIcon = () => (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 4 7.5 6H5a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3h-2.5L15 4H9Zm3 13a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-        </svg>
-    );
-
-
-    const RemoveIcon = () => (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 7h12l-1 14H7L6 7Zm3-4h6l1 2h4v2H4V5h4l1-2Zm1 7v8h2v-8h-2Zm4 0v8h2v-8h-2Z" />
-        </svg>
-    );
-
-
     return (
 
-        <div className="complaints-layout">
+        <div className="dashboard-layout">
 
-            {/* =================================================
-                SHARED VALORA SIDEBAR
-            ================================================= */}
+            {/* SIDEBAR */}
 
-            <DashboardSidebar />
+            <aside className="sidebar">
+
+                <div className="logo-area">
+
+                    <img
+                        src="/ValoraLogo.jpeg"
+                        alt="VALORA Logo"
+                    />
+
+                    <p>
+                        Property Intelligence
+                    </p>
+
+                </div>
 
 
-            {/* =================================================
-                MAIN CONTENT
-            ================================================= */}
+                <nav className="side-nav">
 
-            <main className="complaints-main">
+                    <a href="/dashboard">
+                        🏠 Dashboard
+                    </a>
 
-                <div className="complaints-top-bar">
+                    <a href="/property">
+                        🏡 My Property
+                    </a>
+
+                    <a href="/valuation">
+                        🤖 AI Valuation
+                    </a>
+
+                    <a
+                        href="/complaints"
+                        className="active"
+                    >
+                        🏘 Complaints
+                    </a>
+
+                    <a href="/providers">
+                        🔧 Service Providers
+                    </a>
+
+                    <a href="/announcements">
+                        📢 Announcements
+                    </a>
+
+                    <a href="/profile">
+                        👤 My Profile
+                    </a>
+
+                </nav>
+
+
+                <div className="logout-area">
+
+                    <a href="/">
+                        🚪 Logout
+                    </a>
+
+                </div>
+
+            </aside>
+
+
+            {/* MAIN CONTENT */}
+
+            <main className="dashboard-main">
+
+                <div className="top-bar">
 
                     <div>
-
-                        <span className="complaints-eyebrow">
-                            RESIDENT SERVICES
-                        </span>
 
                         <h2>
                             Community Complaint Tracker
@@ -194,18 +191,16 @@ export default function Complaints() {
                 </div>
 
 
-                {/* =================================================
-                    COMPLAINT FORM + SUMMARY
-                ================================================= */}
+                {/* COMPLAINT FORM + SUMMARY */}
 
-                <div className="complaints-layout-grid">
+                <div className="complaint-layout">
 
 
                     {/* SUBMIT COMPLAINT */}
 
-                    <section className="complaints-panel">
+                    <section className="dashboard-panel">
 
-                        <div className="complaints-panel-heading">
+                        <div className="panel-heading">
 
                             <div>
 
@@ -222,10 +217,7 @@ export default function Complaints() {
                         </div>
 
 
-                        <form
-                            className="complaints-form"
-                            onSubmit={submitComplaint}
-                        >
+                        <form onSubmit={submitComplaint}>
 
                             <label>
                                 Complaint Category
@@ -278,69 +270,6 @@ export default function Complaints() {
                             />
 
 
-                            {/* IMAGE UPLOAD */}
-
-                            <div className="complaints-photo-section">
-
-                                <label>
-                                    Attach a Photo
-                                </label>
-
-                                <p className="complaints-image-upload-help">
-                                    Upload a photo or take a picture of the issue.
-                                </p>
-
-
-                                <label className="complaints-image-upload-button">
-
-                                    <CameraIcon />
-
-                                    <span>
-                                        Take Photo / Choose Image
-                                    </span>
-
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        onChange={handleImageUpload}
-                                        hidden
-                                    />
-
-                                </label>
-
-                            </div>
-
-
-                            {/* IMAGE PREVIEW */}
-
-                            {complaintImage && (
-
-                                <div className="complaints-image-preview">
-
-                                    <img
-                                        src={complaintImage}
-                                        alt="Complaint evidence preview"
-                                    />
-
-                                    <button
-                                        type="button"
-                                        className="complaints-remove-image-button"
-                                        onClick={removeComplaintImage}
-                                    >
-                                        <RemoveIcon />
-
-                                        <span>
-                                            Remove Photo
-                                        </span>
-
-                                    </button>
-
-                                </div>
-
-                            )}
-
-
                             <label>
                                 Priority
                             </label>
@@ -371,10 +300,7 @@ export default function Complaints() {
                             </select>
 
 
-                            <button
-                                type="submit"
-                                className="complaints-submit-btn"
-                            >
+                            <button type="submit">
                                 Submit Complaint
                             </button>
 
@@ -385,9 +311,9 @@ export default function Complaints() {
 
                     {/* SUMMARY */}
 
-                    <section className="complaints-panel">
+                    <section className="dashboard-panel">
 
-                        <div className="complaints-panel-heading">
+                        <div className="panel-heading">
 
                             <div>
 
@@ -404,36 +330,83 @@ export default function Complaints() {
                         </div>
 
 
-                        <div className="complaints-stats">
+                        <div className="complaint-stats">
 
                             <div>
-                                <span>Total</span>
-                                <strong>{totalComplaints}</strong>
+
+                                <span>
+                                    Total
+                                </span>
+
+                                <strong>
+                                    {totalComplaints}
+                                </strong>
+
                             </div>
 
-                            <div>
-                                <span>Submitted</span>
-                                <strong>{submittedComplaints}</strong>
-                            </div>
 
                             <div>
-                                <span>Acknowledged</span>
-                                <strong>{acknowledgedComplaints}</strong>
+
+                                <span>
+                                    Submitted
+                                </span>
+
+                                <strong>
+                                    {submittedComplaints}
+                                </strong>
+
                             </div>
 
-                            <div>
-                                <span>In Progress</span>
-                                <strong>{inProgressComplaints}</strong>
-                            </div>
 
                             <div>
-                                <span>Resolved</span>
-                                <strong>{resolvedComplaints}</strong>
+
+                                <span>
+                                    Acknowledged
+                                </span>
+
+                                <strong>
+                                    {acknowledgedComplaints}
+                                </strong>
+
                             </div>
 
+
                             <div>
-                                <span>Cancelled</span>
-                                <strong>{cancelledComplaints}</strong>
+
+                                <span>
+                                    In Progress
+                                </span>
+
+                                <strong>
+                                    {inProgressComplaints}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Resolved
+                                </span>
+
+                                <strong>
+                                    {resolvedComplaints}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Cancelled
+                                </span>
+
+                                <strong>
+                                    {cancelledComplaints}
+                                </strong>
+
                             </div>
 
                         </div>
@@ -441,7 +414,7 @@ export default function Complaints() {
 
                         {complaints.length > 1 && (
 
-                            <div className="complaints-success-message">
+                            <div className="success-message">
 
                                 Complaint submitted successfully.
                                 Your issue has been added to the
@@ -453,16 +426,15 @@ export default function Complaints() {
 
                     </section>
 
+
                 </div>
 
 
-                {/* =================================================
-                    COMPLAINT HISTORY
-                ================================================= */}
+                {/* COMPLAINT HISTORY */}
 
-                <section className="complaints-panel complaints-history">
+                <section className="dashboard-panel complaint-history">
 
-                    <div className="complaints-panel-heading">
+                    <div className="panel-heading">
 
                         <div>
 
@@ -479,9 +451,9 @@ export default function Complaints() {
                     </div>
 
 
-                    <div className="complaints-table-container">
+                    <div className="table-container">
 
-                        <table className="complaints-data-table">
+                        <table>
 
                             <thead>
 
@@ -532,8 +504,8 @@ export default function Complaints() {
                                                 className={
                                                     complaint.priority === "High" ||
                                                     complaint.priority === "Urgent"
-                                                        ? "complaints-priority-high"
-                                                        : "complaints-priority-normal"
+                                                        ? "priority-high"
+                                                        : "priority-normal"
                                                 }
                                             >
                                                 {complaint.priority}
@@ -550,17 +522,19 @@ export default function Complaints() {
                                             <span
                                                 className={
                                                     complaint.status === "Resolved"
-                                                        ? "complaints-status-resolved"
+                                                        ? "status-resolved"
                                                         : complaint.status === "Cancelled"
-                                                        ? "complaints-status-cancelled"
+                                                        ? "status-cancelled"
                                                         : complaint.status === "In Progress"
-                                                        ? "complaints-status-progress"
+                                                        ? "status-progress"
                                                         : complaint.status === "Acknowledged"
-                                                        ? "complaints-status-acknowledged"
-                                                        : "complaints-status-submitted"
+                                                        ? "status-acknowledged"
+                                                        : "status-submitted"
                                                 }
                                             >
+
                                                 {complaint.status}
+
                                             </span>
 
                                         </td>
@@ -578,13 +552,11 @@ export default function Complaints() {
                 </section>
 
 
-                {/* =================================================
-                    COMPLAINT STATUS FLOW
-                ================================================= */}
+                {/* COMPLAINT STATUS FLOW */}
 
-                <section className="complaints-panel">
+                <section className="dashboard-panel">
 
-                    <div className="complaints-panel-heading">
+                    <div className="panel-heading">
 
                         <div>
 
@@ -601,11 +573,13 @@ export default function Complaints() {
                     </div>
 
 
-                    <div className="complaints-status-flow">
+                    <div className="complaint-status-flow">
 
-                        <div className="complaints-status-step">
+                        <div className="complaint-status-step">
 
-                            <span>01</span>
+                            <span>
+                                01
+                            </span>
 
                             <strong>
                                 Submitted
@@ -618,9 +592,11 @@ export default function Complaints() {
                         </div>
 
 
-                        <div className="complaints-status-step">
+                        <div className="complaint-status-step">
 
-                            <span>02</span>
+                            <span>
+                                02
+                            </span>
 
                             <strong>
                                 Acknowledged
@@ -633,9 +609,11 @@ export default function Complaints() {
                         </div>
 
 
-                        <div className="complaints-status-step">
+                        <div className="complaint-status-step">
 
-                            <span>03</span>
+                            <span>
+                                03
+                            </span>
 
                             <strong>
                                 In Progress
@@ -648,9 +626,11 @@ export default function Complaints() {
                         </div>
 
 
-                        <div className="complaints-status-step">
+                        <div className="complaint-status-step">
 
-                            <span>04</span>
+                            <span>
+                                04
+                            </span>
 
                             <strong>
                                 Resolved
@@ -663,9 +643,11 @@ export default function Complaints() {
                         </div>
 
 
-                        <div className="complaints-status-step">
+                        <div className="complaint-status-step">
 
-                            <span>05</span>
+                            <span>
+                                05
+                            </span>
 
                             <strong>
                                 Cancelled

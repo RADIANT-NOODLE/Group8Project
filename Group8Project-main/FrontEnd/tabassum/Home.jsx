@@ -1,498 +1,26 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProperties } from "../data/propertyStorage";
 import "./Home.css";
 
 function Home() {
-
-  /*
-  =========================================================
-  SHARED PROPERTY STORAGE
-  =========================================================
-
-  Properties are loaded from the shared VALORA property
-  storage instead of directly from properties.js.
-
-  This allows the same property record to eventually be
-  updated by Residents, Investors, Estate Agents and
-  HOA Admin.
-
-  =========================================================
-  */
-
-  const [properties, setProperties] = useState([]);
-
-  useEffect(() => {
-
-    const storedProperties =
-      getProperties();
-
-    setProperties(storedProperties);
-
-  }, []);
-
-
-  /*
-  =========================================================
-  PROFESSIONAL PROPERTY ICON
-  =========================================================
-  */
-
-  const PropertyIcon = () => (
-
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="feature-svg"
-    >
-
-      <path
-        d="M3 10.5L12 3l9 7.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M5 9.5V21h14V9.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M9 21v-6h6v6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-
-    </svg>
-
-  );
-
-
-  /*
-  =========================================================
-  PROFESSIONAL INTELLIGENCE ICON
-  =========================================================
-  */
-
-  const IntelligenceIcon = () => (
-
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="feature-svg"
-    >
-
-      <path
-        d="M4 19V5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M4 19h16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M7 15l4-4 3 2 5-6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      <circle
-        cx="7"
-        cy="15"
-        r="1"
-        fill="currentColor"
-      />
-
-      <circle
-        cx="11"
-        cy="11"
-        r="1"
-        fill="currentColor"
-      />
-
-      <circle
-        cx="14"
-        cy="13"
-        r="1"
-        fill="currentColor"
-      />
-
-      <circle
-        cx="19"
-        cy="7"
-        r="1"
-        fill="currentColor"
-      />
-
-    </svg>
-
-  );
-
-
-  /*
-  =========================================================
-  PROFESSIONAL COMMUNITY ICON
-  =========================================================
-  */
-
-  const CommunityIcon = () => (
-
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="feature-svg"
-    >
-
-      <circle
-        cx="9"
-        cy="8"
-        r="3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-
-      <circle
-        cx="17"
-        cy="9"
-        r="2.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-
-      <path
-        d="M3.5 20c.5-3.2 2.5-5 5.5-5s5 1.8 5.5 5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M14.5 15.5c2.7.1 4.7 1.6 5 4.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-
-    </svg>
-
-  );
-
-
-  /*
-  =========================================================
-  PUBLIC LISTING CHECK
-  =========================================================
-
-  A property is considered publicly listed only after
-  the HOA has approved the Estate Agent's submission.
-
-  This prevents pending or rejected listing information
-  from appearing publicly.
-
-  =========================================================
-  */
-
-  const isPublished = (property) => {
-
-    return (
-      property.listing?.listingStatus === "Published" &&
-      property.listing?.hoaApprovalStatus === "Approved"
-    );
-
-  };
-
-
-  /*
-  =========================================================
-  PROPERTY IMAGE
-  =========================================================
-
-  Only approved images from a published listing are
-  displayed publicly.
-
-  Pending images are never displayed here.
-
-  If there are no approved images, show a professional
-  placeholder instead.
-
-  =========================================================
-  */
-
-  const renderPropertyImage = (property) => {
-
-    const published =
-      isPublished(property);
-
-    const approvedImages =
-      published &&
-      Array.isArray(property.images)
-        ? property.images.filter(Boolean)
-        : [];
-
-    if (approvedImages.length > 0) {
-
-      const firstImage =
-        approvedImages[0];
-
-      const imageSource =
-        typeof firstImage === "string"
-          ? firstImage
-          : firstImage?.data || "";
-
-      if (imageSource) {
-
-        return (
-
-          <img
-            src={imageSource}
-            alt={property.title}
-          />
-
-        );
-
-      }
-
-    }
-
-
-    return (
-
-      <div className="property-image-placeholder">
-
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="property-placeholder-icon"
-        >
-
-          <path
-            d="M3 10.5L12 3l9 7.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          <path
-            d="M5 9.5V21h14V9.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
-
-          <path
-            d="M9 21v-6h6v6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
-
-        </svg>
-
-        <strong>
-          Photos Coming Soon
-        </strong>
-
-        <span>
-          Property images will be added once they are
-          available and approved.
-        </span>
-
-      </div>
-
-    );
-
-  };
-
-
-  /*
-  =========================================================
-  PROPERTY LISTING TYPE
-  =========================================================
-
-  Only published listings can display their listing type.
-
-  =========================================================
-  */
-
-  const getListingType = (property) => {
-
-    if (!isPublished(property)) {
-      return "UNIT AVAILABLE";
-    }
-
-    const listingType =
-      property.listing?.listingType;
-
-    if (listingType) {
-      return listingType.toUpperCase();
-    }
-
-    return "UNIT AVAILABLE";
-
-  };
-
-
-  /*
-  =========================================================
-  PROPERTY PRICE
-  =========================================================
-
-  Only published listings can display their price.
-
-  =========================================================
-  */
-
-  const getPropertyPrice = (property) => {
-
-    if (!isPublished(property)) {
-      return "Not currently listed";
-    }
-
-    const listing =
-      property.listing || {};
-
-
-    if (
-      listing.listingType === "For Sale"
-    ) {
-
-      if (listing.askingPrice) {
-
-        return `R${Number(
-          listing.askingPrice
-        ).toLocaleString()}`;
-
-      }
-
-      return "Price TBC";
-
-    }
-
-
-    if (
-      listing.listingType === "For Rent"
-    ) {
-
-      if (listing.rentalPrice) {
-
-        return `R${Number(
-          listing.rentalPrice
-        ).toLocaleString()} / month`;
-
-      }
-
-      return "Rental Price TBC";
-
-    }
-
-
-    return "Not currently listed";
-
-  };
-
-
-  /*
-  =========================================================
-  PROPERTY BEDROOM LABEL
-  =========================================================
-  */
-
-  const getBedroomLabel = (property) => {
-
-    if (
-      property.propertyType === "Bachelor Suite"
-    ) {
-
-      return "Bachelor Suite";
-
-    }
-
-    return `${property.bedrooms} ${
-      property.bedrooms === 1
-        ? "Bedroom"
-        : "Bedrooms"
-    }`;
-
-  };
-
-
-  /*
-  =========================================================
-  PROPERTY BATHROOM LABEL
-  =========================================================
-  */
-
-  const getBathroomLabel = (property) => {
-
-    return `${property.bathrooms} ${
-      property.bathrooms === 1
-        ? "Bathroom"
-        : "Bathrooms"
-    }`;
-
-  };
-
-
-  /*
-  =========================================================
-  PAGE
-  =========================================================
-  */
-
   return (
-
     <div className="app">
 
-
-      {/* =====================================================
-          NAVIGATION
-      ===================================================== */}
+      {/* ================================
+          NAVIGATION BAR
+      ================================= */}
 
       <nav className="navbar">
 
         <div className="logo">
-
           <img
             src="/ValoraLogo.jpeg"
             alt="VALORA Logo"
           />
-
         </div>
-
 
         <div className="nav-links">
 
-          <a
-            href="#home"
-            className="active"
-          >
+          <a href="#home" className="active">
             HOME
           </a>
 
@@ -513,7 +41,6 @@ function Home() {
           </a>
 
         </div>
-
 
         <div className="nav-buttons">
 
@@ -536,9 +63,9 @@ function Home() {
       </nav>
 
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+      {/* ================================
+          HOME / HERO SECTION
+      ================================= */}
 
       <section
         className="hero"
@@ -548,39 +75,31 @@ function Home() {
         <div className="hero-content">
 
           <h1>
-
             PROPERTY INTELLIGENCE.
             <br />
-
             BETTER COMMUNITIES.
             <br />
-
-            <span>
-              SMARTER DECISIONS.
-            </span>
-
+            <span>SMARTER DECISIONS.</span>
           </h1>
 
-
           <p>
-            VALORA combines property listings,
-            AI-powered property insights and
-            community management tools for
-            South African gated communities
+            VALORA combines property listings, AI-powered
+            property insights and community management
+            tools for South African gated communities
             and residential complexes.
           </p>
 
-
           <div className="hero-buttons">
 
-            <a
-              href="#properties"
+            {/* Login required */}
+            <Link
+              to="/login"
               className="primary-btn"
             >
               EXPLORE PROPERTIES
-            </a>
+            </Link>
 
-
+            {/* Login required */}
             <Link
               to="/login"
               className="secondary-btn"
@@ -590,15 +109,11 @@ function Home() {
 
           </div>
 
-
           <p className="login-text">
-
             Already a member?{" "}
-
             <Link to="/login">
               Log in →
             </Link>
-
           </p>
 
         </div>
@@ -606,17 +121,18 @@ function Home() {
       </section>
 
 
-      {/* =====================================================
-          FEATURES
-      ===================================================== */}
+      {/* ================================
+          MAIN FEATURES
+      ================================= */}
 
       <section className="features">
 
+        {/* PROPERTY */}
 
         <div className="feature-card">
 
           <div className="feature-icon">
-            <PropertyIcon />
+            🏠
           </div>
 
           <div>
@@ -630,25 +146,26 @@ function Home() {
             </h4>
 
             <p>
-              Explore the eight units within
-              the VALORA development and view
-              the information available for
-              each property.
+              Search properties within the community
+              and explore available listings.
             </p>
 
-            <a href="#properties">
+            {/* Login required */}
+            <Link to="/login">
               Explore Properties →
-            </a>
+            </Link>
 
           </div>
 
         </div>
 
 
+        {/* INTELLIGENCE */}
+
         <div className="feature-card">
 
           <div className="feature-icon">
-            <IntelligenceIcon />
+            📊
           </div>
 
           <div>
@@ -662,12 +179,12 @@ function Home() {
             </h4>
 
             <p>
-              Use AI-powered valuation,
-              growth scores, rental yield
-              and 10-year ROI to make
+              Use AI-powered valuation, growth scores,
+              rental yield and 10-year ROI to make
               informed decisions.
             </p>
 
+            {/* Login required */}
             <Link to="/login">
               Try AI Valuation →
             </Link>
@@ -677,10 +194,12 @@ function Home() {
         </div>
 
 
+        {/* COMMUNITY */}
+
         <div className="feature-card">
 
           <div className="feature-icon">
-            <CommunityIcon />
+            👥
           </div>
 
           <div>
@@ -694,11 +213,12 @@ function Home() {
             </h4>
 
             <p>
-              Report issues, track complaints,
-              find verified service providers
-              and stay updated with HOA news.
+              Report issues, track complaints, find
+              verified service providers and stay
+              updated with HOA news.
             </p>
 
+            {/* Login required */}
             <Link to="/login">
               Explore Community →
             </Link>
@@ -707,13 +227,12 @@ function Home() {
 
         </div>
 
-
       </section>
 
 
-      {/* =====================================================
+      {/* ================================
           PROPERTY LISTINGS
-      ===================================================== */}
+      ================================= */}
 
       <section
         className="property-listings"
@@ -725,149 +244,221 @@ function Home() {
           <div>
 
             <p className="section-label">
-              THE VALORA DEVELOPMENT
+              EXPLORE PROPERTIES
             </p>
 
             <h2>
-              Explore our eight units.
+              Find a place that fits your future.
             </h2>
 
             <p>
-              Explore the units within the VALORA
-              development. Property information
-              and approved listing details will be
-              updated as the development progresses.
+              Explore properties within the community
+              and discover the information you need to
+              make a smarter decision.
             </p>
 
           </div>
 
-
-          <a
-            href="#properties"
+          {/* Login required */}
+          <Link
+            to="/login"
             className="view-all"
           >
-            View All Units
-          </a>
+            View All Properties
+          </Link>
 
         </div>
 
 
         <div className="property-cards">
 
-          {properties.map((property) => {
+          {/* PROPERTY 1 */}
 
-            const priceDisplay =
-              getPropertyPrice(property);
+          <div className="property-card">
 
-            const listingType =
-              getListingType(property);
+            <img
+              src="/property_building.png"
+              alt="Property in VALORA community"
+            />
 
+            <div className="property-card-content">
 
-            return (
+              <p className="property-type">
+                FOR SALE
+              </p>
 
-              <div
-                className="property-card"
-                key={property.id}
-              >
+              <h3>
+                Modern Family Home
+              </h3>
 
+              <p className="property-location">
+                VALORA Community
+              </p>
 
-                {/* PROPERTY IMAGE */}
+              <div className="property-details">
 
-                {renderPropertyImage(property)}
+                <span>
+                  3 Beds
+                </span>
 
+                <span>
+                  2 Baths
+                </span>
 
-                <div className="property-card-content">
-
-
-                  {/* LISTING TYPE */}
-
-                  <p className="property-type">
-                    {listingType}
-                  </p>
-
-
-                  {/* PROPERTY TITLE */}
-
-                  <h3>
-                    {property.title}
-                  </h3>
-
-
-                  {/* LOCATION */}
-
-                  <p className="property-location">
-                    {property.location}
-                  </p>
-
-
-                  {/* PROPERTY DETAILS */}
-
-                  <div className="property-details">
-
-                    <span>
-                      {property.propertyType}
-                    </span>
-
-                    <span>
-                      {getBedroomLabel(property)}
-                    </span>
-
-                    <span>
-                      {getBathroomLabel(property)}
-                    </span>
-
-                  </div>
-
-
-                  {/* UNIT INFORMATION */}
-
-                  <div className="property-unit">
-
-                    <span>
-                      {property.unitNumber}
-                    </span>
-
-                    <span>
-                      {property.floor}
-                    </span>
-
-                  </div>
-
-
-                  {/* PRICE + VIEW */}
-
-                  <div className="property-bottom">
-
-                    <strong>
-                      {priceDisplay}
-                    </strong>
-
-                    <Link
-                      to={`/property/${property.id}`}
-                      className="property-view-button"
-                    >
-                      View Property
-                    </Link>
-
-                  </div>
-
-
-                </div>
+                <span>
+                  120 m²
+                </span>
 
               </div>
 
-            );
+              <div className="property-bottom">
 
-          })}
+                <strong>
+                  R1,850,000
+                </strong>
+
+                {/* Login required */}
+                <Link
+                  to="/login"
+                  className="property-view-button"
+                >
+                  View Property
+                </Link>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* PROPERTY 2 */}
+
+          <div className="property-card">
+
+            <img
+              src="/property_building.png"
+              alt="Property in VALORA community"
+            />
+
+            <div className="property-card-content">
+
+              <p className="property-type">
+                FOR SALE
+              </p>
+
+              <h3>
+                Contemporary Townhouse
+              </h3>
+
+              <p className="property-location">
+                VALORA Community
+              </p>
+
+              <div className="property-details">
+
+                <span>
+                  2 Beds
+                </span>
+
+                <span>
+                  2 Baths
+                </span>
+
+                <span>
+                  95 m²
+                </span>
+
+              </div>
+
+              <div className="property-bottom">
+
+                <strong>
+                  R1,450,000
+                </strong>
+
+                {/* Login required */}
+                <Link
+                  to="/login"
+                  className="property-view-button"
+                >
+                  View Property
+                </Link>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* PROPERTY 3 */}
+
+          <div className="property-card">
+
+            <img
+              src="/property_building.png"
+              alt="Property in VALORA community"
+            />
+
+            <div className="property-card-content">
+
+              <p className="property-type">
+                FOR SALE
+              </p>
+
+              <h3>
+                Spacious Garden Home
+              </h3>
+
+              <p className="property-location">
+                VALORA Community
+              </p>
+
+              <div className="property-details">
+
+                <span>
+                  4 Beds
+                </span>
+
+                <span>
+                  3 Baths
+                </span>
+
+                <span>
+                  165 m²
+                </span>
+
+              </div>
+
+              <div className="property-bottom">
+
+                <strong>
+                  R2,250,000
+                </strong>
+
+                {/* Login required */}
+                <Link
+                  to="/login"
+                  className="property-view-button"
+                >
+                  View Property
+                </Link>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
       </section>
 
 
-      {/* =====================================================
-          PROPERTY INTELLIGENCE
-      ===================================================== */}
+      {/* ================================
+          PROPERTY INTELLIGENCE / VALUATION
+      ================================= */}
 
       <section
         className="intelligence-section"
@@ -889,12 +480,11 @@ function Home() {
             </h2>
 
             <p>
-              VALORA combines property data
-              with AI-powered insights to help
-              buyers, investors and estate agents
-              make smarter property decisions.
+              VALORA combines property data with
+              AI-powered insights to help buyers,
+              investors and estate agents make smarter
+              property decisions.
             </p>
-
 
             <div className="intelligence-features">
 
@@ -905,12 +495,11 @@ function Home() {
                 </h3>
 
                 <p>
-                  Get an estimated property value
-                  based on local property data.
+                  Get an estimated property value based
+                  on local property data.
                 </p>
 
               </div>
-
 
               <div>
 
@@ -919,12 +508,11 @@ function Home() {
                 </h3>
 
                 <p>
-                  Understand the potential growth
-                  of the surrounding area.
+                  Understand the potential growth of
+                  the surrounding area.
                 </p>
 
               </div>
-
 
               <div>
 
@@ -938,7 +526,6 @@ function Home() {
                 </p>
 
               </div>
-
 
               <div>
 
@@ -955,7 +542,7 @@ function Home() {
 
             </div>
 
-
+            {/* Login required */}
             <Link
               to="/login"
               className="primary-btn"
@@ -970,9 +557,9 @@ function Home() {
       </section>
 
 
-      {/* =====================================================
+      {/* ================================
           COMMUNITY
-      ===================================================== */}
+      ================================= */}
 
       <section
         className="community-section"
@@ -994,15 +581,13 @@ function Home() {
             </h2>
 
             <p>
-              VALORA brings residents,
-              homeowners associations and
-              trusted service providers together
-              in one connected community platform.
+              VALORA brings residents, homeowners
+              associations and trusted service providers
+              together in one connected community
+              platform.
             </p>
 
-
             <div className="community-features">
-
 
               <div className="community-feature">
 
@@ -1011,12 +596,11 @@ function Home() {
                 </h3>
 
                 <p>
-                  Report community issues and
-                  keep track of their progress.
+                  Report community issues and keep
+                  track of their progress.
                 </p>
 
               </div>
-
 
               <div className="community-feature">
 
@@ -1025,13 +609,11 @@ function Home() {
                 </h3>
 
                 <p>
-                  Discover verified service
-                  providers available within
-                  your community.
+                  Discover verified service providers
+                  available within your community.
                 </p>
 
               </div>
-
 
               <div className="community-feature">
 
@@ -1040,13 +622,11 @@ function Home() {
                 </h3>
 
                 <p>
-                  Keep up with community
-                  announcements, events and
-                  HOA updates.
+                  Keep up with community announcements,
+                  events and HOA updates.
                 </p>
 
               </div>
-
 
               <div className="community-feature">
 
@@ -1055,18 +635,16 @@ function Home() {
                 </h3>
 
                 <p>
-                  Give HOAs the tools they need
-                  to manage residents and
-                  community information
+                  Give HOAs the tools they need to manage
+                  residents and community information
                   more effectively.
                 </p>
 
               </div>
 
-
             </div>
 
-
+            {/* Login required */}
             <Link
               to="/login"
               className="primary-btn"
@@ -1081,9 +659,9 @@ function Home() {
       </section>
 
 
-      {/* =====================================================
-          HOW IT WORKS
-      ===================================================== */}
+      {/* ================================
+          HOW VALORA WORKS
+      ================================= */}
 
       <section className="how-it-works">
 
@@ -1112,7 +690,6 @@ function Home() {
 
           <div className="steps">
 
-
             <div className="step">
 
               <div className="step-number">
@@ -1124,9 +701,8 @@ function Home() {
               </h3>
 
               <p>
-                Find properties within your
-                preferred community and explore
-                available listings.
+                Find properties within your preferred
+                community and explore available listings.
               </p>
 
             </div>
@@ -1143,9 +719,9 @@ function Home() {
               </h3>
 
               <p>
-                Use AI-powered insights to
-                understand property value,
-                growth potential and rental returns.
+                Use AI-powered insights to understand
+                property value, growth potential and
+                rental returns.
               </p>
 
             </div>
@@ -1162,9 +738,9 @@ function Home() {
               </h3>
 
               <p>
-                Stay connected with your
-                community, report issues and
-                access trusted local services.
+                Stay connected with your community,
+                report issues and access trusted local
+                services.
               </p>
 
             </div>
@@ -1181,13 +757,12 @@ function Home() {
               </h3>
 
               <p>
-                Use the information available
-                through VALORA to make more
-                informed property decisions.
+                Use the information available through
+                VALORA to make more informed property
+                decisions.
               </p>
 
             </div>
-
 
           </div>
 
@@ -1196,9 +771,9 @@ function Home() {
       </section>
 
 
-      {/* =====================================================
+      {/* ================================
           ABOUT
-      ===================================================== */}
+      ================================= */}
 
       <section
         className="about-section"
@@ -1218,22 +793,19 @@ function Home() {
           </h2>
 
           <p>
-            VALORA is a property intelligence
-            and community management platform
-            designed to bring property information,
-            intelligent analysis and community
-            services together in one place.
+            VALORA is a property intelligence and
+            community management platform designed
+            to bring property information, intelligent
+            analysis and community services together
+            in one place.
           </p>
 
         </div>
 
       </section>
 
-
     </div>
-
   );
-
 }
 
 export default Home;

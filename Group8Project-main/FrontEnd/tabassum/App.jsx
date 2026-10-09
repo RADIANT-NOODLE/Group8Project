@@ -1,854 +1,382 @@
-import React from "react";
-
 import {
-    BrowserRouter,
-    Routes,
-    Route,
-    Navigate,
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
 } from "react-router-dom";
 
+import Home from "./pages/Home.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import RegistrationPending from "./pages/RegistrationPending.jsx";
 
-/* =========================================================
-   PUBLIC PAGES
-========================================================= */
+import Dashboard from "./pages/Dashboard.jsx";
 
-import Home from "./pages/Home";
+import Property from "./pages/Property.jsx";
+import Valuation from "./pages/Valuation.jsx";
+import Complaints from "./pages/Complaints.jsx";
 
-import Login
-    from "./pages/Auth/Login";
+import ResidentComplaints from "./pages/ResidentComplaints.jsx";
+import ResidentDirectory from "./pages/ResidentDirectory.jsx";
 
-import Register
-    from "./pages/Auth/Register";
+import Maintenance from "./pages/Maintenance.jsx";
+import CommunityAnnouncements from "./pages/CommunityAnnouncements.jsx";
+import AITrainingData from "./pages/AITrainingData.jsx";
+import CommunityAnalytics from "./pages/CommunityAnalytics.jsx";
 
-import RegistrationPending
-    from "./pages/Auth/RegistrationPending";
+import AgentListings from "./pages/AgentListings.jsx";
+import AgentEditListings from "./pages/AgentEditListings.jsx";
+import AgentInquiries from "./pages/AgentInquiries.jsx";
 
+import Providers from "./pages/Providers.jsx";
+import Announcements from "./pages/Announcements.jsx";
 
-/* =========================================================
-   PROPERTY
-========================================================= */
+import Profile from "./pages/Profile.jsx";
+import ROI from "./pages/ROI.jsx";
 
-import Property
-    from "./pages/Property/Property";
-
-import MyProperty
-    from "./pages/Property/MyProperty";
-
-import Properties
-    from "./pages/Property/Properties";
-
-import PropertyRequests
-    from "./pages/Property/PropertyRequests";
-
-import PropertyApprovals
-    from "./pages/Property/PropertyApprovals";
-
-
-/* =========================================================
-   DASHBOARDS
-========================================================= */
-
-import Dashboard
-    from "./pages/Dashboard";
-
-import HeadAdminDashboard
-    from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
-
-
-/* =========================================================
-   RESIDENT
-========================================================= */
-
-import RequestToSell
-    from "./pages/RequestToSell";
-
-import Complaints
-    from "./pages/Complaints";
-
-import ResidentComplaints
-    from "./pages/Complaints/ResidentComplaints";
-
-import ResidentDirectory
-    from "./pages/Resident/ResidentDirectory";
-
-
-/* =========================================================
-   MAINTENANCE
-========================================================= */
-
-import Maintenance
-    from "./pages/Maintenance/Maintenance";
-
-
-/* =========================================================
-   COMMUNITY
-========================================================= */
-
-import Providers
-    from "./pages/Community/Providers";
-
-import CommunityAnnouncements
-    from "./pages/Announcements/CommunityAnnouncements";
-
-import Announcements
-    from "./pages/Announcements/Announcements";
-
-import CommunityAnalytics
-    from "./pages/Community/CommunityAnalytics";
-
-
-/* =========================================================
-   AI
-========================================================= */
-
-import AITrainingData
-    from "./pages/AI/AITrainingData";
-
-
-/* =========================================================
-   ESTATE AGENT
-========================================================= */
-
-import AgentListings
-    from "./pages/EstateAgent/AgentListings";
-
-import AgentEditListings
-    from "./pages/EstateAgent/AgentEditListings";
-
-import AgentInquiries
-    from "./pages/EstateAgent/AgentInquiries";
-
-
-/* =========================================================
-   INVESTOR
-========================================================= */
-
-import Valuation
-    from "./pages/Investor/Valuation";
-
-import ROI
-    from "./pages/Investor/ROI";
-
-
-/* =========================================================
-   HEAD ADMIN
-========================================================= */
-
-import RegistrationRequests
-    from "./pages/HeadAdmin/RegistrationRequests";
-
-import UserManagement
-    from "./pages/HeadAdmin/UserManagement";
-
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-import Profile
-    from "./pages/Profile";
-
-
-/* =========================================================
-   GLOBAL APP CSS
-========================================================= */
+import HeadAdminDashboard from "./pages/HeadAdminDashboard.jsx";
+import RegistrationRequests from "./pages/RegistrationRequests.jsx";
+import UserManagement from "./pages/UserManagement.jsx";
 
 import "./App.css";
 
 
-/* =========================================================
-   GET CURRENT USER
-========================================================= */
 
-function getCurrentUser() {
+// HEAD ADMIN ACCOUNT
+// This account is NOT available through public registration.
 
-    const storedUser =
-        localStorage.getItem("valoraUser");
 
+const headAdminAccount = {
+  id: "head-admin-001",
+  firstName: "Head",
+  lastName: "Administrator",
+  email: "admin@valora.co.za",
+  password: "Admin12345",
+  role: "Head Admin",
+  status: "Approved",
+};
 
-    if (!storedUser) {
 
-        return null;
 
-    }
+// ROLE-BASED DASHBOARD
+// Only approved and logged-in users can access dashboards.
 
 
-    try {
+function RoleDashboard() {
 
-        const user =
-            JSON.parse(storedUser);
+  const loggedIn =
+    localStorage.getItem("valoraLoggedIn") === "true";
 
+  const storedUser =
+    JSON.parse(localStorage.getItem("valoraUser"));
 
-        if (!user || typeof user !== "object") {
 
-            return null;
+  // User is not logged in
+  if (!loggedIn || !storedUser) {
+    return <Navigate to="/login" replace />;
+  }
 
-        }
 
+  // User has not been approved
+  if (storedUser.status !== "Approved") {
 
-        /* =====================================================
-           NORMALISE ROLE
-        ===================================================== */
+    localStorage.removeItem("valoraLoggedIn");
+    localStorage.removeItem("valoraUserEmail");
+    localStorage.removeItem("valoraUser");
 
-        let normalizedRole =
-            user.role || "";
+    return <Navigate to="/login" replace />;
+  }
 
 
-        const roleLower =
-            String(normalizedRole)
-                .trim()
-                .toLowerCase();
+  // Head Admin has a separate dashboard
+  if (storedUser.role === "Head Admin") {
+    return <Navigate to="/head-admin" replace />;
+  }
 
 
-        if (
-            roleLower === "hoa" ||
-            roleLower === "hoa admin" ||
-            roleLower === "hoa administrator"
-        ) {
+  // Send the user to their correct role dashboard
+  switch (storedUser.role) {
 
-            normalizedRole =
-                "HOA Admin";
+    case "Resident":
+      return <Dashboard role="Resident" />;
 
-        }
+    case "Investor":
+      return <Dashboard role="Investor" />;
 
+    case "Estate Agent":
+      return <Dashboard role="Estate Agent" />;
 
-        else if (
-            roleLower === "administrator"
-        ) {
+    case "HOA Admin":
+      return <Dashboard role="HOA Admin" />;
 
-            normalizedRole =
-                "HOA Admin";
+    default:
 
-        }
+      localStorage.removeItem("valoraLoggedIn");
+      localStorage.removeItem("valoraUserEmail");
+      localStorage.removeItem("valoraUser");
 
-
-        else if (
-            roleLower === "property owner"
-        ) {
-
-            normalizedRole =
-                "Resident";
-
-        }
-
-
-        else if (
-            roleLower === "buyer"
-        ) {
-
-            normalizedRole =
-                "Investor";
-
-        }
-
-
-        /* =====================================================
-           NORMALISE NAME
-        ===================================================== */
-
-        const firstName =
-            user.firstName ||
-            user.firstname ||
-            "";
-
-
-        const lastName =
-            user.lastName ||
-            user.lastname ||
-            "";
-
-
-        const fullName =
-            user.fullName ||
-            user.name ||
-            `${firstName} ${lastName}`.trim();
-
-
-        /* =====================================================
-           NORMALISE INITIALS
-        ===================================================== */
-
-        let initials =
-            user.initials ||
-            "";
-
-
-        if (!initials) {
-
-            initials =
-                `${firstName.charAt(0)}${lastName.charAt(0)}`
-                    .toUpperCase();
-
-        }
-
-
-        if (!initials && fullName) {
-
-            const nameParts =
-                fullName
-                    .trim()
-                    .split(/\s+/);
-
-
-            initials =
-                nameParts
-                    .slice(0, 2)
-                    .map(
-                        (part) =>
-                            part.charAt(0)
-                    )
-                    .join("")
-                    .toUpperCase();
-
-        }
-
-
-        return {
-            ...user,
-
-            role:
-                normalizedRole,
-
-            firstName,
-            lastName,
-            fullName,
-            initials,
-        };
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Unable to read VALORA user:",
-            error
-        );
-
-        return null;
-
-    }
-
+      return <Navigate to="/login" replace />;
+  }
 }
 
 
-/* =========================================================
-   PROTECTED ROUTE
-========================================================= */
 
-function ProtectedRoute({ children }) {
+// HEAD ADMIN ROUTE
+// Only an approved, logged-in Head Admin can access
+// Head Admin pages.
 
-    const user =
-        getCurrentUser();
-
-
-    if (!user) {
-
-        return (
-            <Navigate
-                to="/login"
-                replace
-            />
-        );
-
-    }
-
-
-    return children;
-
-}
-
-
-/* =========================================================
-   HEAD ADMIN ROUTE
-========================================================= */
 
 function HeadAdminRoute({ children }) {
 
-    const user =
-        getCurrentUser();
+  const loggedIn =
+    localStorage.getItem("valoraLoggedIn") === "true";
+
+  const storedUser =
+    JSON.parse(localStorage.getItem("valoraUser"));
 
 
-    /* =====================================================
-       NOT LOGGED IN
-    ===================================================== */
-
-    if (!user) {
-
-        return (
-            <Navigate
-                to="/login"
-                replace
-            />
-        );
-
-    }
+  // Not logged in
+  if (!loggedIn || !storedUser) {
+    return <Navigate to="/login" replace />;
+  }
 
 
-    /* =====================================================
-       CHECK ROLE
-    ===================================================== */
+  // Account is not approved
+  if (storedUser.status !== "Approved") {
 
-    const role =
-        String(user.role || "")
-            .trim()
-            .toLowerCase();
+    localStorage.removeItem("valoraLoggedIn");
+    localStorage.removeItem("valoraUserEmail");
+    localStorage.removeItem("valoraUser");
 
-
-    const isHeadAdmin =
-        role === "head admin" ||
-        role === "headadministrator" ||
-        role === "head administrator";
+    return <Navigate to="/login" replace />;
+  }
 
 
-    if (!isHeadAdmin) {
-
-        return (
-            <Navigate
-                to="/dashboard"
-                replace
-            />
-        );
-
-    }
+  // Logged-in user is not Head Admin
+  if (storedUser.role !== "Head Admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
 
 
-    /* =====================================================
-       CHECK APPROVAL STATUS
-    ===================================================== */
-
-    const status =
-        String(user.status || "")
-            .trim()
-            .toLowerCase();
-
-
-    const isApproved =
-        status === "approved" ||
-        status === "active";
-
-
-    if (!isApproved) {
-
-        return (
-            <Navigate
-                to="/registration-pending"
-                replace
-            />
-        );
-
-    }
-
-
-    return children;
-
+  // Approved Head Admin
+  return children;
 }
 
 
-/* =========================================================
-   APP
-========================================================= */
+
+// MAIN APP
+
 
 function App() {
 
-    return (
-
-        <BrowserRouter>
-
-            <Routes>
-
-
-                {/* =================================================
-                    LANDING PAGE
-                ================================================= */}
-
-                <Route
-                    path="/"
-                    element={<Home />}
-                />
-
-
-                {/* =================================================
-                    AUTHENTICATION
-                ================================================= */}
-
-                <Route
-                    path="/login"
-                    element={<Login />}
-                />
-
-
-                <Route
-                    path="/register"
-                    element={<Register />}
-                />
-
-
-                <Route
-                    path="/registration-pending"
-                    element={<RegistrationPending />}
-                />
-
-
-                {/* =================================================
-                    PUBLIC PROPERTY BROWSING
-
-                    IMPORTANT:
-                    /properties = Properties.jsx
-
-                    This is NOT Home.jsx.
-                ================================================= */}
-
-                <Route
-                    path="/properties"
-                    element={<Properties />}
-                />
-
-
-                {/* =================================================
-                    PUBLIC INDIVIDUAL PROPERTY
-
-                    Example:
-                    /property/VAL-001
-                ================================================= */}
-
-                <Route
-                    path="/property/:propertyId"
-                    element={<Property />}
-                />
-
-
-                {/* =================================================
-                    RESIDENT MY PROPERTY
-
-                    /property = MyProperty.jsx
-                ================================================= */}
-
-                <Route
-                    path="/property"
-                    element={
-                        <ProtectedRoute>
-                            <MyProperty />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    MAIN DASHBOARD
-                ================================================= */}
-
-                <Route
-                    path="/dashboard"
-                    element={
-                        <ProtectedRoute>
-                            <Dashboard />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    REQUEST TO SELL / RENT
-                ================================================= */}
-
-                <Route
-                    path="/request-to-sell"
-                    element={
-                        <ProtectedRoute>
-                            <RequestToSell />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    COMPLAINTS
-                ================================================= */}
-
-                <Route
-                    path="/complaints"
-                    element={
-                        <ProtectedRoute>
-                            <Complaints />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    RESIDENT COMPLAINTS
-                ================================================= */}
-
-                <Route
-                    path="/resident-complaints"
-                    element={
-                        <ProtectedRoute>
-                            <ResidentComplaints />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    MAINTENANCE
-                ================================================= */}
-
-                <Route
-                    path="/maintenance"
-                    element={
-                        <ProtectedRoute>
-                            <Maintenance />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    PROVIDERS
-                ================================================= */}
-
-                <Route
-                    path="/providers"
-                    element={
-                        <ProtectedRoute>
-                            <Providers />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    COMMUNITY ANNOUNCEMENTS
-                ================================================= */}
-
-                <Route
-                    path="/announcements"
-                    element={
-                        <ProtectedRoute>
-                            <CommunityAnnouncements />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                <Route
-                    path="/community-announcements"
-                    element={
-                        <ProtectedRoute>
-                            <CommunityAnnouncements />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    COMMUNITY ANALYTICS
-                ================================================= */}
-
-                <Route
-                    path="/community-analytics"
-                    element={
-                        <ProtectedRoute>
-                            <CommunityAnalytics />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    RESIDENT DIRECTORY
-                ================================================= */}
-
-                <Route
-                    path="/resident-directory"
-                    element={
-                        <ProtectedRoute>
-                            <ResidentDirectory />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    PROPERTY REQUESTS
-                ================================================= */}
-
-                <Route
-                    path="/property-requests"
-                    element={
-                        <ProtectedRoute>
-                            <PropertyRequests />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    PROPERTY APPROVALS
-                ================================================= */}
-
-                <Route
-                    path="/property-approvals"
-                    element={
-                        <ProtectedRoute>
-                            <PropertyApprovals />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    AI TRAINING DATA
-                ================================================= */}
-
-                <Route
-                    path="/ai-training-data"
-                    element={
-                        <ProtectedRoute>
-                            <AITrainingData />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    AI VALUATION
-                ================================================= */}
-
-                <Route
-                    path="/valuation"
-                    element={
-                        <ProtectedRoute>
-                            <Valuation />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    INVESTOR ROI
-                ================================================= */}
-
-                <Route
-                    path="/roi"
-                    element={
-                        <ProtectedRoute>
-                            <ROI />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    ESTATE AGENT
-                ================================================= */}
-
-                <Route
-                    path="/agent-listings"
-                    element={
-                        <ProtectedRoute>
-                            <AgentListings />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                <Route
-                    path="/agent-edit-listings"
-                    element={
-                        <ProtectedRoute>
-                            <AgentEditListings />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                <Route
-                    path="/agent-inquiries"
-                    element={
-                        <ProtectedRoute>
-                            <AgentInquiries />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    HEAD ADMIN DASHBOARD
-                ================================================= */}
-
-                <Route
-                    path="/head-admin"
-                    element={
-                        <HeadAdminRoute>
-                            <HeadAdminDashboard />
-                        </HeadAdminRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    HEAD ADMIN REGISTRATION REQUESTS
-                ================================================= */}
-
-                <Route
-                    path="/registration-requests"
-                    element={
-                        <HeadAdminRoute>
-                            <RegistrationRequests />
-                        </HeadAdminRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    HEAD ADMIN USER MANAGEMENT
-                ================================================= */}
-
-                <Route
-                    path="/user-management"
-                    element={
-                        <HeadAdminRoute>
-                            <UserManagement />
-                        </HeadAdminRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    PROFILE
-                ================================================= */}
-
-                <Route
-                    path="/profile"
-                    element={
-                        <ProtectedRoute>
-                            <Profile />
-                        </ProtectedRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    FALLBACK
-                ================================================= */}
-
-                <Route
-                    path="*"
-                    element={
-                        <Navigate
-                            to="/"
-                            replace
-                        />
-                    }
-                />
-
-            </Routes>
-
-        </BrowserRouter>
-
+  // Get all registered users
+  const users =
+    JSON.parse(localStorage.getItem("valoraUsers")) || [];
+
+
+  // Check whether the Head Admin account already exists
+  const headAdminExists = users.some(
+    (user) => user.role === "Head Admin"
+  );
+
+
+  // Create the Head Admin account automatically
+  // if it does not already exist.
+  if (!headAdminExists) {
+
+    localStorage.setItem(
+      "valoraUsers",
+      JSON.stringify([
+        ...users,
+        headAdminAccount,
+      ])
     );
 
+  }
+
+
+  return (
+    <BrowserRouter>
+
+      <Routes>
+
+
+        {/* VALORA HOMEPAGE */}
+
+        <Route
+          path="/"
+          element={<Home />}
+        />
+
+
+        {/* LOGIN & REGISTRATION */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/registration-pending"
+          element={<RegistrationPending />}
+        />
+
+
+        {/* ROLE-BASED USER DASHBOARD */}
+
+        <Route
+          path="/dashboard"
+          element={<RoleDashboard />}
+        />
+
+
+        {/* HEAD ADMIN
+            Protected - Head Admin ONLY */}
+
+        <Route
+          path="/head-admin"
+          element={
+            <HeadAdminRoute>
+              <HeadAdminDashboard />
+            </HeadAdminRoute>
+          }
+        />
+
+        <Route
+          path="/registration-requests"
+          element={
+            <HeadAdminRoute>
+              <RegistrationRequests />
+            </HeadAdminRoute>
+          }
+        />
+
+        <Route
+          path="/user-management"
+          element={
+            <HeadAdminRoute>
+              <UserManagement />
+            </HeadAdminRoute>
+          }
+        />
+
+
+        {/* PROPERTY */}
+
+        <Route
+          path="/property"
+          element={<Property />}
+        />
+
+
+        {/* AI VALUATION */}
+
+        <Route
+          path="/valuation"
+          element={<Valuation />}
+        />
+
+
+        {/* COMPLAINTS */}
+
+        <Route
+          path="/complaints"
+          element={<Complaints />}
+        />
+
+        <Route
+          path="/resident-complaints"
+          element={<ResidentComplaints />}
+        />
+
+
+        {/* HOA ADMIN */}
+
+        <Route
+          path="/resident-directory"
+          element={<ResidentDirectory />}
+        />
+
+        <Route
+          path="/maintenance"
+          element={<Maintenance />}
+        />
+
+        <Route
+          path="/community-announcements"
+          element={<CommunityAnnouncements />}
+        />
+
+        <Route
+          path="/ai-training-data"
+          element={<AITrainingData />}
+        />
+
+        <Route
+          path="/community-analytics"
+          element={<CommunityAnalytics />}
+        />
+
+
+        {/* ESTATE AGENT */}
+
+        <Route
+          path="/agent-listings"
+          element={<AgentListings />}
+        />
+
+        <Route
+          path="/agent-edit-listings"
+          element={<AgentEditListings />}
+        />
+
+        <Route
+          path="/agent-inquiries"
+          element={<AgentInquiries />}
+        />
+
+
+        {/* SERVICE PROVIDERS */}
+
+        <Route
+          path="/providers"
+          element={<Providers />}
+        />
+
+
+        {/* ANNOUNCEMENTS */}
+
+        <Route
+          path="/announcements"
+          element={<Announcements />}
+        />
+
+
+        {/* PROFILE */}
+
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+
+        {/* INVESTOR ROI */}
+
+        <Route
+          path="/roi"
+          element={<ROI />}
+        />
+
+
+      </Routes>
+
+    </BrowserRouter>
+  );
 }
 
 
