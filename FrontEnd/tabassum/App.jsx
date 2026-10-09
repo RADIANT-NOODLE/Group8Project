@@ -1,383 +1,242 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+/* =========================================================
+   VALORA - GLOBAL STYLES
+   =========================================================
+   PURPOSE:
+   Global styling used across the entire VALORA application.
 
-import Home from "./pages/Home.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import RegistrationPending from "./pages/RegistrationPending.jsx";
+   PROJECT THEME:
+   Primary Purple: #563F6B
+   RGB: 86, 63, 107
 
-import Dashboard from "./pages/Dashboard.jsx";
-
-import Property from "./pages/Property.jsx";
-import Valuation from "./pages/Valuation.jsx";
-import Complaints from "./pages/Complaints.jsx";
-
-import ResidentComplaints from "./pages/ResidentComplaints.jsx";
-import ResidentDirectory from "./pages/ResidentDirectory.jsx";
-
-import Maintenance from "./pages/Maintenance.jsx";
-import CommunityAnnouncements from "./pages/CommunityAnnouncements.jsx";
-import AITrainingData from "./pages/AITrainingData.jsx";
-import CommunityAnalytics from "./pages/CommunityAnalytics.jsx";
-
-import AgentListings from "./pages/AgentListings.jsx";
-import AgentEditListings from "./pages/AgentEditListings.jsx";
-import AgentInquiries from "./pages/AgentInquiries.jsx";
-
-import Providers from "./pages/Providers.jsx";
-import Announcements from "./pages/Announcements.jsx";
-
-import Profile from "./pages/Profile.jsx";
-import ROI from "./pages/ROI.jsx";
-
-import HeadAdminDashboard from "./pages/HeadAdminDashboard.jsx";
-import RegistrationRequests from "./pages/RegistrationRequests.jsx";
-import UserManagement from "./pages/UserManagement.jsx";
-
-import "./App.css";
+   Page-specific styling:
+   - home.css  → Aishwariya's Home/Landing Page
+   - auth.css  → Linda's Login/Register
+   - App.css   → Tabassum's Dashboard and system pages
+   ========================================================= */
 
 
+/* =========================================================
+   GLOBAL VARIABLES
+   ========================================================= */
 
-// HEAD ADMIN ACCOUNT
-// This account is NOT available through public registration.
+:root {
+  --primary: #563F6B;
+  --primary-dark: #463256;
+  --primary-light: #f1edf3;
+
+  --white: #ffffff;
+
+  --background: #f5f3f7;
+  --surface: #ffffff;
+
+  --text: #333333;
+  --text-dark: #222222;
+  --text-light: #777777;
+  --text-muted: #999999;
+
+  --border: #ddd7e2;
+
+  --success: #27632a;
+  --success-bg: #eef9f0;
+
+  --danger: #a00000;
+  --danger-bg: #ffe0e0;
+
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+  --font-main: Arial, Helvetica, sans-serif;
+
+  font-family: var(--font-main);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 
-const headAdminAccount = {
-  id: "head-admin-001",
-  firstName: "Head",
-  lastName: "Administrator",
-  email: "admin@valora.co.za",
-  password: "Admin12345",
-  role: "Head Admin",
-  status: "Approved",
-};
+/* =========================================================
+   GLOBAL RESET
+   ========================================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 
+/* =========================================================
+   HTML & BODY
+   ========================================================= */
 
-// ROLE-BASED DASHBOARD
-// Only approved and logged-in users can access dashboards.
+html {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+
+  margin: 0;
+
+  font-family: var(--font-main);
+
+  background: var(--background);
+  color: var(--text);
+
+  line-height: 1.5;
+}
 
 
-function RoleDashboard() {
+/* =========================================================
+   ROOT REACT CONTAINER
+   ========================================================= */
 
-  const loggedIn =
-    localStorage.getItem("valoraLoggedIn") === "true";
+#root {
+  width: 100%;
+  min-height: 100vh;
 
-  const storedUser =
-    JSON.parse(localStorage.getItem("valoraUser"));
+  margin: 0;
+
+  box-sizing: border-box;
+}
 
 
-  // User is not logged in
-  if (!loggedIn || !storedUser) {
-    return <Navigate to="/login" replace />;
+/* =========================================================
+   HEADINGS
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-main);
+
+  color: var(--text-dark);
+
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 42px;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+h4 {
+  font-size: 18px;
+}
+
+
+/* =========================================================
+   PARAGRAPHS
+   ========================================================= */
+
+p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+button {
+  font-family: inherit;
+}
+
+
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+
+/* =========================================================
+   IMAGES
+   ========================================================= */
+
+img {
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+::selection {
+  background: var(--primary);
+  color: var(--white);
+}
+
+
+/* =========================================================
+   MOBILE GLOBAL SETTINGS
+   ========================================================= */
+
+@media (max-width: 1024px) {
+
+  h1 {
+    font-size: 36px;
   }
 
-
-  // User has not been approved
-  if (storedUser.status !== "Approved") {
-
-    localStorage.removeItem("valoraLoggedIn");
-    localStorage.removeItem("valoraUserEmail");
-    localStorage.removeItem("valoraUser");
-
-    return <Navigate to="/login" replace />;
-  }
-
-
-  // Head Admin has a separate dashboard
-  if (storedUser.role === "Head Admin") {
-    return <Navigate to="/head-admin" replace />;
-  }
-
-
-  // Send the user to their correct role dashboard
-  switch (storedUser.role) {
-
-    case "Resident":
-      return <Dashboard role="Resident" />;
-
-    case "Investor":
-      return <Dashboard role="Investor" />;
-
-    case "Estate Agent":
-      return <Dashboard role="Estate Agent" />;
-
-    case "HOA Admin":
-      return <Dashboard role="HOA Admin" />;
-
-    default:
-
-      localStorage.removeItem("valoraLoggedIn");
-      localStorage.removeItem("valoraUserEmail");
-      localStorage.removeItem("valoraUser");
-
-      return <Navigate to="/login" replace />;
+  h2 {
+    font-size: 30px;
   }
 }
 
 
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
 
-// HEAD ADMIN ROUTE
-// Only an approved, logged-in Head Admin can access
-// Head Admin pages.
+@media (max-width: 600px) {
 
-
-function HeadAdminRoute({ children }) {
-
-  const loggedIn =
-    localStorage.getItem("valoraLoggedIn") === "true";
-
-  const storedUser =
-    JSON.parse(localStorage.getItem("valoraUser"));
-
-
-  // Not logged in
-  if (!loggedIn || !storedUser) {
-    return <Navigate to="/login" replace />;
+  h1 {
+    font-size: 32px;
   }
 
-
-  // Account is not approved
-  if (storedUser.status !== "Approved") {
-
-    localStorage.removeItem("valoraLoggedIn");
-    localStorage.removeItem("valoraUserEmail");
-    localStorage.removeItem("valoraUser");
-
-    return <Navigate to="/login" replace />;
+  h2 {
+    font-size: 26px;
   }
 
-
-  // Logged-in user is not Head Admin
-  if (storedUser.role !== "Head Admin") {
-    return <Navigate to="/dashboard" replace />;
+  body {
+    font-size: 15px;
   }
-
-
-  // Approved Head Admin
-  return children;
 }
-
-
-
-// MAIN APP
-
-
-function App() {
-
-  // Get all registered users
-  const users =
-    JSON.parse(localStorage.getItem("valoraUsers")) || [];
-
-
-  // Check whether the Head Admin account already exists
-  const headAdminExists = users.some(
-    (user) => user.role === "Head Admin"
-  );
-
-
-  // Create the Head Admin account automatically
-  // if it does not already exist.
-  if (!headAdminExists) {
-
-    localStorage.setItem(
-      "valoraUsers",
-      JSON.stringify([
-        ...users,
-        headAdminAccount,
-      ])
-    );
-
-  }
-
-
-  return (
-    <BrowserRouter>
-
-      <Routes>
-
-
-        {/* VALORA HOMEPAGE */}
-
-        <Route
-          path="/"
-          element={<Home />}
-        />
-
-
-        {/* LOGIN & REGISTRATION */}
-
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-
-        <Route
-          path="/registration-pending"
-          element={<RegistrationPending />}
-        />
-
-
-        {/* ROLE-BASED USER DASHBOARD */}
-
-        <Route
-          path="/dashboard"
-          element={<RoleDashboard />}
-        />
-
-
-        {/* HEAD ADMIN
-            Protected - Head Admin ONLY */}
-
-        <Route
-          path="/head-admin"
-          element={
-            <HeadAdminRoute>
-              <HeadAdminDashboard />
-            </HeadAdminRoute>
-          }
-        />
-
-        <Route
-          path="/registration-requests"
-          element={
-            <HeadAdminRoute>
-              <RegistrationRequests />
-            </HeadAdminRoute>
-          }
-        />
-
-        <Route
-          path="/user-management"
-          element={
-            <HeadAdminRoute>
-              <UserManagement />
-            </HeadAdminRoute>
-          }
-        />
-
-
-        {/* PROPERTY */}
-
-        <Route
-          path="/property"
-          element={<Property />}
-        />
-
-
-        {/* AI VALUATION */}
-
-        <Route
-          path="/valuation"
-          element={<Valuation />}
-        />
-
-
-        {/* COMPLAINTS */}
-
-        <Route
-          path="/complaints"
-          element={<Complaints />}
-        />
-
-        <Route
-          path="/resident-complaints"
-          element={<ResidentComplaints />}
-        />
-
-
-        {/* HOA ADMIN */}
-
-        <Route
-          path="/resident-directory"
-          element={<ResidentDirectory />}
-        />
-
-        <Route
-          path="/maintenance"
-          element={<Maintenance />}
-        />
-
-        <Route
-          path="/community-announcements"
-          element={<CommunityAnnouncements />}
-        />
-
-        <Route
-          path="/ai-training-data"
-          element={<AITrainingData />}
-        />
-
-        <Route
-          path="/community-analytics"
-          element={<CommunityAnalytics />}
-        />
-
-
-        {/* ESTATE AGENT */}
-
-        <Route
-          path="/agent-listings"
-          element={<AgentListings />}
-        />
-
-        <Route
-          path="/agent-edit-listings"
-          element={<AgentEditListings />}
-        />
-
-        <Route
-          path="/agent-inquiries"
-          element={<AgentInquiries />}
-        />
-
-
-        {/* SERVICE PROVIDERS */}
-
-        <Route
-          path="/providers"
-          element={<Providers />}
-        />
-
-
-        {/* ANNOUNCEMENTS */}
-
-        <Route
-          path="/announcements"
-          element={<Announcements />}
-        />
-
-
-        {/* PROFILE */}
-
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
-
-
-        {/* INVESTOR ROI */}
-
-        <Route
-          path="/roi"
-          element={<ROI />}
-        />
-
-
-      </Routes>
-
-    </BrowserRouter>
-  );
-}
-
-
-export default App;
