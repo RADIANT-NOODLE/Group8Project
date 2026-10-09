@@ -1,242 +1,855 @@
-/* =========================================================
-   VALORA - GLOBAL STYLES
-   =========================================================
-   PURPOSE:
-   Global styling used across the entire VALORA application.
+import React from "react";
 
-   PROJECT THEME:
-   Primary Purple: #563F6B
-   RGB: 86, 63, 107
-
-   Page-specific styling:
-   - home.css  → Aishwariya's Home/Landing Page
-   - auth.css  → Linda's Login/Register
-   - App.css   → Tabassum's Dashboard and system pages
-   ========================================================= */
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+} from "react-router-dom";
 
 
 /* =========================================================
-   GLOBAL VARIABLES
-   ========================================================= */
+   PUBLIC PAGES
+========================================================= */
 
-:root {
-  --primary: #563F6B;
-  --primary-dark: #463256;
-  --primary-light: #f1edf3;
+import Home from "./pages/Home";
 
-  --white: #ffffff;
+import Login
+    from "./pages/Auth/Login";
 
-  --background: #f5f3f7;
-  --surface: #ffffff;
+import Register
+    from "./pages/Auth/Register";
 
-  --text: #333333;
-  --text-dark: #222222;
-  --text-light: #777777;
-  --text-muted: #999999;
+import RegistrationPending
+    from "./pages/Auth/RegistrationPending";
 
-  --border: #ddd7e2;
 
-  --success: #27632a;
-  --success-bg: #eef9f0;
+/* =========================================================
+   PROPERTY
+========================================================= */
 
-  --danger: #a00000;
-  --danger-bg: #ffe0e0;
+import Property
+    from "./pages/Property/Property";
 
-  --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+import MyProperty
+    from "./pages/Property/MyProperty";
 
-  --font-main: Arial, Helvetica, sans-serif;
+import Properties
+    from "./pages/Property/Properties";
 
-  font-family: var(--font-main);
+import PropertyRequests
+    from "./pages/Property/PropertyRequests";
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+import PropertyApprovals
+    from "./pages/Property/PropertyApprovals";
 
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
+/* =========================================================
+   DASHBOARDS
+========================================================= */
+
+import Dashboard
+    from "./pages/Dashboard";
+
+import HeadAdminDashboard
+    from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
+
+
+/* =========================================================
+   RESIDENT
+========================================================= */
+
+import RequestToSell
+    from "./pages/RequestToSell";
+
+import Complaints
+    from "./pages/Complaints";
+
+import ResidentComplaints
+    from "./pages/Complaints/ResidentComplaints";
+
+import ResidentDirectory
+    from "./pages/Resident/ResidentDirectory";
+
+
+/* =========================================================
+   MAINTENANCE
+========================================================= */
+
+import Maintenance
+    from "./pages/Maintenance/Maintenance";
+
+
+/* =========================================================
+   COMMUNITY
+========================================================= */
+
+import Providers
+    from "./pages/Community/Providers";
+
+import CommunityAnnouncements
+    from "./pages/Announcements/CommunityAnnouncements";
+
+import Announcements
+    from "./pages/Announcements/Announcements";
+
+import CommunityAnalytics
+    from "./pages/Community/CommunityAnalytics";
+
+
+/* =========================================================
+   AI
+========================================================= */
+
+import AITrainingData
+    from "./pages/AI/AITrainingData";
+
+
+/* =========================================================
+   ESTATE AGENT
+========================================================= */
+
+import AgentListings
+    from "./pages/EstateAgent/AgentListings";
+
+import AgentEditListings
+    from "./pages/EstateAgent/AgentEditListings";
+
+import AgentInquiries
+    from "./pages/EstateAgent/AgentInquiries";
+
+
+/* =========================================================
+   INVESTOR
+========================================================= */
+
+import Valuation
+    from "./pages/Investor/Valuation";
+
+import ROI
+    from "./pages/Investor/ROI";
+
+
+/* =========================================================
+   HEAD ADMIN
+========================================================= */
+
+import RegistrationRequests
+    from "./pages/HeadAdmin/RegistrationRequests";
+
+import UserManagement
+    from "./pages/HeadAdmin/UserManagement";
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+import Profile
+    from "./pages/Profile";
+
+
+/* =========================================================
+   GLOBAL APP CSS
+========================================================= */
+
+import "./App.css";
+
+
+/* =========================================================
+   GET CURRENT USER
+========================================================= */
+
+function getCurrentUser() {
+
+    const storedUser =
+        localStorage.getItem("valoraUser");
+
+
+    if (!storedUser) {
+
+        return null;
+
+    }
+
+
+    try {
+
+        const user =
+            JSON.parse(storedUser);
+
+
+        if (!user || typeof user !== "object") {
+
+            return null;
+
+        }
+
+
+        /* =====================================================
+           NORMALISE ROLE
+        ===================================================== */
+
+        let normalizedRole =
+            user.role || "";
+
+
+        const roleLower =
+            String(normalizedRole)
+                .trim()
+                .toLowerCase();
+
+
+        if (
+            roleLower === "hoa" ||
+            roleLower === "hoa admin" ||
+            roleLower === "hoa administrator"
+        ) {
+
+            normalizedRole =
+                "HOA Admin";
+
+        }
+
+
+        else if (
+            roleLower === "administrator"
+        ) {
+
+            normalizedRole =
+                "HOA Admin";
+
+        }
+
+
+        else if (
+            roleLower === "property owner"
+        ) {
+
+            normalizedRole =
+                "Resident";
+
+        }
+
+
+        else if (
+            roleLower === "buyer"
+        ) {
+
+            normalizedRole =
+                "Investor";
+
+        }
+
+
+        /* =====================================================
+           NORMALISE NAME
+        ===================================================== */
+
+        const firstName =
+            user.firstName ||
+            user.firstname ||
+            "";
+
+
+        const lastName =
+            user.lastName ||
+            user.lastname ||
+            "";
+
+
+        const fullName =
+            user.fullName ||
+            user.name ||
+            `${firstName} ${lastName}`.trim();
+
+
+        /* =====================================================
+           NORMALISE INITIALS
+        ===================================================== */
+
+        let initials =
+            user.initials ||
+            "";
+
+
+        if (!initials) {
+
+            initials =
+                `${firstName.charAt(0)}${lastName.charAt(0)}`
+                    .toUpperCase();
+
+        }
+
+
+        if (!initials && fullName) {
+
+            const nameParts =
+                fullName
+                    .trim()
+                    .split(/\s+/);
+
+
+            initials =
+                nameParts
+                    .slice(0, 2)
+                    .map(
+                        (part) =>
+                            part.charAt(0)
+                    )
+                    .join("")
+                    .toUpperCase();
+
+        }
+
+
+        return {
+            ...user,
+
+            role:
+                normalizedRole,
+
+            firstName,
+            lastName,
+            fullName,
+            initials,
+        };
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Unable to read VALORA user:",
+            error
+        );
+
+        return null;
+
+    }
+
 }
 
 
 /* =========================================================
-   GLOBAL RESET
-   ========================================================= */
+   PROTECTED ROUTE
+========================================================= */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+function ProtectedRoute({ children }) {
+
+    const user =
+        getCurrentUser();
+
+
+    if (!user) {
+
+        return (
+            <Navigate
+                to="/login"
+                replace
+            />
+        );
+
+    }
+
+
+    return children;
+
 }
 
 
 /* =========================================================
-   HTML & BODY
-   ========================================================= */
+   HEAD ADMIN ROUTE
+========================================================= */
 
-html {
-  width: 100%;
-  min-height: 100%;
-}
+function HeadAdminRoute({ children }) {
 
-body {
-  width: 100%;
-  min-height: 100vh;
-
-  margin: 0;
-
-  font-family: var(--font-main);
-
-  background: var(--background);
-  color: var(--text);
-
-  line-height: 1.5;
-}
+    const user =
+        getCurrentUser();
 
 
-/* =========================================================
-   ROOT REACT CONTAINER
-   ========================================================= */
+    /* =====================================================
+       NOT LOGGED IN
+    ===================================================== */
 
-#root {
-  width: 100%;
-  min-height: 100vh;
+    if (!user) {
 
-  margin: 0;
+        return (
+            <Navigate
+                to="/login"
+                replace
+            />
+        );
 
-  box-sizing: border-box;
-}
-
-
-/* =========================================================
-   HEADINGS
-   ========================================================= */
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-main);
-
-  color: var(--text-dark);
-
-  font-weight: 700;
-}
-
-h1 {
-  font-size: 42px;
-  line-height: 1.15;
-}
-
-h2 {
-  font-size: 34px;
-  line-height: 1.2;
-}
-
-h3 {
-  font-size: 22px;
-  line-height: 1.3;
-}
-
-h4 {
-  font-size: 18px;
-}
+    }
 
 
-/* =========================================================
-   PARAGRAPHS
-   ========================================================= */
+    /* =====================================================
+       CHECK ROLE
+    ===================================================== */
 
-p {
-  margin: 0;
-  line-height: 1.6;
-}
+    const role =
+        String(user.role || "")
+            .trim()
+            .toLowerCase();
 
 
-/* =========================================================
-   LINKS
-   ========================================================= */
+    const isHeadAdmin =
+        role === "head admin" ||
+        role === "headadministrator" ||
+        role === "head administrator";
 
-a {
-  color: var(--primary);
-  text-decoration: none;
-}
 
-a:hover {
-  text-decoration: underline;
+    if (!isHeadAdmin) {
+
+        return (
+            <Navigate
+                to="/dashboard"
+                replace
+            />
+        );
+
+    }
+
+
+    /* =====================================================
+       CHECK APPROVAL STATUS
+    ===================================================== */
+
+    const status =
+        String(user.status || "")
+            .trim()
+            .toLowerCase();
+
+
+    const isApproved =
+        status === "approved" ||
+        status === "active";
+
+
+    if (!isApproved) {
+
+        return (
+            <Navigate
+                to="/registration-pending"
+                replace
+            />
+        );
+
+    }
+
+
+    return children;
+
 }
 
 
 /* =========================================================
-   BUTTONS
-   ========================================================= */
+   APP
+========================================================= */
 
-button {
-  font-family: inherit;
+function App() {
+
+    return (
+
+        <BrowserRouter>
+
+            <Routes>
+
+
+                {/* =================================================
+                    LANDING PAGE
+                ================================================= */}
+
+                <Route
+                    path="/"
+                    element={<Home />}
+                />
+
+
+                {/* =================================================
+                    AUTHENTICATION
+                ================================================= */}
+
+                <Route
+                    path="/login"
+                    element={<Login />}
+                />
+
+
+                <Route
+                    path="/register"
+                    element={<Register />}
+                />
+
+
+                <Route
+                    path="/registration-pending"
+                    element={<RegistrationPending />}
+                />
+
+
+                {/* =================================================
+                    PUBLIC PROPERTY BROWSING
+
+                    IMPORTANT:
+                    /properties = Properties.jsx
+
+                    This is NOT Home.jsx.
+                ================================================= */}
+
+                <Route
+                    path="/properties"
+                    element={<Properties />}
+                />
+
+
+                {/* =================================================
+                    PUBLIC INDIVIDUAL PROPERTY
+
+                    Example:
+                    /property/VAL-001
+                ================================================= */}
+
+                <Route
+                    path="/property/:propertyId"
+                    element={<Property />}
+                />
+
+
+                {/* =================================================
+                    RESIDENT MY PROPERTY
+
+                    /property = MyProperty.jsx
+                ================================================= */}
+
+                <Route
+                    path="/property"
+                    element={
+                        <ProtectedRoute>
+                            <MyProperty />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    MAIN DASHBOARD
+                ================================================= */}
+
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    REQUEST TO SELL / RENT
+                ================================================= */}
+
+                <Route
+                    path="/request-to-sell"
+                    element={
+                        <ProtectedRoute>
+                            <RequestToSell />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    COMPLAINTS
+                ================================================= */}
+
+                <Route
+                    path="/complaints"
+                    element={
+                        <ProtectedRoute>
+                            <Complaints />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    RESIDENT COMPLAINTS
+                ================================================= */}
+
+                <Route
+                    path="/resident-complaints"
+                    element={
+                        <ProtectedRoute>
+                            <ResidentComplaints />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    MAINTENANCE
+                ================================================= */}
+
+                <Route
+                    path="/maintenance"
+                    element={
+                        <ProtectedRoute>
+                            <Maintenance />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    PROVIDERS
+                ================================================= */}
+
+                <Route
+                    path="/providers"
+                    element={
+                        <ProtectedRoute>
+                            <Providers />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    COMMUNITY ANNOUNCEMENTS
+                ================================================= */}
+
+                <Route
+                    path="/announcements"
+                    element={
+                        <ProtectedRoute>
+                            <CommunityAnnouncements />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                <Route
+                    path="/community-announcements"
+                    element={
+                        <ProtectedRoute>
+                            <CommunityAnnouncements />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    COMMUNITY ANALYTICS
+                ================================================= */}
+
+                <Route
+                    path="/community-analytics"
+                    element={
+                        <ProtectedRoute>
+                            <CommunityAnalytics />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    RESIDENT DIRECTORY
+                ================================================= */}
+
+                <Route
+                    path="/resident-directory"
+                    element={
+                        <ProtectedRoute>
+                            <ResidentDirectory />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    PROPERTY REQUESTS
+                ================================================= */}
+
+                <Route
+                    path="/property-requests"
+                    element={
+                        <ProtectedRoute>
+                            <PropertyRequests />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    PROPERTY APPROVALS
+                ================================================= */}
+
+                <Route
+                    path="/property-approvals"
+                    element={
+                        <ProtectedRoute>
+                            <PropertyApprovals />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    AI TRAINING DATA
+                ================================================= */}
+
+                <Route
+                    path="/ai-training-data"
+                    element={
+                        <ProtectedRoute>
+                            <AITrainingData />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    AI VALUATION
+                ================================================= */}
+
+                <Route
+                    path="/valuation"
+                    element={
+                        <ProtectedRoute>
+                            <Valuation />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    INVESTOR ROI
+                ================================================= */}
+
+                <Route
+                    path="/roi"
+                    element={
+                        <ProtectedRoute>
+                            <ROI />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    ESTATE AGENT
+                ================================================= */}
+
+                <Route
+                    path="/agent-listings"
+                    element={
+                        <ProtectedRoute>
+                            <AgentListings />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                <Route
+                    path="/agent-edit-listings"
+                    element={
+                        <ProtectedRoute>
+                            <AgentEditListings />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                <Route
+                    path="/agent-inquiries"
+                    element={
+                        <ProtectedRoute>
+                            <AgentInquiries />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    HEAD ADMIN DASHBOARD
+                ================================================= */}
+
+                <Route
+                    path="/head-admin"
+                    element={
+                        <HeadAdminRoute>
+                            <HeadAdminDashboard />
+                        </HeadAdminRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    HEAD ADMIN REGISTRATION REQUESTS
+                ================================================= */}
+
+                <Route
+                    path="/registration-requests"
+                    element={
+                        <HeadAdminRoute>
+                            <RegistrationRequests />
+                        </HeadAdminRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    HEAD ADMIN USER MANAGEMENT
+                ================================================= */}
+
+                <Route
+                    path="/user-management"
+                    element={
+                        <HeadAdminRoute>
+                            <UserManagement />
+                        </HeadAdminRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    PROFILE
+                ================================================= */}
+
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    }
+                />
+
+
+                {/* =================================================
+                    FALLBACK
+                ================================================= */}
+
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/"
+                            replace
+                        />
+                    }
+                />
+
+            </Routes>
+
+        </BrowserRouter>
+
+    );
+
 }
 
 
-/* =========================================================
-   FORM ELEMENTS
-   ========================================================= */
-
-input,
-select,
-textarea,
-button {
-  font-family: inherit;
-}
-
-
-/* =========================================================
-   IMAGES
-   ========================================================= */
-
-img {
-  max-width: 100%;
-}
-
-
-/* =========================================================
-   SELECTION
-   ========================================================= */
-
-::selection {
-  background: var(--primary);
-  color: var(--white);
-}
-
-
-/* =========================================================
-   MOBILE GLOBAL SETTINGS
-   ========================================================= */
-
-@media (max-width: 1024px) {
-
-  h1 {
-    font-size: 36px;
-  }
-
-  h2 {
-    font-size: 30px;
-  }
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-   ========================================================= */
-
-@media (max-width: 600px) {
-
-  h1 {
-    font-size: 32px;
-  }
-
-  h2 {
-    font-size: 26px;
-  }
-
-  body {
-    font-size: 15px;
-  }
-}
+export default App;
