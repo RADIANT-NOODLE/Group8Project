@@ -1,0 +1,720 @@
+/*
+=========================================================
+VALORA MY PROPERTY
+=========================================================
+*/
+
+/* =======================================================
+   PAGE
+======================================================= */
+
+.my-property-page {
+    min-height: 100vh;
+    width: 100%;
+    background: #f5f3f7;
+    color: #1f1f1f;
+}
+
+
+/* =======================================================
+   MAIN CONTENT
+======================================================= */
+
+.my-property-main {
+    width: calc(100% - 220px);
+    min-height: 100vh;
+    margin-left: 220px;
+    padding: 42px 30px 55px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+
+/* =======================================================
+   PAGE HEADER
+======================================================= */
+
+.my-property-header {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto 28px;
+}
+
+.my-property-eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: #563f6b;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.my-property-header h1 {
+    margin: 0;
+    color: #1f1f1f;
+    font-size: 30px;
+    line-height: 1.15;
+    font-weight: 750;
+}
+
+.my-property-header p {
+    margin: 9px 0 0;
+    color: #77727b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =======================================================
+   PROPERTY CARD
+======================================================= */
+
+.my-property-card {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto 25px;
+    display: grid;
+    grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
+    background: #ffffff;
+    border: 1px solid #e5e1e8;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(35, 25, 45, 0.045);
+}
+
+
+/* =======================================================
+   PROPERTY IMAGE
+======================================================= */
+
+.my-property-image {
+    min-height: 430px;
+    background: #eeebf0;
+    position: relative;
+    overflow: hidden;
+}
+
+.my-property-image img {
+    width: 100%;
+    height: 100%;
+    min-height: 430px;
+    display: block;
+    object-fit: cover;
+}
+
+.my-property-image-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 430px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 35px;
+    box-sizing: border-box;
+    text-align: center;
+    color: #563f6b;
+}
+
+.my-property-image-placeholder svg {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 14px;
+}
+
+.my-property-image-placeholder span {
+    color: #3b3540;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.my-property-image-placeholder small {
+    max-width: 230px;
+    margin-top: 8px;
+    color: #89838d;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+
+/* =======================================================
+   PROPERTY CARD CONTENT
+======================================================= */
+
+.my-property-card-content {
+    min-width: 0;
+    padding: 30px 32px;
+    box-sizing: border-box;
+}
+
+.my-property-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 25px;
+    padding-bottom: 23px;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.my-property-unit {
+    display: block;
+    margin-bottom: 8px;
+    color: #563f6b;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.my-property-card-top h2 {
+    margin: 0;
+    color: #26232a;
+    font-size: 23px;
+    line-height: 1.25;
+    font-weight: 750;
+}
+
+.my-property-location {
+    margin: 7px 0 0;
+    color: #77727b;
+    font-size: 11px;
+}
+
+
+/* =======================================================
+   STATUS
+======================================================= */
+
+.my-property-statuses {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+}
+
+.my-property-occupancy,
+.my-property-unit-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    padding: 5px 10px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+
+.my-property-occupancy {
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.my-property-unit-status {
+    background: #f0eef2;
+    color: #5f5963;
+}
+
+
+/* =======================================================
+   PROPERTY DETAILS
+======================================================= */
+
+.my-property-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 23px;
+    border: 1px solid #ebe8ed;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.my-property-detail {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 15px;
+    box-sizing: border-box;
+    border-right: 1px solid #ebe8ed;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.my-property-detail:nth-child(2n) {
+    border-right: 0;
+}
+
+.my-property-detail:nth-child(3),
+.my-property-detail:nth-child(4) {
+    border-bottom: 0;
+}
+
+.my-property-detail-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: #f2eef5;
+    color: #563f6b;
+}
+
+.my-property-detail div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.my-property-detail div span {
+    color: #8a858d;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.my-property-detail div strong {
+    color: #302c34;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+
+/* =======================================================
+   DESCRIPTION
+======================================================= */
+
+.my-property-description {
+    margin-top: 22px;
+}
+
+.my-property-description > span {
+    display: block;
+    margin-bottom: 7px;
+    color: #563f6b;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+
+.my-property-description p {
+    margin: 0;
+    color: #77727b;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+
+/* =======================================================
+   ACTIONS
+======================================================= */
+
+.my-property-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.my-property-primary-button,
+.my-property-secondary-button {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+        background .2s ease,
+        color .2s ease,
+        border-color .2s ease;
+}
+
+.my-property-primary-button {
+    background: #563f6b;
+    color: #ffffff;
+    border: 1px solid #563f6b;
+}
+
+.my-property-primary-button:hover {
+    background: #463256;
+    border-color: #463256;
+}
+
+.my-property-secondary-button {
+    background: #ffffff;
+    color: #563f6b;
+    border: 1px solid #d9d2de;
+}
+
+.my-property-secondary-button:hover {
+    background: #f4f1f6;
+    border-color: #563f6b;
+}
+
+
+/* =======================================================
+   PROPERTY SUMMARY
+======================================================= */
+
+.my-property-summary {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 25px 28px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #e5e1e8;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(35, 25, 45, 0.035);
+}
+
+.my-property-summary-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 19px;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.my-property-summary-heading span {
+    display: block;
+    margin-bottom: 5px;
+    color: #8b858e;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.my-property-summary-heading h2 {
+    margin: 0;
+    color: #2b2730;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.my-property-summary-status {
+    padding: 7px 11px;
+    border-radius: 5px;
+    background: #563f6b;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+
+.my-property-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 20px;
+}
+
+.my-property-summary-grid > div {
+    min-width: 0;
+    padding: 4px 18px;
+    border-right: 1px solid #ebe8ed;
+}
+
+.my-property-summary-grid > div:first-child {
+    padding-left: 0;
+}
+
+.my-property-summary-grid > div:last-child {
+    padding-right: 0;
+    border-right: 0;
+}
+
+.my-property-summary-grid span {
+    display: block;
+    margin-bottom: 6px;
+    color: #8a858d;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.my-property-summary-grid strong {
+    display: block;
+    overflow: hidden;
+    color: #302c34;
+    font-size: 10px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =======================================================
+   EMPTY STATE
+======================================================= */
+
+.my-property-empty-card {
+    width: 100%;
+    max-width: 1180px;
+    min-height: 350px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    padding: 45px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #e5e1e8;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(35, 25, 45, 0.035);
+}
+
+.my-property-empty-icon {
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #f1edf4;
+    color: #563f6b;
+}
+
+.my-property-empty-icon svg {
+    width: 36px;
+    height: 36px;
+}
+
+.my-property-empty-content {
+    max-width: 520px;
+}
+
+.my-property-empty-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #563f6b;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.my-property-empty-content h2 {
+    margin: 0;
+    color: #28242c;
+    font-size: 20px;
+    line-height: 1.35;
+    font-weight: 750;
+}
+
+.my-property-empty-content p {
+    margin: 9px 0 20px;
+    color: #77727b;
+    font-size: 10px;
+    line-height: 1.7;
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.my-property-loading {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.my-property-loading-line {
+    width: 230px;
+    height: 30px;
+    margin-bottom: 28px;
+    border-radius: 6px;
+    background: #e5e1e8;
+}
+
+.my-property-loading-box {
+    width: 100%;
+    height: 430px;
+    border-radius: 12px;
+    background: #e5e1e8;
+}
+
+
+/* =======================================================
+   RESPONSIVE
+======================================================= */
+
+@media (max-width: 1100px) {
+
+    .my-property-card {
+        grid-template-columns: 320px minmax(0, 1fr);
+    }
+
+    .my-property-card-content {
+        padding: 25px;
+    }
+
+    .my-property-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 0;
+    }
+
+    .my-property-summary-grid > div {
+        border-right: 0;
+    }
+
+    .my-property-summary-grid > div:nth-child(odd) {
+        padding-left: 0;
+        padding-right: 18px;
+        border-right: 1px solid #ebe8ed;
+    }
+
+    .my-property-summary-grid > div:nth-child(even) {
+        padding-left: 18px;
+        padding-right: 0;
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    .my-property-main {
+        width: calc(100% - 200px);
+        margin-left: 200px;
+        padding: 36px 25px 45px;
+    }
+
+    .my-property-card {
+        grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    .my-property-image,
+    .my-property-image img,
+    .my-property-image-placeholder {
+        min-height: 390px;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .my-property-main {
+        width: calc(100% - 170px);
+        margin-left: 170px;
+        padding: 34px 20px 45px;
+    }
+
+    .my-property-header h1 {
+        font-size: 26px;
+    }
+
+    .my-property-card {
+        display: block;
+    }
+
+    .my-property-image,
+    .my-property-image img,
+    .my-property-image-placeholder {
+        min-height: 280px;
+        height: 280px;
+    }
+
+    .my-property-card-content {
+        padding: 24px;
+    }
+
+    .my-property-summary {
+        padding: 22px;
+    }
+
+    .my-property-empty-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 35px 25px;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .my-property-main {
+        width: calc(100% - 68px);
+        margin-left: 68px;
+        padding: 28px 14px 35px;
+    }
+
+    .my-property-header {
+        margin-bottom: 20px;
+    }
+
+    .my-property-header h1 {
+        font-size: 23px;
+    }
+
+    .my-property-header p {
+        font-size: 10px;
+    }
+
+    .my-property-card-top {
+        display: block;
+    }
+
+    .my-property-statuses {
+        align-items: flex-start;
+        margin-top: 14px;
+    }
+
+    .my-property-details {
+        grid-template-columns: 1fr;
+    }
+
+    .my-property-detail,
+    .my-property-detail:nth-child(2n),
+    .my-property-detail:nth-child(3),
+    .my-property-detail:nth-child(4) {
+        border-right: 0;
+        border-bottom: 1px solid #ebe8ed;
+    }
+
+    .my-property-detail:last-child {
+        border-bottom: 0;
+    }
+
+    .my-property-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .my-property-summary-grid > div,
+    .my-property-summary-grid > div:nth-child(odd),
+    .my-property-summary-grid > div:nth-child(even) {
+        padding: 0;
+        border-right: 0;
+    }
+
+    .my-property-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .my-property-primary-button,
+    .my-property-secondary-button {
+        width: 100%;
+    }
+
+}
