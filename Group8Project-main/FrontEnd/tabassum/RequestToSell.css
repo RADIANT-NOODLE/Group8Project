@@ -1,0 +1,793 @@
+/* =========================================================
+   VALORA PROPERTY REQUEST
+   RESIDENT ACCOUNT PAGE
+========================================================= */
+
+.request-page {
+    min-height: 100vh;
+    margin-left: 220px;
+    padding: 32px 30px 50px;
+    background: #f5f3f7;
+    color: #1f1f1f;
+    box-sizing: border-box;
+}
+
+.request-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.request-header {
+    margin-bottom: 24px;
+}
+
+.request-eyebrow {
+    display: block;
+    margin: 0 0 7px;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.request-header h1 {
+    margin: 0;
+    color: #202124;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.request-header p {
+    max-width: 700px;
+    margin: 8px 0 0;
+    color: #73777d;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.request-card {
+    width: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+
+    border: 1px solid #e4e0e7;
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    box-shadow: 0 3px 14px rgba(40, 30, 50, 0.04);
+}
+
+
+/* =========================================================
+   FORM SECTIONS
+========================================================= */
+
+.form-section {
+    padding-bottom: 29px;
+    margin-bottom: 29px;
+
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.form-section:last-of-type {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+}
+
+.section-heading {
+    margin-bottom: 19px;
+}
+
+.section-heading h2 {
+    margin: 0;
+
+    color: #302a34;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+.section-heading p {
+    margin: 5px 0 0;
+
+    color: #89838b;
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   REQUEST TYPE
+========================================================= */
+
+.request-type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.request-type {
+    width: 100%;
+    padding: 19px;
+
+    border: 1px solid #ddd8e1;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #2f2934;
+
+    font-family: inherit;
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.request-type:hover {
+    border-color: #a99caf;
+    background: #fcfbfd;
+}
+
+.request-type.active {
+    border-color: #563f6b;
+    background: #f5f1f7;
+
+    box-shadow:
+        0 0 0 2px rgba(86, 63, 107, 0.07);
+}
+
+.request-type strong {
+    display: block;
+    margin-bottom: 6px;
+
+    color: #342b39;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.request-type span {
+    display: block;
+
+    color: #7d7582;
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   FORM GRID
+========================================================= */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.form-field.full {
+    grid-column: 1 / -1;
+}
+
+.form-field label {
+    margin-bottom: 7px;
+
+    color: #4c4451;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.form-field label span {
+    margin-left: 3px;
+    color: #563f6b;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    min-height: 41px;
+    padding: 10px 12px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #d9d5dd;
+    border-radius: 7px;
+
+    outline: none;
+
+    background: #ffffff;
+    color: #353038;
+
+    font-family: inherit;
+    font-size: 11px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+    color: #a19ba3;
+}
+
+.form-field input:hover,
+.form-field select:hover,
+.form-field textarea:hover {
+    border-color: #c7c0ca;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: #563f6b;
+
+    box-shadow:
+        0 0 0 3px rgba(86, 63, 107, 0.08);
+}
+
+.form-field textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.form-error {
+    display: flex;
+    align-items: flex-start;
+
+    padding: 12px 14px;
+    margin-top: 19px;
+
+    border: 1px solid #e2d0d6;
+    border-left: 3px solid #8a5261;
+    border-radius: 7px;
+
+    background: #faf4f6;
+    color: #7d4655;
+
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+
+    margin-top: 25px;
+    padding-top: 24px;
+
+    border-top: 1px solid #ebe8ed;
+}
+
+.primary-button,
+.secondary-button {
+    min-width: 115px;
+    height: 40px;
+    padding: 0 19px;
+
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.primary-button {
+    border: 1px solid #563f6b;
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.primary-button:hover {
+    border-color: #463256;
+    background: #463256;
+}
+
+.primary-button:active,
+.secondary-button:active {
+    transform: translateY(1px);
+}
+
+.secondary-button {
+    border: 1px solid #d9d4dc;
+    background: #ffffff;
+    color: #625a66;
+}
+
+.secondary-button:hover {
+    border-color: #563f6b;
+    background: #faf8fb;
+    color: #563f6b;
+}
+
+
+/* =========================================================
+   SELECTED PROPERTY
+========================================================= */
+
+.selected-property {
+    margin-top: 20px;
+
+    border: 1px solid #e0d9e4;
+    border-radius: 9px;
+
+    background: #faf9fb;
+
+    overflow: hidden;
+}
+
+.selected-property-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 16px 18px;
+
+    border-bottom: 1px solid #e6e1e8;
+}
+
+.selected-property-header span {
+    display: block;
+    margin-bottom: 5px;
+
+    color: #8a828e;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.selected-property-header h3 {
+    margin: 0;
+
+    color: #342d38;
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.selected-property-header > strong {
+    padding: 5px 8px;
+
+    border-radius: 5px;
+
+    background: #f0ebf4;
+    color: #563f6b;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.selected-property-details {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.selected-property-details > div {
+    padding: 14px 18px;
+
+    border-right: 1px solid #e8e3e9;
+    border-bottom: 1px solid #e8e3e9;
+}
+
+.selected-property-details > div:nth-child(3n) {
+    border-right: 0;
+}
+
+.selected-property-details > div:nth-last-child(-n + 3) {
+    border-bottom: 0;
+}
+
+.selected-property-details span {
+    display: block;
+    margin-bottom: 5px;
+
+    color: #8b838f;
+    font-size: 9px;
+}
+
+.selected-property-details strong {
+    display: block;
+
+    color: #403843;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   ACCESS RESTRICTED
+========================================================= */
+
+.request-access-card {
+    max-width: 600px;
+    margin: 80px auto;
+
+    text-align: center;
+}
+
+.request-access-icon {
+    width: 54px;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    background: #f0ebf4;
+    color: #563f6b;
+}
+
+.request-access-card h1 {
+    margin: 0;
+
+    color: #302a34;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.request-access-card p {
+    max-width: 450px;
+    margin: 10px auto 22px;
+
+    color: #7d7582;
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+.request-access-card button {
+    min-width: 150px;
+    height: 40px;
+    padding: 0 20px;
+
+    border: 1px solid #563f6b;
+    border-radius: 7px;
+
+    background: #563f6b;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.request-access-card button:hover {
+    background: #463256;
+}
+
+
+/* =========================================================
+   SUCCESS STATE
+========================================================= */
+
+.request-success {
+    max-width: 600px;
+    margin: 65px auto;
+
+    text-align: center;
+}
+
+.success-icon {
+    width: 54px;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    background: #f0ebf4;
+    color: #563f6b;
+
+    font-weight: 700;
+}
+
+.success-icon svg {
+    display: block;
+}
+
+.request-success h1 {
+    margin: 0;
+
+    color: #302a34;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.request-success > p {
+    max-width: 470px;
+    margin: 10px auto;
+
+    color: #7d7582;
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+.success-status {
+    max-width: 400px;
+    margin: 24px auto 10px;
+    padding: 15px;
+
+    border: 1px solid #e4dce8;
+    border-radius: 8px;
+
+    background: #f8f5f9;
+}
+
+.success-status span,
+.success-property span {
+    display: block;
+    margin-bottom: 5px;
+
+    color: #8a828e;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.success-status strong {
+    color: #563f6b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   SUCCESS PROPERTY
+========================================================= */
+
+.success-property {
+    max-width: 400px;
+    margin: 10px auto 24px;
+    padding: 14px 15px;
+
+    border: 1px solid #e4dce8;
+    border-radius: 8px;
+
+    background: #faf8fb;
+}
+
+.success-property strong {
+    display: block;
+
+    color: #403642;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.request-success button {
+    min-width: 150px;
+    height: 40px;
+    padding: 0 22px;
+
+    border: 1px solid #563f6b;
+    border-radius: 7px;
+
+    background: #563f6b;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease;
+}
+
+.request-success button:hover {
+    background: #463256;
+}
+
+
+/* =========================================================
+   RESPONSIVE — MATCH SHARED SIDEBAR
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .request-page {
+        margin-left: 200px;
+        padding: 30px 25px 45px;
+    }
+
+    .request-container {
+        max-width: 100%;
+    }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .request-page {
+        margin-left: 170px;
+        padding: 25px 20px 40px;
+    }
+
+    .request-card {
+        padding: 24px;
+        border-radius: 9px;
+    }
+
+    .request-header h1 {
+        font-size: 27px;
+    }
+
+    .request-header p {
+        font-size: 12px;
+    }
+
+    .request-type-grid,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-field.full {
+        grid-column: auto;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .primary-button,
+    .secondary-button {
+        width: 100%;
+    }
+
+    .selected-property-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .selected-property-details > div:nth-child(3n) {
+        border-right: 1px solid #e8e3e9;
+    }
+
+    .selected-property-details > div:nth-child(2n) {
+        border-right: 0;
+    }
+
+    .selected-property-details > div:nth-last-child(-n + 3) {
+        border-bottom: 1px solid #e8e3e9;
+    }
+
+    .selected-property-details > div:nth-last-child(-n + 2) {
+        border-bottom: 0;
+    }
+
+    .request-success {
+        margin: 35px auto;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .request-page {
+        margin-left: 68px;
+        padding: 20px 15px 30px;
+    }
+
+    .request-card {
+        padding: 18px;
+    }
+
+    .request-header {
+        margin-bottom: 20px;
+    }
+
+    .request-header h1 {
+        font-size: 24px;
+    }
+
+    .request-header p {
+        font-size: 11px;
+    }
+
+    .request-type {
+        padding: 16px;
+    }
+
+    .section-heading h2 {
+        font-size: 14px;
+    }
+
+    .selected-property-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .selected-property-details {
+        grid-template-columns: 1fr;
+    }
+
+    .selected-property-details > div,
+    .selected-property-details > div:nth-child(2n),
+    .selected-property-details > div:nth-child(3n) {
+        border-right: 0;
+        border-bottom: 1px solid #e8e3e9;
+    }
+
+    .selected-property-details > div:last-child {
+        border-bottom: 0;
+    }
+
+    .request-success {
+        padding: 25px 20px;
+    }
+
+    .request-success h1 {
+        font-size: 22px;
+    }
+
+    .request-success > p {
+        font-size: 10px;
+    }
+
+    .request-access-card {
+        margin: 40px auto;
+    }
+}
