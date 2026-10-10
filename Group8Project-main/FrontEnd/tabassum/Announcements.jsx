@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./Announcements.css";
 
 function Announcements() {
   const [search, setSearch] = useState("");
@@ -6,7 +7,7 @@ function Announcements() {
 
   const announcements = [
     {
-      icon: "🔧",
+      icon: "maintenance",
       priority: "Normal",
       priorityClass: "normal",
       category: "maintenance",
@@ -17,7 +18,7 @@ function Announcements() {
       date: "18 August 2026",
     },
     {
-      icon: "🔒",
+      icon: "security",
       priority: "Important",
       priorityClass: "high",
       category: "security",
@@ -28,7 +29,7 @@ function Announcements() {
       date: "14 August 2026",
     },
     {
-      icon: "🚧",
+      icon: "parking",
       priority: "Normal",
       priorityClass: "normal",
       category: "parking",
@@ -39,7 +40,7 @@ function Announcements() {
       date: "16 August 2026",
     },
     {
-      icon: "🌳",
+      icon: "community",
       priority: "Normal",
       priorityClass: "normal",
       category: "community",
@@ -63,18 +64,107 @@ function Announcements() {
   });
 
   const handleLogout = () => {
+    localStorage.removeItem("valoraLoggedIn");
+    localStorage.removeItem("valoraUser");
+    localStorage.removeItem("valoraUserEmail");
+
     window.location.href = "/";
   };
 
+  const AnnouncementIcon = ({ type }) => {
+    if (type === "maintenance") {
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M14.5 5.5a4 4 0 0 0-5.1 5.1L4 16a2.1 2.1 0 1 0 3 3l5.4-5.4a4 4 0 0 0 5.1-5.1l-2.4 2.4-2.1-2.1z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    }
+
+    if (type === "security") {
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 3.5 19 6v5.2c0 4.5-2.8 7.8-7 9.3-4.2-1.5-7-4.8-7-9.3V6z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="m9 12 2 2 4-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    }
+
+    if (type === "parking") {
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect
+            x="5"
+            y="4"
+            width="14"
+            height="16"
+            rx="2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          />
+          <path
+            d="M10 16V8h3a2.5 2.5 0 0 1 0 5h-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    }
+
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M12 3.5V8M12 12l3.5 2M16.5 4.5h4v4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  };
+
   return (
-    <div className="dashboard-layout">
+    <div className="announcements-layout">
 
-      {/* SIDEBAR */}
-      <aside className="sidebar">
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
 
-        <div className="logo-area">
+      <aside className="announcements-sidebar">
 
-          {/* VALORA LOGO IMAGE */}
+        <div className="announcements-logo-area">
+
           <img
             src="/ValoraLogo.jpeg"
             alt="VALORA Logo"
@@ -87,43 +177,177 @@ function Announcements() {
         </div>
 
 
-        <nav className="side-nav">
+        <nav className="announcements-side-nav">
 
           <a href="/dashboard">
-            🏠 Dashboard
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-5v6h-5A1.5 1.5 0 0 1 3 19.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>Dashboard</span>
+
           </a>
+
 
           <a href="/property">
-            🏡 My Property
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M9 21v-6h6v6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>My Property</span>
+
           </a>
+
 
           <a href="/valuation">
-            🤖 AI Valuation
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="5"
+                y="5"
+                width="14"
+                height="14"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M9 9h6M9 13h2M13 13h2M9 16h2M13 16h2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>AI Valuation</span>
+
           </a>
+
 
           <a href="/complaints">
-            🏘 Complaints
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="4"
+                y="3"
+                width="16"
+                height="18"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M8 8h8M8 12h8M8 16h5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>Complaints</span>
+
           </a>
 
+
           <a href="/providers">
-            🔧 Service Providers
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M14.5 5.5a4 4 0 0 0-5.1 5.1L4 16a2.1 2.1 0 1 0 3 3l5.4-5.4a4 4 0 0 0 5.1-5.1l-2.4 2.4-2.1-2.1z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>Service Providers</span>
+
           </a>
+
 
           <a
             href="/announcements"
             className="active"
           >
-            📢 Announcements
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 10v4h3l8 4V6l-8 4z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M7 14l1.5 5h2L9 14M19 9.5a3.5 3.5 0 0 1 0 5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>Announcements</span>
+
           </a>
 
+
           <a href="/profile">
-            👤 My Profile
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle
+                cx="12"
+                cy="8"
+                r="3.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>My Profile</span>
+
           </a>
 
         </nav>
 
 
-        <div className="logout-area">
+        {/* LOGOUT */}
+
+        <div className="announcements-logout-area">
 
           <a
             href="/"
@@ -132,7 +356,27 @@ function Announcements() {
               handleLogout();
             }}
           >
-            🚪 Logout
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="m14 8 4 4-4 4M18 12H9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>Logout</span>
+
           </a>
 
         </div>
@@ -140,15 +384,18 @@ function Announcements() {
       </aside>
 
 
-      {/* MAIN CONTENT */}
-      <main className="dashboard-main">
+      {/* =====================================================
+          MAIN CONTENT
+      ===================================================== */}
 
-        <div className="top-bar">
+      <main className="announcements-main">
+
+        <div className="announcements-top-bar">
 
           <div>
 
             <h2>
-              HOA Announcements 📢
+              HOA Announcements
             </h2>
 
             <p>
@@ -157,68 +404,126 @@ function Announcements() {
 
           </div>
 
+          <div className="announcements-profile-small">
+
+            <div className="announcements-profile-circle">
+              R
+            </div>
+
+            <span>
+              Resident
+            </span>
+
+          </div>
+
         </div>
 
 
-        {/* SEARCH AND FILTER */}
-        <section className="dashboard-panel announcement-controls">
+        {/* =====================================================
+            SEARCH AND FILTER
+        ===================================================== */}
 
-          <div>
+        <section className="announcements-panel announcements-controls">
 
-            <h3>
-              Community Updates
-            </h3>
+          <div className="announcements-panel-heading">
 
-            <p>
-              Search and filter the latest announcements.
-            </p>
+            <div>
+
+              <h3>
+                Community Updates
+              </h3>
+
+              <p>
+                Search and filter the latest announcements.
+              </p>
+
+            </div>
 
           </div>
 
 
-          <div className="announcement-filters">
+          <div className="announcements-filters">
 
-            <input
-              type="text"
-              placeholder="Search announcements..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="announcements-search">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="10.5"
+                  cy="10.5"
+                  r="5.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="m15 15 4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              <input
+                type="text"
+                placeholder="Search announcements..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+            </div>
 
 
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
+            <div className="announcements-select-wrapper">
 
-              <option value="all">
-                All Categories
-              </option>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M4 6h16M7 12h10M10 18h4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
 
-              <option value="maintenance">
-                Maintenance
-              </option>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
 
-              <option value="security">
-                Security
-              </option>
+                <option value="all">
+                  All Categories
+                </option>
 
-              <option value="community">
-                Community
-              </option>
+                <option value="maintenance">
+                  Maintenance
+                </option>
 
-              <option value="parking">
-                Parking
-              </option>
+                <option value="security">
+                  Security
+                </option>
 
-            </select>
+                <option value="community">
+                  Community
+                </option>
+
+                <option value="parking">
+                  Parking
+                </option>
+
+              </select>
+
+            </div>
 
           </div>
 
         </section>
 
 
-        {/* ANNOUNCEMENTS */}
+        {/* =====================================================
+            ANNOUNCEMENTS
+        ===================================================== */}
+
         {filteredAnnouncements.length > 0 ? (
 
           <section className="announcement-grid">
@@ -233,7 +538,11 @@ function Announcements() {
                 <div className="announcement-top">
 
                   <span className="announcement-icon">
-                    {announcement.icon}
+
+                    <AnnouncementIcon
+                      type={announcement.icon}
+                    />
+
                   </span>
 
                   <span
@@ -262,11 +571,33 @@ function Announcements() {
 
                 <div className="announcement-footer">
 
-                  <span>
-                    📅 {announcement.date}
+                  <span className="announcement-date">
+
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect
+                        x="4"
+                        y="5"
+                        width="16"
+                        height="15"
+                        rx="2"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                      />
+                      <path
+                        d="M8 3v4M16 3v4M4 10h16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+
+                    {announcement.date}
+
                   </span>
 
-                  <span>
+                  <span className="announcement-author">
                     HOA
                   </span>
 
@@ -280,7 +611,29 @@ function Announcements() {
 
         ) : (
 
-          <div className="no-providers">
+          <div className="announcements-empty">
+
+            <div className="announcements-empty-icon">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="10.5"
+                  cy="10.5"
+                  r="5.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="m15 15 4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+
+            </div>
 
             <h3>
               No announcements found
