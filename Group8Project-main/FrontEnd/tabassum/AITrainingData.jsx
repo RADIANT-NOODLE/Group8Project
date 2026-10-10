@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./AITrainingData.css";
 
 function AITrainingData() {
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -92,11 +93,15 @@ function AITrainingData() {
   };
 
   return (
-    <div className="dashboard-layout">
+    <div className="ai-training-layout">
 
-      <aside className="sidebar">
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
 
-        <div className="logo-area">
+      <aside className="ai-training-sidebar">
+
+        <div className="ai-training-logo-area">
 
           <img
             src="/ValoraLogo.jpeg"
@@ -109,46 +114,184 @@ function AITrainingData() {
 
         </div>
 
-        <nav className="side-nav">
+        <nav className="ai-training-side-nav">
 
           <a href="/dashboard">
-            🏠 Dashboard
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5v-6h-5v6h-5A1.5 1.5 0 0 1 3 19.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>Dashboard</span>
           </a>
 
           <a href="/resident-directory">
-            👥 Resident Directory
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle
+                cx="9"
+                cy="8"
+                r="3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M3.5 20c.6-3.2 2.4-5 5.5-5s4.9 1.8 5.5 5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="M16 5.5a2.5 2.5 0 1 1 0 5M16 14c2.5.1 4 1.8 4.5 4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>Resident Directory</span>
           </a>
 
           <a href="/resident-complaints">
-            📋 Resident Complaints
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="4"
+                y="3"
+                width="16"
+                height="18"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M8 8h8M8 12h8M8 16h5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>Resident Complaints</span>
           </a>
 
           <a href="/maintenance">
-            🔧 Maintenance
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M14.5 5.5a4 4 0 0 0-5.1 5.1L4 16a2.1 2.1 0 1 0 3 3l5.4-5.4a4 4 0 0 0 5.1-5.1l-2.4 2.4-2.1-2.1z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>Maintenance</span>
           </a>
 
           <a href="/community-announcements">
-            📢 Community Announcements
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 10v4h3l8 4V6l-8 4z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M7 14l1.5 5h2L9 14M19 9.5a3.5 3.5 0 0 1 0 5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>Community Announcements</span>
           </a>
 
           <a
             href="/ai-training-data"
             className="active"
           >
-            🤖 AI Training Data
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect
+                x="6"
+                y="6"
+                width="12"
+                height="12"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+            </svg>
+
+            <span>AI Training Data</span>
           </a>
 
           <a href="/community-analytics">
-            📊 Community Analytics
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 19V9M12 19V5M19 19v-8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>Community Analytics</span>
           </a>
 
           <a href="/profile">
-            👤 My Profile
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle
+                cx="12"
+                cy="8"
+                r="3.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <path
+                d="M5 20c.7-4 3-6 7-6s6.3 2 7 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <span>My Profile</span>
           </a>
 
         </nav>
 
-        <div className="logout-area">
+        <div className="ai-training-logout-area">
 
           <a
             href="/"
@@ -157,16 +300,39 @@ function AITrainingData() {
               handleLogout();
             }}
           >
-            🚪 Logout
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="M14 8l4 4-4 4M18 12H9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <span>Logout</span>
           </a>
 
         </div>
 
       </aside>
 
-      <main className="dashboard-main">
 
-        <div className="top-bar">
+      {/* =====================================================
+          MAIN CONTENT
+      ===================================================== */}
+
+      <main className="ai-training-main">
+
+        <div className="ai-training-top-bar">
 
           <div>
 
@@ -175,14 +341,15 @@ function AITrainingData() {
             </h2>
 
             <p>
-              Manage property and community data used to improve VALORA's AI models.
+              Manage property and community data used to improve
+              VALORA's AI models.
             </p>
 
           </div>
 
-          <div className="profile-small">
+          <div className="ai-training-profile-small">
 
-            <div className="profile-circle">
+            <div className="ai-training-profile-circle">
               HOA
             </div>
 
@@ -194,23 +361,52 @@ function AITrainingData() {
 
         </div>
 
-        <section className="stat-cards">
 
-          <div className="stat-card">
+        {/* =====================================================
+            STAT CARDS
+        ===================================================== */}
 
-            <span className="stat-icon">
-              🤖
+        <section className="ai-training-stat-cards">
+
+          <div className="ai-training-stat-card">
+
+            <span className="ai-training-stat-icon">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect
+                  x="6"
+                  y="6"
+                  width="12"
+                  height="12"
+                  rx="2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+              </svg>
+
             </span>
 
             <div>
 
-              <p>
-                Total Datasets
-              </p>
+              <p>Total Datasets</p>
 
-              <h3>
-                {totalDatasets}
-              </h3>
+              <h3>{totalDatasets}</h3>
 
               <small>
                 Available datasets
@@ -220,21 +416,37 @@ function AITrainingData() {
 
           </div>
 
-          <div className="stat-card">
 
-            <span className="stat-icon">
-              ✅
+          <div className="ai-training-stat-card">
+
+            <span className="ai-training-stat-icon">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="m8.5 12 2.3 2.3 4.8-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+
             </span>
 
             <div>
 
-              <p>
-                Active Datasets
-              </p>
+              <p>Active Datasets</p>
 
-              <h3>
-                {activeDatasets}
-              </h3>
+              <h3>{activeDatasets}</h3>
 
               <small>
                 Currently used by AI
@@ -244,21 +456,36 @@ function AITrainingData() {
 
           </div>
 
-          <div className="stat-card">
 
-            <span className="stat-icon">
-              ⏳
+          <div className="ai-training-stat-card">
+
+            <span className="ai-training-stat-icon">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M12 8v4l2.5 2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+
             </span>
 
             <div>
 
-              <p>
-                Pending Review
-              </p>
+              <p>Pending Review</p>
 
-              <h3>
-                {pendingDatasets}
-              </h3>
+              <h3>{pendingDatasets}</h3>
 
               <small>
                 Require admin review
@@ -268,21 +495,28 @@ function AITrainingData() {
 
           </div>
 
-          <div className="stat-card">
 
-            <span className="stat-icon">
-              📊
+          <div className="ai-training-stat-card">
+
+            <span className="ai-training-stat-icon">
+
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M5 19V9M12 19V5M19 19v-7"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+
             </span>
 
             <div>
 
-              <p>
-                Total Records
-              </p>
+              <p>Total Records</p>
 
-              <h3>
-                {totalRecords}
-              </h3>
+              <h3>{totalRecords}</h3>
 
               <small>
                 Training records
@@ -294,9 +528,14 @@ function AITrainingData() {
 
         </section>
 
-        <section className="dashboard-panel large-panel">
 
-          <div className="panel-heading">
+        {/* =====================================================
+            TRAINING DATA MANAGEMENT
+        ===================================================== */}
+
+        <section className="ai-training-panel ai-training-large-panel">
+
+          <div className="ai-training-panel-heading">
 
             <div>
 
@@ -305,98 +544,90 @@ function AITrainingData() {
               </h3>
 
               <p>
-                Review datasets used for property intelligence and AI analysis.
+                Review datasets used for property intelligence
+                and AI analysis.
               </p>
 
             </div>
 
             <button
-              className="primary-btn"
+              className="ai-training-primary-btn"
               onClick={handleAddData}
             >
-              + Add Training Data
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 5v14M5 12h14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              Add Training Data
             </button>
 
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              marginBottom: "25px",
-              flexWrap: "wrap",
-            }}
-          >
 
-            <select
-              value={categoryFilter}
-              onChange={(event) =>
-                setCategoryFilter(event.target.value)
-              }
-              style={{
-                padding: "12px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "14px",
-                minWidth: "200px",
-              }}
-            >
+          {/* FILTER */}
 
-              <option value="All">
-                All Categories
-              </option>
+          <div className="ai-training-filter-row">
 
-              <option value="Property Valuation">
-                Property Valuation
-              </option>
+            <div className="ai-training-filter-group">
 
-              <option value="Rental Yield">
-                Rental Yield
-              </option>
+              <label htmlFor="categoryFilter">
+                Category
+              </label>
 
-              <option value="Community Trends">
-                Community Trends
-              </option>
+              <select
+                id="categoryFilter"
+                value={categoryFilter}
+                onChange={(event) =>
+                  setCategoryFilter(event.target.value)
+                }
+              >
 
-            </select>
+                <option value="All">
+                  All Categories
+                </option>
+
+                <option value="Property Valuation">
+                  Property Valuation
+                </option>
+
+                <option value="Rental Yield">
+                  Rental Yield
+                </option>
+
+                <option value="Community Trends">
+                  Community Trends
+                </option>
+
+              </select>
+
+            </div>
 
           </div>
 
-          <div className="table-container">
 
-            <table className="data-table">
+          {/* TABLE */}
+
+          <div className="ai-training-table-container">
+
+            <table className="ai-training-data-table">
 
               <thead>
 
                 <tr>
 
-                  <th>
-                    Dataset
-                  </th>
-
-                  <th>
-                    Category
-                  </th>
-
-                  <th>
-                    Data Type
-                  </th>
-
-                  <th>
-                    Records
-                  </th>
-
-                  <th>
-                    Last Updated
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
-                  <th>
-                    Action
-                  </th>
+                  <th>Dataset</th>
+                  <th>Category</th>
+                  <th>Data Type</th>
+                  <th>Records</th>
+                  <th>Last Updated</th>
+                  <th>Status</th>
+                  <th>Action</th>
 
                 </tr>
 
@@ -416,13 +647,7 @@ function AITrainingData() {
                           {data.description}
                         </strong>
 
-                        <small
-                          style={{
-                            display: "block",
-                            color: "#777",
-                            marginTop: "4px",
-                          }}
-                        >
+                        <small>
                           {data.id}
                         </small>
 
@@ -430,16 +655,7 @@ function AITrainingData() {
 
                       <td>
 
-                        <span
-                          style={{
-                            padding: "5px 10px",
-                            borderRadius: "15px",
-                            background: "#eee7f3",
-                            color: "#563F6B",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                          }}
-                        >
+                        <span className="ai-training-category-badge">
                           {data.category}
                         </span>
 
@@ -460,20 +676,11 @@ function AITrainingData() {
                       <td>
 
                         <span
-                          style={{
-                            padding: "5px 10px",
-                            borderRadius: "15px",
-                            background:
-                              data.status === "Active"
-                                ? "#e8f5e9"
-                                : "#fff4d6",
-                            color:
-                              data.status === "Active"
-                                ? "#2e7d32"
-                                : "#8a6500",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                          }}
+                          className={`ai-training-status-badge ${
+                            data.status === "Active"
+                              ? "active"
+                              : "pending"
+                          }`}
                         >
                           {data.status}
                         </span>
@@ -482,28 +689,29 @@ function AITrainingData() {
 
                       <td>
 
-                        <button
-                          className="secondary-btn"
-                          onClick={() =>
-                            handleView(data)
-                          }
-                        >
-                          View
-                        </button>
+                        <div className="ai-training-action-buttons">
 
-                        <button
-                          className="secondary-btn"
-                          style={{
-                            marginLeft: "6px",
-                          }}
-                          onClick={() =>
-                            alert(
-                              `Review ${data.id} feature coming soon.`
-                            )
-                          }
-                        >
-                          Review
-                        </button>
+                          <button
+                            className="ai-training-secondary-btn"
+                            onClick={() =>
+                              handleView(data)
+                            }
+                          >
+                            View
+                          </button>
+
+                          <button
+                            className="ai-training-secondary-btn"
+                            onClick={() =>
+                              alert(
+                                `Review ${data.id} feature coming soon.`
+                              )
+                            }
+                          >
+                            Review
+                          </button>
+
+                        </div>
 
                       </td>
 
@@ -517,10 +725,7 @@ function AITrainingData() {
 
                     <td
                       colSpan="7"
-                      style={{
-                        textAlign: "center",
-                        padding: "30px",
-                      }}
+                      className="ai-training-empty-state"
                     >
                       No training data found.
                     </td>
@@ -537,11 +742,16 @@ function AITrainingData() {
 
         </section>
 
-        <section className="dashboard-grid">
 
-          <div className="dashboard-panel">
+        {/* =====================================================
+            LOWER PANELS
+        ===================================================== */}
 
-            <div className="panel-heading">
+        <section className="ai-training-dashboard-grid">
+
+          <div className="ai-training-panel">
+
+            <div className="ai-training-panel-heading">
 
               <div>
 
@@ -557,7 +767,8 @@ function AITrainingData() {
 
             </div>
 
-            <div className="quick-actions">
+
+            <div className="ai-training-quick-actions">
 
               <a
                 href="#"
@@ -566,8 +777,27 @@ function AITrainingData() {
                   handleAddData();
                 }}
               >
-                ➕ Add Training Data
+
+                <span className="ai-training-action-icon">
+
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 5v14M5 12h14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+
+                </span>
+
+                <span>
+                  Add Training Data
+                </span>
+
               </a>
+
 
               <a
                 href="#"
@@ -578,8 +808,35 @@ function AITrainingData() {
                   );
                 }}
               >
-                🔍 Review Pending Data
+
+                <span className="ai-training-action-icon">
+
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle
+                      cx="10.5"
+                      cy="10.5"
+                      r="5.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    />
+                    <path
+                      d="m15 15 4 4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+
+                </span>
+
+                <span>
+                  Review Pending Data
+                </span>
+
               </a>
+
 
               <a
                 href="#"
@@ -590,16 +847,44 @@ function AITrainingData() {
                   );
                 }}
               >
-                🔄 Update AI Data
+
+                <span className="ai-training-action-icon">
+
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M19 8a7 7 0 0 0-12-2L5 8M5 8V4M5 8h4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M5 16a7 7 0 0 0 12 2l2-2M19 16v4M19 16h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                </span>
+
+                <span>
+                  Update AI Data
+                </span>
+
               </a>
 
             </div>
 
           </div>
 
-          <div className="dashboard-panel">
 
-            <div className="panel-heading">
+          <div className="ai-training-panel">
+
+            <div className="ai-training-panel-heading">
 
               <div>
 
@@ -615,7 +900,8 @@ function AITrainingData() {
 
             </div>
 
-            <div className="property-summary">
+
+            <div className="ai-training-property-summary">
 
               <div>
 
