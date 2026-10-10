@@ -1,691 +1,956 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+    getInquiries,
+    updateInquiry,
+} from "../../data/inquiryStorage";
+import { getProperties } from "../../data/propertyStorage";
+import "./AgentInquiries.css";
 
 function AgentInquiries() {
-  const [statusFilter, setStatusFilter] = useState("All");
 
-  const inquiries = [
-    {
-      id: "INQ-001",
-      buyer: "Ayesha Mohammed",
-      property: "3 Bedroom Family Home",
-      location: "Parlock Hills",
-      contact: "071 234 5678",
-      date: "30 Aug 2026",
-      status: "New",
-      message: "I am interested in viewing this property.",
-    },
-    {
-      id: "INQ-002",
-      buyer: "Yusuf Patel",
-      property: "2 Bedroom Apartment",
-      location: "Summerstrand",
-      contact: "072 345 6789",
-      date: "29 Aug 2026",
-      status: "Contacted",
-      message: "Please provide more information about the apartment.",
-    },
-    {
-      id: "INQ-003",
-      buyer: "Fatima Ismail",
-      property: "4 Bedroom Family Home",
-      location: "Walmer",
-      contact: "083 456 7890",
-      date: "28 Aug 2026",
-      status: "Viewing Scheduled",
-      message: "I would like to arrange a viewing.",
-    },
-    {
-      id: "INQ-004",
-      buyer: "Ahmed Khan",
-      property: "2 Bedroom Townhouse",
-      location: "Lorraine",
-      contact: "079 567 8901",
-      date: "27 Aug 2026",
-      status: "Closed",
-      message: "Interested in purchasing the townhouse.",
-    },
-    {
-      id: "INQ-005",
-      buyer: "Zainab Ali",
-      property: "3 Bedroom Family Home",
-      location: "Parlock Hills",
-      contact: "076 678 9012",
-      date: "26 Aug 2026",
-      status: "New",
-      message: "Is the property still available?",
-    },
-  ];
+    const [statusFilter, setStatusFilter] =
+        useState("All");
 
-  const filteredInquiries = inquiries.filter((inquiry) => {
+    const [inquiries, setInquiries] =
+        useState([]);
+
+    const [properties, setProperties] =
+        useState([]);
+
+    /*
+    =========================================================
+    LOAD SHARED DATA
+    =========================================================
+    */
+
+    useEffect(() => {
+
+        const storedInquiries =
+            getInquiries();
+
+        const storedProperties =
+            getProperties();
+
+        setInquiries(
+            storedInquiries
+        );
+
+        setProperties(
+            storedProperties
+        );
+
+    }, []);
+
+    /*
+    =========================================================
+    GET PROPERTY
+    =========================================================
+    */
+
+    const getProperty = (inquiry) => {
+
+        const property =
+            properties.find(
+                (item) =>
+                    item.id ===
+                    inquiry.propertyId
+            );
+
+        return property || null;
+
+    };
+
+    /*
+    =========================================================
+    GET PROPERTY DISPLAY NAME
+    =========================================================
+    */
+
+    const getPropertyName = (inquiry) => {
+
+        const property =
+            getProperty(inquiry);
+
+        if (property) {
+
+            return `${property.unitNumber} - ${property.propertyType}`;
+
+        }
+
+        if (inquiry.propertyUnit) {
+
+            return inquiry.propertyUnit;
+
+        }
+
+        return "Unknown Property";
+
+    };
+
+    /*
+    =========================================================
+    GET PROPERTY LOCATION
+    =========================================================
+    */
+
+    const getPropertyLocation = (inquiry) => {
+
+        const property =
+            getProperty(inquiry);
+
+        if (property) {
+
+            return property.location ||
+                property.development ||
+                "VALORA Estate";
+
+        }
+
+        return "VALORA Estate";
+
+    };
+
+    /*
+    =========================================================
+    FORMAT DATE
+    =========================================================
+    */
+
+    const formatDate = (date) => {
+
+        if (!date) {
+            return "-";
+        }
+
+        const parsedDate =
+            new Date(date);
+
+        if (
+            Number.isNaN(
+                parsedDate.getTime()
+            )
+        ) {
+            return date;
+        }
+
+        return parsedDate.toLocaleDateString(
+            "en-ZA",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            }
+        );
+
+    };
+
+    /*
+    =========================================================
+    STATUS FILTER
+    =========================================================
+    */
+
+    const filteredInquiries =
+        statusFilter === "All"
+            ? inquiries
+            : inquiries.filter(
+                (inquiry) =>
+                    inquiry.status ===
+                    statusFilter
+            );
+
+    /*
+    =========================================================
+    STATUS COUNTS
+    =========================================================
+    */
+
+    const totalInquiries =
+        inquiries.length;
+
+    const newInquiries =
+        inquiries.filter(
+            (inquiry) =>
+                inquiry.status ===
+                "New"
+        ).length;
+
+    const contactedInquiries =
+        inquiries.filter(
+            (inquiry) =>
+                inquiry.status ===
+                "Contacted"
+        ).length;
+
+    const viewingInquiries =
+        inquiries.filter(
+            (inquiry) =>
+                inquiry.status ===
+                "Viewing Scheduled"
+        ).length;
+
+    /*
+    =========================================================
+    UPDATE INQUIRY STATUS
+    =========================================================
+    */
+
+    const handleStatusChange = (
+        inquiryId,
+        newStatus
+    ) => {
+
+        const updatedInquiry =
+            updateInquiry(
+                inquiryId,
+                {
+                    status: newStatus,
+                }
+            );
+
+        if (!updatedInquiry) {
+            return;
+        }
+
+        setInquiries(
+            (currentInquiries) =>
+                currentInquiries.map(
+                    (inquiry) =>
+                        inquiry.id ===
+                        inquiryId
+                            ? updatedInquiry
+                            : inquiry
+                )
+        );
+
+    };
+
+    /*
+    =========================================================
+    VIEW INQUIRY
+    =========================================================
+    */
+
+    const handleView = (
+        inquiry
+    ) => {
+
+        const propertyName =
+            getPropertyName(
+                inquiry
+            );
+
+        const message =
+            inquiry.message ||
+            "No message provided.";
+
+        alert(
+            `Inquiry Details\n\n` +
+            `Buyer: ${inquiry.buyerName || "Not provided"}\n` +
+            `Email: ${inquiry.buyerEmail || "Not provided"}\n` +
+            `Contact: ${inquiry.buyerContact || "Not provided"}\n` +
+            `Property: ${propertyName}\n` +
+            `Location: ${getPropertyLocation(inquiry)}\n` +
+            `Date: ${formatDate(inquiry.date)}\n` +
+            `Status: ${inquiry.status || "New"}\n\n` +
+            `Message:\n${message}`
+        );
+
+    };
+
+    /*
+    =========================================================
+    SVG ICONS
+    =========================================================
+    */
+
+    const DashboardIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <rect
+                x="3"
+                y="3"
+                width="7"
+                height="7"
+                rx="1"
+            />
+            <rect
+                x="14"
+                y="3"
+                width="7"
+                height="7"
+                rx="1"
+            />
+            <rect
+                x="3"
+                y="14"
+                width="7"
+                height="7"
+                rx="1"
+            />
+            <rect
+                x="14"
+                y="14"
+                width="7"
+                height="7"
+                rx="1"
+            />
+        </svg>
+    );
+
+    const ListingsIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V21h14V9.5" />
+            <path d="M9 21v-6h6v6" />
+        </svg>
+    );
+
+    const EditIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+        </svg>
+    );
+
+    const InquiryIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M4 5h16v11H8l-4 4Z" />
+            <path d="M8 9h8" />
+            <path d="M8 13h5" />
+        </svg>
+    );
+
+    const LogoutIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M10 5H5v14h5" />
+            <path d="M14 8l4 4-4 4" />
+            <path d="M9 12h9" />
+        </svg>
+    );
+
+    const UserIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <circle
+                cx="12"
+                cy="8"
+                r="3.5"
+            />
+            <path d="M5 21c.7-4 3-6 7-6s6.3 2 7 6" />
+        </svg>
+    );
+
+    const InquiryCardIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M4 5h16v11H8l-4 4Z" />
+            <path d="M8 9h8" />
+            <path d="M8 13h5" />
+        </svg>
+    );
+
+    const NewIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <circle
+                cx="12"
+                cy="12"
+                r="8"
+            />
+            <path d="M12 8v8" />
+            <path d="M8 12h8" />
+        </svg>
+    );
+
+    const ContactedIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M5 4h14v16H5z" />
+            <path d="M8 8h8" />
+            <path d="M8 12h8" />
+            <path d="M8 16h5" />
+        </svg>
+    );
+
+    const ViewingIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+        >
+            <path d="M4 5h16v14H4z" />
+            <path d="M8 3v4" />
+            <path d="M16 3v4" />
+            <path d="M4 9h16" />
+            <path d="m9 14 2 2 4-4" />
+        </svg>
+    );
+
+    /*
+    =========================================================
+    RENDER
+    =========================================================
+    */
+
     return (
-      statusFilter === "All" ||
-      inquiry.status === statusFilter
-    );
-  });
 
-  const totalInquiries = inquiries.length;
+        <div className="agent-inquiries-page">
 
-  const newInquiries = inquiries.filter(
-    (inquiry) => inquiry.status === "New"
-  ).length;
+            {/* =================================================
+                SIDEBAR
+            ================================================= */}
 
-  const viewingScheduled = inquiries.filter(
-    (inquiry) => inquiry.status === "Viewing Scheduled"
-  ).length;
+            <aside className="agent-inquiries-sidebar">
 
-  const contacted = inquiries.filter(
-    (inquiry) => inquiry.status === "Contacted"
-  ).length;
+                <div className="agent-inquiries-logo-area">
 
-  const handleLogout = () => {
-    localStorage.removeItem("valoraLoggedIn");
-    localStorage.removeItem("valoraUser");
-    localStorage.removeItem("valoraUserEmail");
+                    <img
+                        src="/ValoraLogo.jpeg"
+                        alt="VALORA"
+                    />
 
-    window.location.href = "/";
-  };
+                </div>
 
-  const handleView = (inquiry) => {
-    alert(
-      `${inquiry.buyer}\n\nProperty: ${inquiry.property}\nLocation: ${inquiry.location}\nContact: ${inquiry.contact}\n\nMessage:\n${inquiry.message}`
-    );
-  };
+                <div className="agent-inquiries-role">
 
-  const handleStatusChange = (id, newStatus) => {
-    alert(
-      `Inquiry ${id} status changed to ${newStatus}.`
-    );
-  };
+                    <div className="agent-inquiries-role-icon">
+                        <UserIcon />
+                    </div>
 
-  return (
-    <div className="dashboard-layout">
-
-      <aside className="sidebar">
-
-        <div className="logo-area">
-
-          <img
-            src="/ValoraLogo.jpeg"
-            alt="VALORA Logo"
-          />
-
-          <p>
-            Property Intelligence
-          </p>
-
-        </div>
-
-        <nav className="side-nav">
-
-          <a href="/dashboard">
-            🏠 Dashboard
-          </a>
-
-          <a href="/agent-listings">
-            🏠 My Listings
-          </a>
-
-          <a href="/agent-edit-listings">
-            ✏️ Edit Listings
-          </a>
-
-          <a
-            href="/agent-inquiries"
-            className="active"
-          >
-            👥 Inquiry Log
-          </a>
-
-          <a href="/valuation">
-            🤖 AI Valuation
-          </a>
-
-          <a href="/profile">
-            👤 My Profile
-          </a>
-
-        </nav>
-
-        <div className="logout-area">
-
-          <a
-            href="/"
-            onClick={(event) => {
-              event.preventDefault();
-              handleLogout();
-            }}
-          >
-            🚪 Logout
-          </a>
-
-        </div>
-
-      </aside>
-
-      <main className="dashboard-main">
-
-        <div className="top-bar">
-
-          <div>
-
-            <h2>
-              Inquiry Log
-            </h2>
-
-            <p>
-              Track and manage inquiries from potential property buyers.
-            </p>
-
-          </div>
-
-          <div className="profile-small">
-
-            <div className="profile-circle">
-              EA
-            </div>
-
-            <span>
-              Estate Agent
-            </span>
-
-          </div>
-
-        </div>
-
-        <section className="stat-cards">
-
-          <div className="stat-card">
-
-            <span className="stat-icon">
-              👥
-            </span>
-
-            <div>
-
-              <p>
-                Total Inquiries
-              </p>
-
-              <h3>
-                {totalInquiries}
-              </h3>
-
-              <small>
-                Buyer inquiries
-              </small>
-
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <span className="stat-icon">
-              🆕
-            </span>
-
-            <div>
-
-              <p>
-                New Inquiries
-              </p>
-
-              <h3>
-                {newInquiries}
-              </h3>
-
-              <small>
-                Require response
-              </small>
-
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <span className="stat-icon">
-              📅
-            </span>
-
-            <div>
-
-              <p>
-                Viewings
-              </p>
-
-              <h3>
-                {viewingScheduled}
-              </h3>
-
-              <small>
-                Scheduled viewings
-              </small>
-
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <span className="stat-icon">
-              📞
-            </span>
-
-            <div>
-
-              <p>
-                Contacted
-              </p>
-
-              <h3>
-                {contacted}
-              </h3>
-
-              <small>
-                Buyers contacted
-              </small>
-
-            </div>
-
-          </div>
-
-        </section>
-
-        <section className="dashboard-panel large-panel">
-
-          <div className="panel-heading">
-
-            <div>
-
-              <h3>
-                Buyer Inquiries
-              </h3>
-
-              <p>
-                Review inquiries and follow up with potential buyers.
-              </p>
-
-            </div>
-
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              marginBottom: "25px",
-              flexWrap: "wrap",
-            }}
-          >
-
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value)
-              }
-              style={{
-                padding: "12px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "14px",
-                minWidth: "190px",
-              }}
-            >
-
-              <option value="All">
-                All Statuses
-              </option>
-
-              <option value="New">
-                New
-              </option>
-
-              <option value="Contacted">
-                Contacted
-              </option>
-
-              <option value="Viewing Scheduled">
-                Viewing Scheduled
-              </option>
-
-              <option value="Closed">
-                Closed
-              </option>
-
-            </select>
-
-          </div>
-
-          <div className="table-container">
-
-            <table className="data-table">
-
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Buyer
-                  </th>
-
-                  <th>
-                    Property
-                  </th>
-
-                  <th>
-                    Contact
-                  </th>
-
-                  <th>
-                    Date
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
-                  <th>
-                    Action
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {filteredInquiries.length > 0 ? (
-
-                  filteredInquiries.map((inquiry) => (
-
-                    <tr key={inquiry.id}>
-
-                      <td>
-
+                    <div>
                         <strong>
-                          {inquiry.buyer}
+                            Estate Agent
                         </strong>
 
-                        <small
-                          style={{
-                            display: "block",
-                            color: "#777",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {inquiry.id}
-                        </small>
+                        <span>
+                            Agent Portal
+                        </span>
+                    </div>
 
-                      </td>
+                </div>
 
-                      <td>
+                <nav className="agent-inquiries-nav">
 
-                        <strong>
-                          {inquiry.property}
-                        </strong>
+                    <a href="/dashboard">
 
-                        <small
-                          style={{
-                            display: "block",
-                            color: "#777",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {inquiry.location}
-                        </small>
+                        <DashboardIcon />
 
-                      </td>
-
-                      <td>
-                        {inquiry.contact}
-                      </td>
-
-                      <td>
-                        {inquiry.date}
-                      </td>
-
-                      <td>
-
-                        <span
-                          style={{
-                            padding: "5px 10px",
-                            borderRadius: "15px",
-                            background:
-                              inquiry.status === "New"
-                                ? "#eee7f3"
-                                : inquiry.status ===
-                                  "Viewing Scheduled"
-                                ? "#e8f1fb"
-                                : inquiry.status ===
-                                  "Contacted"
-                                ? "#fff4d6"
-                                : "#e8f5e9",
-                            color:
-                              inquiry.status === "New"
-                                ? "#563F6B"
-                                : inquiry.status ===
-                                  "Viewing Scheduled"
-                                ? "#245a8d"
-                                : inquiry.status ===
-                                  "Contacted"
-                                ? "#8a6500"
-                                : "#2e7d32",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                          }}
-                        >
-                          {inquiry.status}
+                        <span>
+                            Dashboard
                         </span>
 
-                      </td>
+                    </a>
 
-                      <td>
+                    <a href="/agent-listings">
 
-                        <button
-                          className="secondary-btn"
-                          onClick={() =>
-                            handleView(inquiry)
-                          }
-                        >
-                          View
-                        </button>
+                        <ListingsIcon />
 
-                        <select
-                          defaultValue={inquiry.status}
-                          onChange={(event) =>
-                            handleStatusChange(
-                              inquiry.id,
-                              event.target.value
-                            )
-                          }
-                          style={{
-                            marginLeft: "6px",
-                            padding: "7px",
-                            border: "1px solid #ddd",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                          }}
-                        >
+                        <span>
+                            My Listings
+                        </span>
 
-                          <option value="New">
-                            New
-                          </option>
+                    </a>
 
-                          <option value="Contacted">
-                            Contacted
-                          </option>
+                    <a href="/agent-edit-listings">
 
-                          <option value="Viewing Scheduled">
-                            Viewing Scheduled
-                          </option>
+                        <EditIcon />
 
-                          <option value="Closed">
-                            Closed
-                          </option>
+                        <span>
+                            Edit Listings
+                        </span>
 
-                        </select>
+                    </a>
 
-                      </td>
-
-                    </tr>
-
-                  ))
-
-                ) : (
-
-                  <tr>
-
-                    <td
-                      colSpan="6"
-                      style={{
-                        textAlign: "center",
-                        padding: "30px",
-                      }}
+                    <a
+                        href="/agent-inquiries"
+                        className="active"
                     >
-                      No inquiries found.
-                    </td>
 
-                  </tr>
+                        <InquiryIcon />
 
-                )}
+                        <span>
+                            Inquiry Log
+                        </span>
 
-              </tbody>
+                    </a>
 
-            </table>
+                </nav>
 
-          </div>
+                <div className="agent-inquiries-logout-area">
 
-        </section>
+                    <button
+                        onClick={() => {
 
-        <section className="dashboard-grid">
+                            localStorage.removeItem(
+                                "valoraUser"
+                            );
 
-          <div className="dashboard-panel">
+                            window.location.href =
+                                "/login";
 
-            <div className="panel-heading">
+                        }}
+                    >
 
-              <div>
+                        <LogoutIcon />
 
-                <h3>
-                  Inquiry Actions
-                </h3>
+                        <span>
+                            Logout
+                        </span>
 
-                <p>
-                  Manage potential buyer interactions.
-                </p>
+                    </button>
 
-              </div>
+                </div>
 
-            </div>
+            </aside>
 
-            <div className="quick-actions">
+            {/* =================================================
+                MAIN CONTENT
+            ================================================= */}
 
-              <a
-                href="#"
-                onClick={(event) => {
-                  event.preventDefault();
-                  setStatusFilter("New");
-                }}
-              >
-                🆕 View New Inquiries
-              </a>
+            <main className="agent-inquiries-main">
 
-              <a
-                href="#"
-                onClick={(event) => {
-                  event.preventDefault();
-                  setStatusFilter("Viewing Scheduled");
-                }}
-              >
-                📅 View Scheduled Viewings
-              </a>
+                {/* =================================================
+                    TOP BAR
+                ================================================= */}
 
-              <a href="/agent-listings">
-                🏠 View My Listings
-              </a>
+                <div className="agent-inquiries-topbar">
 
-            </div>
+                    <div>
 
-          </div>
+                        <div className="agent-inquiries-breadcrumb">
+                            Estate Agent
+                            <span>/</span>
+                            Inquiry Log
+                        </div>
 
-          <div className="dashboard-panel">
+                        <h1>
+                            Inquiry Log
+                        </h1>
 
-            <div className="panel-heading">
+                        <p>
+                            Manage buyer and investor inquiries
+                            for your assigned VALORA properties.
+                        </p>
 
-              <div>
+                    </div>
 
-                <h3>
-                  Inquiry Overview
-                </h3>
+                    <div className="agent-inquiries-profile">
 
-                <p>
-                  Current buyer activity.
-                </p>
+                        <div className="agent-inquiries-profile-circle">
+                            EA
+                        </div>
 
-              </div>
+                        <div>
 
-            </div>
+                            <strong>
+                                Estate Agent
+                            </strong>
 
-            <div className="property-summary">
+                            <span>
+                                Estate Agent
+                            </span>
 
-              <div>
+                        </div>
 
-                <span>
-                  Total
-                </span>
+                    </div>
 
-                <strong>
-                  {totalInquiries}
-                </strong>
+                </div>
 
-              </div>
+                {/* =================================================
+                    STAT CARDS
+                ================================================= */}
 
-              <div>
+                <div className="agent-inquiries-stat-cards">
 
-                <span>
-                  New
-                </span>
+                    <div className="agent-inquiries-stat-card">
 
-                <strong>
-                  {newInquiries}
-                </strong>
+                        <div className="agent-inquiries-stat-icon">
+                            <InquiryCardIcon />
+                        </div>
 
-              </div>
+                        <div>
 
-              <div>
+                            <span>
+                                Total Inquiries
+                            </span>
 
-                <span>
-                  Viewings
-                </span>
+                            <strong>
+                                {totalInquiries}
+                            </strong>
 
-                <strong>
-                  {viewingScheduled}
-                </strong>
+                        </div>
 
-              </div>
+                    </div>
 
-              <div>
+                    <div className="agent-inquiries-stat-card">
 
-                <span>
-                  Contacted
-                </span>
+                        <div className="agent-inquiries-stat-icon">
+                            <NewIcon />
+                        </div>
 
-                <strong>
-                  {contacted}
-                </strong>
+                        <div>
 
-              </div>
+                            <span>
+                                New
+                            </span>
 
-            </div>
+                            <strong>
+                                {newInquiries}
+                            </strong>
 
-          </div>
+                        </div>
 
-        </section>
+                    </div>
 
-      </main>
+                    <div className="agent-inquiries-stat-card">
 
-    </div>
-  );
+                        <div className="agent-inquiries-stat-icon">
+                            <ContactedIcon />
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Contacted
+                            </span>
+
+                            <strong>
+                                {contactedInquiries}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <div className="agent-inquiries-stat-card">
+
+                        <div className="agent-inquiries-stat-icon">
+                            <ViewingIcon />
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Viewings
+                            </span>
+
+                            <strong>
+                                {viewingInquiries}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {/* =================================================
+                    INQUIRY PANEL
+                ================================================= */}
+
+                <section className="agent-inquiries-panel">
+
+                    <div className="agent-inquiries-panel-heading">
+
+                        <div>
+
+                            <h2>
+                                Property Inquiries
+                            </h2>
+
+                            <p>
+                                Review and manage inquiries
+                                received for your listings.
+                            </p>
+
+                        </div>
+
+                        <div className="agent-inquiries-filter">
+
+                            <label htmlFor="status-filter">
+                                Filter by status
+                            </label>
+
+                            <select
+                                id="status-filter"
+                                value={statusFilter}
+                                onChange={(event) =>
+                                    setStatusFilter(
+                                        event.target.value
+                                    )
+                                }
+                            >
+
+                                <option value="All">
+                                    All Statuses
+                                </option>
+
+                                <option value="New">
+                                    New
+                                </option>
+
+                                <option value="Contacted">
+                                    Contacted
+                                </option>
+
+                                <option value="Viewing Scheduled">
+                                    Viewing Scheduled
+                                </option>
+
+                                <option value="Closed">
+                                    Closed
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                    {/* =================================================
+                        TABLE
+                    ================================================= */}
+
+                    <div className="agent-inquiries-table-container">
+
+                        <table className="agent-inquiries-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Buyer / Investor
+                                    </th>
+
+                                    <th>
+                                        Property
+                                    </th>
+
+                                    <th>
+                                        Location
+                                    </th>
+
+                                    <th>
+                                        Contact
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {filteredInquiries.length === 0 ? (
+
+                                    <tr>
+
+                                        <td
+                                            colSpan="7"
+                                            className="agent-inquiries-empty"
+                                        >
+                                            No inquiries found.
+                                        </td>
+
+                                    </tr>
+
+                                ) : (
+
+                                    filteredInquiries.map(
+                                        (inquiry) => (
+
+                                            <tr
+                                                key={
+                                                    inquiry.id
+                                                }
+                                            >
+
+                                                <td>
+
+                                                    <div className="agent-inquiries-buyer">
+
+                                                        <strong>
+                                                            {
+                                                                inquiry.buyerName ||
+                                                                "Unknown"
+                                                            }
+                                                        </strong>
+
+                                                        {inquiry.buyerEmail && (
+
+                                                            <small>
+                                                                {
+                                                                    inquiry.buyerEmail
+                                                                }
+                                                            </small>
+
+                                                        )}
+
+                                                    </div>
+
+                                                </td>
+
+                                                <td>
+
+                                                    <span className="agent-inquiries-property-name">
+
+                                                        {
+                                                            getPropertyName(
+                                                                inquiry
+                                                            )
+                                                        }
+
+                                                    </span>
+
+                                                </td>
+
+                                                <td>
+
+                                                    {
+                                                        getPropertyLocation(
+                                                            inquiry
+                                                        )
+                                                    }
+
+                                                </td>
+
+                                                <td>
+
+                                                    {
+                                                        inquiry.buyerContact ||
+                                                        "-"
+                                                    }
+
+                                                </td>
+
+                                                <td>
+
+                                                    {
+                                                        formatDate(
+                                                            inquiry.date
+                                                        )
+                                                    }
+
+                                                </td>
+
+                                                <td>
+
+                                                    <select
+                                                        className={`agent-inquiries-status-select status-${String(
+                                                            inquiry.status ||
+                                                            "New"
+                                                        )
+                                                            .toLowerCase()
+                                                            .replace(
+                                                                /\s+/g,
+                                                                "-"
+                                                            )}`}
+                                                        value={
+                                                            inquiry.status ||
+                                                            "New"
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) =>
+                                                            handleStatusChange(
+                                                                inquiry.id,
+                                                                event
+                                                                    .target
+                                                                    .value
+                                                            )
+                                                        }
+                                                    >
+
+                                                        <option value="New">
+                                                            New
+                                                        </option>
+
+                                                        <option value="Contacted">
+                                                            Contacted
+                                                        </option>
+
+                                                        <option value="Viewing Scheduled">
+                                                            Viewing Scheduled
+                                                        </option>
+
+                                                        <option value="Closed">
+                                                            Closed
+                                                        </option>
+
+                                                    </select>
+
+                                                </td>
+
+                                                <td>
+
+                                                    <button
+                                                        className="agent-inquiries-view-btn"
+                                                        onClick={() =>
+                                                            handleView(
+                                                                inquiry
+                                                            )
+                                                        }
+                                                    >
+                                                        View
+                                                    </button>
+
+                                                </td>
+
+                                            </tr>
+
+                                        )
+                                    )
+
+                                )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </main>
+
+        </div>
+
+    );
+
 }
 
 export default AgentInquiries;
