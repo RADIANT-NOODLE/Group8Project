@@ -1,242 +1,909 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getProperties } from "../../data/propertyStorage";
+import { getPropertyRequests } from "../../data/propertyRequests";
+import "./AgentListings.css";
 
 function AgentListings() {
-  const listings = [
-    {
-      id: "VAL-001",
-      property: "3 Bedroom Family Home",
-      location: "Parlock Hills",
-      price: "R1,250,000",
-      status: "Active",
-      views: 124,
-      inquiries: 8,
-      listed: "25 Aug 2026",
-    },
-    {
-      id: "VAL-002",
-      property: "2 Bedroom Apartment",
-      location: "Summerstrand",
-      price: "R895,000",
-      status: "Active",
-      views: 98,
-      inquiries: 5,
-      listed: "22 Aug 2026",
-    },
-    {
-      id: "VAL-003",
-      property: "4 Bedroom Family Home",
-      location: "Walmer",
-      price: "R1,850,000",
-      status: "Under Offer",
-      views: 156,
-      inquiries: 11,
-      listed: "18 Aug 2026",
-    },
-    {
-      id: "VAL-004",
-      property: "2 Bedroom Townhouse",
-      location: "Lorraine",
-      price: "R980,000",
-      status: "Sold",
-      views: 203,
-      inquiries: 14,
-      listed: "10 Aug 2026",
-    },
-  ];
 
-  const totalListings = listings.length;
+  const [properties, setProperties] = useState([]);
+  const [propertyRequests, setPropertyRequests] = useState([]);
 
-  const activeListings = listings.filter(
-    (listing) => listing.status === "Active"
-  ).length;
+  /*
+  =========================================================
+  LOAD PROPERTY DATA
+  =========================================================
+  */
 
-  const underOffer = listings.filter(
-    (listing) => listing.status === "Under Offer"
-  ).length;
+  useEffect(() => {
 
-  const totalInquiries = listings.reduce(
-    (total, listing) => total + listing.inquiries,
-    0
-  );
+    const storedProperties =
+      getProperties();
 
-  const handleLogout = () => {
-    localStorage.removeItem("valoraLoggedIn");
-    localStorage.removeItem("valoraUser");
-    localStorage.removeItem("valoraUserEmail");
+    const storedRequests =
+      getPropertyRequests();
 
-    window.location.href = "/";
-  };
+    setProperties(
+      storedProperties
+    );
 
-  const handleView = (listing) => {
-    alert(
-      `${listing.property}\n\nLocation: ${listing.location}\nPrice: ${listing.price}\nStatus: ${listing.status}`
+    setPropertyRequests(
+      storedRequests
+    );
+
+  }, []);
+
+  /*
+  =========================================================
+  GET CURRENT ESTATE AGENT
+  =========================================================
+  */
+
+  const storedUser =
+    localStorage.getItem(
+      "valoraUser"
+    );
+
+  let currentUser = null;
+
+  try {
+
+    currentUser = storedUser
+      ? JSON.parse(storedUser)
+      : null;
+
+  } catch (error) {
+
+    currentUser = null;
+
+  }
+
+  /*
+  =========================================================
+  GET CURRENT AGENT NAME
+  =========================================================
+  */
+
+  const getCurrentAgentName = () => {
+
+    if (!currentUser) {
+      return "";
+    }
+
+    if (currentUser.name) {
+      return currentUser.name;
+    }
+
+    const firstName =
+      currentUser.firstName || "";
+
+    const lastName =
+      currentUser.lastName || "";
+
+    return (
+      `${firstName} ${lastName}`
+        .trim()
     );
   };
 
-  const handleAddListing = () => {
-    alert("Add New Listing feature coming soon.");
+  const currentAgentName =
+    getCurrentAgentName();
+
+  /*
+  =========================================================
+  GET ASSIGNED PROPERTY REQUESTS
+  =========================================================
+  */
+
+  const assignedRequests =
+    propertyRequests.filter(
+      (request) => {
+
+        if (
+          currentUser?.id &&
+          request.assignedAgentId
+        ) {
+
+          return (
+            request.assignedAgentId ===
+            currentUser.id
+          );
+
+        }
+
+        if (
+          request.assignedAgentName &&
+          currentAgentName
+        ) {
+
+          return (
+            request.assignedAgentName ===
+            currentAgentName
+          );
+
+        }
+
+        return false;
+
+      }
+    );
+
+  /*
+  =========================================================
+  COMBINE REQUEST + PROPERTY RECORD
+  =========================================================
+  */
+
+  const assignedListings =
+    assignedRequests.map(
+      (request) => {
+
+        const property =
+          properties.find(
+            (item) =>
+              item.id ===
+              request.propertyId
+          );
+
+        return {
+          request,
+          property: property || null,
+        };
+
+      }
+    );
+
+  /*
+  =========================================================
+  LISTING HELPERS
+  =========================================================
+  */
+
+  const getListingStatus = ({
+    property,
+  }) => {
+
+    return (
+      property?.listing?.listingStatus ||
+      "Not Listed"
+    );
+
   };
 
+  const getListingPrice = ({
+    request,
+    property,
+  }) => {
+
+    const listing =
+      property?.listing || {};
+
+    if (
+      request.requestType ===
+        "Sell" ||
+      listing.listingType ===
+        "For Sale"
+    ) {
+
+      if (
+        listing.askingPrice
+      ) {
+
+        return `R${Number(
+          listing.askingPrice
+        ).toLocaleString()}`;
+
+      }
+
+      if (
+        request.askingPrice
+      ) {
+
+        return `R${Number(
+          request.askingPrice
+        ).toLocaleString()}`;
+
+      }
+
+      return "Price not set";
+
+    }
+
+    if (
+      request.requestType ===
+        "Rent" ||
+      listing.listingType ===
+        "For Rent"
+    ) {
+
+      if (
+        listing.rentalPrice
+      ) {
+
+        return `R${Number(
+          listing.rentalPrice
+        ).toLocaleString()} / month`;
+
+      }
+
+      return "Rental price not set";
+
+    }
+
+    return "Not listed";
+
+  };
+
+  const getListingType = ({
+    request,
+    property,
+  }) => {
+
+    const listing =
+      property?.listing || {};
+
+    if (
+      request.requestType ===
+      "Sell"
+    ) {
+
+      return "For Sale";
+
+    }
+
+    if (
+      request.requestType ===
+      "Rent"
+    ) {
+
+      return "For Rent";
+
+    }
+
+    return (
+      listing.listingType ||
+      "Not Listed"
+    );
+
+  };
+
+  const getOwnerName = ({
+    request,
+    property,
+  }) => {
+
+    return (
+      request.requesterName ||
+      property?.listing?.ownerName ||
+      "Owner not assigned"
+    );
+
+  };
+
+  const getViews = ({
+    property,
+  }) => {
+
+    return (
+      property?.listing?.views ||
+      0
+    );
+
+  };
+
+  const getInquiries = ({
+    property,
+  }) => {
+
+    return (
+      property?.listing?.inquiries ||
+      0
+    );
+
+  };
+
+  const getRequestStatus = ({
+    request,
+  }) => {
+
+    return (
+      request.status ||
+      "Assigned"
+    );
+
+  };
+
+  /*
+  =========================================================
+  DEVELOPMENT METRICS
+  =========================================================
+  */
+
+  const totalListings =
+    assignedListings.length;
+
+  const activeListings =
+    assignedListings.filter(
+      ({
+        property,
+      }) =>
+        getListingStatus({
+          property,
+        }) === "Published"
+    ).length;
+
+  const underOffer =
+    assignedListings.filter(
+      ({
+        property,
+      }) =>
+        getListingStatus({
+          property,
+        }) === "Under Offer"
+    ).length;
+
+  const totalInquiries =
+    assignedListings.reduce(
+      (
+        total,
+        listing
+      ) =>
+        total +
+        getInquiries(
+          listing
+        ),
+      0
+    );
+
+  /*
+  =========================================================
+  LOGOUT
+  =========================================================
+  */
+
+  const handleLogout = () => {
+
+    localStorage.removeItem(
+      "valoraLoggedIn"
+    );
+
+    localStorage.removeItem(
+      "valoraUser"
+    );
+
+    localStorage.removeItem(
+      "valoraUserEmail"
+    );
+
+    window.location.href = "/";
+
+  };
+
+  /*
+  =========================================================
+  VIEW LISTING
+  =========================================================
+  */
+
+  const handleView = ({
+    request,
+    property,
+  }) => {
+
+    const listing =
+      property?.listing || {};
+
+    const propertyName =
+      property?.unitNumber ||
+      request.propertyAddress ||
+      request.propertyId ||
+      "Property";
+
+    alert(
+
+      `${propertyName}\n\n` +
+
+      `Owner: ${
+        getOwnerName({
+          request,
+          property,
+        })
+      }\n` +
+
+      `Property Type: ${
+        property?.propertyType ||
+        request.propertyType ||
+        "Not specified"
+      }\n` +
+
+      `Bedrooms: ${
+        property?.bedrooms ||
+        request.bedrooms ||
+        "Not specified"
+      }\n` +
+
+      `Bathrooms: ${
+        property?.bathrooms ||
+        request.bathrooms ||
+        "Not specified"
+      }\n` +
+
+      `Property Size: ${
+        property?.size ||
+        property?.area ||
+        request.propertySize ||
+        "Not specified"
+      }\n\n` +
+
+      `Listing Type: ${
+        getListingType({
+          request,
+          property,
+        })
+      }\n` +
+
+      `Price: ${
+        getListingPrice({
+          request,
+          property,
+        })
+      }\n` +
+
+      `Request Status: ${
+        getRequestStatus({
+          request,
+        })
+      }\n` +
+
+      `Listing Status: ${
+        getListingStatus({
+          property,
+        })
+      }\n` +
+
+      `HOA Approval: ${
+        listing.hoaApprovalStatus ||
+        "Not Submitted"
+      }`
+
+    );
+
+  };
+
+  /*
+  =========================================================
+  EDIT LISTING
+  =========================================================
+  */
+
+  const handleEditListing = ({
+    request,
+    property,
+  }) => {
+
+    if (!property) {
+
+      alert(
+        "The property record linked to this request could not be found."
+      );
+
+      return;
+
+    }
+
+    localStorage.setItem(
+      "valoraAgentSelectedProperty",
+      JSON.stringify({
+        propertyId:
+          property.id,
+        requestId:
+          request.id,
+      })
+    );
+
+    window.location.href =
+      `/agent-edit-listings?propertyId=${property.id}`;
+
+  };
+
+  /*
+  =========================================================
+  ADD LISTING
+  =========================================================
+  */
+
+  const handleAddListing = () => {
+
+    alert(
+      "New listings are created through the HOA property request and agent assignment process."
+    );
+
+  };
+
+  /*
+  =========================================================
+  SVG ICONS
+  =========================================================
+  */
+
+  const DashboardIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+
+  const ListingsIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+      <path d="M9 21v-6h6v6" />
+    </svg>
+  );
+
+  const EditIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+    </svg>
+  );
+
+  const InquiryIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M4 5h16v11H8l-4 4Z" />
+      <path d="M8 9h8" />
+      <path d="M8 13h5" />
+    </svg>
+  );
+
+  const LogoutIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M10 5H5v14h5" />
+      <path d="M14 8l4 4-4 4" />
+      <path d="M9 12h9" />
+    </svg>
+  );
+
+  const UserIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 21c.7-4 3-6 7-6s6.3 2 7 6" />
+    </svg>
+  );
+
+  const PropertiesIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M4 21V7l8-4 8 4v14" />
+      <path d="M8 21v-5h8v5" />
+      <path d="M8 10h2" />
+      <path d="M14 10h2" />
+      <path d="M8 13h2" />
+      <path d="M14 13h2" />
+    </svg>
+  );
+
+  const ActiveIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="m5 12 4 4L19 6" />
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+
+  const OffersIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M5 7h14v12H5z" />
+      <path d="M8 7V5h8v2" />
+      <path d="M8 12h8" />
+    </svg>
+  );
+
+  const InquiriesIcon = () => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="M4 5h16v11H8l-4 4Z" />
+      <path d="M8 9h8" />
+      <path d="M8 13h5" />
+    </svg>
+  );
+
+  /*
+  =========================================================
+  RENDER
+  =========================================================
+  */
+
   return (
-    <div className="dashboard-layout">
 
-      <aside className="sidebar">
+    <div className="agent-listings-page">
 
-        <div className="logo-area">
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
+
+      <aside className="agent-listings-sidebar">
+
+        <div className="agent-listings-logo-area">
 
           <img
             src="/ValoraLogo.jpeg"
             alt="VALORA Logo"
           />
 
-          <p>
-            Property Intelligence
-          </p>
+        </div>
+
+        <div className="agent-listings-role">
+
+          <div className="agent-listings-role-icon">
+            <UserIcon />
+          </div>
+
+          <div>
+
+            <strong>
+              Estate Agent
+            </strong>
+
+            <span>
+              Agent Portal
+            </span>
+
+          </div>
 
         </div>
 
-        <nav className="side-nav">
+        <nav className="agent-listings-nav">
 
           <a href="/dashboard">
-            🏠 Dashboard
+
+            <DashboardIcon />
+
+            <span>
+              Dashboard
+            </span>
+
           </a>
 
           <a
             href="/agent-listings"
             className="active"
           >
-            🏠 My Listings
+
+            <ListingsIcon />
+
+            <span>
+              My Listings
+            </span>
+
           </a>
 
           <a href="/agent-edit-listings">
-            ✏️ Edit Listings
+
+            <EditIcon />
+
+            <span>
+              Edit Listings
+            </span>
+
           </a>
 
           <a href="/agent-inquiries">
-            👥 Inquiry Log
+
+            <InquiryIcon />
+
+            <span>
+              Inquiry Log
+            </span>
+
           </a>
 
           <a href="/valuation">
-            🤖 AI Valuation
+
+            <PropertiesIcon />
+
+            <span>
+              AI Valuation
+            </span>
+
           </a>
 
           <a href="/profile">
-            👤 My Profile
+
+            <UserIcon />
+
+            <span>
+              My Profile
+            </span>
+
           </a>
 
         </nav>
 
-        <div className="logout-area">
+        <div className="agent-listings-logout-area">
 
-          <a
-            href="/"
-            onClick={(event) => {
-              event.preventDefault();
-              handleLogout();
-            }}
+          <button
+            onClick={handleLogout}
           >
-            🚪 Logout
-          </a>
+
+            <LogoutIcon />
+
+            <span>
+              Logout
+            </span>
+
+          </button>
 
         </div>
 
       </aside>
 
-      <main className="dashboard-main">
+      {/* =================================================
+          MAIN CONTENT
+      ================================================= */}
 
-        <div className="top-bar">
+      <main className="agent-listings-main">
+
+        {/* =================================================
+            TOP BAR
+        ================================================= */}
+
+        <div className="agent-listings-topbar">
 
           <div>
 
-            <h2>
+            <div className="agent-listings-breadcrumb">
+
+              <span>
+                Estate Agent
+              </span>
+
+              <span>
+                /
+              </span>
+
+              <span>
+                My Listings
+              </span>
+
+            </div>
+
+            <h1>
               My Listings
-            </h2>
+            </h1>
 
             <p>
-              Manage and monitor your property listings.
+              Manage properties assigned to you by the HOA.
             </p>
 
           </div>
 
-          <div className="profile-small">
+          <div className="agent-listings-profile">
 
-            <div className="profile-circle">
-              EA
+            <div className="agent-listings-profile-circle">
+
+              {currentUser?.firstName
+                ? currentUser.firstName
+                    .charAt(0)
+                    .toUpperCase()
+                : "E"}
+
             </div>
 
-            <span>
-              Estate Agent
-            </span>
+            <div>
+
+              <strong>
+                {currentAgentName ||
+                  "Estate Agent"}
+              </strong>
+
+              <span>
+                Estate Agent
+              </span>
+
+            </div>
 
           </div>
 
         </div>
 
-        <section className="stat-cards">
+        {/* =================================================
+            STATS
+        ================================================= */}
 
-          <div className="stat-card">
+        <section className="agent-listings-stat-cards">
 
-            <span className="stat-icon">
-              🏠
-            </span>
+          <div className="agent-listings-stat-card">
+
+            <div className="agent-listings-stat-icon">
+              <PropertiesIcon />
+            </div>
 
             <div>
 
-              <p>
-                Total Listings
-              </p>
+              <span>
+                Assigned Listings
+              </span>
 
-              <h3>
+              <strong>
                 {totalListings}
-              </h3>
+              </strong>
 
               <small>
-                Properties listed
+                Properties assigned to you
               </small>
 
             </div>
 
           </div>
 
-          <div className="stat-card">
+          <div className="agent-listings-stat-card">
 
-            <span className="stat-icon">
-              ✅
-            </span>
+            <div className="agent-listings-stat-icon">
+              <ActiveIcon />
+            </div>
 
             <div>
 
-              <p>
+              <span>
                 Active Listings
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {activeListings}
-              </h3>
+              </strong>
 
               <small>
-                Currently available
+                Currently published
               </small>
 
             </div>
 
           </div>
 
-          <div className="stat-card">
+          <div className="agent-listings-stat-card">
 
-            <span className="stat-icon">
-              🤝
-            </span>
+            <div className="agent-listings-stat-icon">
+              <OffersIcon />
+            </div>
 
             <div>
 
-              <p>
+              <span>
                 Under Offer
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {underOffer}
-              </h3>
+              </strong>
 
               <small>
                 Pending sales
@@ -246,21 +913,21 @@ function AgentListings() {
 
           </div>
 
-          <div className="stat-card">
+          <div className="agent-listings-stat-card">
 
-            <span className="stat-icon">
-              👥
-            </span>
+            <div className="agent-listings-stat-icon">
+              <InquiriesIcon />
+            </div>
 
             <div>
 
-              <p>
+              <span>
                 Total Inquiries
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {totalInquiries}
-              </h3>
+              </strong>
 
               <small>
                 Buyer inquiries
@@ -272,34 +939,39 @@ function AgentListings() {
 
         </section>
 
-        <section className="dashboard-panel large-panel">
+        {/* =================================================
+            PROPERTY LISTINGS
+        ================================================= */}
 
-          <div className="panel-heading">
+        <section className="agent-listings-panel">
+
+          <div className="agent-listings-panel-heading">
 
             <div>
 
-              <h3>
-                Property Listings
-              </h3>
+              <h2>
+                Assigned Properties
+              </h2>
 
               <p>
-                View and manage your current property listings.
+                Properties approved by the HOA and assigned
+                to you for listing management.
               </p>
 
             </div>
 
             <button
-              className="primary-btn"
+              className="agent-listings-primary-btn"
               onClick={handleAddListing}
             >
-              + Add Listing
+              Add Listing
             </button>
 
           </div>
 
-          <div className="table-container">
+          <div className="agent-listings-table-container">
 
-            <table className="data-table">
+            <table className="agent-listings-table">
 
               <thead>
 
@@ -310,7 +982,11 @@ function AgentListings() {
                   </th>
 
                   <th>
-                    Location
+                    Owner
+                  </th>
+
+                  <th>
+                    Request
                   </th>
 
                   <th>
@@ -318,7 +994,11 @@ function AgentListings() {
                   </th>
 
                   <th>
-                    Status
+                    Request Status
+                  </th>
+
+                  <th>
+                    Listing Status
                   </th>
 
                   <th>
@@ -327,10 +1007,6 @@ function AgentListings() {
 
                   <th>
                     Inquiries
-                  </th>
-
-                  <th>
-                    Listed
                   </th>
 
                   <th>
@@ -343,93 +1019,235 @@ function AgentListings() {
 
               <tbody>
 
-                {listings.map((listing) => (
+                {assignedListings.length === 0 ? (
 
-                  <tr key={listing.id}>
+                  <tr>
 
-                    <td>
-
-                      <strong>
-                        {listing.property}
-                      </strong>
-
-                      <small
-                        style={{
-                          display: "block",
-                          color: "#777",
-                          marginTop: "4px",
-                        }}
-                      >
-                        {listing.id}
-                      </small>
-
-                    </td>
-
-                    <td>
-                      {listing.location}
-                    </td>
-
-                    <td>
-                      <strong>
-                        {listing.price}
-                      </strong>
-                    </td>
-
-                    <td>
-
-                      <span
-                        style={{
-                          padding: "5px 10px",
-                          borderRadius: "15px",
-                          background:
-                            listing.status === "Active"
-                              ? "#e8f5e9"
-                              : listing.status === "Under Offer"
-                              ? "#fff4d6"
-                              : "#eee7f3",
-                          color:
-                            listing.status === "Active"
-                              ? "#2e7d32"
-                              : listing.status === "Under Offer"
-                              ? "#8a6500"
-                              : "#563F6B",
-                          fontSize: "12px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        {listing.status}
-                      </span>
-
-                    </td>
-
-                    <td>
-                      {listing.views}
-                    </td>
-
-                    <td>
-                      {listing.inquiries}
-                    </td>
-
-                    <td>
-                      {listing.listed}
-                    </td>
-
-                    <td>
-
-                      <button
-                        className="secondary-btn"
-                        onClick={() =>
-                          handleView(listing)
-                        }
-                      >
-                        View
-                      </button>
-
+                    <td
+                      colSpan="9"
+                      className="agent-listings-empty"
+                    >
+                      No properties have been assigned
+                      to you yet.
                     </td>
 
                   </tr>
 
-                ))}
+                ) : (
+
+                  assignedListings.map(
+                    ({
+                      request,
+                      property,
+                    }) => {
+
+                      const listingStatus =
+                        getListingStatus({
+                          property,
+                        });
+
+                      const requestStatus =
+                        getRequestStatus({
+                          request,
+                        });
+
+                      return (
+
+                        <tr
+                          key={
+                            request.id
+                          }
+                        >
+
+                          {/* PROPERTY */}
+
+                          <td>
+
+                            <div className="agent-listings-primary-text">
+
+                              {property?.unitNumber ||
+                                request.propertyAddress ||
+                                request.propertyId ||
+                                "Property"}
+
+                            </div>
+
+                            <small>
+
+                              {request.propertyId ||
+                                property?.id}
+
+                              {" • "}
+
+                              {property?.propertyType ||
+                                request.propertyType ||
+                                "Property"}
+
+                            </small>
+
+                          </td>
+
+                          {/* OWNER */}
+
+                          <td>
+
+                            <div className="agent-listings-primary-text">
+
+                              {getOwnerName({
+                                request,
+                                property,
+                              })}
+
+                            </div>
+
+                            <small>
+
+                              {request.requesterEmail ||
+                                "No email"}
+
+                            </small>
+
+                          </td>
+
+                          {/* REQUEST */}
+
+                          <td>
+
+                            <div className="agent-listings-primary-text">
+
+                              {getListingType({
+                                request,
+                                property,
+                              })}
+
+                            </div>
+
+                            <small>
+
+                              Request{" "}
+                              {request.id}
+
+                            </small>
+
+                          </td>
+
+                          {/* PRICE */}
+
+                          <td>
+
+                            <strong className="agent-listings-price">
+
+                              {getListingPrice({
+                                request,
+                                property,
+                              })}
+
+                            </strong>
+
+                          </td>
+
+                          {/* REQUEST STATUS */}
+
+                          <td>
+
+                            <span
+                              className={
+                                requestStatus ===
+                                "Assigned to Estate Agent"
+                                  ? "agent-listings-status status-approved"
+                                  : "agent-listings-status status-default"
+                              }
+                            >
+
+                              {requestStatus}
+
+                            </span>
+
+                          </td>
+
+                          {/* LISTING STATUS */}
+
+                          <td>
+
+                            <span
+                              className={
+                                listingStatus ===
+                                "Published"
+                                  ? "agent-listings-status status-published"
+                                  : listingStatus ===
+                                    "Pending HOA Approval"
+                                  ? "agent-listings-status status-pending"
+                                  : listingStatus ===
+                                    "Changes Requested"
+                                  ? "agent-listings-status status-rejected"
+                                  : "agent-listings-status status-default"
+                              }
+                            >
+
+                              {listingStatus}
+
+                            </span>
+
+                          </td>
+
+                          {/* VIEWS */}
+
+                          <td>
+                            {getViews({
+                              property,
+                            })}
+                          </td>
+
+                          {/* INQUIRIES */}
+
+                          <td>
+                            {getInquiries({
+                              property,
+                            })}
+                          </td>
+
+                          {/* ACTION */}
+
+                          <td>
+
+                            <div className="agent-listings-actions">
+
+                              <button
+                                className="agent-listings-secondary-btn"
+                                onClick={() =>
+                                  handleView({
+                                    request,
+                                    property,
+                                  })
+                                }
+                              >
+                                View
+                              </button>
+
+                              <button
+                                className="agent-listings-primary-small-btn"
+                                onClick={() =>
+                                  handleEditListing({
+                                    request,
+                                    property,
+                                  })
+                                }
+                              >
+                                Edit
+                              </button>
+
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                      );
+
+                    }
+                  )
+
+                )}
 
               </tbody>
 
@@ -439,74 +1257,89 @@ function AgentListings() {
 
         </section>
 
-        <section className="dashboard-grid">
+        {/* =================================================
+            LOWER DASHBOARD
+        ================================================= */}
 
-          <div className="dashboard-panel">
+        <section className="agent-listings-grid">
 
-            <div className="panel-heading">
+          {/* =================================================
+              LISTING ACTIONS
+          ================================================= */}
+
+          <div className="agent-listings-panel">
+
+            <div className="agent-listings-panel-heading">
 
               <div>
 
-                <h3>
+                <h2>
                   Listing Actions
-                </h3>
+                </h2>
 
                 <p>
-                  Manage your property listings.
+                  Manage your assigned property listings.
                 </p>
 
               </div>
 
             </div>
 
-            <div className="quick-actions">
+            <div className="agent-listings-quick-actions">
 
               <a
                 href="#"
                 onClick={(event) => {
+
                   event.preventDefault();
+
                   handleAddListing();
+
                 }}
               >
-                ➕ Add New Listing
+                Add New Listing
               </a>
 
               <a href="/agent-edit-listings">
-                ✏️ Edit Listings
+                Edit Listings
               </a>
 
               <a href="/agent-inquiries">
-                👥 View Inquiries
+                View Inquiries
               </a>
 
             </div>
 
           </div>
 
-          <div className="dashboard-panel">
+          {/* =================================================
+              LISTING OVERVIEW
+          ================================================= */}
 
-            <div className="panel-heading">
+          <div className="agent-listings-panel">
+
+            <div className="agent-listings-panel-heading">
 
               <div>
 
-                <h3>
+                <h2>
                   Listing Overview
-                </h3>
+                </h2>
 
                 <p>
-                  Current performance of your listings.
+                  Current status of your assigned properties.
                 </p>
 
               </div>
 
             </div>
 
-            <div className="property-summary">
+            <div className="agent-listings-summary">
 
               <div>
 
                 <span>
-                  Total
+                  Assigned
                 </span>
 
                 <strong>
@@ -518,7 +1351,7 @@ function AgentListings() {
               <div>
 
                 <span>
-                  Active
+                  Published
                 </span>
 
                 <strong>
@@ -560,7 +1393,9 @@ function AgentListings() {
       </main>
 
     </div>
+
   );
+
 }
 
 export default AgentListings;
