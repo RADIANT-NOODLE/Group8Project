@@ -1,920 +1,1280 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getPropertyById } from "../../data/propertyStorage";
+import "./Property.css";
+
+/*
+=========================================================
+VALORA PROPERTY DETAIL PAGE
+=========================================================
+
+PUBLIC PROPERTY PAGE
+
+The same property page can be viewed by:
+- Guests
+- Residents
+- Investors
+- Estate Agents
+- HOA Admins
+- Head Admin
+
+Only HOA-approved published listing information is
+displayed publicly.
+
+=========================================================
+*/
 
 export default function Property() {
 
-    /* =========================================
-       GET LOGGED-IN USER
-    ========================================= */
+    const { propertyId } = useParams();
 
-    const storedUser = localStorage.getItem("valoraUser");
+    const [property, setProperty] = useState(null);
 
-    const user = storedUser
-        ? JSON.parse(storedUser)
-        : {
-            firstName: "VALORA",
-            lastName: "User",
-            role: "Property Owner"
-        };
+    useEffect(() => {
 
-    const role = user.role || "Property Owner";
-
-
-    /* =========================================
-       PROPERTY EDITING
-    ========================================= */
-
-    const [editing, setEditing] = useState(false);
-
-    const [property, setProperty] = useState({
-        name: "Parlock Hills Apartment",
-        size: 85,
-        bedrooms: 2,
-        bathrooms: 1
-    });
-
-    const [form, setForm] = useState({
-        name: "Parlock Hills Apartment",
-        size: 85,
-        bedrooms: 2,
-        bathrooms: 1
-    });
-
-
-    function togglePropertyEdit() {
-
-        setForm(property);
-        setEditing(!editing);
-
-    }
-
-
-    function handleChange(event) {
-
-        const { name, value } = event.target;
-
-        setForm((previous) => ({
-            ...previous,
-            [name]:
-                name === "size" ||
-                name === "bedrooms" ||
-                name === "bathrooms"
-                    ? Number(value)
-                    : value
-        }));
-
-    }
-
-
-    function savePropertyDetails(event) {
-
-        event.preventDefault();
-
-        if (
-            form.name.trim() === "" ||
-            form.size <= 0 ||
-            form.bedrooms <= 0 ||
-            form.bathrooms <= 0
-        ) {
-
-            alert("Please enter valid property details.");
+        if (!propertyId) {
+            setProperty(null);
             return;
+        }
+
+        setProperty(getPropertyById(propertyId));
+
+    }, [propertyId]);
+
+
+    /*
+    =====================================================
+    USER STATE
+    =====================================================
+    */
+
+    const [currentUser, setCurrentUser] = useState(null);
+    const [isSaved, setIsSaved] = useState(false);
+
+
+    /*
+    =====================================================
+    LOAD USER + RECENTLY VIEWED
+    =====================================================
+    */
+
+    useEffect(() => {
+
+        if (!property) {
+            return;
+        }
+
+        const loggedIn =
+            localStorage.getItem("valoraLoggedIn") === "true";
+
+        const storedUser =
+            localStorage.getItem("valoraUser");
+
+        if (!loggedIn || !storedUser) {
+            setCurrentUser(null);
+            setIsSaved(false);
+            return;
+        }
+
+        try {
+
+            const user = JSON.parse(storedUser);
+
+            if (!user) {
+                return;
+            }
+
+            const savedProperties =
+                Array.isArray(user.savedProperties)
+                    ? user.savedProperties
+                    : [];
+
+            setIsSaved(
+                savedProperties.some(
+                    (savedId) =>
+                        String(savedId).toLowerCase() ===
+                        String(property.id).toLowerCase()
+                )
+            );
+
+            const recentlyViewed =
+                Array.isArray(user.recentlyViewed)
+                    ? user.recentlyViewed
+                    : [];
+
+            const updatedRecentlyViewed = [
+                property.id,
+                ...recentlyViewed.filter(
+                    (id) =>
+                        String(id).toLowerCase() !==
+                        String(property.id).toLowerCase()
+                )
+            ].slice(0, 5);
+
+            const updatedUser = {
+                ...user,
+                recentlyViewed: updatedRecentlyViewed
+            };
+
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(updatedUser)
+            );
+
+            setCurrentUser(updatedUser);
+
+        } catch (error) {
+
+            console.error(
+                "Unable to load VALORA user:",
+                error
+            );
 
         }
 
-        setProperty({
-            ...form
-        });
+    }, [property]);
 
-        setEditing(false);
 
-        alert("Property details updated successfully.");
+    /*
+    =====================================================
+    SAVE / UNSAVE PROPERTY
+    =====================================================
+    */
 
+    const handleSaveProperty = () => {
+
+        const loggedIn =
+            localStorage.getItem("valoraLoggedIn") === "true";
+
+        const storedUser =
+            localStorage.getItem("valoraUser");
+
+        if (!loggedIn || !storedUser) {
+            window.location.href = "/login";
+            return;
+        }
+
+        if (!property) {
+            return;
+        }
+
+        try {
+
+            const user = JSON.parse(storedUser);
+
+            const savedProperties =
+                Array.isArray(user.savedProperties)
+                    ? user.savedProperties
+                    : [];
+
+            if (isSaved) {
+
+                const updatedSavedProperties =
+                    savedProperties.filter(
+                        (savedId) =>
+                            String(savedId).toLowerCase() !==
+                            String(property.id).toLowerCase()
+                    );
+
+                const updatedUser = {
+                    ...user,
+                    savedProperties: updatedSavedProperties
+                };
+
+                localStorage.setItem(
+                    "valoraUser",
+                    JSON.stringify(updatedUser)
+                );
+
+                setCurrentUser(updatedUser);
+                setIsSaved(false);
+
+                return;
+            }
+
+            const alreadySaved =
+                savedProperties.some(
+                    (savedId) =>
+                        String(savedId).toLowerCase() ===
+                        String(property.id).toLowerCase()
+                );
+
+            const updatedSavedProperties =
+                alreadySaved
+                    ? savedProperties
+                    : [...savedProperties, property.id];
+
+            const updatedUser = {
+                ...user,
+                savedProperties: updatedSavedProperties
+            };
+
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(updatedUser)
+            );
+
+            setCurrentUser(updatedUser);
+            setIsSaved(true);
+
+        } catch (error) {
+
+            console.error(
+                "Unable to save property:",
+                error
+            );
+
+        }
+
+    };
+
+
+    /*
+    =====================================================
+    PROPERTY NOT FOUND
+    =====================================================
+    */
+
+    if (!property) {
+
+        return (
+            <div className="property-page">
+
+                <header className="property-public-header">
+
+                    <Link
+                        to="/"
+                        className="property-logo-link"
+                    >
+                        <img
+                            src="/ValoraLogo.jpeg"
+                            alt="VALORA Logo"
+                        />
+                    </Link>
+
+                    <div className="property-header-actions">
+
+                        <Link
+                            to="/login"
+                            className="property-header-login"
+                        >
+                            Login
+                        </Link>
+
+                        <Link
+                            to="/register"
+                            className="property-header-register"
+                        >
+                            Register
+                        </Link>
+
+                    </div>
+
+                </header>
+
+
+                <main className="property-not-found-main">
+
+                    <div className="property-not-found-card">
+
+                        <div className="property-not-found-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="36"
+                                height="36"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M3 10.5L12 3l9 7.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.7"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+
+                                <path
+                                    d="M5 9.5V21h14V9.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.7"
+                                    strokeLinejoin="round"
+                                />
+
+                                <path
+                                    d="M9 21v-6h6v6"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.7"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+
+                        </div>
+
+                        <h1>
+                            Property Not Found
+                        </h1>
+
+                        <p>
+                            The property you are looking for could
+                            not be found in the VALORA property
+                            listings.
+                        </p>
+
+                        <Link
+                            to="/"
+                            className="property-primary-button"
+                        >
+                            Back to Properties
+                        </Link>
+
+                    </div>
+
+                </main>
+
+
+                <footer className="property-footer">
+
+                    <p>
+                        © 2026 VALORA — Property Intelligence
+                    </p>
+
+                </footer>
+
+            </div>
+        );
     }
 
 
-    /* =========================================
-       ROLE TITLES
-    ========================================= */
+    /*
+    =====================================================
+    LISTING DATA
+    =====================================================
+    */
 
-    let pageTitle = "My Property 🏡";
-    let pageDescription = "Manage and view your property information.";
-    let propertyLabel = "MY PROPERTY";
+    const listing = property.listing || {};
 
 
-    if (role === "Investor") {
+    /*
+    =====================================================
+    PUBLIC LISTING APPROVAL CHECK
+    =====================================================
+    */
 
-        pageTitle = "Properties 📊";
-        pageDescription =
-            "View properties you are interested in and analyse their investment potential.";
-        propertyLabel = "INVESTMENT PROPERTY";
+    const listingStatusValue =
+        String(listing.listingStatus || "")
+            .trim()
+            .toLowerCase();
 
-    }
+    const hoaApprovalStatusValue =
+        String(listing.hoaApprovalStatus || "")
+            .trim()
+            .toLowerCase();
 
-    if (role === "Estate Agent") {
+    const isPublished =
+        listingStatusValue === "published" &&
+        hoaApprovalStatusValue === "approved";
 
-        pageTitle = "My Listings 🏡";
-        pageDescription =
-            "Manage your property listings and listing information.";
-        propertyLabel = "PROPERTY LISTING";
 
-    }
+    /*
+    =====================================================
+    APPROVED PUBLIC IMAGES
+    =====================================================
+    */
 
-    if (role === "HOA") {
+    const approvedImages =
+        isPublished && Array.isArray(property.images)
+            ? property.images
+                .map((image) => {
 
-        pageTitle = "Community Properties 🏘";
-        pageDescription =
-            "View property information within the VALORA community.";
-        propertyLabel = "COMMUNITY PROPERTY";
+                    if (typeof image === "string") {
+                        return image;
+                    }
 
-    }
+                    if (
+                        image &&
+                        typeof image === "object"
+                    ) {
+                        return image.data || "";
+                    }
 
+                    return "";
+
+                })
+                .filter(Boolean)
+            : [];
+
+
+    /*
+    =====================================================
+    PUBLIC LISTING TYPE
+    =====================================================
+    */
+
+    const listingType =
+        isPublished
+            ? listing.listingType || null
+            : null;
+
+
+    /*
+    =====================================================
+    PUBLIC LISTING STATUS
+    =====================================================
+    */
+
+    const publicListingStatus =
+        isPublished
+            ? "Published"
+            : "Not Currently Listed";
+
+
+    /*
+    =====================================================
+    PRICE DISPLAY
+    =====================================================
+    */
+
+    const getPriceDisplay = () => {
+
+        if (!isPublished) {
+            return "Not currently listed";
+        }
+
+        if (listing.listingType === "For Sale") {
+
+            if (listing.askingPrice) {
+                return `R${Number(
+                    listing.askingPrice
+                ).toLocaleString()}`;
+            }
+
+            return "Price TBC";
+        }
+
+        if (listing.listingType === "For Rent") {
+
+            if (listing.rentalPrice) {
+                return `R${Number(
+                    listing.rentalPrice
+                ).toLocaleString()} / month`;
+            }
+
+            return "Rental Price TBC";
+        }
+
+        return "Not currently listed";
+    };
+
+
+    /*
+    =====================================================
+    UNIT STATUS
+    =====================================================
+    */
+
+    const unitStatus =
+        property.unitStatus ||
+        property.status ||
+        "Available";
+
+
+    /*
+    =====================================================
+    STATUS COLOUR
+    =====================================================
+    */
+
+    const getStatusClass = () => {
+
+        if (unitStatus === "Sold") {
+            return "status-sold";
+        }
+
+        if (unitStatus === "Rented") {
+            return "status-rented";
+        }
+
+        if (unitStatus === "Under Offer") {
+            return "status-under-offer";
+        }
+
+        return "status-available";
+    };
+
+
+    /*
+    =====================================================
+    FEATURE ICON
+    =====================================================
+    */
+
+    const FeatureIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            aria-hidden="true"
+        >
+            <path
+                d="M5 12.5L10 17l9-10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+
+
+    /*
+    =====================================================
+    PROPERTY STAT ICONS
+    =====================================================
+    */
+
+    const BedroomIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            width="30"
+            height="30"
+            aria-hidden="true"
+        >
+            <path
+                d="M4 18v-6h16v6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            <path
+                d="M4 12V8h16v4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            <path
+                d="M7 10v2M17 10v2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+            />
+
+            <path
+                d="M3 18h18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+            />
+        </svg>
+    );
+
+
+    const BathroomIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            width="30"
+            height="30"
+            aria-hidden="true"
+        >
+            <path
+                d="M4 12h16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+            />
+
+            <path
+                d="M6 12V6a2 2 0 0 1 4 0v2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+            />
+
+            <path
+                d="M4 12v2a5 5 0 0 0 5 5h6a5 5 0 0 0 5-5v-2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+
+
+    const PropertyTypeIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            width="30"
+            height="30"
+            aria-hidden="true"
+        >
+            <path
+                d="M3 10.5L12 3l9 7.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            <path
+                d="M5 9.5V21h14V9.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+            />
+
+            <path
+                d="M9 21v-6h6v6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+
+
+    const StatusIcon = () => (
+        <svg
+            viewBox="0 0 24 24"
+            width="30"
+            height="30"
+            aria-hidden="true"
+        >
+            <rect
+                x="5"
+                y="3"
+                width="14"
+                height="18"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+            />
+
+            <path
+                d="M8 8h8M8 12h8M8 16h5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+            />
+        </svg>
+    );
+
+
+    /*
+    =====================================================
+    PHOTO PLACEHOLDER
+    =====================================================
+    */
+
+    const PropertyPhotoPlaceholder = () => (
+        <div className="property-photo-placeholder">
+
+            <div className="property-photo-placeholder-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    width="42"
+                    height="42"
+                    aria-hidden="true"
+                >
+                    <path
+                        d="M3 10.5L12 3l9 7.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+
+                    <path
+                        d="M5 9.5V21h14V9.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                    />
+
+                    <path
+                        d="M9 21v-6h6v6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+
+            </div>
+
+            <h3>
+                Photos Coming Soon
+            </h3>
+
+            <p>
+                Approved property photographs will be
+                displayed here once they have been uploaded
+                by an Estate Agent and approved by the HOA.
+            </p>
+
+        </div>
+    );
+
+
+    /*
+    =====================================================
+    PUBLIC DESCRIPTION
+    =====================================================
+    */
+
+    const publicDescription =
+        isPublished && listing.description
+            ? listing.description
+            : property.description ||
+              "Property information for this unit is being updated as the VALORA development progresses.";
+
+
+    /*
+    =====================================================
+    PROPERTY STATS
+    =====================================================
+    */
+
+    const propertyStats = [
+        {
+            icon: <BedroomIcon />,
+            label: "Bedrooms",
+            value: property.bedrooms,
+        },
+        {
+            icon: <BathroomIcon />,
+            label: "Bathrooms",
+            value: property.bathrooms,
+        },
+        {
+            icon: <PropertyTypeIcon />,
+            label: "Property Type",
+            value: property.propertyType,
+            compact: true,
+        },
+        {
+            icon: <StatusIcon />,
+            label: "Unit Status",
+            value: unitStatus,
+            compact: true,
+        },
+    ];
+
+
+    /*
+    =====================================================
+    MAIN PROPERTY PAGE
+    =====================================================
+    */
 
     return (
-        <div className="dashboard-layout">
 
+        <div className="property-page">
 
-            {/* =========================================
-                SIDEBAR
-            ========================================= */}
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
-            <aside className="sidebar">
+            <header className="property-public-header">
 
-                <div className="logo-area">
-
+                <Link
+                    to="/"
+                    className="property-logo-link"
+                >
                     <img
                         src="/ValoraLogo.jpeg"
                         alt="VALORA Logo"
                     />
+                </Link>
 
-                    <p>
-                        Property Intelligence
-                    </p>
+                <div className="property-header-actions">
 
-                </div>
-
-
-                <nav className="side-nav">
-
-                    <a href="/dashboard">
-                        🏠 Dashboard
-                    </a>
-
-
-                    <a
-                        href="/property"
-                        className="active"
+                    <Link
+                        to="/login"
+                        className="property-header-login"
                     >
-                        🏡 Property
-                    </a>
+                        Login
+                    </Link>
 
-
-                    <a href="/valuation">
-                        🤖 AI Valuation
-                    </a>
-
-
-                    <a href="/complaints">
-                        🏘 Complaints
-                    </a>
-
-
-                    <a href="/providers">
-                        🔧 Service Providers
-                    </a>
-
-
-                    <a href="/announcements">
-                        📢 Announcements
-                    </a>
-
-
-                    <a href="/profile">
-                        👤 My Profile
-                    </a>
-
-                </nav>
-
-
-                <div className="logout-area">
-
-                    <a href="/">
-                        🚪 Logout
-                    </a>
+                    <Link
+                        to="/register"
+                        className="property-header-register"
+                    >
+                        Register
+                    </Link>
 
                 </div>
 
-            </aside>
+            </header>
 
 
-            {/* =========================================
+            {/* =================================================
                 MAIN CONTENT
-            ========================================= */}
+            ================================================= */}
 
-            <main className="dashboard-main">
+            <main className="property-main">
 
-
-                {/* =========================================
-                    TOP BAR
-                ========================================= */}
-
-                <div className="top-bar">
-
-                    <div>
-
-                        <h2>
-                            {pageTitle}
-                        </h2>
-
-                        <p>
-                            {pageDescription}
-                        </p>
-
-                    </div>
-
-                </div>
+                <Link
+                    to="/"
+                    className="property-back-link"
+                >
+                    <span aria-hidden="true">←</span>
+                    Back to Properties
+                </Link>
 
 
-                {/* =========================================
+                {/* =================================================
                     PROPERTY HEADER
-                ========================================= */}
+                ================================================= */}
 
                 <section className="property-header-card">
 
-                    <div className="property-image">
-                        🏠
-                    </div>
-
-
-                    <div className="property-header-info">
-
-                        <span className="property-label">
-                            {propertyLabel}
-                        </span>
-
-
-                        <h1 id="propertyName">
-                            {property.name}
-                        </h1>
-
-
-                        <p>
-                            📍 Parlock, KwaZulu-Natal
-                        </p>
-
-
-                        <span className="property-type-badge">
-                            Apartment
-                        </span>
-
-                    </div>
-
-                </section>
-
-
-                {/* =========================================
-                    PROPERTY STATS
-                ========================================= */}
-
-                <section className="property-stats">
-
-                    <div className="property-stat-card">
-
-                        <span>
-                            📐
-                        </span>
-
-                        <p>
-                            Property Size
-                        </p>
-
-                        <strong>
-                            {property.size} m²
-                        </strong>
-
-                    </div>
-
-
-                    <div className="property-stat-card">
-
-                        <span>
-                            🛏️
-                        </span>
-
-                        <p>
-                            Bedrooms
-                        </p>
-
-                        <strong>
-                            {property.bedrooms}
-                        </strong>
-
-                    </div>
-
-
-                    <div className="property-stat-card">
-
-                        <span>
-                            🚿
-                        </span>
-
-                        <p>
-                            Bathrooms
-                        </p>
-
-                        <strong>
-                            {property.bathrooms}
-                        </strong>
-
-                    </div>
-
-
-                    <div className="property-stat-card">
-
-                        <span>
-                            🚗
-                        </span>
-
-                        <p>
-                            Parking
-                        </p>
-
-                        <strong>
-                            1 Bay
-                        </strong>
-
-                    </div>
-
-                </section>
-
-
-                {/* =========================================
-                    PROPERTY DETAILS
-                ========================================= */}
-
-                <section className="dashboard-panel property-details-panel">
-
-                    <div className="panel-heading">
+                    <div className="property-header-content">
 
                         <div>
 
-                            <h3>
-                                Property Details
-                            </h3>
+                            <span
+                                className={`property-status-badge ${getStatusClass()}`}
+                            >
+                                {unitStatus.toUpperCase()}
+                            </span>
 
-                            <p>
-                                Information about this property.
+                            <div className="property-unit-label">
+                                {property.unitNumber}
+                                {" • "}
+                                {property.propertyType}
+                            </div>
+
+                            <h1>
+                                {property.title}
+                            </h1>
+
+                            <p className="property-location">
+                                {property.location}
                             </p>
 
                         </div>
 
 
-                        {(role === "Property Owner" ||
-                          role === "Buyer") &&
-                          !editing && (
+                        <div className="property-price-area">
 
-                            <button
-                                type="button"
-                                className="edit-property-button"
-                                onClick={togglePropertyEdit}
+                            <span>
+                                {listingType === "For Rent"
+                                    ? "Monthly Rental"
+                                    : listingType === "For Sale"
+                                    ? "Asking Price"
+                                    : "Listing Status"}
+                            </span>
+
+                            <strong
+                                className={
+                                    listingType
+                                        ? "property-price"
+                                        : "property-price property-price-status"
+                                }
                             >
-                                ✏️ Edit Details
-                            </button>
+                                {getPriceDisplay()}
+                            </strong>
 
-                        )}
+                        </div>
 
                     </div>
 
 
-                    {/* =========================================
-                        NORMAL DETAILS
-                    ========================================= */}
+                    {/* SAVE PROPERTY */}
 
-                    {!editing && (
+                    <div className="property-save-row">
 
-                        <div id="propertyDetails">
+                        <div>
 
-                            <div className="property-detail-grid">
+                            <strong>
+                                {isSaved
+                                    ? "Property Saved"
+                                    : "Interested in this property?"}
+                            </strong>
 
-                                <div>
+                            <span>
+                                {isSaved
+                                    ? "You can find this property in your dashboard."
+                                    : "Save it to easily find it again later."}
+                            </span>
 
-                                    <span>
-                                        Property Type
-                                    </span>
+                        </div>
 
-                                    <strong>
-                                        Apartment
-                                    </strong>
+                        <button
+                            type="button"
+                            onClick={handleSaveProperty}
+                            className={
+                                isSaved
+                                    ? "property-save-button saved"
+                                    : "property-save-button"
+                            }
+                        >
+                            {isSaved
+                                ? "Saved Property"
+                                : "Save Property"}
+                        </button>
 
-                                </div>
+                    </div>
 
-
-                                <div>
-
-                                    <span>
-                                        Location
-                                    </span>
-
-                                    <strong>
-                                        Parlock, KZN
-                                    </strong>
-
-                                </div>
-
-
-                                <div>
-
-                                    <span>
-                                        Bedrooms
-                                    </span>
-
-                                    <strong>
-                                        {property.bedrooms}
-                                    </strong>
-
-                                </div>
+                </section>
 
 
-                                <div>
+                {/* =================================================
+                    PROPERTY PHOTOS
+                ================================================= */}
 
-                                    <span>
-                                        Bathrooms
-                                    </span>
+                <section className="property-section-card">
 
-                                    <strong>
-                                        {property.bathrooms}
-                                    </strong>
+                    <div className="property-section-heading">
+                        <h2>
+                            Property Photos
+                        </h2>
 
-                                </div>
+                        <p>
+                            Approved images for this property.
+                        </p>
+                    </div>
 
+                    {approvedImages.length === 0 ? (
 
-                                <div>
+                        <PropertyPhotoPlaceholder />
 
-                                    <span>
-                                        Floor Area
-                                    </span>
+                    ) : (
 
-                                    <strong>
-                                        {property.size} m²
-                                    </strong>
+                        <div className="property-photo-grid">
 
-                                </div>
+                            {approvedImages.map(
+                                (image, index) => (
 
+                                    <div
+                                        key={`${property.id}-photo-${index}`}
+                                        className="property-photo-card"
+                                    >
 
-                                <div>
+                                        <div className="property-photo-image">
 
-                                    <span>
-                                        Parking
-                                    </span>
+                                            <img
+                                                src={image}
+                                                alt={`${property.unitNumber} property photo ${index + 1}`}
+                                            />
 
-                                    <strong>
-                                        1 Bay
-                                    </strong>
+                                        </div>
 
-                                </div>
+                                        <div className="property-photo-caption">
 
-                            </div>
+                                            <h3>
+                                                {property.unitNumber}
+                                                {" — "}
+                                                Photo {index + 1}
+                                            </h3>
+
+                                            <p>
+                                                Approved property
+                                                photograph for{" "}
+                                                {property.title}.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                )
+                            )}
 
                         </div>
 
                     )}
 
+                </section>
 
-                    {/* =========================================
-                        EDIT FORM
-                    ========================================= */}
 
-                    {editing && (
+                {/* =================================================
+                    PROPERTY STATS
+                ================================================= */}
 
-                        <form
-                            className="property-edit-form"
-                            style={{ display: "block" }}
-                            onSubmit={savePropertyDetails}
+                <section className="property-stats-grid">
+
+                    {propertyStats.map((stat) => (
+
+                        <div
+                            key={stat.label}
+                            className="property-stat-card"
                         >
 
-                            <label>
-                                Property Name
-                            </label>
+                            <div className="property-stat-icon">
+                                {stat.icon}
+                            </div>
 
-                            <input
-                                type="text"
-                                name="name"
-                                value={form.name}
-                                onChange={handleChange}
-                            />
+                            <span>
+                                {stat.label}
+                            </span>
 
+                            <strong
+                                className={
+                                    stat.compact
+                                        ? "property-stat-value compact"
+                                        : "property-stat-value"
+                                }
+                            >
+                                {stat.value}
+                            </strong>
 
-                            <label>
-                                Property Size (m²)
-                            </label>
+                        </div>
 
-                            <input
-                                type="number"
-                                name="size"
-                                value={form.size}
-                                onChange={handleChange}
-                            />
+                    ))}
 
-
-                            <label>
-                                Bedrooms
-                            </label>
-
-                            <input
-                                type="number"
-                                name="bedrooms"
-                                value={form.bedrooms}
-                                onChange={handleChange}
-                            />
+                </section>
 
 
-                            <label>
-                                Bathrooms
-                            </label>
+                {/* =================================================
+                    UNIT INFORMATION
+                ================================================= */}
 
-                            <input
-                                type="number"
-                                name="bathrooms"
-                                value={form.bathrooms}
-                                onChange={handleChange}
-                            />
+                <section className="property-section-card">
 
+                    <div className="property-section-heading">
+                        <h2>
+                            Unit Information
+                        </h2>
 
-                            <div className="property-edit-buttons">
+                        <p>
+                            Key information about this VALORA unit.
+                        </p>
+                    </div>
 
-                                <button
-                                    type="submit"
-                                >
-                                    Save Changes
-                                </button>
+                    <div className="property-information-grid">
 
+                        {[
+                            ["Unit Number", property.unitNumber],
+                            [
+                                "Floor",
+                                property.floor || "Information TBC"
+                            ],
+                            [
+                                "Floor Area",
+                                property.floorArea
+                                    ? `${property.floorArea} m²`
+                                    : "Information TBC"
+                            ],
+                            [
+                                "Development",
+                                property.development ||
+                                property.location ||
+                                "VALORA Development"
+                            ]
+                        ].map(([label, value]) => (
 
-                                <button
-                                    type="button"
-                                    onClick={togglePropertyEdit}
-                                >
-                                    Cancel
-                                </button>
+                            <div
+                                key={label}
+                                className="property-information-item"
+                            >
+
+                                <span>
+                                    {label}
+                                </span>
+
+                                <strong>
+                                    {value}
+                                </strong>
 
                             </div>
 
-                        </form>
+                        ))}
+
+                    </div>
+
+                </section>
+
+
+                {/* =================================================
+                    ABOUT PROPERTY
+                ================================================= */}
+
+                <section className="property-section-card">
+
+                    <div className="property-section-heading">
+                        <h2>
+                            About This Property
+                        </h2>
+                    </div>
+
+                    <div className="property-description">
+
+                        <p>
+                            {publicDescription}
+                        </p>
+
+                        <p>
+                            {property.unitNumber} is currently{" "}
+                            <strong>
+                                {unitStatus.toLowerCase()}
+                            </strong>{" "}
+                            within the VALORA development.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                {/* =================================================
+                    PROPERTY FEATURES
+                ================================================= */}
+
+                <section className="property-section-card">
+
+                    <div className="property-section-heading">
+                        <h2>
+                            Property Features
+                        </h2>
+
+                        <p>
+                            Features currently recorded for this unit.
+                        </p>
+                    </div>
+
+                    <div className="property-features-grid">
+
+                        {Array.isArray(property.features) &&
+                            property.features.map(
+                                (feature) => (
+
+                                    <div
+                                        key={feature}
+                                        className="property-feature-item"
+                                    >
+
+                                        <span className="property-feature-icon">
+                                            <FeatureIcon />
+                                        </span>
+
+                                        <span>
+                                            {feature}
+                                        </span>
+
+                                    </div>
+
+                                )
+                            )}
+
+                    </div>
+
+                </section>
+
+
+                {/* =================================================
+                    LISTING STATUS
+                ================================================= */}
+
+                <section className="property-listing-status-card">
+
+                    <div>
+
+                        <p>
+                            Listing Status
+                        </p>
+
+                        <h3>
+                            {publicListingStatus}
+                        </h3>
+
+                    </div>
+
+
+                    {listingType && (
+
+                        <div className="property-listing-type">
+
+                            <p>
+                                Listing Type
+                            </p>
+
+                            <strong>
+                                {listingType}
+                            </strong>
+
+                        </div>
 
                     )}
 
                 </section>
 
 
-                {/* =========================================
-                    FINANCIAL / INVESTMENT OVERVIEW
-                ========================================= */}
-
-                <section className="dashboard-panel property-financial-panel">
-
-                    <div className="panel-heading">
-
-                        <div>
-
-                            <h3>
-                                {role === "Investor"
-                                    ? "Property Valuation & Investment 📊"
-                                    : "Investment Overview 📊"}
-                            </h3>
-
-                            <p>
-                                Current property financial indicators.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="financial-grid">
-
-
-                        <div className="financial-card">
-
-                            <span>
-                                Estimated Value
-                            </span>
-
-                            <strong>
-                                R1,020,000
-                            </strong>
-
-                            <small>
-                                VALORA AI estimate
-                            </small>
-
-                        </div>
-
-
-                        <div className="financial-card">
-
-                            <span>
-                                Monthly Rental
-                            </span>
-
-                            <strong>
-                                R6,000
-                            </strong>
-
-                            <small>
-                                Estimated rental income
-                            </small>
-
-                        </div>
-
-
-                        <div className="financial-card">
-
-                            <span>
-                                Rental Yield
-                            </span>
-
-                            <strong>
-                                7.06%
-                            </strong>
-
-                            <small>
-                                Annual rental yield
-                            </small>
-
-                        </div>
-
-
-                        <div className="financial-card">
-
-                            <span>
-                                10-Year Value
-                            </span>
-
-                            <strong>
-                                R1,508,000
-                            </strong>
-
-                            <small>
-                                Projected value
-                            </small>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                {/* =========================================
-                    ROLE-SPECIFIC PROPERTY ACTIONS
-                ========================================= */}
-
-                <section className="dashboard-panel">
-
-                    <div className="panel-heading">
-
-                        <div>
-
-                            <h3>
-                                Property Actions
-                            </h3>
-
-                            <p>
-                                Access VALORA property tools.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="property-actions">
-
-
-                        {/* PROPERTY OWNER / BUYER */}
-
-                        {(role === "Property Owner" ||
-                          role === "Buyer") && (
-
-                            <>
-
-                                <a href="/valuation">
-
-                                    🤖
-
-                                    <strong>
-                                        Analyse Property
-                                    </strong>
-
-                                    <span>
-                                        View AI valuation
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/complaints">
-
-                                    🏘
-
-                                    <strong>
-                                        Report Issue
-                                    </strong>
-
-                                    <span>
-                                        Submit a complaint
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/providers">
-
-                                    🔧
-
-                                    <strong>
-                                        Find Provider
-                                    </strong>
-
-                                    <span>
-                                        Find a service provider
-                                    </span>
-
-                                </a>
-
-                            </>
-
-                        )}
-
-
-                        {/* INVESTOR */}
-
-                        {role === "Investor" && (
-
-                            <>
-
-                                <a href="/valuation">
-
-                                    🤖
-
-                                    <strong>
-                                        Property Valuation
-                                    </strong>
-
-                                    <span>
-                                        AI valuation and growth score
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/roi">
-
-                                    📈
-
-                                    <strong>
-                                        10-Year ROI
-                                    </strong>
-
-                                    <span>
-                                        View investment forecast
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/complaints">
-
-                                    📊
-
-                                    <strong>
-                                        Complaint Trends
-                                    </strong>
-
-                                    <span>
-                                        View property complaint trends
-                                    </span>
-
-                                </a>
-
-                            </>
-
-                        )}
-
-
-                        {/* ESTATE AGENT */}
-
-                        {role === "Estate Agent" && (
-
-                            <>
-
-                                <a href="/valuation">
-
-                                    🤖
-
-                                    <strong>
-                                        AI Valuation
-                                    </strong>
-
-                                    <span>
-                                        Justify listing prices
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/property">
-
-                                    🏡
-
-                                    <strong>
-                                        Manage Listings
-                                    </strong>
-
-                                    <span>
-                                        Add and manage property listings
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/profile">
-
-                                    👤
-
-                                    <strong>
-                                        Agent Profile
-                                    </strong>
-
-                                    <span>
-                                        Manage your agent information
-                                    </span>
-
-                                </a>
-
-                            </>
-
-                        )}
-
-
-                        {/* HOA */}
-
-                        {role === "HOA" && (
-
-                            <>
-
-                                <a href="/complaints">
-
-                                    🏘
-
-                                    <strong>
-                                        Resident Complaints
-                                    </strong>
-
-                                    <span>
-                                        Manage community complaints
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/providers">
-
-                                    🔧
-
-                                    <strong>
-                                        Service Providers
-                                    </strong>
-
-                                    <span>
-                                        Manage community providers
-                                    </span>
-
-                                </a>
-
-
-                                <a href="/announcements">
-
-                                    📢
-
-                                    <strong>
-                                        Community Announcements
-                                    </strong>
-
-                                    <span>
-                                        Manage community notices
-                                    </span>
-
-                                </a>
-
-                            </>
-
-                        )}
+                {/* =================================================
+                    CONTACT SECTION
+                ================================================= */}
+
+                <section className="property-contact-section">
+
+                    <h2>
+                        Interested in this property?
+                    </h2>
+
+                    <p>
+                        Register or log in to VALORA to access
+                        property intelligence, save properties
+                        and connect with the relevant property
+                        representative when a unit becomes
+                        available for sale or rental.
+                    </p>
+
+                    <div className="property-contact-actions">
+
+                        <Link
+                            to="/login"
+                            className="property-contact-login"
+                        >
+                            Login
+                        </Link>
+
+                        <Link
+                            to="/register"
+                            className="property-contact-register"
+                        >
+                            Register
+                        </Link>
 
                     </div>
 
                 </section>
 
             </main>
+
+
+            {/* =================================================
+                FOOTER
+            ================================================= */}
+
+            <footer className="property-footer">
+
+                <p>
+                    © 2026 VALORA — Property Intelligence
+                </p>
+
+            </footer>
 
         </div>
     );
