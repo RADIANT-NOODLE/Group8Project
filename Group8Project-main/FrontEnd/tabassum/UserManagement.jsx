@@ -1,6 +1,165 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../App.css";
+import "./UserManagement.css";
+
+
+/* =========================================================
+   PROFESSIONAL ICONS
+========================================================= */
+
+function Icon({ name, size = 18 }) {
+
+  const icons = {
+
+    dashboard: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+
+    users: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+
+    requests: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" />
+        <path d="M14 2v6h6" />
+        <path d="M8 13h8" />
+        <path d="M8 17h6" />
+      </svg>
+    ),
+
+    property: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M3 10.5 12 3l9 7.5" />
+        <path d="M5 9.5V21h14V9.5" />
+        <path d="M9 21v-6h6v6" />
+      </svg>
+    ),
+
+    valuation: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Z" />
+        <circle cx="12" cy="9" r="2.5" />
+      </svg>
+    ),
+
+    complaints: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M4 4h16v13H7l-3 3V4Z" />
+        <path d="M8 9h8" />
+        <path d="M8 13h5" />
+      </svg>
+    ),
+
+    providers: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M14.7 6.3a4.5 4.5 0 0 0-5.9 5.9L3 18a2.1 2.1 0 0 0 3 3l5.8-5.8a4.5 4.5 0 0 0 5.9-5.9l-3 3-3-3 3-3Z" />
+      </svg>
+    ),
+
+    announcements: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M3 11v2a2 2 0 0 0 2 2h2l7 4V5L7 9H5a2 2 0 0 0-2 2Z" />
+        <path d="M18 9a5 5 0 0 1 0 6" />
+        <path d="M20 7a8 8 0 0 1 0 10" />
+      </svg>
+    ),
+
+    maintenance: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M14.7 6.3a4.5 4.5 0 0 0-5.9 5.9L3 18a2.1 2.1 0 0 0 3 3l5.8-5.8a4.5 4.5 0 0 0 5.9-5.9l-3 3-3-3 3-3Z" />
+      </svg>
+    ),
+
+    ai: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="5" y="5" width="14" height="14" rx="3" />
+        <path d="M9 9h6v6H9z" />
+        <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" />
+      </svg>
+    ),
+
+    analytics: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M4 20V10" />
+        <path d="M10 20V4" />
+        <path d="M16 20v-7" />
+        <path d="M22 20V7" />
+      </svg>
+    ),
+
+    profile: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </svg>
+    ),
+
+    logout: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M10 17l5-5-5-5" />
+        <path d="M15 12H3" />
+        <path d="M21 19V5a2 2 0 0 0-2-2h-7" />
+      </svg>
+    ),
+
+    refresh: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M20 11a8 8 0 0 0-14.9-3" />
+        <path d="M4 4v4h4" />
+        <path d="M4 13a8 8 0 0 0 14.9 3" />
+        <path d="M20 20v-4h-4" />
+      </svg>
+    ),
+
+    people: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="9" cy="8" r="3.5" />
+        <circle cx="17" cy="9" r="3" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M14 16a5.5 5.5 0 0 1 7.5 4" />
+      </svg>
+    ),
+
+    check: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="m5 12 4 4L19 6" />
+      </svg>
+    ),
+
+    pending: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    ),
+
+    rejected: (
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="9" />
+        <path d="m9 9 6 6M15 9l-6 6" />
+      </svg>
+    ),
+
+  };
+
+  return icons[name] || null;
+}
+
+
+/* =========================================================
+   USER MANAGEMENT
+========================================================= */
 
 function UserManagement() {
 
@@ -13,9 +172,9 @@ function UserManagement() {
   const [filter, setFilter] = useState("All");
 
 
-  // =====================================================
-  // REFRESH USER DATA
-  // =====================================================
+  /* =====================================================
+     REFRESH USER DATA
+  ===================================================== */
 
   function refreshUsers() {
 
@@ -26,9 +185,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // UPDATE USER DATA
-  // =====================================================
+  /* =====================================================
+     UPDATE USER DATA
+  ===================================================== */
 
   function updateUsers(updatedUsers) {
 
@@ -41,9 +200,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // APPROVE USER
-  // =====================================================
+  /* =====================================================
+     APPROVE USER
+  ===================================================== */
 
   function approveUser(userId) {
 
@@ -64,9 +223,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // REJECT USER
-  // =====================================================
+  /* =====================================================
+     REJECT USER
+  ===================================================== */
 
   function rejectUser(userId) {
 
@@ -96,9 +255,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // REACTIVATE REJECTED USER
-  // =====================================================
+  /* =====================================================
+     REACTIVATE REJECTED USER
+  ===================================================== */
 
   function reactivateUser(userId) {
 
@@ -120,9 +279,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // REMOVE USER
-  // =====================================================
+  /* =====================================================
+     REMOVE USER
+  ===================================================== */
 
   function removeUser(userId) {
 
@@ -134,9 +293,6 @@ function UserManagement() {
       return;
     }
 
-
-    // Do not allow the Head Admin to remove
-    // the system Head Admin account.
     if (userToRemove.role === "Head Admin") {
 
       alert(
@@ -146,16 +302,13 @@ function UserManagement() {
       return;
     }
 
-
     const confirmed = window.confirm(
       `Are you sure you want to remove ${userToRemove.firstName} ${userToRemove.lastName} from VALORA?`
     );
 
-
     if (!confirmed) {
       return;
     }
-
 
     const updatedUsers = users.filter(
       (user) => user.id !== userId
@@ -167,9 +320,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // LOGOUT
-  // =====================================================
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
 
   function logout() {
 
@@ -181,9 +334,9 @@ function UserManagement() {
   }
 
 
-  // =====================================================
-  // FILTER USERS
-  // =====================================================
+  /* =====================================================
+     FILTER USERS
+  ===================================================== */
 
   const filteredUsers =
     filter === "All"
@@ -193,9 +346,9 @@ function UserManagement() {
         );
 
 
-  // =====================================================
-  // COUNTS
-  // =====================================================
+  /* =====================================================
+     COUNTS
+  ===================================================== */
 
   const pendingCount = users.filter(
     (user) => user.status === "Pending"
@@ -211,16 +364,16 @@ function UserManagement() {
 
 
   return (
-    <div className="dashboard-layout">
+    <div className="user-management-page">
 
 
       {/* =================================================
           SIDEBAR
       ================================================= */}
 
-      <aside className="sidebar">
+      <aside className="user-management-sidebar">
 
-        <div className="logo-area">
+        <div className="user-management-brand">
 
           <img
             src="/ValoraLogo.jpeg"
@@ -234,20 +387,26 @@ function UserManagement() {
         </div>
 
 
-        <nav className="side-nav">
+        <nav className="user-management-nav">
 
-          <div className="nav-heading">
-            HEAD ADMIN
+          <div className="user-management-nav-heading">
+            HEAD ADMINISTRATION
           </div>
 
 
           <Link to="/head-admin">
-            📊 Dashboard
+            <span className="user-management-nav-icon">
+              <Icon name="dashboard" size={17} />
+            </span>
+            <span>Dashboard</span>
           </Link>
 
 
           <Link to="/registration-requests">
-            📝 Registration Requests
+            <span className="user-management-nav-icon">
+              <Icon name="requests" size={17} />
+            </span>
+            <span>Registration Requests</span>
           </Link>
 
 
@@ -255,66 +414,104 @@ function UserManagement() {
             to="/user-management"
             className="active"
           >
-            👥 User Management
+            <span className="user-management-nav-icon">
+              <Icon name="users" size={17} />
+            </span>
+            <span>User Management</span>
           </Link>
 
 
-          <div className="nav-heading">
+          <div className="user-management-nav-heading">
             SYSTEM MANAGEMENT
           </div>
 
 
           <Link to="/property">
-            🏠 Properties
+            <span className="user-management-nav-icon">
+              <Icon name="property" size={17} />
+            </span>
+            <span>Properties</span>
           </Link>
 
 
           <Link to="/valuation">
-            🤖 AI Valuation
+            <span className="user-management-nav-icon">
+              <Icon name="valuation" size={17} />
+            </span>
+            <span>AI Valuation</span>
           </Link>
 
 
           <Link to="/complaints">
-            📋 Complaints
+            <span className="user-management-nav-icon">
+              <Icon name="complaints" size={17} />
+            </span>
+            <span>Complaints</span>
           </Link>
 
 
           <Link to="/providers">
-            🔧 Service Providers
+            <span className="user-management-nav-icon">
+              <Icon name="providers" size={17} />
+            </span>
+            <span>Service Providers</span>
           </Link>
 
 
           <Link to="/announcements">
-            📢 Announcements
+            <span className="user-management-nav-icon">
+              <Icon name="announcements" size={17} />
+            </span>
+            <span>Announcements</span>
           </Link>
 
 
           <Link to="/maintenance">
-            🛠 Maintenance
+            <span className="user-management-nav-icon">
+              <Icon name="maintenance" size={17} />
+            </span>
+            <span>Maintenance</span>
           </Link>
 
 
           <Link to="/ai-training-data">
-            🧠 AI Training Data
+            <span className="user-management-nav-icon">
+              <Icon name="ai" size={17} />
+            </span>
+            <span>AI Training Data</span>
           </Link>
 
 
           <Link to="/community-analytics">
-            📊 Community Analytics
+            <span className="user-management-nav-icon">
+              <Icon name="analytics" size={17} />
+            </span>
+            <span>Community Analytics</span>
           </Link>
 
 
           <Link to="/profile">
-            👤 My Profile
+            <span className="user-management-nav-icon">
+              <Icon name="profile" size={17} />
+            </span>
+            <span>My Profile</span>
           </Link>
 
         </nav>
 
 
-        <div className="logout-area">
+        <div className="user-management-logout">
 
           <button onClick={logout}>
-            🚪 Logout
+
+            <span className="user-management-nav-icon">
+              <Icon name="logout" size={17} />
+            </span>
+
+            <span>
+              Logout
+            </span>
+
           </button>
 
         </div>
@@ -326,18 +523,18 @@ function UserManagement() {
           MAIN CONTENT
       ================================================= */}
 
-      <main className="dashboard-main">
+      <main className="user-management-main">
 
 
         {/* =================================================
             TOP BAR
         ================================================= */}
 
-        <div className="top-bar">
+        <div className="user-management-header">
 
           <div>
 
-            <p className="page-eyebrow">
+            <p className="user-management-eyebrow">
               HEAD ADMINISTRATION
             </p>
 
@@ -345,7 +542,7 @@ function UserManagement() {
               User Management
             </h1>
 
-            <p className="page-subtitle">
+            <p className="user-management-subtitle">
               View and manage all VALORA user accounts
               and their access status.
             </p>
@@ -353,9 +550,9 @@ function UserManagement() {
           </div>
 
 
-          <div className="profile-small">
+          <div className="user-management-profile">
 
-            <div className="profile-circle">
+            <div className="user-management-profile-circle">
               HA
             </div>
 
@@ -380,73 +577,105 @@ function UserManagement() {
             STATISTICS
         ================================================= */}
 
-        <div className="stat-cards">
+        <div className="user-management-stats">
 
 
-          <div className="stat-card">
+          <div className="user-management-stat-card">
 
-            <span>
-              Total Users
-            </span>
+            <div className="user-management-stat-icon">
+              <Icon name="users" size={19} />
+            </div>
 
-            <strong>
-              {users.length}
-            </strong>
+            <div>
 
-            <small>
-              Registered accounts
-            </small>
+              <span>
+                Total Users
+              </span>
 
-          </div>
+              <strong>
+                {users.length}
+              </strong>
 
+              <small>
+                Registered accounts
+              </small>
 
-          <div className="stat-card">
-
-            <span>
-              Approved
-            </span>
-
-            <strong>
-              {approvedCount}
-            </strong>
-
-            <small>
-              Active accounts
-            </small>
+            </div>
 
           </div>
 
 
-          <div className="stat-card">
+          <div className="user-management-stat-card">
 
-            <span>
-              Pending
-            </span>
+            <div className="user-management-stat-icon">
+              <Icon name="check" size={19} />
+            </div>
 
-            <strong>
-              {pendingCount}
-            </strong>
+            <div>
 
-            <small>
-              Awaiting approval
-            </small>
+              <span>
+                Approved
+              </span>
+
+              <strong>
+                {approvedCount}
+              </strong>
+
+              <small>
+                Active accounts
+              </small>
+
+            </div>
 
           </div>
 
 
-          <div className="stat-card">
+          <div className="user-management-stat-card">
 
-            <span>
-              Rejected
-            </span>
+            <div className="user-management-stat-icon">
+              <Icon name="pending" size={19} />
+            </div>
 
-            <strong>
-              {rejectedCount}
-            </strong>
+            <div>
 
-            <small>
-              Restricted accounts
-            </small>
+              <span>
+                Pending
+              </span>
+
+              <strong>
+                {pendingCount}
+              </strong>
+
+              <small>
+                Awaiting approval
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <div className="user-management-stat-card">
+
+            <div className="user-management-stat-icon">
+              <Icon name="rejected" size={19} />
+            </div>
+
+            <div>
+
+              <span>
+                Rejected
+              </span>
+
+              <strong>
+                {rejectedCount}
+              </strong>
+
+              <small>
+                Restricted accounts
+              </small>
+
+            </div>
 
           </div>
 
@@ -458,10 +687,10 @@ function UserManagement() {
             USER MANAGEMENT PANEL
         ================================================= */}
 
-        <section className="dashboard-panel large-panel">
+        <section className="user-management-panel">
 
 
-          <div className="panel-heading">
+          <div className="user-management-panel-heading">
 
             <div>
 
@@ -478,10 +707,11 @@ function UserManagement() {
 
 
             <button
-              className="secondary-btn"
+              className="user-management-refresh"
               onClick={refreshUsers}
             >
-              ↻ Refresh
+              <Icon name="refresh" size={15} />
+              <span>Refresh</span>
             </button>
 
           </div>
@@ -489,20 +719,13 @@ function UserManagement() {
 
           {/* FILTERS */}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              flexWrap: "wrap",
-              marginBottom: "20px",
-            }}
-          >
+          <div className="user-management-filters">
 
             <button
               className={
                 filter === "All"
-                  ? "primary-btn"
-                  : "secondary-btn"
+                  ? "active"
+                  : ""
               }
               onClick={() => setFilter("All")}
             >
@@ -513,8 +736,8 @@ function UserManagement() {
             <button
               className={
                 filter === "Approved"
-                  ? "primary-btn"
-                  : "secondary-btn"
+                  ? "active"
+                  : ""
               }
               onClick={() =>
                 setFilter("Approved")
@@ -527,8 +750,8 @@ function UserManagement() {
             <button
               className={
                 filter === "Pending"
-                  ? "primary-btn"
-                  : "secondary-btn"
+                  ? "active"
+                  : ""
               }
               onClick={() =>
                 setFilter("Pending")
@@ -541,8 +764,8 @@ function UserManagement() {
             <button
               className={
                 filter === "Rejected"
-                  ? "primary-btn"
-                  : "secondary-btn"
+                  ? "active"
+                  : ""
               }
               onClick={() =>
                 setFilter("Rejected")
@@ -558,12 +781,11 @@ function UserManagement() {
 
           {filteredUsers.length === 0 ? (
 
-            <div
-              style={{
-                padding: "40px 20px",
-                textAlign: "center",
-              }}
-            >
+            <div className="user-management-empty">
+
+              <div className="user-management-empty-icon">
+                <Icon name="users" size={22} />
+              </div>
 
               <h3>
                 No users found
@@ -578,9 +800,9 @@ function UserManagement() {
 
           ) : (
 
-            <div className="table-container">
+            <div className="user-management-table-wrapper">
 
-              <table className="data-table">
+              <table className="user-management-table">
 
                 <thead>
 
@@ -618,8 +840,6 @@ function UserManagement() {
                     <tr key={user.id}>
 
 
-                      {/* NAME */}
-
                       <td>
 
                         <strong>
@@ -630,48 +850,30 @@ function UserManagement() {
                       </td>
 
 
-                      {/* EMAIL */}
-
                       <td>
                         {user.email}
                       </td>
 
 
-                      {/* ROLE */}
-
                       <td>
-                        {user.role}
+
+                        <span className="user-management-role">
+                          {user.role}
+                        </span>
+
                       </td>
 
-
-                      {/* STATUS */}
 
                       <td>
 
                         <span
-                          style={{
-                            display: "inline-block",
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                            background:
-                              user.status ===
-                              "Approved"
-                                ? "#eaf5ec"
-                                : user.status ===
-                                  "Rejected"
-                                ? "#f8eaea"
-                                : "#f3edf7",
-                            color:
-                              user.status ===
-                              "Approved"
-                                ? "#286b35"
-                                : user.status ===
-                                  "Rejected"
-                                ? "#9b3333"
-                                : "#563F6B",
-                          }}
+                          className={`user-management-status ${
+                            user.status === "Approved"
+                              ? "approved"
+                              : user.status === "Rejected"
+                              ? "rejected"
+                              : "pending"
+                          }`}
                         >
                           {user.status}
                         </span>
@@ -679,17 +881,9 @@ function UserManagement() {
                       </td>
 
 
-                      {/* ACTIONS */}
-
                       <td>
 
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <div className="user-management-actions">
 
 
                           {/* PENDING */}
@@ -699,7 +893,7 @@ function UserManagement() {
 
                             <>
                               <button
-                                className="primary-btn"
+                                className="user-management-primary-btn"
                                 onClick={() =>
                                   approveUser(
                                     user.id
@@ -710,7 +904,7 @@ function UserManagement() {
                               </button>
 
                               <button
-                                className="secondary-btn"
+                                className="user-management-secondary-btn"
                                 onClick={() =>
                                   rejectUser(
                                     user.id
@@ -732,7 +926,7 @@ function UserManagement() {
                               "Head Admin" && (
 
                             <button
-                              className="secondary-btn"
+                              className="user-management-secondary-btn"
                               onClick={() =>
                                 rejectUser(
                                   user.id
@@ -741,7 +935,6 @@ function UserManagement() {
                             >
                               Revoke Access
                             </button>
-
                           )}
 
 
@@ -749,9 +942,10 @@ function UserManagement() {
 
                           {user.status ===
                             "Rejected" && (
+
                             <>
                               <button
-                                className="primary-btn"
+                                className="user-management-primary-btn"
                                 onClick={() =>
                                   reactivateUser(
                                     user.id
@@ -762,7 +956,7 @@ function UserManagement() {
                               </button>
 
                               <button
-                                className="secondary-btn"
+                                className="user-management-secondary-btn"
                                 onClick={() =>
                                   removeUser(
                                     user.id
@@ -772,6 +966,7 @@ function UserManagement() {
                                 Remove
                               </button>
                             </>
+
                           )}
 
 
@@ -780,13 +975,7 @@ function UserManagement() {
                           {user.role ===
                             "Head Admin" && (
 
-                            <span
-                              style={{
-                                fontSize: "12px",
-                                fontWeight: "600",
-                                padding: "8px",
-                              }}
-                            >
+                            <span className="user-management-system-account">
                               System Account
                             </span>
 
@@ -795,7 +984,6 @@ function UserManagement() {
                         </div>
 
                       </td>
-
 
                     </tr>
 
@@ -816,9 +1004,10 @@ function UserManagement() {
             ROLE SUMMARY
         ================================================= */}
 
-        <section className="dashboard-panel large-panel">
+        <section className="user-management-panel">
 
-          <div className="panel-heading">
+
+          <div className="user-management-panel-heading">
 
             <div>
 
@@ -835,10 +1024,14 @@ function UserManagement() {
           </div>
 
 
-          <div className="stat-cards">
+          <div className="user-management-role-grid">
 
 
-            <div className="stat-card">
+            <div className="user-management-role-card">
+
+              <div className="user-management-role-icon">
+                <Icon name="users" size={18} />
+              </div>
 
               <span>
                 Residents
@@ -856,7 +1049,11 @@ function UserManagement() {
             </div>
 
 
-            <div className="stat-card">
+            <div className="user-management-role-card">
+
+              <div className="user-management-role-icon">
+                <Icon name="people" size={18} />
+              </div>
 
               <span>
                 Investors
@@ -874,7 +1071,11 @@ function UserManagement() {
             </div>
 
 
-            <div className="stat-card">
+            <div className="user-management-role-card">
+
+              <div className="user-management-role-icon">
+                <Icon name="property" size={18} />
+              </div>
 
               <span>
                 Estate Agents
@@ -892,7 +1093,11 @@ function UserManagement() {
             </div>
 
 
-            <div className="stat-card">
+            <div className="user-management-role-card">
+
+              <div className="user-management-role-icon">
+                <Icon name="profile" size={18} />
+              </div>
 
               <span>
                 HOA Admins
