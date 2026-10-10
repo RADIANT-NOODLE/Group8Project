@@ -1,114 +1,140 @@
+import React from "react";
 import { Link } from "react-router-dom";
-import "../Auth.css";
+import "./Auth.css";
 
 function RegistrationPending() {
+    return (
+        <div className="auth-page">
 
-  return (
-    <div className="auth-page">
+            <div className="auth-card">
 
-      <div className="auth-card">
+                {/* LEFT SIDE */}
 
-        {/* LEFT SIDE */}
+                <div className="auth-sidebar">
 
-        <div className="auth-sidebar">
+                    <div className="auth-logo">
+                        <img
+                            src="/ValoraLogo.jpeg"
+                            alt="VALORA"
+                        />
+                    </div>
 
-          <div className="auth-logo">
+                    <div className="auth-sidebar-content">
 
-            <img
-              src="/ValoraLogo.jpeg"
-              alt="VALORA Logo"
-            />
+                        <p className="auth-eyebrow">
+                            PROPERTY & COMMUNITY
+                        </p>
 
-          </div>
+                        <h1>
+                            Welcome to VALORA
+                        </h1>
 
-          <div className="auth-sidebar-content">
+                        <p>
+                            Your intelligent property and
+                            community platform.
+                        </p>
 
-            <p className="auth-eyebrow">
-              REGISTRATION SUBMITTED
-            </p>
+                    </div>
 
-            <h1>
-              Your request is
-              <br />
-              under review.
-            </h1>
-
-            <p>
-              Your VALORA registration has been
-              successfully submitted and is now
-              awaiting administrator approval.
-            </p>
-
-          </div>
-
-        </div>
+                </div>
 
 
-        {/* RIGHT SIDE */}
+                {/* RIGHT SIDE */}
 
-        <div className="auth-form-panel">
+                <div className="auth-form-panel">
 
-          <div className="auth-form-content">
+                    <div className="auth-form-content">
 
-            <p className="auth-eyebrow">
-              ACCOUNT PENDING
-            </p>
+                        {/* SUCCESS ICON */}
 
-            <h2>
-              Registration received.
-            </h2>
+                        <div className="pending-icon">
 
-            <p className="auth-lead">
-              Thank you for registering with VALORA.
-              Your account request is currently being
-              reviewed by the Head Administrator.
-            </p>
+                            <svg
+                                width="30"
+                                height="30"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M5 12.5L9.2 16.5L19 6.5"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+
+                        </div>
 
 
-            <div className="auth-error">
-              Your account is currently pending approval.
-              You will be able to access your selected
-              dashboard once your registration has been
-              approved.
+                        <h2>
+                            Registration Submitted
+                        </h2>
+
+
+                        <p className="auth-lead">
+                            Thank you for registering with VALORA.
+                            Your registration has been successfully
+                            submitted for review.
+                        </p>
+
+
+                        {/* PENDING MESSAGE */}
+
+                        <div className="pending-message">
+
+                            <h3>
+                                Your account is pending approval
+                            </h3>
+
+                            <p>
+                                A VALORA administrator will review
+                                your registration and approve your
+                                account before you can access your
+                                dashboard.
+                            </p>
+
+                            <p>
+                                Once your account has been approved,
+                                you will be able to log in and access
+                                the features available for your role.
+                            </p>
+
+                        </div>
+
+
+                        {/* HOME */}
+
+                        <Link
+                            to="/"
+                            className="auth-submit auth-home-button"
+                        >
+                            Back to Home
+                        </Link>
+
+
+                        {/* LOGIN */}
+
+                        <div className="auth-switch">
+
+                            Already have an approved account?{" "}
+
+                            <Link to="/login">
+                                Login
+                            </Link>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
 
-
-            <p className="auth-lead">
-              Requested accounts are reviewed to ensure
-              that users receive the correct level of
-              access within VALORA.
-            </p>
-
-
-            <Link
-              to="/login"
-              className="auth-submit"
-              style={{
-                display: "block",
-                textAlign: "center",
-                textDecoration: "none",
-              }}
-            >
-              Return to Sign In
-            </Link>
-
-
-            <p className="auth-home-link">
-
-              <Link to="/">
-                ← Back to homepage
-              </Link>
-
-            </p>
-
-          </div>
-
         </div>
-
-      </div>
-
-    </div>
-  );
+    );
 }
 
 export default RegistrationPending;
