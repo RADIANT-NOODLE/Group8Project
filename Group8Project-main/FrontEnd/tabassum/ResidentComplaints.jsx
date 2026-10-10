@@ -1,4 +1,151 @@
 import React, { useState } from "react";
+import "./ResidentComplaints.css";
+
+
+/* =========================================================
+   VALORA ICONS
+========================================================= */
+
+function Icon({ name, size = 18 }) {
+
+    const icons = {
+
+        dashboard: (
+            <>
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+            </>
+        ),
+
+        residents: (
+            <>
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3.5 19c.5-3 2.4-4.5 5.5-4.5s5 1.5 5.5 4.5" />
+                <path d="M15 5.5c2.2-.2 4 1.2 4 3.5 0 1.5-.8 2.7-2 3.3" />
+                <path d="M16 14.5c2.4.4 3.9 1.8 4.5 4" />
+            </>
+        ),
+
+        complaints: (
+            <>
+                <rect x="5" y="3" width="14" height="18" rx="2" />
+                <path d="M8.5 8h7" />
+                <path d="M8.5 12h7" />
+                <path d="M8.5 16h4.5" />
+            </>
+        ),
+
+        maintenance: (
+            <>
+                <path d="M14.5 5.5a4 4 0 0 0-5.1 5.1L4 16l4 4 5.4-5.4a4 4 0 0 0 5.1-5.1l-2.6 2.6-3-3 2.6-2.6Z" />
+            </>
+        ),
+
+        announcements: (
+            <>
+                <path d="M4 10v4h4l7 4V6l-7 4H4Z" />
+                <path d="M8 14l1.5 5" />
+                <path d="M18 9c1 .8 1.5 1.7 1.5 3s-.5 2.2-1.5 3" />
+            </>
+        ),
+
+        ai: (
+            <>
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+                <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
+                <path d="M10 10h4v4h-4z" />
+            </>
+        ),
+
+        analytics: (
+            <>
+                <path d="M4 19V9" />
+                <path d="M10 19V5" />
+                <path d="M16 19v-7" />
+                <path d="M22 19V3" />
+            </>
+        ),
+
+        profile: (
+            <>
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M5 21c.7-4 3-6 7-6s6.3 2 7 6" />
+            </>
+        ),
+
+        logout: (
+            <>
+                <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
+                <path d="M14 8l4 4-4 4" />
+                <path d="M18 12H9" />
+            </>
+        ),
+
+        total: (
+            <>
+                <rect x="4" y="3" width="16" height="18" rx="2" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+            </>
+        ),
+
+        active: (
+            <>
+                <path d="M12 3 21 19H3L12 3Z" />
+                <path d="M12 9v4" />
+                <circle cx="12" cy="16" r=".7" fill="currentColor" stroke="none" />
+            </>
+        ),
+
+        resolved: (
+            <>
+                <circle cx="12" cy="12" r="9" />
+                <path d="m7.5 12 3 3 6-6" />
+            </>
+        ),
+
+        urgent: (
+            <>
+                <path d="M12 3 21 19H3L12 3Z" />
+                <path d="M12 9v4" />
+                <circle cx="12" cy="16" r=".7" fill="currentColor" stroke="none" />
+            </>
+        ),
+
+        check: (
+            <path d="m5 12.5 4 4L19 6.5" />
+        ),
+
+        arrow: (
+            <path d="M5 12h14M13 6l6 6-6 6" />
+        )
+
+    };
+
+
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            {icons[name]}
+        </svg>
+    );
+}
+
+
+/* =========================================================
+   RESIDENT COMPLAINTS
+========================================================= */
 
 function ResidentComplaints() {
 
@@ -45,6 +192,11 @@ function ResidentComplaints() {
         }
     ]);
 
+
+    /* =====================================================
+       UPDATE STATUS
+    ===================================================== */
+
     const updateStatus = (id, newStatus) => {
 
         setComplaints(
@@ -59,24 +211,41 @@ function ResidentComplaints() {
         );
     };
 
-    const totalComplaints = complaints.length;
 
-    const activeComplaints = complaints.filter(
-        complaint =>
-            complaint.status !== "Resolved" &&
-            complaint.status !== "Cancelled"
-    ).length;
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
 
-    const resolvedComplaints = complaints.filter(
-        complaint =>
-            complaint.status === "Resolved"
-    ).length;
+    const totalComplaints =
+        complaints.length;
 
-    const urgentComplaints = complaints.filter(
-        complaint =>
-            complaint.priority === "Urgent" ||
-            complaint.priority === "High"
-    ).length;
+
+    const activeComplaints =
+        complaints.filter(
+            complaint =>
+                complaint.status !== "Resolved" &&
+                complaint.status !== "Cancelled"
+        ).length;
+
+
+    const resolvedComplaints =
+        complaints.filter(
+            complaint =>
+                complaint.status === "Resolved"
+        ).length;
+
+
+    const urgentComplaints =
+        complaints.filter(
+            complaint =>
+                complaint.priority === "Urgent" ||
+                complaint.priority === "High"
+        ).length;
+
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
 
     const handleLogout = () => {
 
@@ -87,15 +256,62 @@ function ResidentComplaints() {
         window.location.href = "/";
     };
 
+
+    /* =====================================================
+       STATUS CLASS
+    ===================================================== */
+
+    const getStatusClass = (status) => {
+
+        switch (status) {
+
+            case "Resolved":
+                return "resident-complaints-status-resolved";
+
+            case "In Progress":
+                return "resident-complaints-status-progress";
+
+            case "Acknowledged":
+                return "resident-complaints-status-acknowledged";
+
+            case "Cancelled":
+                return "resident-complaints-status-cancelled";
+
+            default:
+                return "resident-complaints-status-submitted";
+        }
+    };
+
+
+    /* =====================================================
+       PRIORITY CLASS
+    ===================================================== */
+
+    const getPriorityClass = (priority) => {
+
+        if (
+            priority === "High" ||
+            priority === "Urgent"
+        ) {
+            return "resident-complaints-priority-high";
+        }
+
+        return "resident-complaints-priority-normal";
+    };
+
+
     return (
 
-        <div className="dashboard-layout">
+        <div className="resident-complaints-layout">
 
-            {/* SIDEBAR */}
 
-            <aside className="sidebar">
+            {/* =================================================
+                SIDEBAR
+            ================================================= */}
 
-                <div className="logo-area">
+            <aside className="resident-complaints-sidebar">
+
+                <div className="resident-complaints-logo-area">
 
                     <img
                         src="/ValoraLogo.jpeg"
@@ -108,46 +324,103 @@ function ResidentComplaints() {
 
                 </div>
 
-                <nav className="side-nav">
+
+                <nav className="resident-complaints-side-nav">
 
                     <a href="/dashboard">
-                        🏠 Dashboard
+                        <Icon
+                            name="dashboard"
+                            size={17}
+                        />
+                        <span>
+                            Dashboard
+                        </span>
                     </a>
 
+
                     <a href="/resident-directory">
-                        👥 Resident Directory
+                        <Icon
+                            name="residents"
+                            size={17}
+                        />
+                        <span>
+                            Resident Directory
+                        </span>
                     </a>
+
 
                     <a
                         href="/resident-complaints"
                         className="active"
                     >
-                        📋 Resident Complaints
+                        <Icon
+                            name="complaints"
+                            size={17}
+                        />
+                        <span>
+                            Resident Complaints
+                        </span>
                     </a>
+
 
                     <a href="/maintenance">
-                        🔧 Maintenance
+                        <Icon
+                            name="maintenance"
+                            size={17}
+                        />
+                        <span>
+                            Maintenance
+                        </span>
                     </a>
+
 
                     <a href="/community-announcements">
-                        📢 Community Announcements
+                        <Icon
+                            name="announcements"
+                            size={17}
+                        />
+                        <span>
+                            Community Announcements
+                        </span>
                     </a>
+
 
                     <a href="/ai-training-data">
-                        🤖 AI Training Data
+                        <Icon
+                            name="ai"
+                            size={17}
+                        />
+                        <span>
+                            AI Training Data
+                        </span>
                     </a>
+
 
                     <a href="/community-analytics">
-                        📊 Community Analytics
+                        <Icon
+                            name="analytics"
+                            size={17}
+                        />
+                        <span>
+                            Community Analytics
+                        </span>
                     </a>
 
+
                     <a href="/profile">
-                        👤 My Profile
+                        <Icon
+                            name="profile"
+                            size={17}
+                        />
+                        <span>
+                            My Profile
+                        </span>
                     </a>
 
                 </nav>
 
-                <div className="logout-area">
+
+                <div className="resident-complaints-logout-area">
 
                     <a
                         href="/"
@@ -156,7 +429,13 @@ function ResidentComplaints() {
                             handleLogout();
                         }}
                     >
-                        🚪 Logout
+                        <Icon
+                            name="logout"
+                            size={17}
+                        />
+                        <span>
+                            Logout
+                        </span>
                     </a>
 
                 </div>
@@ -164,16 +443,27 @@ function ResidentComplaints() {
             </aside>
 
 
-            {/* MAIN CONTENT */}
+            {/* =================================================
+                MAIN CONTENT
+            ================================================= */}
 
-            <main className="dashboard-main">
+            <main className="resident-complaints-main">
 
-                <div className="top-bar">
+
+                {/* =================================================
+                    TOP BAR
+                ================================================= */}
+
+                <div className="resident-complaints-top-bar">
 
                     <div>
 
+                        <span className="resident-complaints-eyebrow">
+                            COMMUNITY MANAGEMENT
+                        </span>
+
                         <h2>
-                            Resident Complaints 📋
+                            Resident Complaints
                         </h2>
 
                         <p>
@@ -182,9 +472,10 @@ function ResidentComplaints() {
 
                     </div>
 
-                    <div className="profile-small">
 
-                        <div className="profile-circle">
+                    <div className="resident-complaints-profile-small">
+
+                        <div className="resident-complaints-profile-circle">
                             A
                         </div>
 
@@ -197,15 +488,23 @@ function ResidentComplaints() {
                 </div>
 
 
-                {/* STAT CARDS */}
+                {/* =================================================
+                    STAT CARDS
+                ================================================= */}
 
-                <section className="stat-cards">
+                <section className="resident-complaints-stat-cards">
 
-                    <div className="stat-card">
 
-                        <span className="stat-icon">
-                            📋
-                        </span>
+                    <div className="resident-complaints-stat-card">
+
+                        <div className="resident-complaints-stat-icon">
+
+                            <Icon
+                                name="total"
+                                size={19}
+                            />
+
+                        </div>
 
                         <div>
 
@@ -226,11 +525,16 @@ function ResidentComplaints() {
                     </div>
 
 
-                    <div className="stat-card">
+                    <div className="resident-complaints-stat-card">
 
-                        <span className="stat-icon">
-                            ⚠️
-                        </span>
+                        <div className="resident-complaints-stat-icon">
+
+                            <Icon
+                                name="active"
+                                size={19}
+                            />
+
+                        </div>
 
                         <div>
 
@@ -251,11 +555,16 @@ function ResidentComplaints() {
                     </div>
 
 
-                    <div className="stat-card">
+                    <div className="resident-complaints-stat-card">
 
-                        <span className="stat-icon">
-                            ✅
-                        </span>
+                        <div className="resident-complaints-stat-icon">
+
+                            <Icon
+                                name="resolved"
+                                size={19}
+                            />
+
+                        </div>
 
                         <div>
 
@@ -276,11 +585,16 @@ function ResidentComplaints() {
                     </div>
 
 
-                    <div className="stat-card">
+                    <div className="resident-complaints-stat-card">
 
-                        <span className="stat-icon">
-                            🚨
-                        </span>
+                        <div className="resident-complaints-stat-icon">
+
+                            <Icon
+                                name="urgent"
+                                size={19}
+                            />
+
+                        </div>
 
                         <div>
 
@@ -303,11 +617,14 @@ function ResidentComplaints() {
                 </section>
 
 
-                {/* COMPLAINT TABLE */}
+                {/* =================================================
+                    COMPLAINT TABLE
+                ================================================= */}
 
-                <section className="dashboard-panel complaint-history">
+                <section className="resident-complaints-panel">
 
-                    <div className="panel-heading">
+
+                    <div className="resident-complaints-panel-heading">
 
                         <div>
 
@@ -321,12 +638,16 @@ function ResidentComplaints() {
 
                         </div>
 
+                        <div className="resident-complaints-record-count">
+                            {totalComplaints} Records
+                        </div>
+
                     </div>
 
 
-                    <div className="table-container">
+                    <div className="resident-complaints-table-container">
 
-                        <table>
+                        <table className="resident-complaints-table">
 
                             <thead>
 
@@ -376,31 +697,46 @@ function ResidentComplaints() {
                                     <tr key={complaint.id}>
 
                                         <td>
-                                            <strong>
+
+                                            <strong className="resident-complaints-id">
                                                 {complaint.id}
                                             </strong>
+
                                         </td>
 
+
                                         <td>
-                                            {complaint.resident}
+
+                                            <div className="resident-complaints-resident">
+                                                <strong>
+                                                    {complaint.resident}
+                                                </strong>
+
+                                                <small>
+                                                    {complaint.description}
+                                                </small>
+                                            </div>
+
                                         </td>
+
 
                                         <td>
                                             {complaint.unit}
                                         </td>
 
+
                                         <td>
                                             {complaint.category}
                                         </td>
+
 
                                         <td>
 
                                             <span
                                                 className={
-                                                    complaint.priority === "High" ||
-                                                    complaint.priority === "Urgent"
-                                                        ? "priority-high"
-                                                        : "priority-normal"
+                                                    getPriorityClass(
+                                                        complaint.priority
+                                                    )
                                                 }
                                             >
                                                 {complaint.priority}
@@ -408,23 +744,19 @@ function ResidentComplaints() {
 
                                         </td>
 
+
                                         <td>
                                             {complaint.date}
                                         </td>
+
 
                                         <td>
 
                                             <span
                                                 className={
-                                                    complaint.status === "Resolved"
-                                                        ? "status-resolved"
-                                                        : complaint.status === "In Progress"
-                                                        ? "status-progress"
-                                                        : complaint.status === "Acknowledged"
-                                                        ? "status-acknowledged"
-                                                        : complaint.status === "Cancelled"
-                                                        ? "status-cancelled"
-                                                        : "status-submitted"
+                                                    getStatusClass(
+                                                        complaint.status
+                                                    )
                                                 }
                                             >
                                                 {complaint.status}
@@ -432,10 +764,14 @@ function ResidentComplaints() {
 
                                         </td>
 
+
                                         <td>
 
                                             <select
-                                                value={complaint.status}
+                                                className="resident-complaints-status-select"
+                                                value={
+                                                    complaint.status
+                                                }
                                                 onChange={(event) =>
                                                     updateStatus(
                                                         complaint.id,
@@ -481,11 +817,14 @@ function ResidentComplaints() {
                 </section>
 
 
-                {/* INFORMATION PANEL */}
+                {/* =================================================
+                    INFORMATION PANEL
+                ================================================= */}
 
-                <section className="dashboard-panel">
+                <section className="resident-complaints-panel">
 
-                    <div className="panel-heading">
+
+                    <div className="resident-complaints-panel-heading">
 
                         <div>
 
@@ -502,13 +841,14 @@ function ResidentComplaints() {
                     </div>
 
 
-                    <div className="complaint-status-flow">
+                    <div className="resident-complaints-status-flow">
 
-                        <div className="complaint-status-step">
 
-                            <span>
+                        <div className="resident-complaints-status-step">
+
+                            <div className="resident-complaints-step-number">
                                 01
-                            </span>
+                            </div>
 
                             <strong>
                                 Submitted
@@ -521,11 +861,14 @@ function ResidentComplaints() {
                         </div>
 
 
-                        <div className="complaint-status-step">
+                        <div className="resident-complaints-flow-line" />
 
-                            <span>
+
+                        <div className="resident-complaints-status-step">
+
+                            <div className="resident-complaints-step-number">
                                 02
-                            </span>
+                            </div>
 
                             <strong>
                                 Acknowledged
@@ -538,11 +881,14 @@ function ResidentComplaints() {
                         </div>
 
 
-                        <div className="complaint-status-step">
+                        <div className="resident-complaints-flow-line" />
 
-                            <span>
+
+                        <div className="resident-complaints-status-step">
+
+                            <div className="resident-complaints-step-number">
                                 03
-                            </span>
+                            </div>
 
                             <strong>
                                 In Progress
@@ -555,11 +901,14 @@ function ResidentComplaints() {
                         </div>
 
 
-                        <div className="complaint-status-step">
+                        <div className="resident-complaints-flow-line" />
 
-                            <span>
+
+                        <div className="resident-complaints-status-step">
+
+                            <div className="resident-complaints-step-number">
                                 04
-                            </span>
+                            </div>
 
                             <strong>
                                 Resolved
@@ -575,10 +924,13 @@ function ResidentComplaints() {
 
                 </section>
 
+
             </main>
 
         </div>
+
     );
 }
+
 
 export default ResidentComplaints;
