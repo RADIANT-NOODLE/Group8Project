@@ -1,248 +1,1060 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+
+import "./Maintenance.css";
+
+
+/*
+=========================================================
+STORAGE
+=========================================================
+*/
+
+const MAINTENANCE_STORAGE_KEY =
+  "valoraMaintenanceRequests";
+
+
+/*
+=========================================================
+GET CURRENT USER
+=========================================================
+*/
+
+function getCurrentUser() {
+
+  const storedUser =
+    localStorage.getItem("valoraUser");
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+
+    return JSON.parse(storedUser);
+
+  } catch (error) {
+
+    console.error(
+      "Unable to read VALORA user:",
+      error
+    );
+
+    return null;
+
+  }
+
+}
+
+
+/*
+=========================================================
+GET USER ROLE
+=========================================================
+*/
+
+function getUserRole(user) {
+
+  if (!user) {
+    return "";
+  }
+
+  const role =
+    user.role ||
+    user.userType ||
+    user.accountType ||
+    "";
+
+  const normalizedRole =
+    role
+      .toString()
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    normalizedRole === "hoa" ||
+    normalizedRole === "hoa admin" ||
+    normalizedRole === "administrator" ||
+    normalizedRole === "admin"
+  ) {
+    return "HOA Admin";
+  }
+
+
+  if (
+    normalizedRole === "resident" ||
+    normalizedRole === "property owner"
+  ) {
+    return "Resident";
+  }
+
+
+  if (
+    normalizedRole === "investor" ||
+    normalizedRole === "buyer"
+  ) {
+    return "Investor";
+  }
+
+
+  if (
+    normalizedRole === "estate agent" ||
+    normalizedRole === "agent"
+  ) {
+    return "Estate Agent";
+  }
+
+
+  return role;
+
+}
+
+
+/*
+=========================================================
+GET USER NAME
+=========================================================
+*/
+
+function getUserName(user) {
+
+  if (!user) {
+    return "";
+  }
+
+  if (user.fullName) {
+    return user.fullName;
+  }
+
+  if (user.name) {
+    return user.name;
+  }
+
+  const combinedName =
+    `${user.firstName || ""} ${user.lastName || ""}`.trim();
+
+  return combinedName;
+
+}
+
+
+/*
+=========================================================
+INITIAL MAINTENANCE DATA
+=========================================================
+*/
+
+const initialMaintenanceRequests = [
+
+  {
+    id: "MNT-001",
+    issue: "Street Light Not Working",
+    location: "Unit 12 / Main Road",
+    reportedBy: "Ahmed Khan",
+    provider: "Bright Electrical",
+    priority: "High",
+    status: "In Progress",
+    date: "18 Aug 2026",
+    category: "Electrical",
+    description:
+      "Street light near Unit 12 is not functioning.",
+  },
+
+  {
+    id: "MNT-002",
+    issue: "Water Leak",
+    location: "Unit 24",
+    reportedBy: "Fatima Ismail",
+    provider: "AquaFix Plumbing",
+    priority: "High",
+    status: "Submitted",
+    date: "17 Aug 2026",
+    category: "Plumbing",
+    description:
+      "Water is leaking near the kitchen sink.",
+  },
+
+  {
+    id: "MNT-003",
+    issue: "Garden Maintenance",
+    location: "Community Park",
+    reportedBy: "HOA Admin",
+    provider: "GreenScape Gardens",
+    priority: "Medium",
+    status: "Scheduled",
+    date: "16 Aug 2026",
+    category: "Landscaping",
+    description:
+      "Community park requires routine garden maintenance.",
+  },
+
+  {
+    id: "MNT-004",
+    issue: "Gate Remote Issue",
+    location: "Main Entrance",
+    reportedBy: "Yusuf Patel",
+    provider: "SecureAccess",
+    priority: "Medium",
+    status: "Resolved",
+    date: "15 Aug 2026",
+    category: "Security",
+    description:
+      "Gate remote was not opening the main entrance.",
+  },
+
+  {
+    id: "MNT-005",
+    issue: "Broken Window",
+    location: "Unit 08",
+    reportedBy: "Ayesha Mohammed",
+    provider: "GlassPro",
+    priority: "Low",
+    status: "Submitted",
+    date: "14 Aug 2026",
+    category: "General",
+    description:
+      "Bedroom window has been damaged.",
+  },
+
+];
+
+
+/*
+=========================================================
+LOAD REQUESTS
+=========================================================
+*/
+
+function loadMaintenanceRequests() {
+
+  const storedRequests =
+    localStorage.getItem(
+      MAINTENANCE_STORAGE_KEY
+    );
+
+
+  if (!storedRequests) {
+
+    localStorage.setItem(
+      MAINTENANCE_STORAGE_KEY,
+      JSON.stringify(
+        initialMaintenanceRequests
+      )
+    );
+
+    return initialMaintenanceRequests;
+
+  }
+
+
+  try {
+
+    return JSON.parse(
+      storedRequests
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Unable to load maintenance requests:",
+      error
+    );
+
+    return initialMaintenanceRequests;
+
+  }
+
+}
+
+
+/*
+=========================================================
+SAVE REQUESTS
+=========================================================
+*/
+
+function saveMaintenanceRequests(
+  requests
+) {
+
+  localStorage.setItem(
+    MAINTENANCE_STORAGE_KEY,
+    JSON.stringify(requests)
+  );
+
+}
+
+
+/*
+=========================================================
+GENERATE REQUEST ID
+=========================================================
+*/
+
+function generateRequestId(
+  requests
+) {
+
+  let highestNumber = 0;
+
+
+  requests.forEach(
+    (request) => {
+
+      const number =
+        parseInt(
+          String(request.id).replace(
+            "MNT-",
+            ""
+          ),
+          10
+        );
+
+
+      if (
+        !Number.isNaN(number) &&
+        number > highestNumber
+      ) {
+        highestNumber = number;
+      }
+
+    }
+  );
+
+
+  return `MNT-${String(
+    highestNumber + 1
+  ).padStart(3, "0")}`;
+
+}
+
+
+/*
+=========================================================
+CURRENT DATE
+=========================================================
+*/
+
+function getCurrentDate() {
+
+  return new Date().toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
+
+}
+
+
+/*
+=========================================================
+MAINTENANCE
+=========================================================
+*/
 
 function Maintenance() {
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [priorityFilter, setPriorityFilter] = useState("All");
 
-  const maintenanceRequests = [
-    {
-      id: "MNT-001",
-      issue: "Street Light Not Working",
-      location: "Unit 12 / Main Road",
-      reportedBy: "Ahmed Khan",
-      provider: "Bright Electrical",
-      priority: "High",
-      status: "In Progress",
-      date: "18 Aug 2026",
-    },
-    {
-      id: "MNT-002",
-      issue: "Water Leak",
-      location: "Unit 24",
-      reportedBy: "Fatima Ismail",
-      provider: "AquaFix Plumbing",
-      priority: "High",
-      status: "Submitted",
-      date: "17 Aug 2026",
-    },
-    {
-      id: "MNT-003",
-      issue: "Garden Maintenance",
-      location: "Community Park",
-      reportedBy: "HOA Admin",
-      provider: "GreenScape Gardens",
-      priority: "Medium",
-      status: "Scheduled",
-      date: "16 Aug 2026",
-    },
-    {
-      id: "MNT-004",
-      issue: "Gate Remote Issue",
-      location: "Main Entrance",
-      reportedBy: "Yusuf Patel",
-      provider: "SecureAccess",
-      priority: "Medium",
-      status: "Resolved",
-      date: "15 Aug 2026",
-    },
-    {
-      id: "MNT-005",
-      issue: "Broken Window",
-      location: "Unit 08",
-      reportedBy: "Ayesha Mohammed",
-      provider: "GlassPro",
-      priority: "Low",
-      status: "Submitted",
-      date: "14 Aug 2026",
-    },
-  ];
+  const currentUser =
+    getCurrentUser();
 
-  const filteredRequests = maintenanceRequests.filter((request) => {
-    const matchesStatus =
-      statusFilter === "All" || request.status === statusFilter;
+  const userRole =
+    getUserRole(currentUser);
 
-    const matchesPriority =
-      priorityFilter === "All" || request.priority === priorityFilter;
+  const currentUserName =
+    getUserName(currentUser);
 
-    return matchesStatus && matchesPriority;
+
+  const isHOAAdmin =
+    userRole === "HOA Admin";
+
+  const isResident =
+    userRole === "Resident";
+
+
+  /*
+  =========================================================
+  STATE
+  =========================================================
+  */
+
+  const [
+    maintenanceRequests,
+    setMaintenanceRequests
+  ] = useState(
+    loadMaintenanceRequests
+  );
+
+
+  const [
+    statusFilter,
+    setStatusFilter
+  ] = useState("All");
+
+
+  const [
+    priorityFilter,
+    setPriorityFilter
+  ] = useState("All");
+
+
+  const [
+    showAddRequest,
+    setShowAddRequest
+  ] = useState(false);
+
+
+  const [
+    selectedRequest,
+    setSelectedRequest
+  ] = useState(null);
+
+
+  const [
+    formData,
+    setFormData
+  ] = useState({
+    issue: "",
+    category: "General",
+    location: "",
+    description: "",
+    priority: "Medium",
   });
 
-  const totalRequests = maintenanceRequests.length;
 
-  const activeRequests = maintenanceRequests.filter(
-    (request) =>
-      request.status !== "Resolved"
-  ).length;
+  /*
+  =========================================================
+  SAVE REQUESTS
+  =========================================================
+  */
 
-  const scheduledRequests = maintenanceRequests.filter(
-    (request) =>
-      request.status === "Scheduled"
-  ).length;
+  useEffect(
+    () => {
 
-  const resolvedRequests = maintenanceRequests.filter(
-    (request) =>
-      request.status === "Resolved"
-  ).length;
+      saveMaintenanceRequests(
+        maintenanceRequests
+      );
 
-  const handleLogout = () => {
-    localStorage.removeItem("valoraLoggedIn");
-    localStorage.removeItem("valoraUser");
-    localStorage.removeItem("valoraUserEmail");
+    },
+    [
+      maintenanceRequests
+    ]
+  );
 
-    window.location.href = "/";
-  };
 
-  const handleStatusChange = (id, newStatus) => {
-    alert(
-      `Maintenance request ${id} status changed to ${newStatus}.`
+  /*
+  =========================================================
+  ROLE BASED REQUESTS
+  =========================================================
+  */
+
+  const roleBasedRequests =
+    isHOAAdmin
+      ? maintenanceRequests
+      : isResident
+        ? maintenanceRequests.filter(
+            (request) =>
+              request.reportedBy
+                .toLowerCase()
+                .trim() ===
+              currentUserName
+                .toLowerCase()
+                .trim()
+          )
+        : [];
+
+
+  /*
+  =========================================================
+  FILTERED REQUESTS
+  =========================================================
+  */
+
+  const filteredRequests =
+    roleBasedRequests.filter(
+      (request) => {
+
+        const matchesStatus =
+          statusFilter === "All" ||
+          request.status === statusFilter;
+
+
+        const matchesPriority =
+          priorityFilter === "All" ||
+          request.priority === priorityFilter;
+
+
+        return (
+          matchesStatus &&
+          matchesPriority
+        );
+
+      }
     );
+
+
+  /*
+  =========================================================
+  STATISTICS
+  =========================================================
+  */
+
+  const totalRequests =
+    roleBasedRequests.length;
+
+
+  const activeRequests =
+    roleBasedRequests.filter(
+      (request) =>
+        request.status !== "Resolved" &&
+        request.status !== "Cancelled"
+    ).length;
+
+
+  const scheduledRequests =
+    roleBasedRequests.filter(
+      (request) =>
+        request.status === "Scheduled"
+    ).length;
+
+
+  const resolvedRequests =
+    roleBasedRequests.filter(
+      (request) =>
+        request.status === "Resolved"
+    ).length;
+
+
+  /*
+  =========================================================
+  FORM HANDLER
+  =========================================================
+  */
+
+  const handleFormChange =
+    (event) => {
+
+      const {
+        name,
+        value
+      } = event.target;
+
+
+      setFormData(
+        (previous) => ({
+          ...previous,
+          [name]: value,
+        })
+      );
+
+    };
+
+
+  /*
+  =========================================================
+  OPEN ADD REQUEST
+  =========================================================
+  */
+
+  const handleOpenAddRequest =
+    () => {
+
+      setFormData({
+        issue: "",
+        category: "General",
+        location: "",
+        description: "",
+        priority: "Medium",
+      });
+
+
+      setShowAddRequest(
+        true
+      );
+
+    };
+
+
+  /*
+  =========================================================
+  CLOSE ADD REQUEST
+  =========================================================
+  */
+
+  const handleCloseAddRequest =
+    () => {
+
+      setShowAddRequest(
+        false
+      );
+
+    };
+
+
+  /*
+  =========================================================
+  SUBMIT REQUEST
+  =========================================================
+  */
+
+  const handleSubmitRequest =
+    (event) => {
+
+      event.preventDefault();
+
+
+      if (!currentUser) {
+
+        alert(
+          "Please log in before submitting a maintenance request."
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !formData.issue.trim() ||
+        !formData.location.trim() ||
+        !formData.description.trim()
+      ) {
+
+        alert(
+          "Please complete all required fields."
+        );
+
+        return;
+
+      }
+
+
+      const newRequest = {
+
+        id:
+          generateRequestId(
+            maintenanceRequests
+          ),
+
+        issue:
+          formData.issue.trim(),
+
+        location:
+          formData.location.trim(),
+
+        reportedBy:
+          currentUserName ||
+          "Resident",
+
+        provider:
+          "Not Assigned",
+
+        priority:
+          formData.priority,
+
+        status:
+          "Submitted",
+
+        date:
+          getCurrentDate(),
+
+        category:
+          formData.category,
+
+        description:
+          formData.description.trim(),
+
+      };
+
+
+      setMaintenanceRequests(
+        (previous) => [
+          newRequest,
+          ...previous,
+        ]
+      );
+
+
+      setShowAddRequest(
+        false
+      );
+
+
+      setFormData({
+        issue: "",
+        category: "General",
+        location: "",
+        description: "",
+        priority: "Medium",
+      });
+
+
+      alert(
+        `${newRequest.id} has been submitted successfully.`
+      );
+
+    };
+
+
+  /*
+  =========================================================
+  VIEW REQUEST
+  =========================================================
+  */
+
+  const handleViewRequest =
+    (request) => {
+
+      setSelectedRequest(
+        request
+      );
+
+    };
+
+
+  /*
+  =========================================================
+  CHANGE STATUS
+  =========================================================
+  */
+
+  const handleStatusChange =
+    (id, newStatus) => {
+
+      if (!isHOAAdmin) {
+
+        alert(
+          "Only the HOA Admin can update maintenance request status."
+        );
+
+        return;
+
+      }
+
+
+      setMaintenanceRequests(
+        (previousRequests) =>
+          previousRequests.map(
+            (request) =>
+              request.id === id
+                ? {
+                    ...request,
+                    status:
+                      newStatus,
+                  }
+                : request
+          )
+      );
+
+
+      setSelectedRequest(
+        (previousRequest) => {
+
+          if (
+            !previousRequest ||
+            previousRequest.id !== id
+          ) {
+            return previousRequest;
+          }
+
+
+          return {
+            ...previousRequest,
+            status:
+              newStatus,
+          };
+
+        }
+      );
+
+    };
+
+
+  /*
+  =========================================================
+  ICON
+  =========================================================
+  */
+
+  const Icon = ({
+    name,
+    size = 19,
+  }) => {
+
+    const commonProps = {
+
+      width: size,
+
+      height: size,
+
+      viewBox:
+        "0 0 24 24",
+
+      fill:
+        "none",
+
+      stroke:
+        "currentColor",
+
+      strokeWidth:
+        "1.8",
+
+      strokeLinecap:
+        "round",
+
+      strokeLinejoin:
+        "round",
+
+      "aria-hidden":
+        "true",
+
+    };
+
+
+    switch (name) {
+
+      case "wrench":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M14.7 6.3a4 4 0 0 0-5.6 5.6l-6.4 6.4a2 2 0 0 0 2.8 2.8l6.4-6.4a4 4 0 0 0 5.6-5.6l-2.2 2.2-2.8-2.8z" />
+
+          </svg>
+        );
+
+
+      case "clock":
+
+        return (
+          <svg {...commonProps}>
+
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+            />
+
+            <path d="M12 7v5l3 2" />
+
+          </svg>
+        );
+
+
+      case "calendar":
+
+        return (
+          <svg {...commonProps}>
+
+            <rect
+              x="3"
+              y="4"
+              width="18"
+              height="17"
+              rx="2"
+            />
+
+            <path d="M16 2v4" />
+
+            <path d="M8 2v4" />
+
+            <path d="M3 9h18" />
+
+          </svg>
+        );
+
+
+      case "check":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M20 6L9 17l-5-5" />
+
+          </svg>
+        );
+
+
+      case "providers":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M3 21h18" />
+
+            <path d="M5 21V9l7-5 7 5v12" />
+
+            <path d="M9 21v-6h6v6" />
+
+          </svg>
+        );
+
+
+      case "star":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z" />
+
+          </svg>
+        );
+
+
+      case "plus":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M12 5v14" />
+
+            <path d="M5 12h14" />
+
+          </svg>
+        );
+
+
+      case "eye":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+
+            <circle
+              cx="12"
+              cy="12"
+              r="2.5"
+            />
+
+          </svg>
+        );
+
+
+      case "close":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M6 6l12 12" />
+
+            <path d="M18 6L6 18" />
+
+          </svg>
+        );
+
+
+      case "send":
+
+        return (
+          <svg {...commonProps}>
+
+            <path d="M22 2L11 13" />
+
+            <path d="M22 2l-7 20-4-9-9-4z" />
+
+          </svg>
+        );
+
+
+      default:
+
+        return null;
+
+    }
+
   };
+
+
+  /*
+  =========================================================
+  PAGE
+  =========================================================
+  */
 
   return (
-    <div className="dashboard-layout">
 
-      {/* =================================================
-          SIDEBAR
-          SAME AS ORIGINAL HOA ADMIN DASHBOARD
-          ================================================= */}
-
-      <aside className="sidebar">
-
-        <div className="logo-area">
-
-          <img
-            src="/ValoraLogo.jpeg"
-            alt="VALORA Logo"
-          />
-
-          <p>
-            Property Intelligence
-          </p>
-
-        </div>
+    <div className="maintenance-page">
 
 
-        <nav className="side-nav">
-
-          <a href="/dashboard">
-            🏠 Dashboard
-          </a>
-
-          <a href="/resident-directory">
-            👥 Resident Directory
-          </a>
-
-          <a href="/resident-complaints">
-            📋 Resident Complaints
-          </a>
-
-          <a
-            href="/maintenance"
-            className="active"
-          >
-            🔧 Maintenance
-          </a>
-
-          <a href="/community-announcements">
-            📢 Community Announcements
-          </a>
-
-          <a href="/ai-training-data">
-            🤖 AI Training Data
-          </a>
-
-          <a href="/community-analytics">
-            📊 Community Analytics
-          </a>
-
-          <a href="/profile">
-            👤 My Profile
-          </a>
-
-        </nav>
+      <DashboardSidebar />
 
 
-        {/* LOGOUT */}
-
-        <div className="logout-area">
-
-          <a
-            href="/"
-            onClick={(event) => {
-              event.preventDefault();
-              handleLogout();
-            }}
-          >
-            🚪 Logout
-          </a>
-
-        </div>
-
-      </aside>
+      <main className="maintenance-main">
 
 
-      {/* =================================================
-          MAIN DASHBOARD
-          ================================================= */}
+        {/* =================================================
+            HEADER
+            ================================================= */}
 
-      <main className="dashboard-main">
-
-        {/* TOP BAR */}
-
-        <div className="top-bar">
+        <header className="maintenance-header">
 
           <div>
 
-            <h2>
+            <p className="maintenance-eyebrow">
+
+              {isHOAAdmin
+                ? "HOA ADMINISTRATION"
+                : "MY MAINTENANCE"}
+
+            </p>
+
+
+            <h1>
               Maintenance
-            </h2>
+            </h1>
+
 
             <p>
-              Manage community maintenance requests and service providers.
+
+              {isHOAAdmin
+                ? "Manage community maintenance requests and service providers."
+                : "Submit and track your maintenance requests."}
+
             </p>
 
           </div>
 
-
-          <div className="profile-small">
-
-            <div className="profile-circle">
-              HOA
-            </div>
-
-            <span>
-              HOA Admin
-            </span>
-
-          </div>
-
-        </div>
+        </header>
 
 
         {/* =================================================
-            STAT CARDS
+            STATISTICS
             ================================================= */}
 
-        <section className="stat-cards">
+        <section className="maintenance-stat-grid">
 
-          <div className="stat-card">
 
-            <span className="stat-icon">
-              🔧
-            </span>
+          <div className="maintenance-stat-card">
+
+            <div className="maintenance-stat-icon purple">
+
+              <Icon name="wrench" />
+
+            </div>
+
 
             <div>
 
-              <p>
+              <span>
                 Total Requests
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {totalRequests}
-              </h3>
+              </strong>
 
               <small>
-                Maintenance requests
+
+                {isHOAAdmin
+                  ? "Community requests"
+                  : "Your requests"}
+
               </small>
 
             </div>
@@ -250,21 +1062,24 @@ function Maintenance() {
           </div>
 
 
-          <div className="stat-card">
+          <div className="maintenance-stat-card">
 
-            <span className="stat-icon">
-              ⏳
-            </span>
+            <div className="maintenance-stat-icon orange">
+
+              <Icon name="clock" />
+
+            </div>
+
 
             <div>
 
-              <p>
+              <span>
                 Active Requests
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {activeRequests}
-              </h3>
+              </strong>
 
               <small>
                 Require attention
@@ -275,21 +1090,24 @@ function Maintenance() {
           </div>
 
 
-          <div className="stat-card">
+          <div className="maintenance-stat-card">
 
-            <span className="stat-icon">
-              📅
-            </span>
+            <div className="maintenance-stat-icon blue">
+
+              <Icon name="calendar" />
+
+            </div>
+
 
             <div>
 
-              <p>
+              <span>
                 Scheduled
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {scheduledRequests}
-              </h3>
+              </strong>
 
               <small>
                 Upcoming maintenance
@@ -300,21 +1118,24 @@ function Maintenance() {
           </div>
 
 
-          <div className="stat-card">
+          <div className="maintenance-stat-card">
 
-            <span className="stat-icon">
-              ✅
-            </span>
+            <div className="maintenance-stat-icon green">
+
+              <Icon name="check" />
+
+            </div>
+
 
             <div>
 
-              <p>
+              <span>
                 Resolved
-              </p>
+              </span>
 
-              <h3>
+              <strong>
                 {resolvedRequests}
-              </h3>
+              </strong>
 
               <small>
                 Completed requests
@@ -324,422 +1145,764 @@ function Maintenance() {
 
           </div>
 
+
         </section>
 
 
         {/* =================================================
-            MAINTENANCE MANAGEMENT
+            REQUEST PANEL
             ================================================= */}
 
-        <section className="dashboard-panel large-panel">
+        <section className="maintenance-panel maintenance-large-panel">
 
-          <div className="panel-heading">
+
+          <div className="maintenance-panel-heading">
 
             <div>
 
-              <h3>
+              <h2>
                 Maintenance Requests
-              </h3>
+              </h2>
 
               <p>
-                Review and manage community maintenance issues.
+
+                {isHOAAdmin
+                  ? "Review and manage community maintenance issues."
+                  : "View and track your submitted maintenance issues."}
+
               </p>
 
             </div>
 
 
             <button
-              className="primary-btn"
-              onClick={() =>
-                alert(
-                  "Add Maintenance Request feature coming soon."
-                )
+              type="button"
+              className="maintenance-primary-btn"
+              onClick={
+                handleOpenAddRequest
               }
             >
-              + Add Request
+
+              <Icon
+                name="plus"
+                size={17}
+              />
+
+              <span>
+                Add Request
+              </span>
+
             </button>
 
           </div>
 
 
-          {/* FILTERS */}
+          {/* =================================================
+              ADD REQUEST FORM
+              ================================================= */}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              marginBottom: "25px",
-              flexWrap: "wrap",
-            }}
-          >
+          {showAddRequest && (
 
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value)
-              }
-              style={{
-                padding: "12px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "14px",
-                minWidth: "180px",
-              }}
-            >
-
-              <option value="All">
-                All Statuses
-              </option>
-
-              <option value="Submitted">
-                Submitted
-              </option>
-
-              <option value="In Progress">
-                In Progress
-              </option>
-
-              <option value="Scheduled">
-                Scheduled
-              </option>
-
-              <option value="Resolved">
-                Resolved
-              </option>
-
-            </select>
+            <div className="maintenance-add-form">
 
 
-            <select
-              value={priorityFilter}
-              onChange={(event) =>
-                setPriorityFilter(event.target.value)
-              }
-              style={{
-                padding: "12px 15px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                fontSize: "14px",
-                minWidth: "180px",
-              }}
-            >
+              <div className="maintenance-form-header">
 
-              <option value="All">
-                All Priorities
-              </option>
+                <div>
 
-              <option value="High">
-                High Priority
-              </option>
+                  <p className="maintenance-eyebrow">
+                    NEW REQUEST
+                  </p>
 
-              <option value="Medium">
-                Medium Priority
-              </option>
+                  <h2>
+                    Submit Maintenance Request
+                  </h2>
 
-              <option value="Low">
-                Low Priority
-              </option>
+                  <p>
+                    Enter the details of the maintenance
+                    issue you want to report.
+                  </p>
 
-            </select>
-
-          </div>
+                </div>
 
 
-          {/* MAINTENANCE TABLE */}
+                <button
+                  type="button"
+                  className="maintenance-modal-close"
+                  onClick={
+                    handleCloseAddRequest
+                  }
+                  aria-label="Close form"
+                >
 
-          <div className="table-container">
+                  <Icon
+                    name="close"
+                    size={18}
+                  />
 
-            <table className="data-table">
+                </button>
 
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Request
-                  </th>
-
-                  <th>
-                    Location
-                  </th>
-
-                  <th>
-                    Reported By
-                  </th>
-
-                  <th>
-                    Service Provider
-                  </th>
-
-                  <th>
-                    Priority
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
-                  <th>
-                    Date
-                  </th>
-
-                  <th>
-                    Action
-                  </th>
-
-                </tr>
-
-              </thead>
+              </div>
 
 
-              <tbody>
+              <form
+                className="maintenance-form"
+                onSubmit={
+                  handleSubmitRequest
+                }
+              >
 
-                {filteredRequests.length > 0 ? (
 
-                  filteredRequests.map((request) => (
+                <div className="maintenance-form-group">
 
-                    <tr key={request.id}>
+                  <label htmlFor="maintenance-issue">
+                    Issue *
+                  </label>
 
-                      <td>
+                  <input
+                    id="maintenance-issue"
+                    name="issue"
+                    type="text"
+                    value={
+                      formData.issue
+                    }
+                    onChange={
+                      handleFormChange
+                    }
+                    placeholder="e.g. Water leak"
+                    required
+                  />
 
-                        <strong>
-                          {request.issue}
-                        </strong>
+                </div>
 
-                        <small
-                          style={{
-                            display: "block",
-                            color: "#777",
-                            marginTop: "4px",
-                          }}
+
+                <div className="maintenance-form-row">
+
+
+                  <div className="maintenance-form-group">
+
+                    <label htmlFor="maintenance-category">
+                      Category *
+                    </label>
+
+                    <select
+                      id="maintenance-category"
+                      name="category"
+                      value={
+                        formData.category
+                      }
+                      onChange={
+                        handleFormChange
+                      }
+                    >
+
+                      <option value="General">
+                        General
+                      </option>
+
+                      <option value="Plumbing">
+                        Plumbing
+                      </option>
+
+                      <option value="Electrical">
+                        Electrical
+                      </option>
+
+                      <option value="Security">
+                        Security
+                      </option>
+
+                      <option value="Landscaping">
+                        Landscaping
+                      </option>
+
+                      <option value="Cleaning">
+                        Cleaning
+                      </option>
+
+                      <option value="Structural">
+                        Structural
+                      </option>
+
+                      <option value="Other">
+                        Other
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div className="maintenance-form-group">
+
+                    <label htmlFor="maintenance-priority">
+                      Priority *
+                    </label>
+
+                    <select
+                      id="maintenance-priority"
+                      name="priority"
+                      value={
+                        formData.priority
+                      }
+                      onChange={
+                        handleFormChange
+                      }
+                    >
+
+                      <option value="Low">
+                        Low
+                      </option>
+
+                      <option value="Medium">
+                        Medium
+                      </option>
+
+                      <option value="High">
+                        High
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                </div>
+
+
+                <div className="maintenance-form-group">
+
+                  <label htmlFor="maintenance-location">
+                    Location / Unit *
+                  </label>
+
+                  <input
+                    id="maintenance-location"
+                    name="location"
+                    type="text"
+                    value={
+                      formData.location
+                    }
+                    onChange={
+                      handleFormChange
+                    }
+                    placeholder="e.g. Unit 15 / Bathroom"
+                    required
+                  />
+
+                </div>
+
+
+                <div className="maintenance-form-group">
+
+                  <label htmlFor="maintenance-description">
+                    Description *
+                  </label>
+
+                  <textarea
+                    id="maintenance-description"
+                    name="description"
+                    value={
+                      formData.description
+                    }
+                    onChange={
+                      handleFormChange
+                    }
+                    placeholder="Describe the issue..."
+                    rows="5"
+                    required
+                  />
+
+                </div>
+
+
+                <div className="maintenance-form-actions">
+
+                  <button
+                    type="button"
+                    className="maintenance-secondary-btn"
+                    onClick={
+                      handleCloseAddRequest
+                    }
+                  >
+                    Cancel
+                  </button>
+
+
+                  <button
+                    type="submit"
+                    className="maintenance-primary-btn"
+                  >
+
+                    <Icon
+                      name="send"
+                      size={16}
+                    />
+
+                    Submit Request
+
+                  </button>
+
+                </div>
+
+
+              </form>
+
+            </div>
+
+          )}
+
+
+          {/* =================================================
+              FILTERS
+              ================================================= */}
+
+          {!showAddRequest && (
+
+            <div className="maintenance-filters">
+
+
+              <div className="maintenance-filter-group">
+
+                <label htmlFor="maintenance-status-filter">
+                  Status
+                </label>
+
+                <select
+                  id="maintenance-status-filter"
+                  value={
+                    statusFilter
+                  }
+                  onChange={(event) =>
+                    setStatusFilter(
+                      event.target.value
+                    )
+                  }
+                >
+
+                  <option value="All">
+                    All Statuses
+                  </option>
+
+                  <option value="Submitted">
+                    Submitted
+                  </option>
+
+                  <option value="Acknowledged">
+                    Acknowledged
+                  </option>
+
+                  <option value="In Progress">
+                    In Progress
+                  </option>
+
+                  <option value="Scheduled">
+                    Scheduled
+                  </option>
+
+                  <option value="Resolved">
+                    Resolved
+                  </option>
+
+                  <option value="Cancelled">
+                    Cancelled
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div className="maintenance-filter-group">
+
+                <label htmlFor="maintenance-priority-filter">
+                  Priority
+                </label>
+
+                <select
+                  id="maintenance-priority-filter"
+                  value={
+                    priorityFilter
+                  }
+                  onChange={(event) =>
+                    setPriorityFilter(
+                      event.target.value
+                    )
+                  }
+                >
+
+                  <option value="All">
+                    All Priorities
+                  </option>
+
+                  <option value="High">
+                    High Priority
+                  </option>
+
+                  <option value="Medium">
+                    Medium Priority
+                  </option>
+
+                  <option value="Low">
+                    Low Priority
+                  </option>
+
+                </select>
+
+              </div>
+
+
+            </div>
+
+          )}
+
+
+          {/* =================================================
+              TABLE
+              ================================================= */}
+
+          {!showAddRequest && (
+
+            <div className="maintenance-table-wrapper">
+
+              <table className="maintenance-table">
+
+                <thead>
+
+                  <tr>
+
+                    <th>
+                      Request
+                    </th>
+
+                    <th>
+                      Location
+                    </th>
+
+                    <th>
+                      Reported By
+                    </th>
+
+                    <th>
+                      Service Provider
+                    </th>
+
+                    <th>
+                      Priority
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
+                    <th>
+                      Date
+                    </th>
+
+                    <th>
+                      Action
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {filteredRequests.length > 0 ? (
+
+                    filteredRequests.map(
+                      (request) => (
+
+                        <tr
+                          key={request.id}
                         >
-                          {request.id}
-                        </small>
-
-                      </td>
 
 
-                      <td>
-                        {request.location}
-                      </td>
+                          <td>
+
+                            <div className="maintenance-request-cell">
+
+                              <strong>
+                                {request.issue}
+                              </strong>
+
+                              <small>
+                                {request.id}
+                              </small>
+
+                            </div>
+
+                          </td>
 
 
-                      <td>
-                        {request.reportedBy}
-                      </td>
+                          <td>
+                            {request.location}
+                          </td>
 
 
-                      <td>
-                        {request.provider}
-                      </td>
+                          <td>
+                            {request.reportedBy}
+                          </td>
 
 
-                      <td>
-
-                        <span
-                          style={{
-                            padding: "5px 10px",
-                            borderRadius: "15px",
-                            background:
-                              request.priority === "High"
-                                ? "#fce8e6"
-                                : request.priority === "Medium"
-                                ? "#fff4d6"
-                                : "#eee7f3",
-                            color:
-                              request.priority === "High"
-                                ? "#b42318"
-                                : request.priority === "Medium"
-                                ? "#8a6500"
-                                : "#563F6B",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                          }}
-                        >
-                          {request.priority}
-                        </span>
-
-                      </td>
+                          <td>
+                            {request.provider}
+                          </td>
 
 
-                      <td>
+                          <td>
 
-                        <span
-                          style={{
-                            padding: "5px 10px",
-                            borderRadius: "15px",
-                            background:
-                              request.status === "Resolved"
-                                ? "#e8f5e9"
-                                : request.status === "In Progress"
-                                ? "#eee7f3"
-                                : request.status === "Scheduled"
-                                ? "#e8f1fb"
-                                : "#f1f1f1",
-                            color:
-                              request.status === "Resolved"
-                                ? "#2e7d32"
-                                : request.status === "In Progress"
-                                ? "#563F6B"
-                                : request.status === "Scheduled"
-                                ? "#245a8d"
-                                : "#666",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                          }}
-                        >
-                          {request.status}
-                        </span>
+                            <span
+                              className={`maintenance-badge priority-${request.priority
+                                .toLowerCase()
+                                .replace(
+                                  " ",
+                                  "-"
+                                )}`}
+                            >
 
-                      </td>
+                              {request.priority}
+
+                            </span>
+
+                          </td>
 
 
-                      <td>
-                        {request.date}
-                      </td>
+                          <td>
+
+                            <span
+                              className={`maintenance-badge status-${request.status
+                                .toLowerCase()
+                                .replace(
+                                  /\s+/g,
+                                  "-"
+                                )}`}
+                            >
+
+                              {request.status}
+
+                            </span>
+
+                          </td>
 
 
-                      <td>
+                          <td>
+                            {request.date}
+                          </td>
 
-                        <button
-                          className="secondary-btn"
-                          onClick={() =>
-                            alert(
-                              `Viewing ${request.id}: ${request.issue}`
-                            )
-                          }
-                        >
-                          View
-                        </button>
 
-                        <select
-                          defaultValue={request.status}
-                          onChange={(event) =>
-                            handleStatusChange(
-                              request.id,
-                              event.target.value
-                            )
-                          }
-                          style={{
-                            marginLeft: "6px",
-                            padding: "7px",
-                            border: "1px solid #ddd",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                          }}
-                        >
+                          <td>
 
-                          <option value="Submitted">
-                            Submitted
-                          </option>
+                            <div className="maintenance-actions">
 
-                          <option value="In Progress">
-                            In Progress
-                          </option>
 
-                          <option value="Scheduled">
-                            Scheduled
-                          </option>
+                              <button
+                                type="button"
+                                className="maintenance-view-btn"
+                                onClick={() =>
+                                  handleViewRequest(
+                                    request
+                                  )
+                                }
+                              >
 
-                          <option value="Resolved">
-                            Resolved
-                          </option>
+                                <Icon
+                                  name="eye"
+                                  size={15}
+                                />
 
-                        </select>
+                                View
+
+                              </button>
+
+
+                              {isHOAAdmin && (
+
+                                <select
+                                  className="maintenance-status-select"
+                                  value={
+                                    request.status
+                                  }
+                                  onChange={(event) =>
+                                    handleStatusChange(
+                                      request.id,
+                                      event.target.value
+                                    )
+                                  }
+                                >
+
+                                  <option value="Submitted">
+                                    Submitted
+                                  </option>
+
+                                  <option value="Acknowledged">
+                                    Acknowledged
+                                  </option>
+
+                                  <option value="In Progress">
+                                    In Progress
+                                  </option>
+
+                                  <option value="Scheduled">
+                                    Scheduled
+                                  </option>
+
+                                  <option value="Resolved">
+                                    Resolved
+                                  </option>
+
+                                  <option value="Cancelled">
+                                    Cancelled
+                                  </option>
+
+                                </select>
+
+                              )}
+
+
+                            </div>
+
+                          </td>
+
+
+                        </tr>
+
+                      )
+
+                    )
+
+                  ) : (
+
+                    <tr>
+
+                      <td
+                        colSpan="8"
+                        className="maintenance-empty"
+                      >
+
+                        {isResident
+                          ? "You have no maintenance requests yet."
+                          : "No maintenance requests found."}
 
                       </td>
 
                     </tr>
 
-                  ))
+                  )}
 
-                ) : (
+                </tbody>
 
-                  <tr>
+              </table>
 
-                    <td
-                      colSpan="8"
-                      style={{
-                        textAlign: "center",
-                        padding: "30px",
-                      }}
-                    >
-                      No maintenance requests found.
-                    </td>
+            </div>
 
-                  </tr>
+          )}
 
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
 
         </section>
 
 
         {/* =================================================
-            SERVICE PROVIDER MANAGEMENT
+            LOWER PANELS
             ================================================= */}
 
-        <section className="dashboard-grid">
+        <section className="maintenance-content-grid">
 
-          <div className="dashboard-panel">
 
-            <div className="panel-heading">
+          <div className="maintenance-panel">
+
+            <div className="maintenance-panel-heading">
 
               <div>
 
-                <h3>
+                <h2>
                   Service Providers
-                </h3>
+                </h2>
 
                 <p>
-                  Manage trusted community providers.
+                  {isHOAAdmin
+                    ? "Manage trusted community providers."
+                    : "View trusted community service providers."}
                 </p>
 
               </div>
 
-              <a href="/providers">
-                Manage
-              </a>
+
+              <Link
+                to="/providers"
+                className="maintenance-panel-link"
+              >
+
+                {isHOAAdmin
+                  ? "Manage"
+                  : "View"}
+
+              </Link>
 
             </div>
 
 
-            <div className="quick-actions">
+            <div className="maintenance-quick-actions">
 
-              <a href="/providers">
-                🔧 View Providers
-              </a>
 
-              <a href="/providers">
-                ✅ Verify Providers
-              </a>
+              <Link to="/providers">
 
-              <a href="/providers">
-                ⭐ View Ratings
-              </a>
+                <Icon name="providers" />
+
+                <span>
+                  View Providers
+                </span>
+
+              </Link>
+
+
+              {isHOAAdmin && (
+
+                <Link to="/providers">
+
+                  <Icon name="check" />
+
+                  <span>
+                    Verify Providers
+                  </span>
+
+                </Link>
+
+              )}
+
+
+              <Link to="/providers">
+
+                <Icon name="star" />
+
+                <span>
+                  View Ratings
+                </span>
+
+              </Link>
+
 
             </div>
 
           </div>
 
 
-          <div className="dashboard-panel">
+          <div className="maintenance-panel">
 
-            <div className="panel-heading">
+            <div className="maintenance-panel-heading">
 
               <div>
 
-                <h3>
+                <h2>
                   Maintenance Overview
-                </h3>
+                </h2>
 
                 <p>
-                  Current community maintenance activity.
+                  {isHOAAdmin
+                    ? "Current community maintenance activity."
+                    : "Your current maintenance activity."}
                 </p>
 
               </div>
@@ -747,7 +1910,8 @@ function Maintenance() {
             </div>
 
 
-            <div className="property-summary">
+            <div className="maintenance-overview">
+
 
               <div>
 
@@ -756,7 +1920,15 @@ function Maintenance() {
                 </span>
 
                 <strong>
-                  2
+
+                  {
+                    roleBasedRequests.filter(
+                      (request) =>
+                        request.priority ===
+                        "High"
+                    ).length
+                  }
+
                 </strong>
 
               </div>
@@ -769,7 +1941,7 @@ function Maintenance() {
                 </span>
 
                 <strong>
-                  1
+                  {scheduledRequests}
                 </strong>
 
               </div>
@@ -782,7 +1954,15 @@ function Maintenance() {
                 </span>
 
                 <strong>
-                  1
+
+                  {
+                    roleBasedRequests.filter(
+                      (request) =>
+                        request.status ===
+                        "In Progress"
+                    ).length
+                  }
+
                 </strong>
 
               </div>
@@ -795,21 +1975,260 @@ function Maintenance() {
                 </span>
 
                 <strong>
-                  1
+                  {resolvedRequests}
                 </strong>
 
               </div>
+
 
             </div>
 
           </div>
 
+
         </section>
+
 
       </main>
 
+
+      {/* =================================================
+          VIEW REQUEST
+          ================================================= */}
+
+      {selectedRequest && (
+
+        <div className="maintenance-modal-overlay">
+
+          <div className="maintenance-modal">
+
+
+            <div className="maintenance-form-header">
+
+              <div>
+
+                <p className="maintenance-eyebrow">
+                  {selectedRequest.id}
+                </p>
+
+                <h2>
+                  {selectedRequest.issue}
+                </h2>
+
+                <p>
+                  Maintenance request details
+                </p>
+
+              </div>
+
+
+              <button
+                type="button"
+                className="maintenance-modal-close"
+                onClick={() =>
+                  setSelectedRequest(null)
+                }
+                aria-label="Close"
+              >
+
+                <Icon
+                  name="close"
+                  size={18}
+                />
+
+              </button>
+
+            </div>
+
+
+            <div className="maintenance-request-details">
+
+
+              <div>
+
+                <span>
+                  Category
+                </span>
+
+                <strong>
+                  {selectedRequest.category}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Priority
+                </span>
+
+                <strong>
+                  {selectedRequest.priority}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Location
+                </span>
+
+                <strong>
+                  {selectedRequest.location}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Reported By
+                </span>
+
+                <strong>
+                  {selectedRequest.reportedBy}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Service Provider
+                </span>
+
+                <strong>
+                  {selectedRequest.provider}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Date
+                </span>
+
+                <strong>
+                  {selectedRequest.date}
+                </strong>
+
+              </div>
+
+
+              <div className="maintenance-request-detail-full">
+
+                <span>
+                  Status
+                </span>
+
+                <strong>
+                  {selectedRequest.status}
+                </strong>
+
+              </div>
+
+
+              <div className="maintenance-request-detail-full">
+
+                <span>
+                  Description
+                </span>
+
+                <p>
+                  {selectedRequest.description}
+                </p>
+
+              </div>
+
+
+            </div>
+
+
+            {isHOAAdmin && (
+
+              <div className="maintenance-admin-status">
+
+                <label htmlFor="maintenance-view-status">
+                  Update Status
+                </label>
+
+                <select
+                  id="maintenance-view-status"
+                  value={
+                    selectedRequest.status
+                  }
+                  onChange={(event) =>
+                    handleStatusChange(
+                      selectedRequest.id,
+                      event.target.value
+                    )
+                  }
+                >
+
+                  <option value="Submitted">
+                    Submitted
+                  </option>
+
+                  <option value="Acknowledged">
+                    Acknowledged
+                  </option>
+
+                  <option value="In Progress">
+                    In Progress
+                  </option>
+
+                  <option value="Scheduled">
+                    Scheduled
+                  </option>
+
+                  <option value="Resolved">
+                    Resolved
+                  </option>
+
+                  <option value="Cancelled">
+                    Cancelled
+                  </option>
+
+                </select>
+
+              </div>
+
+            )}
+
+
+            <div className="maintenance-form-actions">
+
+              <button
+                type="button"
+                className="maintenance-secondary-btn"
+                onClick={() =>
+                  setSelectedRequest(null)
+                }
+              >
+                Close
+              </button>
+
+            </div>
+
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
+
   );
+
 }
+
 
 export default Maintenance;
