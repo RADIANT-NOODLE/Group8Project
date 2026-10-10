@@ -1,245 +1,496 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "../Auth.css";
+import "./Auth.css";
 
 function Login() {
-  const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+    const navigate = useNavigate();
 
-  function handleSubmit(event) {
-    event.preventDefault();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
-    setError("");
 
-    if (!email || !password) {
-      setError("Please enter your email and password.");
-      return;
-    }
+    /*
+    =========================================================
+    LOGIN
+    =========================================================
+    */
 
-    // Get all registered VALORA users
-    const users =
-      JSON.parse(localStorage.getItem("valoraUsers")) || [];
+    const handleSubmit = (event) => {
 
-    // Find the account using the email address
-    const user = users.find(
-      (registeredUser) =>
-        registeredUser.email.toLowerCase() ===
-        email.toLowerCase()
-    );
+        event.preventDefault();
 
-    // No account found
-    if (!user) {
-      setError(
-        "No VALORA account was found with this email address. Please register first."
-      );
-      return;
-    }
+        setError("");
 
-    // Check password
-    if (user.password !== password) {
-      setError("Incorrect password.");
-      return;
-    }
 
-    // Check account status
-    if (user.status === "Pending") {
-      setError(
-        "Account Pending Approval: Your registration is still being reviewed by the Head Administrator."
-      );
-      return;
-    }
+        /*
+        =====================================================
+        VALIDATION
+        =====================================================
+        */
 
-    if (user.status === "Rejected") {
-      setError(
-        user.rejectionReason
-          ? `Registration Rejected: ${user.rejectionReason}`
-          : "Registration Rejected: Your account request was not approved."
-      );
-      return;
-    }
+        if (
+            !email.trim() ||
+            !password.trim()
+        ) {
 
-    // Only approved users can log in
-    if (user.status !== "Approved") {
-      setError(
-        "Your account is not currently authorised to access VALORA."
-      );
-      return;
-    }
+            setError(
+                "Please enter your email address and password."
+            );
 
-    // Save approved login session
-    localStorage.setItem(
-      "valoraLoggedIn",
-      "true"
-    );
+            return;
+        }
 
-    localStorage.setItem(
-      "valoraUserEmail",
-      user.email
-    );
 
-    localStorage.setItem(
-      "valoraUser",
-      JSON.stringify(user)
-    );
+        /*
+        =====================================================
+        HEAD ADMIN LOGIN
+        =====================================================
+        */
 
-    // Head Admin gets their own dashboard
-    if (user.role === "Head Admin") {
-      navigate("/head-admin");
-      return;
-    }
+        const headAdmin = {
 
-    // All other approved users go to their role dashboard
-    navigate("/dashboard");
-  }
+            id: "head-admin-001",
 
-  return (
-    <div className="auth-page">
+            firstName: "Head",
 
-      <div className="auth-card">
+            lastName: "Administrator",
 
-        {/* LEFT SIDE */}
+            email: "admin@valora.co.za",
 
-        <div className="auth-sidebar">
+            password: "Admin12345",
 
-          <div className="auth-logo">
+            role: "Head Admin",
 
-            <img
-              src="/ValoraLogo.jpeg"
-              alt="VALORA Logo"
-            />
+            status: "Approved",
 
-          </div>
+        };
 
-          <div className="auth-sidebar-content">
 
-            <p className="auth-eyebrow">
-              ACCOUNT ACCESS
-            </p>
+        if (
+            email.trim().toLowerCase() ===
+                headAdmin.email.toLowerCase() &&
+            password === headAdmin.password
+        ) {
 
-            <h1>
-              A clearer view
-              <br />
-              of where you live.
-            </h1>
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(headAdmin)
+            );
 
-            <p>
-              Return to one considered place for property
-              and community intelligence that helps you
-              stay informed.
-            </p>
+            localStorage.setItem(
+                "valoraLoggedIn",
+                "true"
+            );
 
-          </div>
+            navigate("/head-admin");
+
+            return;
+        }
+
+
+        /*
+        =====================================================
+        REGISTERED USER LOGIN
+        =====================================================
+        */
+
+        let existingUsers = [];
+
+
+        try {
+
+            existingUsers = JSON.parse(
+                localStorage.getItem(
+                    "valoraUsers"
+                ) || "[]"
+            );
+
+
+            if (
+                !Array.isArray(existingUsers)
+            ) {
+
+                existingUsers = [];
+
+            }
+
+        } catch (storageError) {
+
+            existingUsers = [];
+
+        }
+
+
+        /*
+        =====================================================
+        FIND USER
+        =====================================================
+        */
+
+        const user =
+            existingUsers.find(
+                (storedUser) =>
+                    storedUser.email &&
+                    storedUser.email.toLowerCase() ===
+                        email.trim().toLowerCase()
+            );
+
+
+        if (!user) {
+
+            setError(
+                "No account was found with this email address."
+            );
+
+            return;
+        }
+
+
+        /*
+        =====================================================
+        PASSWORD CHECK
+        =====================================================
+        */
+
+        if (
+            user.password !== password
+        ) {
+
+            setError(
+                "Incorrect password. Please try again."
+            );
+
+            return;
+        }
+
+
+        /*
+        =====================================================
+        PENDING ACCOUNT
+        =====================================================
+        */
+
+        if (
+            user.status !== "Approved"
+        ) {
+
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(user)
+            );
+
+            navigate(
+                "/registration-pending"
+            );
+
+            return;
+        }
+
+
+        /*
+        =====================================================
+        SUCCESSFUL LOGIN
+        =====================================================
+        */
+
+        localStorage.setItem(
+            "valoraUser",
+            JSON.stringify(user)
+        );
+
+        localStorage.setItem(
+            "valoraLoggedIn",
+            "true"
+        );
+
+
+        /*
+        =====================================================
+        NORMALISE ROLE
+        =====================================================
+
+        This keeps older role values compatible with
+        the current VALORA role names.
+
+        =====================================================
+        */
+
+        const rawRole =
+            String(
+                user.role || ""
+            ).trim().toLowerCase();
+
+
+        const normalisedRole =
+            rawRole === "head admin"
+                ? "Head Admin"
+                : rawRole === "hoa admin" ||
+                  rawRole === "hoa administrator"
+                    ? "HOA Admin"
+                    : rawRole === "estate agent" ||
+                      rawRole === "agent"
+                        ? "Estate Agent"
+                        : rawRole === "investor"
+                            ? "Investor"
+                            : rawRole === "resident"
+                                ? "Resident"
+                                : user.role;
+
+
+        /*
+        =====================================================
+        UPDATE STORED ROLE IF NEEDED
+        =====================================================
+        */
+
+        if (
+            normalisedRole !== user.role
+        ) {
+
+            const updatedUser = {
+                ...user,
+                role: normalisedRole,
+            };
+
+
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(updatedUser)
+            );
+
+        }
+
+
+        /*
+        =====================================================
+        ROLE-BASED REDIRECTION
+        =====================================================
+        */
+
+        if (
+            normalisedRole === "Head Admin"
+        ) {
+
+            navigate(
+                "/head-admin"
+            );
+
+            return;
+        }
+
+
+        /*
+        =====================================================
+        STANDARD USER DASHBOARD
+        =====================================================
+        */
+
+        navigate(
+            "/dashboard"
+        );
+
+    };
+
+
+    /*
+    =========================================================
+    PAGE
+    =========================================================
+    */
+
+    return (
+
+        <div className="auth-page">
+
+            <div className="auth-card">
+
+
+                {/* =================================================
+                    LEFT SIDE
+                ================================================== */}
+
+                <div className="auth-sidebar">
+
+                    <div className="auth-logo">
+
+                        <img
+                            src="/ValoraLogo.jpeg"
+                            alt="VALORA"
+                        />
+
+                    </div>
+
+
+                    <div className="auth-sidebar-content">
+
+                        <p className="auth-eyebrow">
+                            PROPERTY & COMMUNITY
+                        </p>
+
+
+                        <h1>
+                            Welcome Back
+                        </h1>
+
+
+                        <p>
+                            Sign in to access your VALORA
+                            property and community platform.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                {/* =================================================
+                    RIGHT SIDE
+                ================================================== */}
+
+                <div className="auth-form-panel">
+
+                    <div className="auth-form-content">
+
+
+                        <h2>
+                            Login to VALORA
+                        </h2>
+
+
+                        <p className="auth-lead">
+                            Enter your account details to
+                            continue.
+                        </p>
+
+
+                        {/* =================================================
+                            ERROR MESSAGE
+                        ================================================== */}
+
+                        {error && (
+
+                            <div className="auth-error">
+                                {error}
+                            </div>
+
+                        )}
+
+
+                        <form
+                            onSubmit={handleSubmit}
+                        >
+
+
+                            {/* =================================================
+                                EMAIL
+                            ================================================== */}
+
+                            <div className="auth-field">
+
+                                <label htmlFor="email">
+                                    Email Address
+                                </label>
+
+
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(event) =>
+                                        setEmail(
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="Enter email address"
+                                    autoComplete="email"
+                                    required
+                                />
+
+                            </div>
+
+
+                            {/* =================================================
+                                PASSWORD
+                            ================================================== */}
+
+                            <div className="auth-field">
+
+                                <label htmlFor="password">
+                                    Password
+                                </label>
+
+
+                                <input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(event) =>
+                                        setPassword(
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="Enter password"
+                                    autoComplete="current-password"
+                                    required
+                                />
+
+                            </div>
+
+
+                            {/* =================================================
+                                LOGIN BUTTON
+                            ================================================== */}
+
+                            <button
+                                type="submit"
+                                className="auth-submit"
+                            >
+                                Login
+                            </button>
+
+
+                            {/* =================================================
+                                REGISTER
+                            ================================================== */}
+
+                            <div className="auth-switch">
+
+                                Don't have an account?{" "}
+
+                                <Link to="/register">
+                                    Register
+                                </Link>
+
+                            </div>
+
+
+                            {/* =================================================
+                                HOME
+                            ================================================== */}
+
+                            <div className="auth-home-link">
+
+                                <Link to="/">
+                                    Back to Home
+                                </Link>
+
+                            </div>
+
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
+    );
 
-        {/* RIGHT SIDE */}
-
-        <div className="auth-form-panel">
-
-          <div className="auth-form-content">
-
-            <p className="auth-eyebrow">
-              WELCOME BACK
-            </p>
-
-            <h2>
-              Sign in to VALORA.
-            </h2>
-
-            <p className="auth-lead">
-              Sign in to return to your property and
-              community intelligence.
-            </p>
-
-
-            {error && (
-              <div className="auth-error">
-                {error}
-              </div>
-            )}
-
-
-            <form onSubmit={handleSubmit}>
-
-              <div className="auth-field">
-
-                <label htmlFor="email">
-                  Email
-                </label>
-
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) =>
-                    setEmail(event.target.value)
-                  }
-                  placeholder="name@example.com"
-                  autoComplete="email"
-                />
-
-              </div>
-
-
-              <div className="auth-field">
-
-                <label htmlFor="password">
-                  Password
-                </label>
-
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) =>
-                    setPassword(event.target.value)
-                  }
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                />
-
-              </div>
-
-
-              <button
-                type="submit"
-                className="auth-submit"
-              >
-                Sign in securely
-              </button>
-
-            </form>
-
-
-            <p className="auth-switch">
-              New to VALORA?{" "}
-
-              <Link to="/register">
-                Create an account
-              </Link>
-            </p>
-
-
-            <p className="auth-home-link">
-
-              <Link to="/">
-                ← Back to homepage
-              </Link>
-
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
 }
 
 export default Login;
