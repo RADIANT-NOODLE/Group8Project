@@ -1,0 +1,440 @@
+/* =========================================================
+   VALORA SHARED SIDEBAR
+========================================================= */
+
+.dashboard-sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    z-index: 1000;
+
+    width: 220px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #563f6b;
+    color: #ffffff;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    box-shadow:
+        2px 0 12px rgba(30, 20, 40, 0.08);
+}
+
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+.dashboard-sidebar-brand {
+    min-height: 78px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 17px 20px;
+
+    box-sizing: border-box;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.10);
+}
+
+.dashboard-logo {
+    display: block;
+
+    width: 135px;
+    max-width: 100%;
+
+    height: auto;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.dashboard-sidebar-profile {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 18px;
+
+    box-sizing: border-box;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.10);
+}
+
+.dashboard-profile-avatar {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+    color: #563f6b;
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.dashboard-profile-details {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.dashboard-profile-details strong {
+    max-width: 145px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.dashboard-profile-details span {
+    max-width: 145px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: rgba(255, 255, 255, 0.65);
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   MAIN MENU
+========================================================= */
+
+.dashboard-sidebar-navigation {
+    flex: 1;
+
+    padding: 18px 11px 15px;
+
+    box-sizing: border-box;
+}
+
+.dashboard-nav-section-title,
+.dashboard-account-section-title {
+    display: block;
+
+    margin: 0 9px 8px;
+
+    color: rgba(255, 255, 255, 0.46);
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+}
+
+.dashboard-account-section-title {
+    margin-top: 22px;
+}
+
+
+/* =========================================================
+   NAVIGATION LINKS
+========================================================= */
+
+.dashboard-sidebar-link {
+    width: 100%;
+    min-height: 39px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 3px;
+
+    padding: 9px 10px;
+
+    box-sizing: border-box;
+
+    border-radius: 7px;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    font-size: 9px;
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.dashboard-sidebar-link:hover {
+    background:
+        rgba(255, 255, 255, 0.09);
+
+    color: #ffffff;
+}
+
+.dashboard-sidebar-link.active {
+    background: #ffffff;
+
+    color: #563f6b;
+
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   NAV ICON
+========================================================= */
+
+.dashboard-nav-icon {
+    width: 18px;
+    height: 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+}
+
+.dashboard-nav-label {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+.dashboard-sidebar-bottom {
+    padding: 12px 11px 16px;
+
+    box-sizing: border-box;
+
+    border-top:
+        1px solid rgba(255, 255, 255, 0.10);
+}
+
+.dashboard-logout-button {
+    width: 100%;
+    min-height: 39px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 9px 10px;
+
+    box-sizing: border-box;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    font-family: inherit;
+
+    font-size: 9px;
+    font-weight: 600;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.dashboard-logout-button:hover {
+    background:
+        rgba(255, 255, 255, 0.09);
+
+    color: #ffffff;
+}
+
+.dashboard-logout-icon {
+    width: 18px;
+    height: 18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   900PX
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .dashboard-sidebar {
+        width: 200px;
+    }
+
+    .dashboard-logo {
+        width: 125px;
+    }
+
+}
+
+
+/* =========================================================
+   700PX
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .dashboard-sidebar {
+        width: 170px;
+    }
+
+    .dashboard-profile-details {
+        display: none;
+    }
+
+    .dashboard-sidebar-profile {
+        justify-content: center;
+
+        padding: 15px 10px;
+    }
+
+    .dashboard-sidebar-navigation {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .dashboard-sidebar-link {
+        justify-content: flex-start;
+    }
+
+}
+
+
+/* =========================================================
+   480PX
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .dashboard-sidebar {
+        width: 68px;
+    }
+
+    .dashboard-sidebar-brand {
+        min-height: 68px;
+
+        justify-content: center;
+
+        padding: 12px 8px;
+    }
+
+    .dashboard-logo {
+        width: 45px;
+        height: 45px;
+
+        object-fit: cover;
+
+        border-radius: 8px;
+    }
+
+    .dashboard-sidebar-profile {
+        padding: 12px 8px;
+    }
+
+    .dashboard-profile-avatar {
+        width: 34px;
+        height: 34px;
+    }
+
+    .dashboard-nav-section-title,
+    .dashboard-account-section-title {
+        display: none;
+    }
+
+    .dashboard-sidebar-navigation {
+        padding: 12px 7px;
+    }
+
+    .dashboard-sidebar-link {
+        min-height: 42px;
+
+        justify-content: center;
+
+        margin-bottom: 4px;
+
+        padding: 9px 5px;
+    }
+
+    .dashboard-nav-label {
+        display: none;
+    }
+
+    .dashboard-nav-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .dashboard-sidebar-bottom {
+        padding: 10px 7px 14px;
+    }
+
+    .dashboard-logout-button {
+        min-height: 42px;
+
+        justify-content: center;
+
+        padding: 9px 5px;
+    }
+
+    .dashboard-logout-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+}
