@@ -11,7 +11,6 @@ class AIAnalytic(Base):
     property_id = Column(Integer, ForeignKey("properties.unit_id", ondelete="SET NULL"), nullable=False)
     predicted_market_value = Column(Numeric(12, 2), nullable=True)
     rental_yield_pct = Column(Numeric(5, 2), nullable=True)
-    growth_score = Column(Numeric(5, 2), nullable=True)
     ten_year_roi = Column(Numeric(8, 2), nullable=True)
     calculated_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     model_version = Column(String(20), nullable=True)
