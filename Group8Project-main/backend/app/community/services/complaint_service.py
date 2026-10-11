@@ -57,6 +57,7 @@ class ComplaintService:
             category=payload.category.strip(),
             description=payload.description.strip(),
             is_anonymous=payload.is_anonymous,
+            photo_url=payload.photo_url,
         )
         return self._to_response(complaint, user)
 
@@ -142,3 +143,4 @@ class ComplaintService:
             resolution_rate_pct=resolution_rate_pct,
             avg_resolution_hours=avg_resolution_hours,
         )
+
