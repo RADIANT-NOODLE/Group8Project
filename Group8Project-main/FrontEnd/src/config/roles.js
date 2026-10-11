@@ -36,3 +36,7 @@ export function getValoraRole(value) {
 export function getValoraRoleLabel(value) {
   return getValoraRole(value).label;
 }
+
+export const VALORA_REGISTRATION_ROLE_OPTIONS = Object.freeze(
+  VALORA_ROLE_OPTIONS.filter(({ value }) => value !== 'hoa_admin'),
+);
