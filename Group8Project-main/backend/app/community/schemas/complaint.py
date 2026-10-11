@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +20,7 @@ class ComplaintCreate(BaseModel):
     category: str = Field(..., min_length=2, max_length=50)
     description: str = Field(..., min_length=5, max_length=5000)
     is_anonymous: bool = False
+    photo_url: Optional[str] = None
 
 
 class ComplaintStatusUpdate(BaseModel):
@@ -33,6 +35,7 @@ class ComplaintResponse(BaseModel):
     unit_id: int
     category: str
     description: str
+    photo_url: Optional[str] = None
     is_anonymous: bool | None
     status: str | None
     assigned_to: str | None
