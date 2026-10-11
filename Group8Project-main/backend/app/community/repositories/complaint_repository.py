@@ -77,6 +77,7 @@ class ComplaintRepository:
         category: str,
         description: str,
         is_anonymous: bool,
+        photo_url: str | None,
     ) -> Complaint:
         complaint = Complaint(
             user_id=user_id,
@@ -85,6 +86,7 @@ class ComplaintRepository:
             description=description,
             is_anonymous=is_anonymous,
             status="submitted",
+            photo_url=photo_url,
         )
         self._db.add(complaint)
         await self._db.commit()
