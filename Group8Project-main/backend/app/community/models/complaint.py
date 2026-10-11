@@ -14,6 +14,7 @@ class Complaint(Base):
     description = Column(Text, nullable=False)
     is_anonymous = Column(Boolean, default=False)
     status = Column(String(20), default="submitted")
+    photo_url = Column(String(500), nullable=True)
     assigned_to = Column(String(100), nullable=True)
     resolved_at = Column(TIMESTAMP(timezone=True), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
