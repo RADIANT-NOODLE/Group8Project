@@ -1,0 +1,25 @@
+.inline-message {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.inline-message-info {
+    background: #f8f6fa;
+    border: 1px solid #d8cfe0;
+    color: #4b3a5c;
+}
+
+.inline-message-error {
+    background: #fdf2f2;
+    border: 1px solid #f0c2c2;
+    color: #8a2b2b;
+}
+
+.inline-message-success {
+    background: #f1f8f3;
+    border: 1px solid #bfe0c8;
+    color: #2c6b45;
+}

@@ -29,8 +29,8 @@ globalThis.window = { localStorage: new MemoryStorage() };
 let fetchHandler;
 globalThis.fetch = (...args) => fetchHandler(...args);
 
-const authService = await import('../src/auth/authService.js');
-const { ApiError, getApiBaseUrl } = await import('../src/api/client.js');
+const authService = await import('../app/services/authService.js');
+const { ApiError, getApiBaseUrl } = await import('../app/services/apiClient.js');
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {

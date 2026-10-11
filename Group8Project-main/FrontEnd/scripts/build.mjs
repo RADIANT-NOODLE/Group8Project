@@ -1,9 +1,10 @@
 import * as esbuild from 'esbuild';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
+const appDirectory = path.join(root, 'app');
 
 function parseEnvFile(text) {
   const values = {};
@@ -43,7 +44,7 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 
 await esbuild.build({
-  entryPoints: [path.join(root, 'src/main.jsx')],
+  entryPoints: [path.join(appDirectory, 'main.jsx')],
   bundle: true,
   minify: true,
   sourcemap: true,
@@ -56,11 +57,14 @@ await esbuild.build({
   },
 });
 
-const html = await readFile(path.join(root, 'index.html'), 'utf8');
+// Static assets the HTML and pages reference (logo, favicon) are served from /assets.
+await cp(path.join(appDirectory, 'assets'), path.join(dist, 'assets'), { recursive: true });
+
+const html = await readFile(path.join(appDirectory, 'index.html'), 'utf8');
 await writeFile(
   path.join(dist, 'index.html'),
   html.replace(
-    '<script type="module" src="/src/main.jsx"></script>',
+    '<script type="module" src="/main.jsx"></script>',
     '<link rel="stylesheet" href="/assets/app.css" />\n    <script type="module" src="/assets/app.js"></script>',
   ),
 );

@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 
 const root = process.cwd();
-const port = Number(process.env.PORT || 4173);
+// Guard against an empty, zero or non-numeric PORT, which would otherwise
+// silently bind a random port instead of the documented 4173.
+const port = Number(process.env.PORT) || 4173;
 
 await new Promise((resolve, reject) => {
   const build = spawn(process.execPath, [path.join(root, 'scripts/build.mjs')], { stdio: 'inherit' });
@@ -48,5 +50,5 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`VALORA frontend running at http://localhost:${port}`);
+  console.log(`VALORA frontend running at http://localhost:${server.address().port}`);
 });

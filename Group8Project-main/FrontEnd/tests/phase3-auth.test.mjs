@@ -23,7 +23,7 @@ class MemoryStorage {
 
 globalThis.window = { localStorage: new MemoryStorage() };
 
-const auth = await import('../src/auth/mockAuthService.js');
+const auth = await import('../app/services/mockAuthService.js');
 
 function registration(overrides = {}) {
   return {
@@ -111,6 +111,70 @@ test('all four VALORA roles can register and round-trip through the session', as
     assert.equal(result.user.role, role);
     assert.equal(auth.getSession().user.role, role);
   }
+});
+
+test('UI-only profile fields merge into the session without changing identity', async () => {
+  const { user } = await auth.register(registration());
+
+  const updated = auth.updateSessionUser({
+    savedProperties: ['VAL-001'],
+    recentlyViewed: ['VAL-002'],
+    role: 'hoa_admin',
+    email: 'attacker@example.com',
+    id: 'someone-else',
+  });
+
+  assert.deepEqual(updated.savedProperties, ['VAL-001']);
+  assert.deepEqual(updated.recentlyViewed, ['VAL-002']);
+
+  /* identity survives a patch */
+  assert.equal(updated.id, user.id);
+  assert.equal(updated.email, 'jane@example.com');
+  assert.equal(updated.role, 'resident');
+
+  /* and the change is persisted, not just returned */
+  const session = auth.getSession();
+  assert.deepEqual(session.user.savedProperties, ['VAL-001']);
+  assert.equal(session.user.role, 'resident');
+});
+
+test('updateSessionUser is a no-op when nobody is signed in', async () => {
+  auth.logout();
+  assert.equal(auth.updateSessionUser({ savedProperties: ['VAL-001'] }), null);
+});
+
+test('reading an in-progress session never cancels the sign-in being written', async () => {
+  /*
+   * Regression: the session is stored as two keys. Another tab's storage
+   * listener reads between the token write and the profile write, so a read
+   * that observes a half-written session must report "signed out" without
+   * removing anything — otherwise the sign-in is destroyed.
+   */
+  window.localStorage.setItem(auth.mockAuthStorageKeys.token, 'mock.partial.signed-in');
+
+  assert.deepEqual(auth.getSession(), { token: null, user: null });
+  assert.equal(
+    window.localStorage.getItem(auth.mockAuthStorageKeys.token),
+    'mock.partial.signed-in',
+    'a read must not remove the token',
+  );
+
+  /* The writer finishes, and the session is intact. */
+  window.localStorage.setItem(
+    auth.mockAuthStorageKeys.user,
+    JSON.stringify({
+      id: 'user-1',
+      first_name: 'Jane',
+      last_name: 'Resident',
+      full_name: 'Jane Resident',
+      email: 'jane@example.com',
+      role: 'resident',
+    }),
+  );
+
+  const session = auth.getSession();
+  assert.equal(session.token, 'mock.partial.signed-in');
+  assert.equal(session.user.email, 'jane@example.com');
 });
 
 test('invalid registration data and corrupt session are rejected safely', async () => {
