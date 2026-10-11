@@ -12,7 +12,6 @@ class AIAnalyticCreate(BaseModel):
     property_id: int
     predicted_market_value: Optional[float] = None
     rental_yield_pct: Optional[float] = None
-    growth_score: Optional[float] = None
     ten_year_roi: Optional[float] = None
     model_version: Optional[str] = "v1.0"
     confidence_score: Optional[float] = None
@@ -25,7 +24,6 @@ class AIAnalyticCreate(BaseModel):
 class AIAnalyticUpdate(BaseModel):
     predicted_market_value: Optional[float] = None
     rental_yield_pct: Optional[float] = None
-    growth_score: Optional[float] = None
     ten_year_roi: Optional[float] = None
     confidence_score: Optional[float] = None
     actual_market_value: Optional[float] = None
@@ -54,7 +52,6 @@ def create_ai_analytic(analytic: AIAnalyticCreate, db: Session = Depends(get_db)
         property_id = analytic.property_id,
         predicted_market_value = analytic.predicted_market_value,
         rental_yield_pct = analytic.predicted_market_value,
-        growth_score = analytic.growth_score,
         ten_year_roi = analytic.ten_year_roi,
         model_version = analytic.model_version,
         confidence_score = analytic.confidence_score,
@@ -79,8 +76,6 @@ def updated_ai_analytic(analytics_id: int, analytic_update: AIAnalyticUpdate, db
         analytic.predicted_market_value = analytic_update.predicted_market_value
     if analytic_update.rental_yield_pct is not None:
         analytic.rental_yield_pct = analytic_update.rental_yield_pct
-    if analytic_update.growth_score is not None:
-        analytic.growth_score = analytic_update.growth_score
     if analytic_update.ten_year_roi is not None:
         analytic.ten_year_roi = analytic_update.ten_year_roi
     if analytic_update.confidence_score is not None:
