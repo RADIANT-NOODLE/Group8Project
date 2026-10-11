@@ -1,8 +1,8 @@
 # Frontend Development Update
 
-## What we did
+## What I did
 
-We cleaned up the frontend. The project had two or three copies of the same screens, so we deleted the
+I cleaned up the frontend. The project had two or three copies of the same screens, so I deleted the
 old ones and kept one set of pages, one login and one set of styles. There is now one frontend to work
 on instead of three.
 
@@ -11,7 +11,7 @@ on instead of three.
 - The frontend is connected to the backend. Login, registration, roles, complaints and the dashboards
   run on the real backend, with real accounts and real data.
 - Every user goes to their own dashboard and cannot open another role's pages.
-- We removed the old pop-up alerts and confirm boxes and put the messages inside the page instead. Each
+- I removed the old pop-up alerts and confirm boxes and put the messages inside the page instead. Each
   page also says plainly when it is loading, empty or has a problem.
 - Tests and the build pass.
 
@@ -34,7 +34,3 @@ keep their data in the browser, so that data is not shared between users:
 - A few screens need a design pass, especially on smaller screens.
 - Assets: a proper logo image and page icons.
 
-## Can we show it?
-
-Yes. The system can be shown to Sir. Login, roles, complaints and the dashboards work end to end on the
-real backend, and the lists above are the known gaps.
