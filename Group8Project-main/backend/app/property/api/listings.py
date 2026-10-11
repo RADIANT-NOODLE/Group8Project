@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.enums import ListingStatus, UserRole
@@ -34,6 +34,7 @@ async def search_listings(
     min_price: Annotated[Decimal | None, Query(ge=0)] = None,
     max_price: Annotated[Decimal | None, Query(ge=0)] = None,
 ) -> PaginatedListingsResponse:
+    """Public listing search, newest first."""
     return await ListingService(db).search_listings(
         page=page,
         page_size=page_size,
@@ -59,6 +60,7 @@ async def create_listing(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: AgentOrAdmin,
 ) -> ListingResponse:
+    """Create a listing. The agent is taken from the logged-in user, not the request body."""
     return await ListingService(db).create_listing(payload, current_user)
 
 
@@ -69,14 +71,5 @@ async def update_listing(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: AgentOrAdmin,
 ) -> ListingResponse:
+    """Edit price, description, photo or status. Agents can only edit their own listings."""
     return await ListingService(db).update_listing(listing_id, payload, current_user)
-
-
-@router.delete("/{listing_id}", status_code=204)
-async def delete_listing(
-    listing_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: AgentOrAdmin,
-) -> Response:
-    await ListingService(db).delete_listing(listing_id, current_user)
-    return Response(status_code=204)

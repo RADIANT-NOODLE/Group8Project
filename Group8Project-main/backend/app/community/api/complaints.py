@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.enums import ComplaintStatus, UserRole
@@ -9,7 +9,6 @@ from app.community.schemas.complaint import (
     ComplaintResponse,
     ComplaintStatsResponse,
     ComplaintStatusUpdate,
-    ComplaintUpdate,
     PaginatedComplaintsResponse,
 )
 from app.community.services.complaint_service import ComplaintService
@@ -35,6 +34,7 @@ async def list_complaints(
     status: Annotated[ComplaintStatus | None, Query()] = None,
     category: Annotated[str | None, Query(max_length=50)] = None,
 ) -> PaginatedComplaintsResponse:
+    """HOA admins see all complaints; other users only see their own."""
     return await ComplaintService(db).list_complaints(
         current_user,
         page=page,
@@ -69,6 +69,7 @@ async def create_complaint(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: ResidentOrAdmin,
 ) -> ComplaintResponse:
+    """File a complaint. The author is taken from the logged-in user."""
     return await ComplaintService(db).create_complaint(payload, current_user)
 
 
@@ -80,23 +81,3 @@ async def update_complaint_status(
     admin: AdminOnly,
 ) -> ComplaintResponse:
     return await ComplaintService(db).update_status(complaint_id, payload, admin)
-
-
-@router.patch("/{complaint_id}", response_model=ComplaintResponse)
-async def update_complaint(
-    complaint_id: int,
-    payload: ComplaintUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: CurrentUser,
-) -> ComplaintResponse:
-    return await ComplaintService(db).update_complaint(complaint_id, payload, current_user)
-
-
-@router.delete("/{complaint_id}", status_code=204)
-async def delete_complaint(
-    complaint_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: CurrentUser,
-) -> Response:
-    await ComplaintService(db).delete_complaint(complaint_id, current_user)
-    return Response(status_code=204)
