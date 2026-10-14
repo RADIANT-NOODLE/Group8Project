@@ -1,129 +1,163 @@
-import React, { useState } from "react";
-import * as authService from "../../services/authService.js";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./ResidentComplaints.css";
 
+const STORAGE_KEY = "valoraComplaints";
+const UPDATED_EVENT = "valoraComplaintsUpdated";
 
-/* =========================================================
-   VALORA ICONS
-========================================================= */
+const STATUSES = [
+    "Submitted",
+    "Acknowledged",
+    "In Progress",
+    "Resolved",
+    "Cancelled",
+];
 
-function Icon({ name, size = 18 }) {
+function readUser() {
+    try {
+        return JSON.parse(localStorage.getItem("valoraUser") || "null");
+    } catch {
+        return null;
+    }
+}
 
+function normaliseRole(value = "") {
+    const role = String(value).trim().toLowerCase();
+
+    if (role.includes("head admin")) return "Head Admin";
+
+    if (
+        role.includes("hoa") ||
+        role.includes("homeowners association") ||
+        role === "administrator"
+    ) {
+        return "HOA Admin";
+    }
+
+    return value || "User";
+}
+
+function getUserRole(user) {
+    return normaliseRole(
+        user?.role || user?.userType || user?.accountType || ""
+    );
+}
+
+function getUserName(user) {
+    if (!user) return "Administrator";
+
+    return (
+        user.fullName ||
+        user.name ||
+        [user.firstName || user.firstname, user.lastName || user.lastname]
+            .filter(Boolean)
+            .join(" ") ||
+        user.email ||
+        "Administrator"
+    ).trim();
+}
+
+function loadComplaints() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+
+        if (!stored) return [];
+
+        const parsed = JSON.parse(stored);
+
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed.filter(
+            (complaint) =>
+                complaint &&
+                typeof complaint === "object" &&
+                complaint.id
+        );
+    } catch {
+        return [];
+    }
+}
+
+function saveComplaints(complaints) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(complaints));
+    window.dispatchEvent(new Event(UPDATED_EVENT));
+}
+
+function formatDate(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+    return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+}
+
+function getStatusClass(status) {
+    const classes = {
+        Submitted: "resident-complaints-status-submitted",
+        Acknowledged: "resident-complaints-status-acknowledged",
+        "In Progress": "resident-complaints-status-progress",
+        Resolved: "resident-complaints-status-resolved",
+        Cancelled: "resident-complaints-status-cancelled",
+    };
+
+    return classes[status] || classes.Submitted;
+}
+
+function getPriorityClass(priority) {
+    return ["High", "Urgent"].includes(priority)
+        ? "resident-complaints-priority-high"
+        : "resident-complaints-priority-normal";
+}
+
+function Icon({ name, size = 19 }) {
     const icons = {
-
-        dashboard: (
-            <>
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-            </>
-        ),
-
-        residents: (
-            <>
-                <circle cx="9" cy="8" r="3" />
-                <path d="M3.5 19c.5-3 2.4-4.5 5.5-4.5s5 1.5 5.5 4.5" />
-                <path d="M15 5.5c2.2-.2 4 1.2 4 3.5 0 1.5-.8 2.7-2 3.3" />
-                <path d="M16 14.5c2.4.4 3.9 1.8 4.5 4" />
-            </>
-        ),
-
-        complaints: (
-            <>
-                <rect x="5" y="3" width="14" height="18" rx="2" />
-                <path d="M8.5 8h7" />
-                <path d="M8.5 12h7" />
-                <path d="M8.5 16h4.5" />
-            </>
-        ),
-
-        maintenance: (
-            <>
-                <path d="M14.5 5.5a4 4 0 0 0-5.1 5.1L4 16l4 4 5.4-5.4a4 4 0 0 0 5.1-5.1l-2.6 2.6-3-3 2.6-2.6Z" />
-            </>
-        ),
-
-        announcements: (
-            <>
-                <path d="M4 10v4h4l7 4V6l-7 4H4Z" />
-                <path d="M8 14l1.5 5" />
-                <path d="M18 9c1 .8 1.5 1.7 1.5 3s-.5 2.2-1.5 3" />
-            </>
-        ),
-
-        ai: (
-            <>
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-                <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
-                <path d="M10 10h4v4h-4z" />
-            </>
-        ),
-
-        analytics: (
-            <>
-                <path d="M4 19V9" />
-                <path d="M10 19V5" />
-                <path d="M16 19v-7" />
-                <path d="M22 19V3" />
-            </>
-        ),
-
-        profile: (
-            <>
-                <circle cx="12" cy="8" r="3.5" />
-                <path d="M5 21c.7-4 3-6 7-6s6.3 2 7 6" />
-            </>
-        ),
-
-        logout: (
-            <>
-                <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
-                <path d="M14 8l4 4-4 4" />
-                <path d="M18 12H9" />
-            </>
-        ),
-
         total: (
             <>
                 <rect x="4" y="3" width="16" height="18" rx="2" />
                 <path d="M8 8h8M8 12h8M8 16h5" />
             </>
         ),
-
         active: (
             <>
                 <path d="M12 3 21 19H3L12 3Z" />
                 <path d="M12 9v4" />
-                <circle cx="12" cy="16" r=".7" fill="currentColor" stroke="none" />
+                <circle
+                    cx="12"
+                    cy="16"
+                    r=".7"
+                    fill="currentColor"
+                    stroke="none"
+                />
             </>
         ),
-
         resolved: (
             <>
                 <circle cx="12" cy="12" r="9" />
                 <path d="m7.5 12 3 3 6-6" />
             </>
         ),
-
         urgent: (
             <>
                 <path d="M12 3 21 19H3L12 3Z" />
                 <path d="M12 9v4" />
-                <circle cx="12" cy="16" r=".7" fill="currentColor" stroke="none" />
+                <circle
+                    cx="12"
+                    cy="16"
+                    r=".7"
+                    fill="currentColor"
+                    stroke="none"
+                />
             </>
         ),
-
-        check: (
-            <path d="m5 12.5 4 4L19 6.5" />
-        ),
-
-        arrow: (
-            <path d="M5 12h14M13 6l6 6-6 6" />
-        )
-
     };
-
 
     return (
         <svg
@@ -131,645 +165,384 @@ function Icon({ name, size = 18 }) {
             height={size}
             viewBox="0 0 24 24"
             fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden="true"
         >
-            {icons[name]}
+            {icons[name] || icons.total}
         </svg>
     );
 }
 
+export default function ResidentComplaints() {
+    const [user, setUser] = useState(readUser);
+    const [complaints, setComplaints] = useState(loadComplaints);
+    const [notice, setNotice] = useState("");
+    const [error, setError] = useState("");
+    const [search, setSearch] = useState("");
 
-/* =========================================================
-   RESIDENT COMPLAINTS
-========================================================= */
+    const role = getUserRole(user);
+    const userName = getUserName(user);
+    const isAdmin = role === "HOA Admin" || role === "Head Admin";
 
-function ResidentComplaints() {
+    const refreshComplaints = useCallback(() => {
+        setComplaints(loadComplaints());
+    }, []);
 
-    const [complaints, setComplaints] = useState([
-        {
-            id: "VAL-001",
-            resident: "Ahmed Khan",
-            unit: "Unit 12",
-            category: "Security",
-            description: "Security gate access issue reported.",
-            priority: "High",
-            date: "18 Aug 2026",
-            status: "Submitted"
-        },
-        {
-            id: "VAL-002",
-            resident: "Fatima Ismail",
-            unit: "Unit 24",
-            category: "Maintenance",
-            description: "Water leakage reported in the kitchen.",
-            priority: "Medium",
-            date: "17 Aug 2026",
-            status: "In Progress"
-        },
-        {
-            id: "VAL-003",
-            resident: "Yusuf Patel",
-            unit: "Unit 31",
-            category: "Cleaning",
-            description: "Common area requires cleaning.",
-            priority: "Low",
-            date: "15 Aug 2026",
-            status: "Resolved"
-        },
-        {
-            id: "VAL-004",
-            resident: "Ayesha Mohammed",
-            unit: "Unit 08",
-            category: "Noise",
-            description: "Noise complaint regarding late-night disturbance.",
-            priority: "Medium",
-            date: "14 Aug 2026",
-            status: "Acknowledged"
-        }
-    ]);
+    useEffect(() => {
+        const refresh = () => {
+            setUser(readUser());
+            refreshComplaints();
+        };
 
+        window.addEventListener(UPDATED_EVENT, refresh);
+        window.addEventListener("storage", refresh);
+        window.addEventListener("focus", refresh);
 
-    /* =====================================================
-       UPDATE STATUS
-    ===================================================== */
+        return () => {
+            window.removeEventListener(UPDATED_EVENT, refresh);
+            window.removeEventListener("storage", refresh);
+            window.removeEventListener("focus", refresh);
+        };
+    }, [refreshComplaints]);
 
-    const updateStatus = (id, newStatus) => {
+    const filteredComplaints = useMemo(() => {
+        const term = search.trim().toLowerCase();
 
-        setComplaints(
-            complaints.map((complaint) =>
-                complaint.id === id
-                    ? {
-                        ...complaint,
-                        status: newStatus
-                    }
-                    : complaint
-            )
+        const sorted = [...complaints].sort((a, b) => {
+            const aDate = new Date(a.createdAt || a.date || 0).getTime();
+            const bDate = new Date(b.createdAt || b.date || 0).getTime();
+
+            return bDate - aDate;
+        });
+
+        if (!term) return sorted;
+
+        return sorted.filter((complaint) =>
+            [
+                complaint.id,
+                complaint.submitterName,
+                complaint.submitterRole,
+                complaint.unit,
+                complaint.category,
+                complaint.description,
+                complaint.priority,
+                complaint.status,
+            ]
+                .filter(Boolean)
+                .some((value) =>
+                    String(value).toLowerCase().includes(term)
+                )
         );
-    };
+    }, [complaints, search]);
 
+    const stats = useMemo(() => ({
+        total: complaints.length,
+        active: complaints.filter(
+            (item) =>
+                item.status !== "Resolved" &&
+                item.status !== "Cancelled"
+        ).length,
+        resolved: complaints.filter(
+            (item) => item.status === "Resolved"
+        ).length,
+        highPriority: complaints.filter(
+            (item) => ["High", "Urgent"].includes(item.priority)
+        ).length,
+    }), [complaints]);
 
-    /* =====================================================
-       STATISTICS
-    ===================================================== */
-
-    const totalComplaints =
-        complaints.length;
-
-
-    const activeComplaints =
-        complaints.filter(
-            complaint =>
-                complaint.status !== "Resolved" &&
-                complaint.status !== "Cancelled"
-        ).length;
-
-
-    const resolvedComplaints =
-        complaints.filter(
-            complaint =>
-                complaint.status === "Resolved"
-        ).length;
-
-
-    const urgentComplaints =
-        complaints.filter(
-            complaint =>
-                complaint.priority === "Urgent" ||
-                complaint.priority === "High"
-        ).length;
-
-
-    /* =====================================================
-       LOGOUT
-    ===================================================== */
-
-    const handleLogout = () => {
-
-        authService.logout();
-
-        window.location.href = "/";
-    };
-
-
-    /* =====================================================
-       STATUS CLASS
-    ===================================================== */
-
-    const getStatusClass = (status) => {
-
-        switch (status) {
-
-            case "Resolved":
-                return "resident-complaints-status-resolved";
-
-            case "In Progress":
-                return "resident-complaints-status-progress";
-
-            case "Acknowledged":
-                return "resident-complaints-status-acknowledged";
-
-            case "Cancelled":
-                return "resident-complaints-status-cancelled";
-
-            default:
-                return "resident-complaints-status-submitted";
-        }
-    };
-
-
-    /* =====================================================
-       PRIORITY CLASS
-    ===================================================== */
-
-    const getPriorityClass = (priority) => {
-
-        if (
-            priority === "High" ||
-            priority === "Urgent"
-        ) {
-            return "resident-complaints-priority-high";
+    function updateStatus(complaintId, nextStatus) {
+        if (!isAdmin) {
+            setError("You are not authorised to update complaint statuses.");
+            return;
         }
 
-        return "resident-complaints-priority-normal";
-    };
+        if (!STATUSES.includes(nextStatus)) return;
 
+        const existing = loadComplaints();
+        const targetExists = existing.some(
+            (item) => item.id === complaintId
+        );
+
+        if (!targetExists) {
+            setError(
+                "This complaint could not be found. Refresh the page and try again."
+            );
+            refreshComplaints();
+            return;
+        }
+
+        const timestamp = new Date().toISOString();
+
+        const updated = existing.map((item) =>
+            item.id === complaintId
+                ? {
+                    ...item,
+                    status: nextStatus,
+                    statusUpdatedAt: timestamp,
+                    statusUpdatedBy: userName,
+                }
+                : item
+        );
+
+        try {
+            saveComplaints(updated);
+            setComplaints(loadComplaints());
+            setError("");
+            setNotice(
+                `Complaint ${complaintId} updated to "${nextStatus}".`
+            );
+        } catch {
+            setError(
+                "The status could not be saved. Please check browser storage."
+            );
+        }
+    }
+
+    if (!user) {
+        return (
+            <div className="resident-complaints-layout">
+                <DashboardSidebar />
+                <main className="resident-complaints-main">
+                    <section className="resident-complaints-panel resident-complaints-message">
+                        <h2>Sign in required</h2>
+                        <p>Please sign in to access community complaints.</p>
+                    </section>
+                </main>
+            </div>
+        );
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="resident-complaints-layout">
+                <DashboardSidebar />
+                <main className="resident-complaints-main">
+                    <section className="resident-complaints-panel resident-complaints-message">
+                        <h2>Access restricted</h2>
+                        <p>
+                            This page is for HOA Admin and Head Admin users.
+                        </p>
+                    </section>
+                </main>
+            </div>
+        );
+    }
 
     return (
-
         <div className="resident-complaints-layout">
-
-
-            {/* =================================================
-                SIDEBAR
-            ================================================= */}
-
-            <aside className="resident-complaints-sidebar">
-
-                <div className="resident-complaints-logo-area">
-
-                    <img
-                        src="/assets/valora-logo.svg"
-                        alt="VALORA Logo"
-                    />
-
-                    <p>
-                        Property Intelligence
-                    </p>
-
-                </div>
-
-
-                <nav className="resident-complaints-side-nav">
-
-                    <a href="/dashboard">
-                        <Icon
-                            name="dashboard"
-                            size={17}
-                        />
-                        <span>
-                            Dashboard
-                        </span>
-                    </a>
-
-
-                    <a href="/resident-directory">
-                        <Icon
-                            name="residents"
-                            size={17}
-                        />
-                        <span>
-                            Resident Directory
-                        </span>
-                    </a>
-
-
-                    <a
-                        href="/resident-complaints"
-                        className="active"
-                    >
-                        <Icon
-                            name="complaints"
-                            size={17}
-                        />
-                        <span>
-                            Resident Complaints
-                        </span>
-                    </a>
-
-
-                    <a href="/maintenance">
-                        <Icon
-                            name="maintenance"
-                            size={17}
-                        />
-                        <span>
-                            Maintenance
-                        </span>
-                    </a>
-
-
-                    <a href="/community-announcements">
-                        <Icon
-                            name="announcements"
-                            size={17}
-                        />
-                        <span>
-                            Community Announcements
-                        </span>
-                    </a>
-
-
-                    <a href="/ai-training-data">
-                        <Icon
-                            name="ai"
-                            size={17}
-                        />
-                        <span>
-                            AI Training Data
-                        </span>
-                    </a>
-
-
-                    <a href="/community-analytics">
-                        <Icon
-                            name="analytics"
-                            size={17}
-                        />
-                        <span>
-                            Community Analytics
-                        </span>
-                    </a>
-
-
-                    <a href="/profile">
-                        <Icon
-                            name="profile"
-                            size={17}
-                        />
-                        <span>
-                            My Profile
-                        </span>
-                    </a>
-
-                </nav>
-
-
-                <div className="resident-complaints-logout-area">
-
-                    <a
-                        href="/"
-                        onClick={(event) => {
-                            event.preventDefault();
-                            handleLogout();
-                        }}
-                    >
-                        <Icon
-                            name="logout"
-                            size={17}
-                        />
-                        <span>
-                            Logout
-                        </span>
-                    </a>
-
-                </div>
-
-            </aside>
-
-
-            {/* =================================================
-                MAIN CONTENT
-            ================================================= */}
+            <DashboardSidebar />
 
             <main className="resident-complaints-main">
-
-
-                {/* =================================================
-                    TOP BAR
-                ================================================= */}
-
-                <div className="resident-complaints-top-bar">
-
+                <header className="resident-complaints-top-bar">
                     <div>
-
                         <span className="resident-complaints-eyebrow">
                             COMMUNITY MANAGEMENT
                         </span>
 
-                        <h2>
-                            Resident Complaints
-                        </h2>
+                        <h2>Resident Complaints</h2>
 
                         <p>
-                            Review and manage complaints submitted by residents.
+                            Review complaints submitted across VALORA and
+                            update their progress.
                         </p>
-
                     </div>
 
-
-                    <div className="resident-complaints-profile-small">
-
-                        <div className="resident-complaints-profile-circle">
-                            A
-                        </div>
-
-                        <span>
-                            HOA Admin
+                    <div className="resident-complaints-admin-label">
+                        <span className="resident-complaints-admin-avatar">
+                            {userName
+                                .split(/\s+/)
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .map((part) => part.charAt(0))
+                                .join("")
+                                .toUpperCase()}
                         </span>
 
-                    </div>
-
-                </div>
-
-
-                {/* =================================================
-                    STAT CARDS
-                ================================================= */}
-
-                <section className="resident-complaints-stat-cards">
-
-
-                    <div className="resident-complaints-stat-card">
-
-                        <div className="resident-complaints-stat-icon">
-
-                            <Icon
-                                name="total"
-                                size={19}
-                            />
-
-                        </div>
-
                         <div>
-
-                            <p>
-                                Total Complaints
-                            </p>
-
-                            <h3>
-                                {totalComplaints}
-                            </h3>
-
-                            <small>
-                                Community complaints
-                            </small>
-
+                            <strong>{userName}</strong>
+                            <span>{role}</span>
                         </div>
-
                     </div>
+                </header>
 
-
-                    <div className="resident-complaints-stat-card">
-
-                        <div className="resident-complaints-stat-icon">
-
-                            <Icon
-                                name="active"
-                                size={19}
-                            />
-
-                        </div>
-
-                        <div>
-
-                            <p>
-                                Active Complaints
-                            </p>
-
-                            <h3>
-                                {activeComplaints}
-                            </h3>
-
-                            <small>
-                                Require attention
-                            </small>
-
-                        </div>
-
+                {notice && (
+                    <div
+                        className="resident-complaints-notice"
+                        role="status"
+                    >
+                        <span>{notice}</span>
+                        <button
+                            type="button"
+                            onClick={() => setNotice("")}
+                            aria-label="Dismiss message"
+                        >
+                            ×
+                        </button>
                     </div>
+                )}
 
-
-                    <div className="resident-complaints-stat-card">
-
-                        <div className="resident-complaints-stat-icon">
-
-                            <Icon
-                                name="resolved"
-                                size={19}
-                            />
-
-                        </div>
-
-                        <div>
-
-                            <p>
-                                Resolved
-                            </p>
-
-                            <h3>
-                                {resolvedComplaints}
-                            </h3>
-
-                            <small>
-                                Successfully resolved
-                            </small>
-
-                        </div>
-
+                {error && (
+                    <div
+                        className="resident-complaints-error"
+                        role="alert"
+                    >
+                        <span>{error}</span>
+                        <button
+                            type="button"
+                            onClick={() => setError("")}
+                            aria-label="Dismiss error"
+                        >
+                            ×
+                        </button>
                     </div>
+                )}
 
+                <section
+                    className="resident-complaints-stat-cards"
+                    aria-label="Complaint statistics"
+                >
+                    <StatCard
+                        icon="total"
+                        label="Total Complaints"
+                        value={stats.total}
+                        description="All submitted complaints"
+                    />
 
-                    <div className="resident-complaints-stat-card">
+                    <StatCard
+                        icon="active"
+                        label="Active Complaints"
+                        value={stats.active}
+                        description="Require attention"
+                    />
 
-                        <div className="resident-complaints-stat-icon">
+                    <StatCard
+                        icon="resolved"
+                        label="Resolved"
+                        value={stats.resolved}
+                        description="Successfully resolved"
+                    />
 
-                            <Icon
-                                name="urgent"
-                                size={19}
-                            />
-
-                        </div>
-
-                        <div>
-
-                            <p>
-                                High Priority
-                            </p>
-
-                            <h3>
-                                {urgentComplaints}
-                            </h3>
-
-                            <small>
-                                High or urgent complaints
-                            </small>
-
-                        </div>
-
-                    </div>
-
+                    <StatCard
+                        icon="urgent"
+                        label="High Priority"
+                        value={stats.highPriority}
+                        description="High or urgent complaints"
+                    />
                 </section>
 
-
-                {/* =================================================
-                    COMPLAINT TABLE
-                ================================================= */}
-
                 <section className="resident-complaints-panel">
-
-
                     <div className="resident-complaints-panel-heading">
-
                         <div>
-
-                            <h3>
-                                Complaint Management
-                            </h3>
-
+                            <h3>Complaint Management</h3>
                             <p>
-                                Review resident complaints and update their status.
+                                Changes are saved to the shared complaint
+                                records used by the other dashboards.
                             </p>
-
                         </div>
 
-                        <div className="resident-complaints-record-count">
-                            {totalComplaints} Records
-                        </div>
-
+                        <span className="resident-complaints-record-count">
+                            {complaints.length}{" "}
+                            {complaints.length === 1 ? "Record" : "Records"}
+                        </span>
                     </div>
 
+                    <div className="resident-complaints-toolbar">
+                        <label htmlFor="resident-complaints-search">
+                            Search complaints
+                        </label>
+
+                        <input
+                            id="resident-complaints-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder="Search ID, submitter, category or status..."
+                        />
+                    </div>
 
                     <div className="resident-complaints-table-container">
-
                         <table className="resident-complaints-table">
-
                             <thead>
-
                                 <tr>
-
-                                    <th>
-                                        Complaint ID
-                                    </th>
-
-                                    <th>
-                                        Resident
-                                    </th>
-
-                                    <th>
-                                        Unit
-                                    </th>
-
-                                    <th>
-                                        Category
-                                    </th>
-
-                                    <th>
-                                        Priority
-                                    </th>
-
-                                    <th>
-                                        Date
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Action
-                                    </th>
-
+                                    <th>Complaint ID</th>
+                                    <th>Submitted By</th>
+                                    <th>Unit</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Update Status</th>
                                 </tr>
-
                             </thead>
 
-
                             <tbody>
-
-                                {complaints.map((complaint) => (
-
+                                {filteredComplaints.map((complaint) => (
                                     <tr key={complaint.id}>
-
                                         <td>
-
                                             <strong className="resident-complaints-id">
                                                 {complaint.id}
                                             </strong>
-
                                         </td>
 
-
                                         <td>
-
                                             <div className="resident-complaints-resident">
                                                 <strong>
-                                                    {complaint.resident}
+                                                    {complaint.submitterName ||
+                                                        complaint.resident ||
+                                                        "Unknown user"}
                                                 </strong>
 
                                                 <small>
-                                                    {complaint.description}
+                                                    {complaint.submitterRole ||
+                                                        "Account role unavailable"}
                                                 </small>
                                             </div>
-
                                         </td>
 
+                                        <td>{complaint.unit || "—"}</td>
+
+                                        <td>{complaint.category || "Other"}</td>
 
                                         <td>
-                                            {complaint.unit}
-                                        </td>
-
-
-                                        <td>
-                                            {complaint.category}
-                                        </td>
-
-
-                                        <td>
-
                                             <span
-                                                className={
-                                                    getPriorityClass(
-                                                        complaint.priority
-                                                    )
-                                                }
+                                                className={getPriorityClass(
+                                                    complaint.priority
+                                                )}
                                             >
-                                                {complaint.priority}
+                                                {complaint.priority || "Low"}
                                             </span>
-
                                         </td>
 
-
                                         <td>
-                                            {complaint.date}
+                                            {formatDate(
+                                                complaint.createdAt ||
+                                                complaint.date
+                                            )}
                                         </td>
 
-
                                         <td>
-
                                             <span
-                                                className={
-                                                    getStatusClass(
-                                                        complaint.status
-                                                    )
-                                                }
+                                                className={getStatusClass(
+                                                    complaint.status
+                                                )}
                                             >
-                                                {complaint.status}
+                                                {complaint.status || "Submitted"}
                                             </span>
-
                                         </td>
 
-
                                         <td>
-
                                             <select
                                                 className="resident-complaints-status-select"
+                                                aria-label={`Update status for ${complaint.id}`}
                                                 value={
-                                                    complaint.status
+                                                    STATUSES.includes(
+                                                        complaint.status
+                                                    )
+                                                        ? complaint.status
+                                                        : "Submitted"
                                                 }
                                                 onChange={(event) =>
                                                     updateStatus(
@@ -778,158 +551,104 @@ function ResidentComplaints() {
                                                     )
                                                 }
                                             >
-
-                                                <option value="Submitted">
-                                                    Submitted
-                                                </option>
-
-                                                <option value="Acknowledged">
-                                                    Acknowledged
-                                                </option>
-
-                                                <option value="In Progress">
-                                                    In Progress
-                                                </option>
-
-                                                <option value="Resolved">
-                                                    Resolved
-                                                </option>
-
-                                                <option value="Cancelled">
-                                                    Cancelled
-                                                </option>
-
+                                                {STATUSES.map((status) => (
+                                                    <option
+                                                        key={status}
+                                                        value={status}
+                                                    >
+                                                        {status}
+                                                    </option>
+                                                ))}
                                             </select>
-
                                         </td>
-
                                     </tr>
-
                                 ))}
 
+                                {filteredComplaints.length === 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={8}
+                                            className="resident-complaints-empty"
+                                        >
+                                            {search
+                                                ? "No complaints match your search."
+                                                : "No complaints have been submitted yet. New submissions will appear here automatically."}
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
-
                         </table>
-
                     </div>
-
                 </section>
-
-
-                {/* =================================================
-                    INFORMATION PANEL
-                ================================================= */}
 
                 <section className="resident-complaints-panel">
-
-
                     <div className="resident-complaints-panel-heading">
-
                         <div>
-
-                            <h3>
-                                Complaint Management Process
-                            </h3>
-
+                            <h3>Complaint Management Process</h3>
                             <p>
-                                HOA administrators can monitor complaints through each stage.
+                                Monitor each complaint from submission through
+                                resolution or cancellation.
                             </p>
-
                         </div>
-
                     </div>
-
 
                     <div className="resident-complaints-status-flow">
+                        {[
+                            {
+                                number: "01",
+                                title: "Submitted",
+                                description: "A user submits a complaint.",
+                            },
+                            {
+                                number: "02",
+                                title: "Acknowledged",
+                                description: "An administrator acknowledges it.",
+                            },
+                            {
+                                number: "03",
+                                title: "In Progress",
+                                description: "The issue is being addressed.",
+                            },
+                            {
+                                number: "04",
+                                title: "Resolved",
+                                description: "The reported issue is resolved.",
+                            },
+                        ].map((step, index, steps) => (
+                            <React.Fragment key={step.number}>
+                                <div className="resident-complaints-status-step">
+                                    <div className="resident-complaints-step-number">
+                                        {step.number}
+                                    </div>
 
+                                    <strong>{step.title}</strong>
+                                    <p>{step.description}</p>
+                                </div>
 
-                        <div className="resident-complaints-status-step">
-
-                            <div className="resident-complaints-step-number">
-                                01
-                            </div>
-
-                            <strong>
-                                Submitted
-                            </strong>
-
-                            <p>
-                                Resident submits a complaint.
-                            </p>
-
-                        </div>
-
-
-                        <div className="resident-complaints-flow-line" />
-
-
-                        <div className="resident-complaints-status-step">
-
-                            <div className="resident-complaints-step-number">
-                                02
-                            </div>
-
-                            <strong>
-                                Acknowledged
-                            </strong>
-
-                            <p>
-                                HOA acknowledges the complaint.
-                            </p>
-
-                        </div>
-
-
-                        <div className="resident-complaints-flow-line" />
-
-
-                        <div className="resident-complaints-status-step">
-
-                            <div className="resident-complaints-step-number">
-                                03
-                            </div>
-
-                            <strong>
-                                In Progress
-                            </strong>
-
-                            <p>
-                                The issue is being investigated or addressed.
-                            </p>
-
-                        </div>
-
-
-                        <div className="resident-complaints-flow-line" />
-
-
-                        <div className="resident-complaints-status-step">
-
-                            <div className="resident-complaints-step-number">
-                                04
-                            </div>
-
-                            <strong>
-                                Resolved
-                            </strong>
-
-                            <p>
-                                The complaint has been successfully resolved.
-                            </p>
-
-                        </div>
-
+                                {index < steps.length - 1 && (
+                                    <div className="resident-complaints-flow-line" />
+                                )}
+                            </React.Fragment>
+                        ))}
                     </div>
-
                 </section>
-
-
             </main>
-
         </div>
-
     );
 }
 
+function StatCard({ icon, label, value, description }) {
+    return (
+        <div className="resident-complaints-stat-card">
+            <div className="resident-complaints-stat-icon">
+                <Icon name={icon} />
+            </div>
 
-export default ResidentComplaints;
+            <div className="resident-complaints-stat-content">
+                <p>{label}</p>
+                <h3>{value}</h3>
+                <small>{description}</small>
+            </div>
+        </div>
+    );
+}
