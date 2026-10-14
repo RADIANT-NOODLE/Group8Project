@@ -1,6 +1,5 @@
 import { useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import InlineMessage from "../../components/InlineMessage";
 import "./Valuation.css";
 
 
@@ -108,8 +107,6 @@ export default function Valuation() {
 
     const [result, setResult] = useState(null);
 
-    const [error, setError] = useState("");
-
 
     /* =====================================================
        CALCULATE VALUATION
@@ -125,15 +122,12 @@ export default function Valuation() {
             Number(propertySize) <= 0
         ) {
 
-            setError(
-                "Please enter a property location and a property size greater than zero."
+            alert(
+                "Please enter a property location and valid property size."
             );
 
             return;
         }
-
-
-        setError("");
 
         const size = Number(propertySize);
         const typeMultiplier = Number(propertyType);
@@ -528,11 +522,6 @@ export default function Valuation() {
                             {/* =================================================
                                 BUTTON
                             ================================================= */}
-
-                            <InlineMessage tone="error">
-                                {error}
-                            </InlineMessage>
-
 
                             <button
                                 className="valuation-submit"
