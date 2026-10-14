@@ -310,7 +310,7 @@ function Properties() {
                 <div className="logo">
 
                     <img
-                        src="/assets/valora-logo.svg"
+                        src="/ValoraLogo.jpeg"
                         alt="VALORA Logo"
                     />
 
