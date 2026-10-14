@@ -340,33 +340,10 @@ body {
     transform: translateY(-5px);
 }
 
-
-/* =========================================================
-   PROFESSIONAL FEATURE ICONS
-   ========================================================= */
-
 .feature-icon {
-    width: clamp(42px, 4vw, 52px);
-    height: clamp(42px, 4vw, 52px);
+    font-size: clamp(25px, 3vw, 35px);
 
     flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #f1edf4;
-
-    color: #563F6B;
-
-    border-radius: 12px;
-}
-
-.feature-svg {
-    width: clamp(23px, 2.5vw, 30px);
-    height: clamp(23px, 2.5vw, 30px);
-
-    display: block;
 }
 
 .feature-card h3 {
@@ -568,12 +545,6 @@ body {
     border-radius: 8px;
 
     font-size: 13px;
-
-    transition: 0.2s ease;
-}
-
-.view-all:hover {
-    background: #f1edf4;
 }
 
 
@@ -610,22 +581,9 @@ body {
     flex-direction: column;
 
     height: 100%;
-
-    transition: 0.2s ease;
 }
 
-.property-card:hover {
-    transform: translateY(-4px);
-
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.11);
-}
-
-
-/* =========================================================
-   PROPERTY IMAGES
-   ========================================================= */
-
-.property-card > img {
+.property-card img {
     width: 100%;
 
     height: clamp(160px, 18vw, 220px);
@@ -634,70 +592,6 @@ body {
 
     display: block;
 }
-
-
-/* =========================================================
-   PROPERTY PHOTO PLACEHOLDER
-   ========================================================= */
-
-.property-image-placeholder {
-    width: 100%;
-
-    height: clamp(160px, 18vw, 220px);
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 8px;
-
-    padding: 20px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #f5f3f7 0%,
-            #ebe7ee 100%
-        );
-
-    color: #563F6B;
-
-    text-align: center;
-}
-
-.property-placeholder-icon {
-    width: 48px;
-    height: 48px;
-
-    margin-bottom: 3px;
-}
-
-.property-image-placeholder strong {
-    color: #563F6B;
-
-    font-size: 14px;
-
-    letter-spacing: 0.3px;
-}
-
-.property-image-placeholder span {
-    max-width: 230px;
-
-    color: #777777;
-
-    font-size: 11px;
-
-    line-height: 1.45;
-}
-
-
-/* =========================================================
-   PROPERTY CARD CONTENT
-   ========================================================= */
 
 .property-card-content {
     padding: clamp(18px, 2vw, 25px);
@@ -737,68 +631,19 @@ body {
     margin-bottom: 15px;
 }
 
-
-/* =========================================================
-   PROPERTY DETAILS
-   ========================================================= */
-
 .property-details {
     display: flex;
 
     flex-wrap: wrap;
 
-    gap: 7px;
+    gap: 10px;
 
     color: #666666;
 
-    font-size: 11px;
+    font-size: 12px;
 
-    margin-bottom: 10px;
+    margin-bottom: 18px;
 }
-
-.property-details span {
-    padding: 5px 8px;
-
-    background: #f5f3f7;
-
-    border-radius: 5px;
-}
-
-
-/* =========================================================
-   PROPERTY UNIT INFORMATION
-   ========================================================= */
-
-.property-unit {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 10px;
-
-    padding-bottom: 16px;
-
-    margin-bottom: 15px;
-
-    border-bottom: 1px solid #eeeeee;
-
-    color: #777777;
-
-    font-size: 11px;
-}
-
-.property-unit span:first-child {
-    color: #563F6B;
-
-    font-weight: bold;
-}
-
-
-/* =========================================================
-   PROPERTY BOTTOM
-   ========================================================= */
 
 .property-bottom {
     margin-top: auto;
@@ -815,7 +660,7 @@ body {
 .property-bottom strong {
     color: #333333;
 
-    font-size: clamp(13px, 1.3vw, 16px);
+    font-size: clamp(15px, 1.5vw, 18px);
 }
 
 .property-view-button {
@@ -834,12 +679,6 @@ body {
     font-weight: bold;
 
     white-space: nowrap;
-
-    transition: 0.2s ease;
-}
-
-.property-view-button:hover {
-    background: #463256;
 }
 
 
@@ -1273,8 +1112,7 @@ body {
         gap: 15px;
     }
 
-    .property-card > img,
-    .property-image-placeholder {
+    .property-card img {
         height: 190px;
     }
 
@@ -1401,8 +1239,7 @@ body {
         padding: 18px;
     }
 
-    .property-card > img,
-    .property-image-placeholder {
+    .property-card img {
         height: 175px;
     }
 
@@ -1471,4 +1308,110 @@ body {
     overflow-wrap: break-word;
 
     word-wrap: break-word;
+}
+
+/* =========================================================
+   HOA ADMIN-MANAGED LANDING PAGE HERO IMAGE
+========================================================= */
+
+.hero-layout {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(25px, 4vw, 60px);
+}
+
+.hero-layout:not(.hero-layout-with-image) .hero-content {
+    width: 100%;
+    max-width: 950px;
+    margin: 0 auto;
+}
+
+.hero-layout-with-image .hero-content {
+    flex: 1 1 58%;
+    min-width: 0;
+    max-width: 720px;
+    margin: 0;
+}
+
+.hero-image-container {
+    flex: 0 1 42%;
+    width: 42%;
+    max-width: 500px;
+    min-width: 0;
+}
+
+.hero-development-image {
+    display: block;
+    width: 100%;
+    max-height: 460px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 18px;
+    box-shadow: 0 16px 40px rgba(35, 24, 45, 0.15);
+}
+
+.hero.hero-with-background {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.hero.hero-with-background .hero-layout {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 900px) {
+    .hero-layout-with-image {
+        gap: 28px;
+    }
+
+    .hero-layout-with-image .hero-content {
+        flex-basis: 55%;
+    }
+
+    .hero-image-container {
+        flex-basis: 45%;
+        width: 45%;
+    }
+
+    .hero-development-image {
+        max-height: 360px;
+    }
+}
+
+@media (max-width: 650px) {
+    .hero-layout-with-image {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 30px;
+    }
+
+    .hero-layout-with-image .hero-content {
+        width: 100%;
+        max-width: 100%;
+        text-align: center;
+    }
+
+    .hero-layout-with-image .hero-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .hero-image-container {
+        width: 100%;
+        max-width: 520px;
+        flex: none;
+        margin: 0 auto;
+    }
+
+    .hero-development-image {
+        width: 100%;
+        max-height: 300px;
+        aspect-ratio: 16 / 10;
+    }
 }
