@@ -1,316 +1,345 @@
+
 import React, { useState } from "react";
-import {
-    Link,
-    useLocation,
-    useNavigate,
-} from "react-router-dom";
-
-import { getLoginErrorMessage } from "../../services/authErrorMessages.js";
-import { getSafeNextPath } from "../../services/navigation.js";
-import { dashboardPathForRole } from "../../services/roleMap.js";
-import { login } from "../../services/session.js";
-
+import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 
-
 function Login() {
+    const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
-    const location =
-        useLocation();
-
-    const [email, setEmail] =
-        useState("");
-
-    const [password, setPassword] =
-        useState("");
-
-    const [error, setError] =
-        useState("");
-
-    const [isSubmitting, setIsSubmitting] =
-        useState(false);
-
-
-    /*
-    =========================================================
-    LOGIN
-
-    Authentication is the backend's: this page sends the
-    credentials to /api/v1/auth/login and stores the JWT the
-    API returns. There is no local account list and no local
-    password check.
-    =========================================================
-    */
-
-    const handleSubmit = async (event) => {
-
+    const handleSubmit = (event) => {
         event.preventDefault();
-
         setError("");
 
-
-        if (
-            !email.trim() ||
-            !password.trim()
-        ) {
-
-            setError(
-                "Please enter your email address and password."
-            );
-
+        if (!email.trim() || !password) {
+            setError("Please enter your email address and password.");
             return;
         }
 
+        /*
+        =====================================================
+        HEAD ADMIN ACCOUNT
+        =====================================================
+        */
 
-        setIsSubmitting(true);
+        const headAdmin = {
+            id: "head-admin-001",
+            firstName: "Head",
+            lastName: "Administrator",
+            email: "admin@valora.co.za",
+            password: "Admin12345",
+            role: "Head Admin",
+            status: "Approved",
+        };
 
-        try {
+        /*
+        =====================================================
+        DEFAULT HOA ADMIN ACCOUNT
+        =====================================================
+        */
 
-            const { user } =
-                await login({
-                    email,
-                    password,
-                });
+        const hoaAdmin = {
+            id: "hoa-admin-001",
+            firstName: "HOA",
+            lastName: "Administrator",
+            email: "hoa.admin@valora.co.za",
+            password: "HOAAdmin12345",
+            role: "HOA Admin",
+            status: "Approved",
+        };
 
+        const enteredEmail = email.trim().toLowerCase();
 
-            /*
-            =================================================
-            WHERE TO GO NEXT
+        /*
+        =====================================================
+        DIRECT HEAD ADMIN LOGIN
+        =====================================================
+        */
 
-            A `?next=` target wins when it is safe;
-            otherwise the user's own role decides.
-            =================================================
-            */
+        if (
+            enteredEmail === headAdmin.email.toLowerCase() &&
+            password === headAdmin.password
+        ) {
+            localStorage.setItem("valoraUser", JSON.stringify(headAdmin));
+            localStorage.setItem("valoraUserEmail", headAdmin.email);
+            localStorage.setItem("valoraLoggedIn", "true");
 
-            navigate(
-                getSafeNextPath(
-                    location.search,
-                    dashboardPathForRole(user.role)
-                ),
-                { replace: true }
-            );
-
-        } catch (loginError) {
-
-            setError(
-                getLoginErrorMessage(loginError)
-            );
-
-        } finally {
-
-            setIsSubmitting(false);
-
+            navigate("/head-admin");
+            return;
         }
 
+        /*
+        =====================================================
+        DIRECT DEFAULT HOA ADMIN LOGIN
+        =====================================================
+        */
+
+        if (
+            enteredEmail === hoaAdmin.email.toLowerCase() &&
+            password === hoaAdmin.password
+        ) {
+            // Ensure the default HOA Admin exists in the user list.
+            let existingUsers = [];
+
+            try {
+                const savedUsers = JSON.parse(
+                    localStorage.getItem("valoraUsers") || "[]"
+                );
+
+                if (Array.isArray(savedUsers)) {
+                    existingUsers = savedUsers;
+                }
+            } catch {
+                existingUsers = [];
+            }
+
+            const hoaAdminExists = existingUsers.some(
+                (storedUser) =>
+                    String(storedUser.email || "").toLowerCase() ===
+                    hoaAdmin.email.toLowerCase()
+            );
+
+            if (!hoaAdminExists) {
+                existingUsers.push(hoaAdmin);
+                localStorage.setItem(
+                    "valoraUsers",
+                    JSON.stringify(existingUsers)
+                );
+            }
+
+            localStorage.setItem("valoraUser", JSON.stringify(hoaAdmin));
+            localStorage.setItem("valoraUserEmail", hoaAdmin.email);
+            localStorage.setItem("valoraLoggedIn", "true");
+
+            navigate("/dashboard");
+            return;
+        }
+
+        /*
+        =====================================================
+        LOAD REGISTERED USERS
+        =====================================================
+        */
+
+        let existingUsers = [];
+
+        try {
+            const savedUsers = JSON.parse(
+                localStorage.getItem("valoraUsers") || "[]"
+            );
+
+            if (Array.isArray(savedUsers)) {
+                existingUsers = savedUsers;
+            }
+        } catch {
+            existingUsers = [];
+        }
+
+        /*
+        =====================================================
+        FIND USER
+        =====================================================
+        */
+
+        const user = existingUsers.find(
+            (storedUser) =>
+                storedUser.email &&
+                storedUser.email.trim().toLowerCase() === enteredEmail
+        );
+
+        if (!user) {
+            setError("No account was found with this email address.");
+            return;
+        }
+
+        /*
+        =====================================================
+        CHECK PASSWORD
+        =====================================================
+        */
+
+        if (user.password !== password) {
+            setError("Incorrect password. Please try again.");
+            return;
+        }
+
+        /*
+        =====================================================
+        CHECK APPROVAL STATUS
+        =====================================================
+        */
+
+        if (user.status !== "Approved") {
+            localStorage.setItem("valoraUser", JSON.stringify(user));
+            localStorage.removeItem("valoraLoggedIn");
+
+            navigate("/registration-pending");
+            return;
+        }
+
+        /*
+        =====================================================
+        NORMALISE USER ROLE
+        =====================================================
+        */
+
+        const rawRole = String(user.role || "").trim().toLowerCase();
+
+        const normalisedRole =
+            rawRole === "head admin"
+                ? "Head Admin"
+                : [
+                      "hoa admin",
+                      "hoa administrator",
+                      "hoa",
+                  ].includes(rawRole)
+                  ? "HOA Admin"
+                  : rawRole === "estate agent" || rawRole === "agent"
+                    ? "Estate Agent"
+                    : rawRole === "investor"
+                      ? "Investor"
+                      : rawRole === "resident"
+                        ? "Resident"
+                        : user.role;
+
+        const updatedUser = {
+            ...user,
+            role: normalisedRole,
+        };
+
+        /*
+        =====================================================
+        SAVE LOGIN SESSION
+        =====================================================
+        */
+
+        localStorage.setItem("valoraUser", JSON.stringify(updatedUser));
+        localStorage.setItem("valoraUserEmail", updatedUser.email);
+        localStorage.setItem("valoraLoggedIn", "true");
+
+        /*
+        =====================================================
+        ROLE-BASED REDIRECTION
+        =====================================================
+        */
+
+        if (normalisedRole === "Head Admin") {
+            navigate("/head-admin");
+            return;
+        }
+
+        navigate("/dashboard");
     };
 
-
-    /*
-    =========================================================
-    PAGE
-    =========================================================
-    */
-
     return (
-
         <div className="auth-page">
-
             <div className="auth-card">
-
-
-                {/* =================================================
-                    LEFT SIDE
-                ================================================== */}
+                {/* LEFT SIDE */}
 
                 <div className="auth-sidebar">
-
                     <div className="auth-logo">
-
-                        <img
-                            src="/assets/valora-logo.svg"
-                            alt="VALORA"
-                        />
-
+                        <img src="/ValoraLogo.jpeg" alt="VALORA" />
                     </div>
-
 
                     <div className="auth-sidebar-content">
-
                         <p className="auth-eyebrow">
-                            PROPERTY & COMMUNITY
+                            PROPERTY &amp; COMMUNITY
                         </p>
 
-
-                        <h1>
-                            Welcome Back
-                        </h1>
-
+                        <h1>Welcome Back</h1>
 
                         <p>
-                            Sign in to access your VALORA
-                            property and community platform.
+                            Sign in to access your VALORA property and
+                            community platform.
                         </p>
-
                     </div>
-
                 </div>
 
-
-                {/* =================================================
-                    RIGHT SIDE
-                ================================================== */}
+                {/* RIGHT SIDE */}
 
                 <div className="auth-form-panel">
-
                     <div className="auth-form-content">
-
-
-                        <h2>
-                            Login to VALORA
-                        </h2>
-
+                        <h2>Login to VALORA</h2>
 
                         <p className="auth-lead">
-                            Enter your account details to
-                            continue.
+                            Enter your account details to continue.
                         </p>
 
-
-                        {/* =================================================
-                            ERROR MESSAGE
-                        ================================================== */}
+                        {/* ERROR MESSAGE */}
 
                         {error && (
-
-                            <div
-                                className="auth-error"
-                                role="alert"
-                            >
+                            <div className="auth-error" role="alert">
                                 {error}
                             </div>
-
                         )}
 
-
-                        <form
-                            onSubmit={handleSubmit}
-                        >
-
-
-                            {/* =================================================
-                                EMAIL
-                            ================================================== */}
+                        <form onSubmit={handleSubmit}>
+                            {/* EMAIL */}
 
                             <div className="auth-field">
-
-                                <label htmlFor="email">
-                                    Email Address
-                                </label>
-
+                                <label htmlFor="email">Email Address</label>
 
                                 <input
                                     id="email"
                                     type="email"
                                     value={email}
                                     onChange={(event) =>
-                                        setEmail(
-                                            event.target.value
-                                        )
+                                        setEmail(event.target.value)
                                     }
                                     placeholder="Enter email address"
-                                    autoComplete="email"
+                                    autoComplete="username"
                                     required
                                 />
-
                             </div>
 
-
-                            {/* =================================================
-                                PASSWORD
-                            ================================================== */}
+                            {/* PASSWORD */}
 
                             <div className="auth-field">
-
-                                <label htmlFor="password">
-                                    Password
-                                </label>
-
+                                <label htmlFor="password">Password</label>
 
                                 <input
                                     id="password"
                                     type="password"
                                     value={password}
                                     onChange={(event) =>
-                                        setPassword(
-                                            event.target.value
-                                        )
+                                        setPassword(event.target.value)
                                     }
                                     placeholder="Enter password"
                                     autoComplete="current-password"
                                     required
                                 />
-
                             </div>
 
-
-                            {/* =================================================
-                                LOGIN BUTTON
-                            ================================================== */}
+                            {/* LOGIN BUTTON */}
 
                             <button
                                 type="submit"
                                 className="auth-submit"
-                                disabled={isSubmitting}
                             >
-                                {isSubmitting
-                                    ? "Signing in…"
-                                    : "Login"}
+                                Login
                             </button>
 
-
-                            {/* =================================================
-                                REGISTER
-                            ================================================== */}
+                            {/* REGISTER */}
 
                             <div className="auth-switch">
-
                                 Don't have an account?{" "}
-
-                                <Link to="/register">
-                                    Register
-                                </Link>
-
+                                <Link to="/register">Register</Link>
                             </div>
 
-
-                            {/* =================================================
-                                HOME
-                            ================================================== */}
+                            {/* HOME */}
 
                             <div className="auth-home-link">
-
-                                <Link to="/">
-                                    Back to Home
-                                </Link>
-
+                                <Link to="/">Back to Home</Link>
                             </div>
-
-
                         </form>
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
     );
-
 }
 
 export default Login;
