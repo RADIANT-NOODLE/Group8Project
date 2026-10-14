@@ -1,354 +1,387 @@
 import React from "react";
-
 import {
     BrowserRouter,
     Routes,
     Route,
     Navigate,
-    useLocation,
 } from "react-router-dom";
 
-import ErrorBoundary
-    from "./components/ErrorBoundary";
-
-
-/* =========================================================
-   PUBLIC PAGES
-========================================================= */
-
+/* PUBLIC PAGES */
 import Home from "./pages/Home";
+import Login from "./pages/Auth/Login";
+import Register from "./pages/Auth/Register";
+import RegistrationPending from "./pages/Auth/RegistrationPending";
 
-import Login
-    from "./pages/Auth/Login";
+/* PROPERTY */
+import Property from "./pages/Property/Property";
+import MyProperty from "./pages/Property/MyProperty";
+import Properties from "./pages/Property/Properties";
+import PropertyRequests from "./pages/Property/PropertyRequests";
+import PropertyApprovals from "./pages/Property/PropertyApprovals";
+import PropertyManagement from "./pages/Property/PropertyManagement";
 
-import Register
-    from "./pages/Auth/Register";
-
-/* =========================================================
-   PROPERTY
-========================================================= */
-
-import Property
-    from "./pages/Property/Property";
-
-import MyProperty
-    from "./pages/Property/MyProperty";
-
-import Properties
-    from "./pages/Property/Properties";
-
-import PropertyRequests
-    from "./pages/Property/PropertyRequests";
-
-import PropertyApprovals
-    from "./pages/Property/PropertyApprovals";
-
-
-/* =========================================================
-   DASHBOARDS
-========================================================= */
-
-import Dashboard
-    from "./pages/Dashboard";
-
+/* DASHBOARDS */
+import Dashboard from "./pages/Dashboard";
 import HeadAdminDashboard
     from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
 
+/* HOA ADMIN */
+import LandingPageSettings
+    from "./pages/Dashboards/HOAAdmin/LandingPageSettings";
 
-/* =========================================================
-   RESIDENT
-========================================================= */
-
-import RequestToSell
-    from "./pages/RequestToSell";
-
-import Complaints
-    from "./pages/Complaints";
-
+/* RESIDENT */
+import RequestToSell from "./pages/RequestToSell";
+import Complaints from "./pages/Complaints";
 import ResidentComplaints
     from "./pages/Complaints/ResidentComplaints";
-
 import ResidentDirectory
     from "./pages/Resident/ResidentDirectory";
 
+/* MAINTENANCE */
+import Maintenance from "./pages/Maintenance/Maintenance";
 
-/* =========================================================
-   MAINTENANCE
-========================================================= */
-
-import Maintenance
-    from "./pages/Maintenance/Maintenance";
-
-
-/* =========================================================
-   COMMUNITY
-========================================================= */
-
-import Providers
-    from "./pages/Community/Providers";
-
+/* COMMUNITY */
+import Providers from "./pages/Community/Providers";
 import CommunityAnnouncements
     from "./pages/Announcements/CommunityAnnouncements";
-
 import Announcements
     from "./pages/Announcements/Announcements";
-
 import CommunityAnalytics
     from "./pages/Community/CommunityAnalytics";
 
+/* AI */
+import AITrainingData from "./pages/AI/AITrainingData";
 
-/* =========================================================
-   AI
-========================================================= */
-
-import AITrainingData
-    from "./pages/AI/AITrainingData";
-
-
-/* =========================================================
-   ESTATE AGENT
-========================================================= */
-
-import AgentListings
-    from "./pages/EstateAgent/AgentListings";
-
+/* ESTATE AGENT */
+import AgentListings from "./pages/EstateAgent/AgentListings";
 import AgentEditListings
     from "./pages/EstateAgent/AgentEditListings";
+import AgentInquiries from "./pages/EstateAgent/AgentInquiries";
 
-import AgentInquiries
-    from "./pages/EstateAgent/AgentInquiries";
+/* INVESTOR */
+import Valuation from "./pages/Investor/Valuation";
+import ROI from "./pages/Investor/ROI";
 
-
-/* =========================================================
-   INVESTOR
-========================================================= */
-
-import Valuation
-    from "./pages/Investor/Valuation";
-
-import ROI
-    from "./pages/Investor/ROI";
-
-
-/* =========================================================
-   HEAD ADMIN
-========================================================= */
-
+/* HEAD ADMIN */
 import RegistrationRequests
     from "./pages/HeadAdmin/RegistrationRequests";
-
 import UserManagement
     from "./pages/HeadAdmin/UserManagement";
 
+/* PROFILE */
+import Profile from "./pages/Profile";
 
-/* =========================================================
-   PROFILE
-========================================================= */
-
-import Profile
-    from "./pages/Profile";
-
-
-import { canAccessRoute, defaultRouteForRole } from "./services/roleMap.js";
-import { useSession } from "./services/session.js";
-
-
-/* =========================================================
-   GLOBAL APP CSS
-========================================================= */
-
+/* GLOBAL CSS */
 import "./App.css";
 
+/* DEFAULT HEAD ADMIN ACCOUNT */
+const headAdminAccount = {
+    id: "head-admin-001",
+    firstName: "Head",
+    lastName: "Administrator",
+    email: "admin@valora.co.za",
+    password: "Admin12345",
+    role: "Head Admin",
+    status: "Approved",
+};
 
-/* =========================================================
-   PROTECTED ROUTE
+/* DEFAULT HOA ADMIN ACCOUNT */
+const hoaAdminAccount = {
+    id: "hoa-admin-001",
+    firstName: "HOA",
+    lastName: "Administrator",
+    email: "hoa.admin@valora.co.za",
+    password: "HOAAdmin12345",
+    role: "HOA Admin",
+    status: "Approved",
+};
 
-   The session is the token the API issued, so a page is
-   protected exactly when that session exists.
-========================================================= */
+/* INITIALISE DEFAULT ACCOUNTS */
+function initialiseDefaultAccounts() {
+    let existingUsers = [];
 
+    try {
+        const savedUsers = JSON.parse(
+            localStorage.getItem("valoraUsers") || "[]"
+        );
+
+        if (Array.isArray(savedUsers)) {
+            existingUsers = savedUsers;
+        }
+    } catch (error) {
+        console.error("Unable to read VALORA users:", error);
+    }
+
+    const defaultAccounts = [
+        headAdminAccount,
+        hoaAdminAccount,
+    ];
+
+    let usersChanged = false;
+
+    defaultAccounts.forEach((defaultAccount) => {
+        const accountExists = existingUsers.some(
+            (user) =>
+                String(user.email || "").trim().toLowerCase() ===
+                defaultAccount.email.toLowerCase()
+        );
+
+        if (!accountExists) {
+            existingUsers.push(defaultAccount);
+            usersChanged = true;
+        }
+    });
+
+    if (
+        usersChanged ||
+        !localStorage.getItem("valoraUsers")
+    ) {
+        localStorage.setItem(
+            "valoraUsers",
+            JSON.stringify(existingUsers)
+        );
+    }
+}
+
+/* NORMALISE ROLE */
+function normalizeRole(roleValue) {
+    const role = String(roleValue || "").trim().toLowerCase();
+
+    if (
+        [
+            "hoa",
+            "hoa admin",
+            "hoa administrator",
+            "administrator",
+        ].includes(role)
+    ) {
+        return "HOA Admin";
+    }
+
+    if (
+        [
+            "head admin",
+            "headadministrator",
+            "head administrator",
+        ].includes(role)
+    ) {
+        return "Head Admin";
+    }
+
+    if (
+        ["property owner", "resident"].includes(role)
+    ) {
+        return "Resident";
+    }
+
+    if (["buyer", "investor"].includes(role)) {
+        return "Investor";
+    }
+
+    if (role === "estate agent") {
+        return "Estate Agent";
+    }
+
+    return String(roleValue || "").trim();
+}
+
+/* GET CURRENT USER */
+function getCurrentUser() {
+    const storedUser = localStorage.getItem("valoraUser");
+
+    if (!storedUser) {
+        return null;
+    }
+
+    try {
+        const user = JSON.parse(storedUser);
+
+        if (!user || typeof user !== "object") {
+            return null;
+        }
+
+        const normalizedRole = normalizeRole(user.role);
+
+        const firstName =
+            user.firstName ||
+            user.firstname ||
+            user.first_name ||
+            "";
+
+        const lastName =
+            user.lastName ||
+            user.lastname ||
+            user.last_name ||
+            "";
+
+        const fullName =
+            user.fullName ||
+            user.name ||
+            `${firstName} ${lastName}`.trim();
+
+        let initials = user.initials || "";
+
+        if (!initials) {
+            initials =
+                `${firstName.charAt(0)}${lastName.charAt(0)}`
+                    .toUpperCase();
+        }
+
+        if (!initials && fullName) {
+            initials = fullName
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((part) => part.charAt(0))
+                .join("")
+                .toUpperCase();
+        }
+
+        return {
+            ...user,
+            role: normalizedRole,
+            firstName,
+            lastName,
+            fullName,
+            initials,
+        };
+    } catch (error) {
+        console.error("Unable to read VALORA user:", error);
+        return null;
+    }
+}
+
+/* CHECK APPROVAL STATUS */
+function isUserApproved(user) {
+    const status = String(user?.status || "")
+        .trim()
+        .toLowerCase();
+
+    return status === "approved" || status === "active";
+}
+
+/* PROTECTED ROUTE */
 function ProtectedRoute({ children }) {
+    const user = getCurrentUser();
 
-    const { isAuthenticated } =
-        useSession();
-
-
-    if (!isAuthenticated) {
-
-        return (
-            <Navigate
-                to="/login"
-                replace
-            />
-        );
-
+    if (!user) {
+        return <Navigate to="/login" replace />;
     }
 
+    if (!isUserApproved(user)) {
+        return <Navigate to="/registration-pending" replace />;
+    }
 
     return children;
-
 }
 
+/* HEAD ADMIN ROUTE */
+function HeadAdminRoute({ children }) {
+    const user = getCurrentUser();
 
-/* =========================================================
-   ROLE ROUTE
-
-   Signed in, and allowed to open this screen for the role
-   the API returned. A refused route sends the person to
-   their own workspace instead.
-========================================================= */
-
-function RoleRoute({ path, children }) {
-
-    const { isAuthenticated, user } =
-        useSession();
-
-
-    if (!isAuthenticated) {
-
-        return (
-            <Navigate
-                to="/login"
-                replace
-            />
-        );
-
+    if (!user) {
+        return <Navigate to="/login" replace />;
     }
 
-
-    if (!canAccessRoute(user?.role, path)) {
-
-        return (
-            <Navigate
-                to={defaultRouteForRole(user?.role)}
-                replace
-            />
-        );
-
+    if (!isUserApproved(user)) {
+        return <Navigate to="/registration-pending" replace />;
     }
 
+    if (user.role !== "Head Admin") {
+        return <Navigate to="/dashboard" replace />;
+    }
 
     return children;
-
 }
 
+/* HOA ADMIN ROUTE */
+function HOAAdminRoute({ children }) {
+    const user = getCurrentUser();
 
-/* =========================================================
-   APP
-========================================================= */
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
 
+    if (!isUserApproved(user)) {
+        return <Navigate to="/registration-pending" replace />;
+    }
+
+    if (!["Head Admin", "HOA Admin"].includes(user.role)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+}
+
+/* ADMIN MANAGEMENT ROUTE */
+function AdminManagementRoute({ children }) {
+    const user = getCurrentUser();
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (!isUserApproved(user)) {
+        return <Navigate to="/registration-pending" replace />;
+    }
+
+    if (!["Head Admin", "HOA Admin"].includes(user.role)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+}
+
+/* APP */
 function App() {
+    initialiseDefaultAccounts();
 
     return (
-
         <BrowserRouter>
-
-            <AppRoutes />
-
-        </BrowserRouter>
-
-    );
-
-}
-
-
-/*
-=========================================================
-ROUTES
-
-Keyed on the current path so that navigating away from a
-crashed page clears the error boundary and mounts the next
-page fresh, instead of leaving the error on screen.
-=========================================================
-*/
-
-function AppRoutes() {
-
-    const location =
-        useLocation();
-
-
-    return (
-
-        <ErrorBoundary key={location.pathname}>
-
             <Routes>
+                {/* LANDING PAGE */}
+                <Route path="/" element={<Home />} />
 
-
-                {/* =================================================
-                    LANDING PAGE
-                ================================================= */}
-
+                {/* AUTHENTICATION */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 <Route
-                    path="/"
-                    element={<Home />}
+                    path="/registration-pending"
+                    element={<RegistrationPending />}
                 />
 
-
-                {/* =================================================
-                    AUTHENTICATION
-                ================================================= */}
-
-                <Route
-                    path="/login"
-                    element={<Login />}
-                />
-
-
-                <Route
-                    path="/register"
-                    element={<Register />}
-                />
-
-
-                {/* =================================================
-                    PUBLIC PROPERTY BROWSING
-
-                    IMPORTANT:
-                    /properties = Properties.jsx
-
-                    This is NOT Home.jsx.
-                ================================================= */}
-
+                {/* PUBLIC PROPERTY BROWSING */}
                 <Route
                     path="/properties"
                     element={<Properties />}
                 />
-
-
-                {/* =================================================
-                    PUBLIC INDIVIDUAL PROPERTY
-
-                    Example:
-                    /property/VAL-001
-                ================================================= */}
 
                 <Route
                     path="/property/:propertyId"
                     element={<Property />}
                 />
 
-
-                {/* =================================================
-                    RESIDENT MY PROPERTY
-
-                    /property = MyProperty.jsx
-                ================================================= */}
-
+                {/* MY PROPERTY */}
                 <Route
                     path="/property"
                     element={
-                        <RoleRoute path="/property">
+                        <ProtectedRoute>
                             <MyProperty />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
+                {/* HEAD ADMIN PROPERTY MANAGEMENT */}
+                <Route
+                    path="/property-management"
+                    element={
+                        <HeadAdminRoute>
+                            <PropertyManagement />
+                        </HeadAdminRoute>
+                    }
+                />
 
-                {/* =================================================
-                    MAIN DASHBOARD
-                ================================================= */}
-
+                {/* MAIN DASHBOARD */}
                 <Route
                     path="/dashboard"
                     element={
@@ -358,67 +391,66 @@ function AppRoutes() {
                     }
                 />
 
+                {/* HEAD ADMIN DASHBOARD */}
+                <Route
+                    path="/head-admin"
+                    element={
+                        <HeadAdminRoute>
+                            <HeadAdminDashboard />
+                        </HeadAdminRoute>
+                    }
+                />
 
-                {/* =================================================
-                    REQUEST TO SELL / RENT
-                ================================================= */}
+                {/* LANDING PAGE SETTINGS */}
+                <Route
+                    path="/landing-page-settings"
+                    element={
+                        <HOAAdminRoute>
+                            <LandingPageSettings />
+                        </HOAAdminRoute>
+                    }
+                />
 
+                {/* REQUEST TO SELL / RENT */}
                 <Route
                     path="/request-to-sell"
                     element={
-                        <RoleRoute path="/request-to-sell">
+                        <ProtectedRoute>
                             <RequestToSell />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    COMPLAINTS
-                ================================================= */}
-
+                {/* COMPLAINTS */}
                 <Route
                     path="/complaints"
                     element={
-                        <RoleRoute path="/complaints">
+                        <ProtectedRoute>
                             <Complaints />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
-
-
-                {/* =================================================
-                    RESIDENT COMPLAINTS
-                ================================================= */}
 
                 <Route
                     path="/resident-complaints"
                     element={
-                        <RoleRoute path="/resident-complaints">
+                        <ProtectedRoute>
                             <ResidentComplaints />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    MAINTENANCE
-                ================================================= */}
-
+                {/* MAINTENANCE */}
                 <Route
                     path="/maintenance"
                     element={
-                        <RoleRoute path="/maintenance">
+                        <ProtectedRoute>
                             <Maintenance />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    PROVIDERS
-                ================================================= */}
-
+                {/* SERVICE PROVIDERS */}
                 <Route
                     path="/providers"
                     element={
@@ -428,20 +460,15 @@ function AppRoutes() {
                     }
                 />
 
-
-                {/* =================================================
-                    COMMUNITY ANNOUNCEMENTS
-                ================================================= */}
-
+                {/* COMMUNITY ANNOUNCEMENTS */}
                 <Route
                     path="/announcements"
                     element={
                         <ProtectedRoute>
-                            <CommunityAnnouncements />
+                            <Announcements />
                         </ProtectedRoute>
                     }
                 />
-
 
                 <Route
                     path="/community-announcements"
@@ -452,185 +479,125 @@ function AppRoutes() {
                     }
                 />
 
-
-                {/* =================================================
-                    COMMUNITY ANALYTICS
-                ================================================= */}
-
+                {/* COMMUNITY ANALYTICS */}
                 <Route
                     path="/community-analytics"
                     element={
-                        <RoleRoute path="/community-analytics">
+                        <HOAAdminRoute>
                             <CommunityAnalytics />
-                        </RoleRoute>
+                        </HOAAdminRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    RESIDENT DIRECTORY
-                ================================================= */}
-
+                {/* RESIDENT DIRECTORY */}
                 <Route
                     path="/resident-directory"
                     element={
-                        <RoleRoute path="/resident-directory">
+                        <HOAAdminRoute>
                             <ResidentDirectory />
-                        </RoleRoute>
+                        </HOAAdminRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    PROPERTY REQUESTS
-                ================================================= */}
-
+                {/* PROPERTY REQUESTS */}
                 <Route
                     path="/property-requests"
                     element={
-                        <RoleRoute path="/property-requests">
+                        <AdminManagementRoute>
                             <PropertyRequests />
-                        </RoleRoute>
+                        </AdminManagementRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    PROPERTY APPROVALS
-                ================================================= */}
-
+                {/* PROPERTY APPROVALS */}
                 <Route
                     path="/property-approvals"
                     element={
-                        <RoleRoute path="/property-approvals">
+                        <AdminManagementRoute>
                             <PropertyApprovals />
-                        </RoleRoute>
+                        </AdminManagementRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    AI TRAINING DATA
-                ================================================= */}
-
+                {/* AI TRAINING DATA */}
                 <Route
                     path="/ai-training-data"
                     element={
-                        <RoleRoute path="/ai-training-data">
+                        <HOAAdminRoute>
                             <AITrainingData />
-                        </RoleRoute>
+                        </HOAAdminRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    AI VALUATION
-                ================================================= */}
-
+                {/* AI VALUATION */}
                 <Route
                     path="/valuation"
                     element={
-                        <RoleRoute path="/valuation">
+                        <ProtectedRoute>
                             <Valuation />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    INVESTOR ROI
-                ================================================= */}
-
+                {/* INVESTOR ROI */}
                 <Route
                     path="/roi"
                     element={
-                        <RoleRoute path="/roi">
+                        <ProtectedRoute>
                             <ROI />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    ESTATE AGENT
-                ================================================= */}
-
+                {/* ESTATE AGENT */}
                 <Route
                     path="/agent-listings"
                     element={
-                        <RoleRoute path="/agent-listings">
+                        <ProtectedRoute>
                             <AgentListings />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
-
 
                 <Route
                     path="/agent-edit-listings"
                     element={
-                        <RoleRoute path="/agent-edit-listings">
+                        <ProtectedRoute>
                             <AgentEditListings />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
-
 
                 <Route
                     path="/agent-inquiries"
                     element={
-                        <RoleRoute path="/agent-inquiries">
+                        <ProtectedRoute>
                             <AgentInquiries />
-                        </RoleRoute>
+                        </ProtectedRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    HEAD ADMIN DASHBOARD
-                ================================================= */}
-
-                <Route
-                    path="/head-admin"
-                    element={
-                        <RoleRoute path="/head-admin">
-                            <HeadAdminDashboard />
-                        </RoleRoute>
-                    }
-                />
-
-
-                {/* =================================================
-                    HEAD ADMIN REGISTRATION REQUESTS
-                ================================================= */}
-
+                {/* REGISTRATION REQUESTS */}
                 <Route
                     path="/registration-requests"
                     element={
-                        <RoleRoute path="/registration-requests">
+                        <AdminManagementRoute>
                             <RegistrationRequests />
-                        </RoleRoute>
+                        </AdminManagementRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    HEAD ADMIN USER MANAGEMENT
-                ================================================= */}
-
+                {/* USER MANAGEMENT */}
                 <Route
                     path="/user-management"
                     element={
-                        <RoleRoute path="/user-management">
+                        <HeadAdminRoute>
                             <UserManagement />
-                        </RoleRoute>
+                        </HeadAdminRoute>
                     }
                 />
 
-
-                {/* =================================================
-                    PROFILE
-                ================================================= */}
-
+                {/* PROFILE */}
                 <Route
                     path="/profile"
                     element={
@@ -640,28 +607,14 @@ function AppRoutes() {
                     }
                 />
 
-
-                {/* =================================================
-                    FALLBACK
-                ================================================= */}
-
+                {/* FALLBACK */}
                 <Route
                     path="*"
-                    element={
-                        <Navigate
-                            to="/"
-                            replace
-                        />
-                    }
+                    element={<Navigate to="/" replace />}
                 />
-
             </Routes>
-
-        </ErrorBoundary>
-
+        </BrowserRouter>
     );
-
 }
-
 
 export default App;
