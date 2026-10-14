@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { getPropertyById } from "../../data/propertyStorage";
-import { getSessionUser } from "../../services/session.js";
 import "./MyProperty.css";
 
 /*
@@ -52,7 +51,7 @@ export default function MyProperty() {
     useEffect(() => {
 
         const storedUser =
-            getSessionUser();
+            localStorage.getItem("valoraUser");
 
         if (!storedUser) {
             setUser(null);
@@ -64,7 +63,7 @@ export default function MyProperty() {
         try {
 
             const parsedUser =
-                storedUser;
+                JSON.parse(storedUser);
 
             if (!parsedUser) {
                 setUser(null);
