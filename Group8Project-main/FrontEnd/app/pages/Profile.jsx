@@ -1,41 +1,18 @@
 import React, { useState } from "react";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
-import * as authService from "../services/authService.js";
-import { roleLabel } from "../services/roleMap.js";
-import { useSession } from "../services/session.js";
-import InlineMessage from "../components/InlineMessage";
 import "./Profile.css";
 
 function Profile() {
 
-  const { user } = useSession();
-
   const [editing, setEditing] = useState(false);
 
-  /*
-  The profile shows the signed-in account: the name and email
-  come from the session the API issued, never from a placeholder.
-  The API does not expose a phone number yet (Phase 4).
-  */
+  const [name, setName] = useState("Tabassum");
+  const [email, setEmail] = useState("tabassum@example.com");
+  const [phone, setPhone] = useState("083 000 0000");
 
-  const [name, setName] = useState(user?.full_name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [phone, setPhone] = useState("");
-
-  const [editName, setEditName] = useState(user?.full_name ?? "");
-  const [editEmail, setEditEmail] = useState(user?.email ?? "");
-  const [editPhone, setEditPhone] = useState("");
-
-  /* Result messages used to be browser alert dialogs. */
-
-  const [notice, setNotice] = useState(null);
-
-
-  function showNotice(text, tone = "success") {
-
-    setNotice({ text, tone });
-  }
-
+  const [editName, setEditName] = useState("Tabassum");
+  const [editEmail, setEditEmail] = useState("tabassum@example.com");
+  const [editPhone, setEditPhone] = useState("083 000 0000");
 
   const [notifications, setNotifications] = useState(true);
   const [propertyUpdates, setPropertyUpdates] = useState(true);
@@ -154,9 +131,8 @@ function Profile() {
       editPhone.trim() === ""
     ) {
 
-      showNotice(
-        "Please complete all profile fields.",
-        "error"
+      alert(
+        "Please complete all profile fields."
       );
 
       return;
@@ -168,8 +144,8 @@ function Profile() {
 
     setEditing(false);
 
-    showNotice(
-      "Profile details updated for this session. Saving them to your VALORA account arrives with the account endpoints."
+    alert(
+      "Profile updated successfully."
     );
   };
 
@@ -182,9 +158,8 @@ function Profile() {
 
   const changePassword = () => {
 
-    showNotice(
-      "Password change functionality will be connected to the authentication system.",
-      "info"
+    alert(
+      "Password change functionality will be connected to the authentication system."
     );
   };
 
@@ -211,15 +186,6 @@ function Profile() {
           ================================================= */}
 
       <main className="resident-profile-main">
-
-
-        {/* =================================================
-            RESULT MESSAGE
-            ================================================= */}
-
-        <InlineMessage tone={notice?.tone}>
-          {notice?.text}
-        </InlineMessage>
 
 
         {/* =================================================
@@ -268,7 +234,7 @@ function Profile() {
             </h1>
 
             <p>
-              {roleLabel(user?.role)}
+              Property Owner
             </p>
 
           </div>
@@ -372,7 +338,7 @@ function Profile() {
                 </span>
 
                 <strong>
-                  {roleLabel(user?.role)}
+                  Property Owner
                 </strong>
 
               </div>
@@ -689,7 +655,7 @@ function Profile() {
             <button
               type="button"
               onClick={() => {
-                authService.logout();
+                localStorage.removeItem("valoraUser");
                 window.location.href = "/";
               }}
             >
