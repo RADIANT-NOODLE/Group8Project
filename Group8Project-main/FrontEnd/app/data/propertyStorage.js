@@ -1,3 +1,4 @@
+
 import properties from "./properties";
 
 /*
@@ -5,23 +6,15 @@ import properties from "./properties";
 VALORA PROPERTY STORAGE
 =========================================================
 
-This file creates one shared property data source for VALORA.
+Current stage: Frontend development.
 
-The original property information comes from:
-src/data/properties.js
+Existing frontend features can continue using localStorage.
+Property Management uses getPropertiesForManagement(),
+which returns no records until the backend is connected.
 
-A copy is stored in localStorage so that changes made by
-different parts of the system can persist after refresh.
+When the backend is ready, replace the implementation of
+getPropertiesForManagement() with the real API request.
 
-Storage key:
-valoraProperties
-
-IMPORTANT:
-- Unit information is preserved.
-- Listing information is preserved.
-- Approved images are preserved.
-- Pending images are preserved.
-- Nested listing updates are merged safely.
 =========================================================
 */
 
@@ -29,7 +22,8 @@ const STORAGE_KEY = "valoraProperties";
 
 /*
 =========================================================
-GET ALL PROPERTIES
+EXISTING FRONTEND STORAGE
+Kept for compatibility with other VALORA pages.
 =========================================================
 */
 
@@ -55,12 +49,6 @@ export function getProperties() {
         }
     }
 
-    /*
-    -----------------------------------------------------
-    FIRST LOAD
-    -----------------------------------------------------
-    */
-
     const initialProperties = JSON.parse(
         JSON.stringify(properties)
     );
@@ -72,12 +60,6 @@ export function getProperties() {
 
     return initialProperties;
 }
-
-/*
-=========================================================
-SAVE ALL PROPERTIES
-=========================================================
-*/
 
 export function saveProperties(updatedProperties) {
     if (!Array.isArray(updatedProperties)) {
@@ -96,12 +78,6 @@ export function saveProperties(updatedProperties) {
     return updatedProperties;
 }
 
-/*
-=========================================================
-GET ONE PROPERTY
-=========================================================
-*/
-
 export function getPropertyById(propertyId) {
     if (!propertyId) {
         return null;
@@ -111,68 +87,26 @@ export function getPropertyById(propertyId) {
 
     return (
         allProperties.find(
-            (property) => property.id === propertyId
+            property => property.id === propertyId
         ) || null
     );
 }
 
-/*
-=========================================================
-UPDATE ONE PROPERTY
-=========================================================
-
-Updates the selected property while preserving all
-existing information.
-
-If "listing" is included in the updates, it is MERGED
-with the existing listing instead of replacing it.
-
-This is important because the VALORA workflow uses the
-same property record across:
-
-Resident / Investor
-        ↓
-Request to Sell / Rent
-        ↓
-HOA Review
-        ↓
-Estate Agent Assignment
-        ↓
-Agent Listing
-        ↓
-HOA Property Approval
-        ↓
-Published Listing
-=========================================================
-*/
-
 export function updateProperty(propertyId, updates = {}) {
     const allProperties = getProperties();
 
-    const updatedProperties = allProperties.map((property) => {
+    const updatedProperties = allProperties.map(property => {
         if (property.id !== propertyId) {
             return property;
         }
 
-        /*
-        -------------------------------------------------
-        MERGE NESTED LISTING DATA
-        -------------------------------------------------
-        */
-
         const updatedListing =
             updates.listing !== undefined
                 ? {
-                      ...(property.listing || {}),
-                      ...(updates.listing || {}),
-                  }
+                    ...(property.listing || {}),
+                    ...(updates.listing || {}),
+                }
                 : property.listing;
-
-        /*
-        -------------------------------------------------
-        UPDATE PROPERTY
-        -------------------------------------------------
-        */
 
         return {
             ...property,
@@ -185,31 +119,10 @@ export function updateProperty(propertyId, updates = {}) {
 
     return (
         updatedProperties.find(
-            (property) => property.id === propertyId
+            property => property.id === propertyId
         ) || null
     );
 }
-
-/*
-=========================================================
-RESET PROPERTY STORAGE
-=========================================================
-
-Useful during development if you want to remove test
-changes and return to the original properties.js data.
-
-WARNING:
-This removes all current property workflow changes,
-including:
-
-- Listing information
-- Assigned owners
-- Assigned Estate Agents
-- Approved photos
-- Pending photos
-- HOA approval statuses
-=========================================================
-*/
 
 export function resetProperties() {
     localStorage.removeItem(STORAGE_KEY);
@@ -228,9 +141,36 @@ export function resetProperties() {
 
 /*
 =========================================================
-DEFAULT EXPORT
+PROPERTY MANAGEMENT DATA SOURCE
+=========================================================
+
+This function intentionally returns an empty array for now.
+
+It does NOT:
+- Load sample properties.
+- Seed localStorage with demo properties.
+- Assume that a backend endpoint already exists.
+
+Backend integration can replace this function without
+requiring PropertyManagement.jsx to be rewritten.
 =========================================================
 */
+
+export async function getPropertiesForManagement() {
+    // TODO: Replace with the backend API request when available.
+    // Example future implementation:
+    //
+    // const response = await fetch(`${API_BASE_URL}/properties`);
+    //
+    // if (!response.ok) {
+    //     throw new Error("Unable to load properties.");
+    // }
+    //
+    // const data = await response.json();
+    // return Array.isArray(data) ? data : data.properties || [];
+
+    return [];
+}
 
 export default {
     getProperties,
@@ -238,4 +178,5 @@ export default {
     getPropertyById,
     updateProperty,
     resetProperties,
+    getPropertiesForManagement,
 };
