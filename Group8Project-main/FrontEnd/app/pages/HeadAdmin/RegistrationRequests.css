@@ -1,150 +1,26 @@
 /* =========================================================
-   VALORA HEAD ADMIN
-   REGISTRATION REQUESTS
+   VALORA — REGISTRATION REQUESTS
+   Uses the shared DashboardSidebar component.
 ========================================================= */
 
 .registration-requests-page {
     min-height: 100vh;
     background: #f5f3f7;
     color: #1f1f1f;
-}
-
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.registration-requests-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 100;
-    width: 220px;
-    display: flex;
-    flex-direction: column;
-    background: #563f6b;
-    color: #ffffff;
-    overflow-y: auto;
-}
-
-
-/* =========================================================
-   BRAND
-========================================================= */
-
-.registration-requests-brand {
-    padding: 25px 20px 21px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.registration-requests-brand img {
-    display: block;
-    width: 132px;
-    max-width: 100%;
-    height: auto;
-}
-
-.registration-requests-brand p {
-    margin: 10px 0 0;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 10px;
-    line-height: 1.5;
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-.registration-requests-nav {
-    flex: 1;
-    padding: 17px 10px;
-}
-
-.registration-requests-nav-heading {
-    padding: 10px 11px 7px;
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 1.1px;
-}
-
-.registration-requests-nav a {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 9px 11px;
-    margin-bottom: 3px;
-    border-radius: 7px;
-    color: rgba(255, 255, 255, 0.76);
-    font-size: 11px;
-    font-weight: 500;
-    text-decoration: none;
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-.registration-requests-nav a svg {
-    flex: 0 0 auto;
-}
-
-.registration-requests-nav a:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-}
-
-.registration-requests-nav a.active {
-    background: #ffffff;
-    color: #563f6b;
-    font-weight: 650;
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-.registration-requests-logout {
-    padding: 13px 10px 17px;
-    border-top: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.registration-requests-logout button {
-    width: 100%;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 9px 11px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.72);
     font-family: inherit;
-    font-size: 11px;
-    cursor: pointer;
-    text-align: left;
 }
-
-.registration-requests-logout button:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-}
-
 
 /* =========================================================
-   MAIN
+   MAIN CONTENT — ALIGNED WITH SHARED SIDEBAR
 ========================================================= */
 
 .registration-requests-main {
+    box-sizing: border-box;
+    width: calc(100% - 220px);
     min-height: 100vh;
     margin-left: 220px;
     padding: 30px 34px 45px;
 }
-
 
 /* =========================================================
    TOP BAR
@@ -182,9 +58,8 @@
     line-height: 1.6;
 }
 
-
 /* =========================================================
-   PROFILE
+   CURRENT USER DETAILS
 ========================================================= */
 
 .registration-requests-profile {
@@ -221,7 +96,6 @@
     font-size: 10px;
 }
 
-
 /* =========================================================
    STAT CARDS
 ========================================================= */
@@ -234,6 +108,7 @@
 }
 
 .registration-requests-stat-card {
+    min-width: 0;
     min-height: 125px;
     padding: 19px;
     border: 1px solid #e4e0e7;
@@ -264,7 +139,6 @@
     color: #98939a;
     font-size: 10px;
 }
-
 
 /* =========================================================
    PANELS
@@ -305,7 +179,6 @@
     line-height: 1.5;
 }
 
-
 /* =========================================================
    EMPTY STATE
 ========================================================= */
@@ -340,7 +213,6 @@
     font-size: 11px;
     line-height: 1.6;
 }
-
 
 /* =========================================================
    TABLE
@@ -415,9 +287,8 @@
     color: #563f6b;
 }
 
-
 /* =========================================================
-   ACTIONS
+   APPROVE / REJECT ACTIONS
 ========================================================= */
 
 .registration-requests-actions {
@@ -468,20 +339,14 @@
     color: #563f6b;
 }
 
-
 /* =========================================================
-   INFORMATION GRID
+   APPROVAL PROCESS
 ========================================================= */
 
 .registration-requests-information-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
 }
-
-
-/* =========================================================
-   APPROVAL STEPS
-========================================================= */
 
 .registration-requests-steps {
     display: grid;
@@ -534,13 +399,11 @@
     line-height: 1.55;
 }
 
-
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE — MATCH SHARED DASHBOARD SIDEBAR
 ========================================================= */
 
 @media (max-width: 1100px) {
-
     .registration-requests-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -551,6 +414,7 @@
     }
 
     .registration-requests-step:nth-child(2) {
+        padding-right: 0;
         border-right: 0;
     }
 
@@ -563,15 +427,11 @@
     }
 }
 
-
-@media (max-width: 850px) {
-
-    .registration-requests-sidebar {
-        width: 190px;
-    }
-
+/* Shared sidebar width: 200px */
+@media (max-width: 900px) {
     .registration-requests-main {
-        margin-left: 190px;
+        width: calc(100% - 200px);
+        margin-left: 200px;
         padding: 25px 22px 35px;
     }
 
@@ -584,39 +444,12 @@
     }
 }
 
-
+/* Shared sidebar width: 170px */
 @media (max-width: 700px) {
-
-    .registration-requests-sidebar {
-        position: relative;
-        width: 100%;
-        min-height: auto;
-    }
-
-    .registration-requests-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 3px;
-    }
-
-    .registration-requests-nav-heading {
-        grid-column: 1 / -1;
-    }
-
-    .registration-requests-logout {
-        border-top: 1px solid rgba(255, 255, 255, 0.10);
-    }
-
     .registration-requests-main {
-        margin-left: 0;
-    }
-}
-
-
-@media (max-width: 550px) {
-
-    .registration-requests-main {
-        padding: 22px 15px 30px;
+        width: calc(100% - 170px);
+        margin-left: 170px;
+        padding: 22px 16px 30px;
     }
 
     .registration-requests-stats {
@@ -663,20 +496,36 @@
     }
 }
 
-
-@media (max-width: 400px) {
-
-    .registration-requests-nav {
-        grid-template-columns: 1fr;
+/* Shared sidebar width: 68px */
+@media (max-width: 480px) {
+    .registration-requests-main {
+        width: calc(100% - 68px);
+        margin-left: 68px;
+        padding: 20px 12px 25px;
     }
 
-    .registration-requests-nav-heading {
-        margin-top: 5px;
+    .registration-requests-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .registration-requests-stat-card {
+        min-height: 105px;
+        padding: 16px;
+    }
+
+    .registration-requests-panel-heading {
+        padding: 15px;
+    }
+
+    .registration-requests-table th,
+    .registration-requests-table td {
+        padding: 12px;
     }
 
     .registration-requests-actions {
-        flex-direction: column;
         align-items: stretch;
+        flex-direction: column;
     }
 
     .registration-requests-primary-btn,
