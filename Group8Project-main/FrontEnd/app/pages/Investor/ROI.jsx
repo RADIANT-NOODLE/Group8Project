@@ -1,86 +1,20 @@
+
 import { useState } from "react";
-import * as authService from "../../services/authService.js";
-import InlineMessage from "../../components/InlineMessage";
+import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./ROI.css";
 
-
 /* =========================================================
-   VALORA ICONS
+   VALORA ROI ICONS
 ========================================================= */
 
 function Icon({ name, size = 18 }) {
-
     const icons = {
-
-        dashboard: (
-            <>
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-            </>
-        ),
-
-        property: (
-            <>
-                <path d="M3 11.5 12 4l9 7.5" />
-                <path d="M5.5 10v10h13V10" />
-                <path d="M9 20v-6h6v6" />
-            </>
-        ),
-
-        ai: (
-            <>
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-                <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
-                <path d="M10 10h4v4h-4z" />
-            </>
-        ),
-
         roi: (
             <>
                 <path d="M4 19V9" />
                 <path d="M10 19V5" />
                 <path d="M16 19v-7" />
                 <path d="M22 19V3" />
-            </>
-        ),
-
-        complaints: (
-            <>
-                <rect x="5" y="3" width="14" height="18" rx="2" />
-                <path d="M8.5 8h7" />
-                <path d="M8.5 12h7" />
-                <path d="M8.5 16h4.5" />
-            </>
-        ),
-
-        providers: (
-            <>
-                <path d="M14.5 5.5a4 4 0 0 0-5.1 5.1L4 16l4 4 5.4-5.4a4 4 0 0 0 5.1-5.1l-2.6 2.6-3-3 2.6-2.6Z" />
-            </>
-        ),
-
-        announcements: (
-            <>
-                <path d="M4 10v4h4l7 4V6l-7 4H4Z" />
-                <path d="M8 14l1.5 5" />
-                <path d="M18 9c1 .8 1.5 1.7 1.5 3s-.5 2.2-1.5 3" />
-            </>
-        ),
-
-        profile: (
-            <>
-                <circle cx="12" cy="8" r="3.5" />
-                <path d="M5 21c.7-4 3-6 7-6s6.3 2 7 6" />
-            </>
-        ),
-
-        logout: (
-            <>
-                <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
-                <path d="M14 8l4 4-4 4" />
-                <path d="M18 12H9" />
             </>
         ),
 
@@ -126,12 +60,16 @@ function Icon({ name, size = 18 }) {
             <>
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 10v6" />
-                <circle cx="12" cy="7" r=".7" fill="currentColor" stroke="none" />
+                <circle
+                    cx="12"
+                    cy="7"
+                    r=".7"
+                    fill="currentColor"
+                    stroke="none"
+                />
             </>
-        )
-
+        ),
     };
-
 
     return (
         <svg
@@ -151,54 +89,51 @@ function Icon({ name, size = 18 }) {
     );
 }
 
-
 /* =========================================================
    ROI CALCULATOR
 ========================================================= */
 
 export default function ROI() {
-
     const [propertyValue, setPropertyValue] = useState("");
     const [monthlyRent, setMonthlyRent] = useState("");
     const [monthlyExpenses, setMonthlyExpenses] = useState("");
     const [growthRate, setGrowthRate] = useState("4");
     const [investmentPeriod, setInvestmentPeriod] = useState("10");
-
     const [result, setResult] = useState(null);
-
-    /* Input problems used to be browser alert dialogs. */
-
-    const [error, setError] = useState("");
-
 
     /* =======================================================
        CALCULATE ROI
     ======================================================= */
 
     function calculateROI(event) {
-
         event.preventDefault();
 
-        if (!propertyValue || Number(propertyValue) <= 0) {
-            setError("Please enter a valid property value.");
+        if (
+            propertyValue === "" ||
+            !Number.isFinite(Number(propertyValue)) ||
+            Number(propertyValue) <= 0
+        ) {
+            window.alert("Please enter a valid property value.");
             return;
         }
 
-        if (!monthlyRent || Number(monthlyRent) < 0) {
-            setError("Please enter a valid monthly rental amount.");
+        if (
+            monthlyRent === "" ||
+            !Number.isFinite(Number(monthlyRent)) ||
+            Number(monthlyRent) < 0
+        ) {
+            window.alert("Please enter a valid monthly rental amount.");
             return;
         }
 
         if (
             monthlyExpenses === "" ||
+            !Number.isFinite(Number(monthlyExpenses)) ||
             Number(monthlyExpenses) < 0
         ) {
-            setError("Please enter your monthly expenses.");
+            window.alert("Please enter valid monthly property expenses.");
             return;
         }
-
-        setError("");
-
 
         const value = Number(propertyValue);
         const rent = Number(monthlyRent);
@@ -206,38 +141,27 @@ export default function ROI() {
         const growth = Number(growthRate) / 100;
         const years = Number(investmentPeriod);
 
-
         const annualRentalIncome = rent * 12;
-
         const annualExpenses = expenses * 12;
 
         const netAnnualRentalIncome =
             annualRentalIncome - annualExpenses;
 
-
         const projectedValue =
             value * Math.pow(1 + growth, years);
 
-
-        const capitalGrowth =
-            projectedValue - value;
-
+        const capitalGrowth = projectedValue - value;
 
         const totalRentalIncome =
             netAnnualRentalIncome * years;
 
-
         const totalReturn =
             capitalGrowth + totalRentalIncome;
 
-
-        const roi =
-            (totalReturn / value) * 100;
-
+        const roi = (totalReturn / value) * 100;
 
         const rentalYield =
             (netAnnualRentalIncome / value) * 100;
-
 
         setResult({
             annualRentalIncome,
@@ -249,849 +173,456 @@ export default function ROI() {
             totalReturn,
             roi,
             rentalYield,
-            years
+            years,
         });
     }
-
 
     /* =======================================================
        FORMAT CURRENCY
     ======================================================= */
 
     function formatCurrency(value) {
-
         return new Intl.NumberFormat("en-ZA", {
             style: "currency",
             currency: "ZAR",
-            maximumFractionDigits: 0
+            maximumFractionDigits: 0,
         }).format(value);
-
     }
-
-
-    /* =======================================================
-       LOGOUT
-    ======================================================= */
-
-    function handleLogout() {
-
-        authService.logout();
-
-        window.location.href = "/";
-    }
-
 
     return (
-
         <div className="roi-page">
+            {/* SHARED VALORA DASHBOARD NAVIGATION */}
 
+            <DashboardSidebar />
 
-            {/* =================================================
-                SIDEBAR
-            ================================================= */}
-
-            <aside className="roi-sidebar">
-
-
-                <div className="roi-logo-area">
-
-                    <img
-                        src="/assets/valora-logo.svg"
-                        alt="VALORA Logo"
-                    />
-
-                    <p>
-                        Property Intelligence
-                    </p>
-
-                </div>
-
-
-                <nav className="roi-side-nav">
-
-
-                    <a href="/dashboard">
-
-                        <Icon
-                            name="dashboard"
-                            size={17}
-                        />
-
-                        <span>
-                            Dashboard
-                        </span>
-
-                    </a>
-
-
-                    <a href="/property">
-
-                        <Icon
-                            name="property"
-                            size={17}
-                        />
-
-                        <span>
-                            My Property
-                        </span>
-
-                    </a>
-
-
-                    <a href="/valuation">
-
-                        <Icon
-                            name="ai"
-                            size={17}
-                        />
-
-                        <span>
-                            AI Valuation
-                        </span>
-
-                    </a>
-
-
-                    <a
-                        href="/roi"
-                        className="active"
-                    >
-
-                        <Icon
-                            name="roi"
-                            size={17}
-                        />
-
-                        <span>
-                            10-Year ROI
-                        </span>
-
-                    </a>
-
-
-                    <a href="/complaints">
-
-                        <Icon
-                            name="complaints"
-                            size={17}
-                        />
-
-                        <span>
-                            Complaints
-                        </span>
-
-                    </a>
-
-
-                    <a href="/providers">
-
-                        <Icon
-                            name="providers"
-                            size={17}
-                        />
-
-                        <span>
-                            Service Providers
-                        </span>
-
-                    </a>
-
-
-                    <a href="/announcements">
-
-                        <Icon
-                            name="announcements"
-                            size={17}
-                        />
-
-                        <span>
-                            Announcements
-                        </span>
-
-                    </a>
-
-
-                    <a href="/profile">
-
-                        <Icon
-                            name="profile"
-                            size={17}
-                        />
-
-                        <span>
-                            My Profile
-                        </span>
-
-                    </a>
-
-                </nav>
-
-
-                <div className="roi-logout-area">
-
-                    <a
-                        href="/"
-                        onClick={(event) => {
-                            event.preventDefault();
-                            handleLogout();
-                        }}
-                    >
-
-                        <Icon
-                            name="logout"
-                            size={17}
-                        />
-
-                        <span>
-                            Logout
-                        </span>
-
-                    </a>
-
-                </div>
-
-            </aside>
-
-
-            {/* =================================================
-                MAIN CONTENT
-            ================================================= */}
+            {/* MAIN CONTENT */}
 
             <main className="roi-main">
+                {/* PAGE HEADER */}
 
-
-                {/* TOP BAR */}
-
-                <div className="roi-top-bar">
-
+                <header className="roi-top-bar">
                     <div>
-
                         <span className="roi-eyebrow">
                             INVESTMENT ANALYSIS
                         </span>
 
-                        <h2>
-                            10-Year ROI
-                        </h2>
+                        <h2>10-Year ROI</h2>
 
                         <p>
-                            Evaluate your property's potential investment return.
+                            Evaluate your property's potential investment
+                            return.
                         </p>
-
                     </div>
+                </header>
 
-                </div>
-
-
-                {/* =================================================
-                    INPUT PROBLEM
-                ================================================= */}
-
-                <InlineMessage tone="error">
-                    {error}
-                </InlineMessage>
-
-
-                {/* =================================================
-                    INTRODUCTION
-                ================================================= */}
+                {/* INTRODUCTION */}
 
                 <section className="roi-intro-panel">
-
                     <div className="roi-intro-icon">
-
-                        <Icon
-                            name="calculator"
-                            size={22}
-                        />
-
+                        <Icon name="calculator" size={22} />
                     </div>
 
                     <div>
-
-                        <h3>
-                            Investment Return Calculator
-                        </h3>
+                        <h3>Investment Return Calculator</h3>
 
                         <p>
-                            Tell VALORA about your property, rental income
-                            and expected growth. We'll estimate how your
-                            investment could perform over the selected period.
+                            Enter your property's value, rental income,
+                            expenses and expected growth. VALORA will estimate
+                            how your investment could perform over your
+                            selected period.
                         </p>
-
                     </div>
-
                 </section>
 
-
-                {/* =================================================
-                    CALCULATOR LAYOUT
-                ================================================= */}
+                {/* CALCULATOR LAYOUT */}
 
                 <div className="roi-layout">
-
-
-                    {/* =================================================
-                        INPUT PANEL
-                    ================================================= */}
+                    {/* INVESTMENT INPUTS */}
 
                     <section className="roi-panel roi-input-panel">
-
                         <div className="roi-panel-heading">
-
                             <div>
-
-                                <h3>
-                                    Investment Information
-                                </h3>
+                                <h3>Investment Information</h3>
 
                                 <p>
                                     Enter the information for your property.
                                 </p>
-
                             </div>
-
                         </div>
-
 
                         <form
                             className="roi-form"
                             onSubmit={calculateROI}
                         >
-
-
                             {/* PROPERTY VALUE */}
 
                             <div className="roi-form-field">
-
-                                <label>
+                                <label htmlFor="roi-property-value">
                                     Property Value
                                 </label>
 
                                 <div className="roi-input-wrapper">
-
                                     <span className="roi-input-prefix">
                                         R
                                     </span>
 
                                     <input
+                                        id="roi-property-value"
                                         type="number"
-                                        placeholder="Example: 1020000"
+                                        min="1"
+                                        step="any"
+                                        placeholder="Enter property value"
                                         value={propertyValue}
                                         onChange={(event) =>
-                                            setPropertyValue(event.target.value)
+                                            setPropertyValue(
+                                                event.target.value
+                                            )
                                         }
+                                        required
                                     />
-
                                 </div>
-
                             </div>
 
-
-                            {/* RENT */}
+                            {/* MONTHLY RENT */}
 
                             <div className="roi-form-field">
-
-                                <label>
+                                <label htmlFor="roi-monthly-rent">
                                     Expected Monthly Rent
                                 </label>
 
                                 <div className="roi-input-wrapper">
-
                                     <span className="roi-input-icon">
-
-                                        <Icon
-                                            name="rent"
-                                            size={15}
-                                        />
-
+                                        <Icon name="rent" size={15} />
                                     </span>
 
                                     <input
+                                        id="roi-monthly-rent"
                                         type="number"
-                                        placeholder="Example: 6000"
+                                        min="0"
+                                        step="any"
+                                        placeholder="Enter monthly rent"
                                         value={monthlyRent}
                                         onChange={(event) =>
-                                            setMonthlyRent(event.target.value)
+                                            setMonthlyRent(
+                                                event.target.value
+                                            )
                                         }
+                                        required
                                     />
-
                                 </div>
-
                             </div>
 
-
-                            {/* EXPENSES */}
+                            {/* MONTHLY EXPENSES */}
 
                             <div className="roi-form-field">
-
-                                <label>
+                                <label htmlFor="roi-monthly-expenses">
                                     Monthly Property Expenses
                                 </label>
 
                                 <div className="roi-input-wrapper">
-
                                     <span className="roi-input-icon">
-
-                                        <Icon
-                                            name="expenses"
-                                            size={15}
-                                        />
-
+                                        <Icon name="expenses" size={15} />
                                     </span>
 
                                     <input
+                                        id="roi-monthly-expenses"
                                         type="number"
-                                        placeholder="Example: 1500"
+                                        min="0"
+                                        step="any"
+                                        placeholder="Enter monthly expenses"
                                         value={monthlyExpenses}
                                         onChange={(event) =>
-                                            setMonthlyExpenses(event.target.value)
+                                            setMonthlyExpenses(
+                                                event.target.value
+                                            )
                                         }
+                                        required
                                     />
-
                                 </div>
-
                             </div>
 
-
-                            {/* GROWTH */}
+                            {/* ANNUAL GROWTH */}
 
                             <div className="roi-form-field">
-
-                                <label>
+                                <label htmlFor="roi-growth-rate">
                                     Expected Annual Growth
                                 </label>
 
                                 <select
+                                    id="roi-growth-rate"
                                     value={growthRate}
                                     onChange={(event) =>
                                         setGrowthRate(event.target.value)
                                     }
                                 >
-
-                                    <option value="2">
-                                        2% per year
-                                    </option>
-
-                                    <option value="3">
-                                        3% per year
-                                    </option>
-
-                                    <option value="4">
-                                        4% per year
-                                    </option>
-
-                                    <option value="5">
-                                        5% per year
-                                    </option>
-
-                                    <option value="6">
-                                        6% per year
-                                    </option>
-
-                                    <option value="7">
-                                        7% per year
-                                    </option>
-
+                                    <option value="2">2% per year</option>
+                                    <option value="3">3% per year</option>
+                                    <option value="4">4% per year</option>
+                                    <option value="5">5% per year</option>
+                                    <option value="6">6% per year</option>
+                                    <option value="7">7% per year</option>
                                 </select>
-
                             </div>
-
 
                             {/* INVESTMENT PERIOD */}
 
                             <div className="roi-form-field">
-
-                                <label>
+                                <label htmlFor="roi-investment-period">
                                     Investment Period
                                 </label>
 
                                 <select
+                                    id="roi-investment-period"
                                     value={investmentPeriod}
                                     onChange={(event) =>
-                                        setInvestmentPeriod(event.target.value)
+                                        setInvestmentPeriod(
+                                            event.target.value
+                                        )
                                     }
                                 >
-
-                                    <option value="5">
-                                        5 Years
-                                    </option>
-
-                                    <option value="10">
-                                        10 Years
-                                    </option>
-
-                                    <option value="15">
-                                        15 Years
-                                    </option>
-
-                                    <option value="20">
-                                        20 Years
-                                    </option>
-
+                                    <option value="5">5 Years</option>
+                                    <option value="10">10 Years</option>
+                                    <option value="15">15 Years</option>
+                                    <option value="20">20 Years</option>
                                 </select>
-
                             </div>
-
 
                             <button
                                 className="roi-calculate-button"
                                 type="submit"
                             >
-
-                                <Icon
-                                    name="calculator"
-                                    size={15}
-                                />
-
-                                <span>
-                                    Calculate ROI
-                                </span>
-
+                                <Icon name="calculator" size={15} />
+                                <span>Calculate ROI</span>
                             </button>
-
                         </form>
-
                     </section>
 
-
-                    {/* =================================================
-                        RESULTS PANEL
-                    ================================================= */}
+                    {/* RESULTS */}
 
                     <section className="roi-panel roi-results-panel">
-
                         <div className="roi-panel-heading">
-
                             <div>
-
-                                <h3>
-                                    VALORA Investment Analysis
-                                </h3>
+                                <h3>VALORA Investment Analysis</h3>
 
                                 <p>
                                     Your projected investment performance.
                                 </p>
-
                             </div>
-
                         </div>
 
-
                         {!result && (
-
                             <div className="roi-empty-result">
-
                                 <div className="roi-empty-icon">
-
-                                    <Icon
-                                        name="roi"
-                                        size={22}
-                                    />
-
+                                    <Icon name="roi" size={22} />
                                 </div>
 
-                                <h3>
-                                    Ready to calculate
-                                </h3>
+                                <h3>Ready to calculate</h3>
 
                                 <p>
                                     Enter your investment information and
                                     calculate your projected return.
                                 </p>
-
                             </div>
-
                         )}
 
-
                         {result && (
-
                             <div className="roi-results-content">
-
-
                                 {/* MAIN ROI */}
 
                                 <div className="roi-main-result">
-
                                     <span>
                                         Estimated {result.years}-Year ROI
                                     </span>
 
-                                    <h2>
-                                        {result.roi.toFixed(1)}%
-                                    </h2>
+                                    <h2>{result.roi.toFixed(1)}%</h2>
 
                                     <p>
-                                        Estimated total return on your investment
+                                        Estimated total return on your
+                                        investment
                                     </p>
-
                                 </div>
-
 
                                 {/* METRICS */}
 
                                 <div className="roi-metrics">
-
-
                                     <div className="roi-metric">
-
                                         <div className="roi-metric-icon">
-
                                             <Icon
                                                 name="income"
                                                 size={17}
                                             />
-
                                         </div>
 
                                         <div>
-
-                                            <p>
-                                                Annual Rental Income
-                                            </p>
+                                            <p>Annual Rental Income</p>
 
                                             <strong>
                                                 {formatCurrency(
                                                     result.annualRentalIncome
                                                 )}
                                             </strong>
-
                                         </div>
-
                                     </div>
 
-
                                     <div className="roi-metric">
-
                                         <div className="roi-metric-icon">
-
                                             <Icon
                                                 name="expenses"
                                                 size={17}
                                             />
-
                                         </div>
 
                                         <div>
-
-                                            <p>
-                                                Annual Expenses
-                                            </p>
+                                            <p>Annual Expenses</p>
 
                                             <strong>
                                                 {formatCurrency(
                                                     result.annualExpenses
                                                 )}
                                             </strong>
-
                                         </div>
-
                                     </div>
 
-
                                     <div className="roi-metric">
-
                                         <div className="roi-metric-icon">
-
                                             <Icon
                                                 name="income"
                                                 size={17}
                                             />
-
                                         </div>
 
                                         <div>
-
-                                            <p>
-                                                Net Annual Rental
-                                            </p>
+                                            <p>Net Annual Rental</p>
 
                                             <strong>
                                                 {formatCurrency(
                                                     result.netAnnualRentalIncome
                                                 )}
                                             </strong>
-
                                         </div>
-
                                     </div>
 
-
                                     <div className="roi-metric">
-
                                         <div className="roi-metric-icon">
-
                                             <Icon
                                                 name="growth"
                                                 size={17}
                                             />
-
                                         </div>
 
                                         <div>
-
-                                            <p>
-                                                Rental Yield
-                                            </p>
+                                            <p>Rental Yield</p>
 
                                             <strong>
                                                 {result.rentalYield.toFixed(2)}%
                                             </strong>
-
                                         </div>
-
                                     </div>
-
                                 </div>
-
 
                                 {/* PROJECTION */}
 
                                 <div className="roi-projection-box">
-
                                     <div className="roi-projection-header">
-
                                         <div>
-
-                                            <span>
-                                                PROJECTION
-                                            </span>
+                                            <span>PROJECTION</span>
 
                                             <h3>
                                                 {result.years}-Year Projection
                                             </h3>
-
                                         </div>
 
                                         <div className="roi-projection-icon">
-
                                             <Icon
                                                 name="growth"
                                                 size={18}
                                             />
-
                                         </div>
-
                                     </div>
 
-
-                                    <p>
-                                        Projected property value
-                                    </p>
+                                    <p>Projected property value</p>
 
                                     <h2>
-                                        {formatCurrency(
-                                            result.projectedValue
-                                        )}
+                                        {formatCurrency(result.projectedValue)}
                                     </h2>
 
-
                                     <div className="roi-projection-details">
-
                                         <div>
-
-                                            <span>
-                                                Capital Growth
-                                            </span>
+                                            <span>Capital Growth</span>
 
                                             <strong>
                                                 {formatCurrency(
                                                     result.capitalGrowth
                                                 )}
                                             </strong>
-
                                         </div>
 
-
                                         <div>
-
-                                            <span>
-                                                Rental Income
-                                            </span>
+                                            <span>Net Rental Income</span>
 
                                             <strong>
                                                 {formatCurrency(
                                                     result.totalRentalIncome
                                                 )}
                                             </strong>
-
                                         </div>
-
                                     </div>
-
                                 </div>
-
 
                                 {/* TOTAL RETURN */}
 
                                 <div className="roi-total-return">
-
                                     <div>
-
                                         <span>
                                             TOTAL ESTIMATED RETURN
                                         </span>
 
                                         <strong>
-                                            {formatCurrency(
-                                                result.totalReturn
-                                            )}
+                                            {formatCurrency(result.totalReturn)}
                                         </strong>
-
                                     </div>
-
                                 </div>
-
 
                                 {/* EXPLANATION */}
 
                                 <div className="roi-explanation">
-
                                     <div className="roi-explanation-icon">
-
                                         <Icon
                                             name="information"
                                             size={17}
                                         />
-
                                     </div>
 
                                     <div>
-
-                                        <strong>
-                                            What does this mean?
-                                        </strong>
+                                        <strong>What does this mean?</strong>
 
                                         <p>
                                             ROI (Return on Investment) shows
-                                            how much your investment could grow
-                                            compared with the original property
-                                            value over the selected period.
+                                            the estimated return relative to
+                                            your original property value over
+                                            the selected period. This
+                                            calculation includes projected
+                                            capital growth and net rental
+                                            income.
                                         </p>
 
                                         <p>
-                                            This is an estimated projection.
-                                            Actual returns can change depending
-                                            on property prices, rental income,
-                                            expenses, interest rates and market
-                                            conditions.
+                                            This estimate assumes the selected
+                                            growth rate and constant monthly
+                                            rent and expenses throughout the
+                                            investment period. It excludes
+                                            financing costs, taxes, vacancies,
+                                            transaction costs and changes in
+                                            rental amounts. Actual returns may
+                                            differ.
                                         </p>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         )}
-
                     </section>
-
                 </div>
-
             </main>
-
         </div>
     );
 }
