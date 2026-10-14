@@ -1628,4 +1628,77 @@ th {
     .complaint-image-preview img {
         max-height: 220px;
     }
+
+    
+/* =========================================================
+   VALORA - AGENT INQUIRIES
+   Protect page-specific layout from global dashboard styles
+========================================================= */
+
+.agent-inquiries-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    box-sizing: border-box;
+}
+
+.agent-inquiries-page .agent-inquiries-main {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    box-sizing: border-box;
+}
+
+.agent-inquiries-page .agent-inquiries-table-container {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.agent-inquiries-page .agent-inquiries-table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+}
+
+.agent-inquiries-page .agent-inquiries-table th {
+    padding: 14px 18px;
+    background: #fafafa;
+    border-bottom: 1px solid #e7e7ea;
+    color: #6e6e75;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    white-space: nowrap;
+}
+
+.agent-inquiries-page .agent-inquiries-table td {
+    padding: 17px 18px;
+    border-bottom: 1px solid #eeeeef;
+    color: #4d4c53;
+    font-size: 13px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.agent-inquiries-page .agent-inquiries-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.agent-inquiries-page .agent-inquiries-table tbody tr:hover {
+    background: #fcfbfd;
+}
+
+.agent-inquiries-page .agent-inquiries-filter select,
+.agent-inquiries-page .agent-inquiries-status-select {
+    max-width: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.agent-inquiries-page .agent-inquiries-view-btn {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
 }
