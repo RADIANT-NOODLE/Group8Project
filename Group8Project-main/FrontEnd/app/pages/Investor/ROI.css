@@ -1,113 +1,34 @@
+
 /* =========================================================
    VALORA ROI PAGE
+   Shared navigation is styled by DashboardSidebar.css
 ========================================================= */
 
 .roi-page {
+    --roi-primary: #563f6b;
+    --roi-primary-dark: #463256;
+    --roi-purple-light: #f0ebf4;
+    --roi-border: #e4e0e7;
+    --roi-text: #302a34;
+    --roi-muted: #89838b;
+
     min-height: 100vh;
     display: flex;
     background: #f5f3f7;
     color: #242027;
+    font-family: inherit;
+    box-sizing: border-box;
 }
 
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.roi-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 20;
-    width: 220px;
-    display: flex;
-    flex-direction: column;
-    background: #563f6b;
-    color: #ffffff;
-    overflow-y: auto;
+.roi-page *,
+.roi-page *::before,
+.roi-page *::after {
+    box-sizing: border-box;
 }
-
-.roi-logo-area {
-    padding: 25px 22px 22px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.roi-logo-area img {
-    display: block;
-    width: 132px;
-    max-width: 100%;
-    height: auto;
-}
-
-.roi-logo-area p {
-    margin: 10px 0 0;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
-
-/* =========================================================
-   SIDEBAR NAVIGATION
-========================================================= */
-
-.roi-side-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 20px 12px;
-}
-
-.roi-side-nav a,
-.roi-logout-area a {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 0 12px;
-    border-radius: 7px;
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 10px;
-    font-weight: 500;
-    text-decoration: none;
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-.roi-side-nav a svg,
-.roi-logout-area a svg {
-    flex-shrink: 0;
-}
-
-.roi-side-nav a:hover,
-.roi-logout-area a:hover {
-    background: rgba(255, 255, 255, 0.09);
-    color: #ffffff;
-}
-
-.roi-side-nav a.active {
-    background: #ffffff;
-    color: #563f6b;
-    font-weight: 650;
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-.roi-logout-area {
-    margin-top: auto;
-    padding: 14px 12px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 
 /* =========================================================
    MAIN CONTENT
+   Shared sidebar default width: 220px
 ========================================================= */
 
 .roi-main {
@@ -117,7 +38,6 @@
     margin-left: 220px;
     padding: 30px 34px 45px;
 }
-
 
 /* =========================================================
    TOP BAR
@@ -130,7 +50,7 @@
 .roi-eyebrow {
     display: block;
     margin-bottom: 6px;
-    color: #563f6b;
+    color: var(--roi-primary);
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 1.3px;
@@ -151,7 +71,6 @@
     line-height: 1.5;
 }
 
-
 /* =========================================================
    INTRODUCTION
 ========================================================= */
@@ -162,7 +81,7 @@
     gap: 15px;
     margin-bottom: 18px;
     padding: 20px;
-    border: 1px solid #e4e0e7;
+    border: 1px solid var(--roi-border);
     border-radius: 9px;
     background: #ffffff;
     box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
@@ -176,13 +95,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: #f0ebf4;
-    color: #563f6b;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
 }
 
 .roi-intro-panel h3 {
     margin: 0;
-    color: #302a34;
+    color: var(--roi-text);
     font-size: 14px;
     font-weight: 650;
 }
@@ -190,11 +109,10 @@
 .roi-intro-panel p {
     max-width: 780px;
     margin: 6px 0 0;
-    color: #89838b;
+    color: var(--roi-muted);
     font-size: 10px;
     line-height: 1.6;
 }
-
 
 /* =========================================================
    MAIN LAYOUT
@@ -202,11 +120,10 @@
 
 .roi-layout {
     display: grid;
-    grid-template-columns: minmax(310px, 0.85fr) minmax(420px, 1.15fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     gap: 18px;
     align-items: start;
 }
-
 
 /* =========================================================
    PANELS
@@ -214,7 +131,7 @@
 
 .roi-panel {
     min-width: 0;
-    border: 1px solid #e4e0e7;
+    border: 1px solid var(--roi-border);
     border-radius: 10px;
     background: #ffffff;
     box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
@@ -228,18 +145,17 @@
 
 .roi-panel-heading h3 {
     margin: 0;
-    color: #302a34;
+    color: var(--roi-text);
     font-size: 14px;
     font-weight: 650;
 }
 
 .roi-panel-heading p {
     margin: 5px 0 0;
-    color: #89838b;
+    color: var(--roi-muted);
     font-size: 9px;
     line-height: 1.5;
 }
-
 
 /* =========================================================
    FORM
@@ -255,6 +171,7 @@
 .roi-form-field {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .roi-form-field label {
@@ -267,6 +184,7 @@
 .roi-form-field input,
 .roi-form-field select {
     width: 100%;
+    min-width: 0;
     height: 39px;
     padding: 0 11px;
     border: 1px solid #d9d5dd;
@@ -292,10 +210,9 @@
 
 .roi-form-field input:focus,
 .roi-form-field select:focus {
-    border-color: #563f6b;
+    border-color: var(--roi-primary);
     box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.08);
 }
-
 
 /* =========================================================
    INPUT WRAPPERS
@@ -305,6 +222,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    min-width: 0;
 }
 
 .roi-input-wrapper input {
@@ -328,7 +246,6 @@
     font-weight: 700;
 }
 
-
 /* =========================================================
    CALCULATE BUTTON
 ========================================================= */
@@ -341,9 +258,10 @@
     justify-content: center;
     gap: 7px;
     margin-top: 4px;
-    border: 1px solid #563f6b;
+    padding: 10px 14px;
+    border: 1px solid var(--roi-primary);
     border-radius: 6px;
-    background: #563f6b;
+    background: var(--roi-primary);
     color: #ffffff;
     font-family: inherit;
     font-size: 10px;
@@ -356,14 +274,18 @@
 }
 
 .roi-calculate-button:hover {
-    border-color: #463256;
-    background: #463256;
+    border-color: var(--roi-primary-dark);
+    background: var(--roi-primary-dark);
+}
+
+.roi-calculate-button:focus-visible {
+    outline: 3px solid rgba(86, 63, 107, 0.25);
+    outline-offset: 3px;
 }
 
 .roi-calculate-button:active {
     transform: translateY(1px);
 }
-
 
 /* =========================================================
    EMPTY RESULT
@@ -387,8 +309,8 @@
     justify-content: center;
     margin-bottom: 16px;
     border-radius: 50%;
-    background: #f0ebf4;
-    color: #563f6b;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
 }
 
 .roi-empty-result h3 {
@@ -406,15 +328,14 @@
     line-height: 1.6;
 }
 
-
 /* =========================================================
    RESULTS CONTENT
 ========================================================= */
 
 .roi-results-content {
+    min-width: 0;
     padding: 20px;
 }
-
 
 /* =========================================================
    MAIN ROI RESULT
@@ -423,14 +344,14 @@
 .roi-main-result {
     padding: 22px;
     border-radius: 8px;
-    background: #563f6b;
+    background: var(--roi-primary);
     color: #ffffff;
     text-align: center;
 }
 
 .roi-main-result span {
     display: block;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.78);
     font-size: 9px;
     font-weight: 650;
     letter-spacing: 0.7px;
@@ -442,15 +363,16 @@
     color: #ffffff;
     font-size: 38px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
 }
 
 .roi-main-result p {
     margin: 0;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.78);
     font-size: 9px;
+    line-height: 1.5;
 }
-
 
 /* =========================================================
    METRICS
@@ -482,15 +404,19 @@
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    background: #f0ebf4;
-    color: #563f6b;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-metric > div:last-child {
+    min-width: 0;
 }
 
 .roi-metric p {
     margin: 0 0 4px;
     color: #89828c;
     font-size: 8px;
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 .roi-metric strong {
@@ -498,8 +424,8 @@
     color: #3d3641;
     font-size: 10px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
-
 
 /* =========================================================
    PROJECTION
@@ -523,7 +449,7 @@
 .roi-projection-header span {
     display: block;
     margin-bottom: 4px;
-    color: #563f6b;
+    color: var(--roi-primary);
     font-size: 8px;
     font-weight: 700;
     letter-spacing: 0.9px;
@@ -539,12 +465,13 @@
 .roi-projection-icon {
     width: 32px;
     height: 32px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    background: #f0ebf4;
-    color: #563f6b;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
 }
 
 .roi-projection-box > p {
@@ -555,18 +482,23 @@
 
 .roi-projection-box > h2 {
     margin: 0;
-    color: #302a34;
+    color: var(--roi-text);
     font-size: 23px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 .roi-projection-details {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin-top: 16px;
     padding-top: 13px;
     border-top: 1px solid #e7e1e9;
+}
+
+.roi-projection-details > div {
+    min-width: 0;
 }
 
 .roi-projection-details span {
@@ -580,8 +512,8 @@
     color: #4b4350;
     font-size: 10px;
     font-weight: 650;
+    overflow-wrap: anywhere;
 }
-
 
 /* =========================================================
    TOTAL RETURN
@@ -607,11 +539,11 @@
 }
 
 .roi-total-return strong {
-    color: #563f6b;
+    color: var(--roi-primary);
     font-size: 17px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
-
 
 /* =========================================================
    EXPLANATION
@@ -636,8 +568,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #f0ebf4;
-    color: #563f6b;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-explanation > div:last-child {
+    min-width: 0;
 }
 
 .roi-explanation strong {
@@ -652,103 +588,53 @@
     margin: 0 0 6px;
     color: #89828c;
     font-size: 8px;
-    line-height: 1.55;
+    line-height: 1.6;
 }
 
 .roi-explanation p:last-child {
     margin-bottom: 0;
 }
 
-
 /* =========================================================
-   RESPONSIVE — LARGE TABLET
+   LARGE TABLET
 ========================================================= */
 
-@media (max-width: 1050px) {
-
+@media (max-width: 1150px) {
     .roi-main {
         padding: 28px 25px 40px;
     }
 
     .roi-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .roi-input-panel {
-        max-width: none;
+    .roi-input-panel,
+    .roi-results-panel {
+        width: 100%;
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE — TABLET
+   SHARED SIDEBAR RESPONSIVE WIDTH: 200px
 ========================================================= */
 
-@media (max-width: 850px) {
-
-    .roi-sidebar {
-        width: 190px;
-    }
-
+@media (max-width: 900px) {
     .roi-main {
-        width: calc(100% - 190px);
-        margin-left: 190px;
+        width: calc(100% - 200px);
+        margin-left: 200px;
         padding: 25px 20px 35px;
-    }
-
-    .roi-side-nav a,
-    .roi-logout-area a {
-        font-size: 9px;
-    }
-
-    .roi-logo-area {
-        padding-left: 18px;
-        padding-right: 18px;
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE — MOBILE
+   SHARED SIDEBAR RESPONSIVE WIDTH: 170px
 ========================================================= */
 
 @media (max-width: 700px) {
-
-    .roi-page {
-        display: block;
-    }
-
-    .roi-sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-        min-height: auto;
-    }
-
-    .roi-logo-area {
-        padding: 18px 20px;
-    }
-
-    .roi-logo-area img {
-        width: 120px;
-    }
-
-    .roi-side-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        padding: 12px;
-    }
-
-    .roi-logout-area {
-        margin-top: 0;
-        padding: 0 12px 14px;
-        border-top: 0;
-    }
-
     .roi-main {
-        width: 100%;
-        margin-left: 0;
-        padding: 22px 15px 30px;
+        width: calc(100% - 170px);
+        margin-left: 170px;
+        padding: 22px 16px 30px;
     }
 
     .roi-top-bar h2 {
@@ -760,27 +646,20 @@
     }
 
     .roi-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .roi-metrics {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE — SMALL MOBILE
+   SMALL MOBILE
+   Shared sidebar responsive width: 68px
 ========================================================= */
 
-@media (max-width: 450px) {
-
-    .roi-side-nav {
-        grid-template-columns: 1fr;
-    }
-
+@media (max-width: 480px) {
     .roi-main {
-        padding: 18px 10px 25px;
+        width: calc(100% - 68px);
+        margin-left: 68px;
+        padding: 18px 12px 25px;
     }
 
     .roi-top-bar h2 {
@@ -801,15 +680,17 @@
         height: 36px;
     }
 
-    .roi-panel-heading,
+    .roi-panel-heading {
+        padding: 16px;
+    }
+
     .roi-form,
     .roi-results-content {
-        padding-left: 16px;
-        padding-right: 16px;
+        padding: 16px;
     }
 
     .roi-metrics {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .roi-main-result {
@@ -821,6 +702,14 @@
     }
 
     .roi-projection-details {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .roi-total-return {
+        padding: 14px;
+    }
+
+    .roi-total-return strong {
+        font-size: 15px;
     }
 }
