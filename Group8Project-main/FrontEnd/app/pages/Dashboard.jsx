@@ -2,11 +2,106 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
-import { ROLES, roleLabel, toRole } from "../services/roleMap.js";
-import { useSession } from "../services/session.js";
 import "./Dashboard.css";
 
 
+/*
+=========================================================
+GET CURRENT USER
+=========================================================
+*/
+
+function getCurrentUser() {
+
+  const storedUser =
+    localStorage.getItem("valoraUser");
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+
+    const user =
+      JSON.parse(storedUser);
+
+    /*
+    -------------------------------------------------------
+    NORMALISE LEGACY ROLES
+    -------------------------------------------------------
+    */
+
+    let role = user.role;
+
+    if (
+      role === "HOA" ||
+      role === "HOA Admin"
+    ) {
+      role = "HOA Admin";
+    }
+
+    if (
+      role === "Administrator"
+    ) {
+      role = "HOA Admin";
+    }
+
+    if (
+      role === "Property Owner"
+    ) {
+      role = "Resident";
+    }
+
+    if (
+      role === "Buyer"
+    ) {
+      role = "Investor";
+    }
+
+    const firstName =
+      user.firstName ||
+      user.first_name ||
+      "";
+
+    const lastName =
+      user.lastName ||
+      user.last_name ||
+      "";
+
+    const fullName =
+      `${firstName} ${lastName}`.trim() ||
+      user.name ||
+      "VALORA User";
+
+    const initials =
+      `${firstName.charAt(0)}${lastName.charAt(0)}`
+        .toUpperCase() ||
+      fullName
+        .split(" ")
+        .map((name) => name.charAt(0))
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
+
+    return {
+      ...user,
+      role,
+      firstName,
+      lastName,
+      fullName,
+      initials,
+    };
+
+  } catch (error) {
+
+    console.error(
+      "Unable to read VALORA user:",
+      error
+    );
+
+    return null;
+  }
+}
 
 
 /*
@@ -1813,41 +1908,12 @@ MAIN DASHBOARD
 =========================================================
 */
 
-function NoWorkspaceForRole({
+function Dashboard({
   role,
 }) {
 
-  return (
-    <div className="main-dashboard-empty-state">
-
-      <div className="main-dashboard-empty-icon">
-
-        <Icon
-          name="profile"
-          size={30}
-        />
-
-      </div>
-
-      <h3>
-        No workspace for {role || "your role"} yet
-      </h3>
-
-      <p>
-        This VALORA role does not have a dashboard yet. Your
-        account is active — the workspace arrives with the
-        next release.
-      </p>
-
-    </div>
-  );
-}
-
-
-function Dashboard() {
-
-  const { user } =
-    useSession();
+  const user =
+    getCurrentUser();
 
 
   /*
@@ -1897,23 +1963,56 @@ function Dashboard() {
   -------------------------------------------------------
   */
 
-  const role =
-    toRole(user.role);
+  let normalizedRole =
+    role || user.role;
+
+
+  if (
+    normalizedRole === "HOA" ||
+    normalizedRole === "HOA Admin"
+  ) {
+
+    normalizedRole = "HOA Admin";
+
+  }
+
+  if (
+    normalizedRole === "Administrator"
+  ) {
+
+    normalizedRole = "HOA Admin";
+
+  }
+
+  if (
+    normalizedRole === "Property Owner"
+  ) {
+
+    normalizedRole = "Resident";
+
+  }
+
+  if (
+    normalizedRole === "Buyer"
+  ) {
+
+    normalizedRole = "Investor";
+
+  }
 
 
   /*
   -------------------------------------------------------
   ROLE CONTENT
-
-  Every role gets its own workspace; a role without one
-  gets an explicit message instead of the resident view.
   -------------------------------------------------------
   */
 
   let dashboardContent;
 
 
-  if (role === ROLES.resident) {
+  if (
+    normalizedRole === "Resident"
+  ) {
 
     dashboardContent = (
       <ResidentDashboard
@@ -1923,7 +2022,9 @@ function Dashboard() {
 
   }
 
-  else if (role === ROLES.investor) {
+  else if (
+    normalizedRole === "Investor"
+  ) {
 
     dashboardContent = (
       <InvestorDashboard
@@ -1933,7 +2034,9 @@ function Dashboard() {
 
   }
 
-  else if (role === ROLES.estateAgent) {
+  else if (
+    normalizedRole === "Estate Agent"
+  ) {
 
     dashboardContent = (
       <AgentDashboard
@@ -1943,7 +2046,9 @@ function Dashboard() {
 
   }
 
-  else if (role === ROLES.hoaAdmin) {
+  else if (
+    normalizedRole === "HOA Admin"
+  ) {
 
     dashboardContent = (
       <HOADashboard
@@ -1956,8 +2061,8 @@ function Dashboard() {
   else {
 
     dashboardContent = (
-      <NoWorkspaceForRole
-        role={roleLabel(role)}
+      <ResidentDashboard
+        user={user}
       />
     );
 
