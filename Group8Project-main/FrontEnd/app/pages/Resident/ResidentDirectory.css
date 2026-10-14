@@ -1,5 +1,7 @@
+
 /* =========================================================
    VALORA RESIDENT DIRECTORY
+   Shared DashboardSidebar + Consistent Purple Theme
 ========================================================= */
 
 .resident-directory-layout {
@@ -7,121 +9,8 @@
     display: flex;
     background: #f5f3f7;
     color: #242027;
+    font-family: Arial, Helvetica, sans-serif;
 }
-
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.resident-directory-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 20;
-    width: 220px;
-    display: flex;
-    flex-direction: column;
-    background: #563f6b;
-    color: #ffffff;
-    overflow-y: auto;
-}
-
-
-/* =========================================================
-   LOGO
-========================================================= */
-
-.resident-directory-logo-area {
-    padding: 25px 22px 22px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.resident-directory-logo-area img {
-    display: block;
-    width: 132px;
-    max-width: 100%;
-    height: auto;
-}
-
-.resident-directory-logo-area p {
-    margin: 10px 0 0;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-.resident-directory-side-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 20px 12px;
-}
-
-.resident-directory-side-nav a,
-.resident-directory-logout-area a {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 0 12px;
-    border-radius: 7px;
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 10px;
-    font-weight: 500;
-    text-decoration: none;
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-.resident-directory-side-nav a svg,
-.resident-directory-logout-area a svg {
-    flex-shrink: 0;
-}
-
-.resident-directory-side-nav a:hover,
-.resident-directory-logout-area a:hover {
-    background: rgba(255, 255, 255, 0.09);
-    color: #ffffff;
-}
-
-.resident-directory-side-nav a.active {
-    background: #ffffff;
-    color: #563f6b;
-    font-weight: 650;
-}
-
-.resident-directory-side-nav a.active svg {
-    color: #563f6b;
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-.resident-directory-logout-area {
-    margin-top: auto;
-    padding: 14px 12px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.resident-directory-logout-area a {
-    color: rgba(255, 255, 255, 0.72);
-}
-
-
-/* =========================================================
-   MAIN CONTENT
-========================================================= */
 
 .resident-directory-main {
     width: calc(100% - 220px);
@@ -129,8 +18,8 @@
     min-height: 100vh;
     margin-left: 220px;
     padding: 30px 34px 45px;
+    box-sizing: border-box;
 }
-
 
 /* =========================================================
    TOP BAR
@@ -165,9 +54,8 @@
     margin: 6px 0 0;
     color: #858087;
     font-size: 11px;
-    line-height: 1.5;
+    line-height: 1.6;
 }
-
 
 /* =========================================================
    PROFILE
@@ -177,6 +65,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
     color: #4d4650;
     font-size: 10px;
     font-weight: 600;
@@ -196,6 +85,42 @@
     font-weight: 700;
 }
 
+/* =========================================================
+   FEEDBACK
+========================================================= */
+
+.resident-directory-feedback {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 13px 15px;
+    border: 1px solid #d9e7dd;
+    border-radius: 7px;
+    background: #f1f7f2;
+    color: #42634d;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.resident-directory-feedback-error {
+    border-color: #efd5d5;
+    background: #fff4f4;
+    color: #9a3e3e;
+}
+
+.resident-directory-feedback button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
 
 /* =========================================================
    STAT CARDS
@@ -218,6 +143,7 @@
     border-radius: 9px;
     background: #ffffff;
     box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+    box-sizing: border-box;
 }
 
 .resident-directory-stat-icon {
@@ -252,8 +178,8 @@
     margin-top: 6px;
     color: #9a949c;
     font-size: 8px;
+    line-height: 1.5;
 }
-
 
 /* =========================================================
    DIRECTORY PANEL
@@ -261,6 +187,7 @@
 
 .resident-directory-panel {
     width: 100%;
+    min-width: 0;
     border: 1px solid #e4e0e7;
     border-radius: 10px;
     background: #ffffff;
@@ -276,6 +203,7 @@
     gap: 20px;
     padding: 18px 20px;
     border-bottom: 1px solid #ebe8ed;
+    box-sizing: border-box;
 }
 
 .resident-directory-panel-heading h3 {
@@ -289,9 +217,8 @@
     margin: 5px 0 0;
     color: #89838b;
     font-size: 9px;
-    line-height: 1.5;
+    line-height: 1.6;
 }
-
 
 /* =========================================================
    PRIMARY BUTTON
@@ -303,6 +230,7 @@
     align-items: center;
     justify-content: center;
     gap: 7px;
+    flex-shrink: 0;
     padding: 0 14px;
     border: 1px solid #563f6b;
     border-radius: 6px;
@@ -314,14 +242,53 @@
     cursor: pointer;
     transition:
         background 0.2s ease,
-        border-color 0.2s ease;
+        border-color 0.2s ease,
+        opacity 0.2s ease;
 }
 
-.resident-directory-primary-btn:hover {
+.resident-directory-primary-btn:hover:not(:disabled) {
     border-color: #463256;
     background: #463256;
 }
 
+.resident-directory-primary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.resident-directory-primary-btn:focus-visible,
+.resident-directory-secondary-btn:focus-visible,
+.resident-directory-remove-btn:focus-visible {
+    outline: 2px solid #806b94;
+    outline-offset: 2px;
+}
+
+/* =========================================================
+   HOA VERIFICATION NOTICE
+========================================================= */
+
+.resident-directory-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 17px 20px 0;
+    padding: 12px 13px;
+    border: 1px solid #e6dfec;
+    border-radius: 6px;
+    background: #faf8fc;
+    color: #63546f;
+}
+
+.resident-directory-notice svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.resident-directory-notice p {
+    margin: 0;
+    font-size: 9px;
+    line-height: 1.7;
+}
 
 /* =========================================================
    SEARCH AND FILTER
@@ -337,7 +304,7 @@
 .resident-directory-search {
     position: relative;
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
 }
 
 .resident-directory-search svg {
@@ -360,6 +327,7 @@
     color: #39333d;
     font-family: inherit;
     font-size: 9px;
+    box-sizing: border-box;
     transition:
         border-color 0.2s ease,
         box-shadow 0.2s ease;
@@ -380,6 +348,7 @@
 
 .resident-directory-filter-select {
     width: 155px;
+    min-width: 0;
     height: 38px;
     padding: 0 11px;
     border: 1px solid #dcd7df;
@@ -401,7 +370,6 @@
     box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.08);
 }
 
-
 /* =========================================================
    RESULTS
 ========================================================= */
@@ -415,6 +383,53 @@
     font-size: 8px;
 }
 
+/* =========================================================
+   EMPTY STATES
+========================================================= */
+
+.resident-directory-empty {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 48px 24px 52px;
+    text-align: center;
+}
+
+.resident-directory-empty-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 17px;
+    border: 1px solid #e5ddec;
+    border-radius: 50%;
+    background: #f5f0f8;
+    color: #563f6b;
+}
+
+.resident-directory-empty h3 {
+    margin: 0;
+    color: #332c38;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.resident-directory-empty p {
+    max-width: 440px;
+    margin: 9px 0 20px;
+    color: #89838b;
+    font-size: 10px;
+    line-height: 1.8;
+}
+
+.resident-directory-empty-compact {
+    padding: 34px 20px;
+}
+
+.resident-directory-empty-compact p {
+    margin-bottom: 0;
+}
 
 /* =========================================================
    TABLE
@@ -423,11 +438,12 @@
 .resident-directory-table-container {
     width: 100%;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
 }
 
 .resident-directory-table {
     width: 100%;
-    min-width: 900px;
+    min-width: 1050px;
     border-collapse: collapse;
 }
 
@@ -460,9 +476,8 @@
     background: #fcfbfd;
 }
 
-
 /* =========================================================
-   RESIDENT CELL
+   RESIDENT AND UNIT CELLS
 ========================================================= */
 
 .resident-directory-resident-cell {
@@ -483,16 +498,21 @@
     font-size: 8px;
 }
 
-
-/* =========================================================
-   UNIT
-========================================================= */
+.resident-directory-unit-cell {
+    min-width: 100px;
+}
 
 .resident-directory-unit {
     color: #563f6b;
     font-weight: 650;
 }
 
+.resident-directory-unit-cell small {
+    display: block;
+    margin-top: 4px;
+    color: #9a949c;
+    font-size: 8px;
+}
 
 /* =========================================================
    CONTACT
@@ -518,9 +538,8 @@
     word-break: break-word;
 }
 
-
 /* =========================================================
-   OCCUPANCY
+   OCCUPANCY AND STATUS
 ========================================================= */
 
 .resident-directory-occupancy-occupied,
@@ -557,7 +576,6 @@
     color: #746e77;
 }
 
-
 /* =========================================================
    ACTIONS
 ========================================================= */
@@ -568,7 +586,8 @@
     gap: 6px;
 }
 
-.resident-directory-secondary-btn {
+.resident-directory-secondary-btn,
+.resident-directory-remove-btn {
     min-height: 29px;
     display: inline-flex;
     align-items: center;
@@ -582,6 +601,7 @@
     font-family: inherit;
     font-size: 8px;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
     transition:
         border-color 0.2s ease,
@@ -595,25 +615,255 @@
     color: #563f6b;
 }
 
-
-/* =========================================================
-   NO RESULTS
-========================================================= */
-
-.resident-directory-no-results {
-    padding: 40px 20px !important;
-    color: #89828c !important;
-    font-size: 9px !important;
-    text-align: center;
+.resident-directory-remove-btn {
+    border-color: #ead8d8;
+    color: #9a5555;
 }
 
+.resident-directory-remove-btn:hover {
+    border-color: #c98787;
+    background: #fff6f6;
+    color: #8b3636;
+}
 
 /* =========================================================
-   RESPONSIVE — LARGE TABLET
+   MODAL
+========================================================= */
+
+.resident-directory-modal-overlay {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(31, 24, 36, 0.52);
+    box-sizing: border-box;
+}
+
+.resident-directory-modal {
+    width: min(100%, 690px);
+    max-height: min(90vh, 850px);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e4e0e7;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 22px 70px rgba(25, 18, 31, 0.2);
+    overflow: hidden;
+}
+
+.resident-directory-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 23px 25px 19px;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.resident-directory-modal-header h2 {
+    margin: 0;
+    color: #29232e;
+    font-size: 20px;
+    line-height: 1.35;
+}
+
+.resident-directory-modal-header p {
+    margin: 7px 0 0;
+    color: #858087;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.resident-directory-modal-close {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #e2dde5;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #6e6573;
+    cursor: pointer;
+}
+
+.resident-directory-modal-close:hover {
+    border-color: #cfc4d8;
+    background: #f8f5fa;
+    color: #563f6b;
+}
+
+.resident-directory-modal-body {
+    min-height: 0;
+    padding: 23px 25px;
+    overflow-y: auto;
+}
+
+.resident-directory-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 23px;
+    padding-top: 17px;
+    border-top: 1px solid #ebe8ed;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.resident-directory-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px 15px;
+}
+
+.resident-directory-form-full {
+    grid-column: 1 / -1;
+}
+
+.resident-directory-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.resident-directory-form-group label {
+    color: #514957;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.resident-directory-form-group input,
+.resident-directory-form-group select,
+.resident-directory-form-group textarea {
+    width: 100%;
+    min-height: 39px;
+    padding: 10px 11px;
+    border: 1px solid #dcd7df;
+    border-radius: 6px;
+    outline: none;
+    background: #ffffff;
+    color: #39333d;
+    font-family: inherit;
+    font-size: 10px;
+    box-sizing: border-box;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.resident-directory-form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.resident-directory-form-group input:focus,
+.resident-directory-form-group select:focus,
+.resident-directory-form-group textarea:focus {
+    border-color: #563f6b;
+    box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.08);
+}
+
+.resident-directory-form-group small {
+    color: #89818d;
+    font-size: 9px;
+    line-height: 1.6;
+}
+
+.resident-directory-linked-account {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 19px;
+    padding: 12px;
+    border: 1px solid #e6dfec;
+    border-radius: 6px;
+    background: #faf8fc;
+    color: #63546f;
+}
+
+.resident-directory-linked-account svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.resident-directory-linked-account p {
+    margin: 0;
+    font-size: 9px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.resident-directory-form-error {
+    margin-top: 17px;
+    padding: 11px 12px;
+    border: 1px solid #efd5d5;
+    border-radius: 6px;
+    background: #fff4f4;
+    color: #9a3e3e;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   VIEW DETAILS
+========================================================= */
+
+.resident-directory-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+.resident-directory-detail-grid > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.resident-directory-detail-grid span {
+    color: #89818d;
+    font-size: 9px;
+}
+
+.resident-directory-detail-grid strong {
+    color: #38313e;
+    font-size: 10px;
+    font-weight: 650;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.resident-directory-detail-grid .resident-directory-detail-full {
+    grid-column: 1 / -1;
+}
+
+/* =========================================================
+   FOCUS AND ACCESSIBILITY
+========================================================= */
+
+.resident-directory-layout button:focus-visible,
+.resident-directory-layout input:focus-visible,
+.resident-directory-layout select:focus-visible,
+.resident-directory-layout textarea:focus-visible {
+    outline: 2px solid #806b94;
+    outline-offset: 2px;
+}
+
+/* =========================================================
+   LARGE TABLET
 ========================================================= */
 
 @media (max-width: 1100px) {
-
     .resident-directory-main {
         padding: 28px 25px 40px;
     }
@@ -621,87 +871,57 @@
     .resident-directory-stat-cards {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .resident-directory-role-filter {
+        width: 155px;
+    }
 }
 
-
 /* =========================================================
-   RESPONSIVE — TABLET
+   SHARED SIDEBAR: TABLET WIDTH
 ========================================================= */
 
-@media (max-width: 850px) {
-
-    .resident-directory-sidebar {
-        width: 190px;
-    }
-
+@media (max-width: 900px) {
     .resident-directory-main {
-        width: calc(100% - 190px);
-        margin-left: 190px;
+        width: calc(100% - 200px);
+        margin-left: 200px;
         padding: 25px 20px 35px;
-    }
-
-    .resident-directory-side-nav a,
-    .resident-directory-logout-area a {
-        font-size: 9px;
-    }
-
-    .resident-directory-logo-area {
-        padding-left: 18px;
-        padding-right: 18px;
     }
 
     .resident-directory-top-bar h2 {
         font-size: 22px;
     }
+
+    .resident-directory-filters {
+        flex-wrap: wrap;
+    }
+
+    .resident-directory-search {
+        flex-basis: 100%;
+    }
+
+    .resident-directory-filter-select,
+    .resident-directory-role-filter {
+        flex: 1;
+        width: auto;
+    }
 }
 
-
 /* =========================================================
-   RESPONSIVE — MOBILE
+   SHARED SIDEBAR: SMALLER SCREENS
 ========================================================= */
 
 @media (max-width: 700px) {
-
-    .resident-directory-layout {
-        display: block;
-    }
-
-    .resident-directory-sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-        min-height: auto;
-    }
-
-    .resident-directory-logo-area {
-        padding: 18px 20px;
-    }
-
-    .resident-directory-logo-area img {
-        width: 120px;
-    }
-
-    .resident-directory-side-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        padding: 12px;
-    }
-
-    .resident-directory-logout-area {
-        margin-top: 0;
-        padding: 0 12px 14px;
-        border-top: 0;
-    }
-
     .resident-directory-main {
-        width: 100%;
-        margin-left: 0;
+        width: calc(100% - 170px);
+        margin-left: 170px;
         padding: 22px 15px 30px;
     }
 
     .resident-directory-top-bar {
         align-items: flex-start;
         flex-direction: column;
+        gap: 14px;
         margin-bottom: 22px;
     }
 
@@ -710,7 +930,7 @@
     }
 
     .resident-directory-stat-cards {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
     }
 
@@ -723,8 +943,13 @@
         flex-direction: column;
     }
 
-    .resident-directory-primary-btn {
+    .resident-directory-panel-heading .resident-directory-primary-btn {
         width: 100%;
+    }
+
+    .resident-directory-notice {
+        margin-right: 15px;
+        margin-left: 15px;
     }
 
     .resident-directory-filters {
@@ -732,27 +957,30 @@
         flex-direction: column;
     }
 
-    .resident-directory-filter-select {
+    .resident-directory-filter-select,
+    .resident-directory-role-filter {
         width: 100%;
+        min-height: 38px;
+        flex: initial;
+    }
+
+    .resident-directory-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .resident-directory-form-full {
+        grid-column: auto;
     }
 }
 
-
 /* =========================================================
-   RESPONSIVE — SMALL MOBILE
+   SHARED SIDEBAR: MOBILE COLLAPSED WIDTH
 ========================================================= */
 
-@media (max-width: 450px) {
-
-    .resident-directory-side-nav {
-        grid-template-columns: 1fr;
-    }
-
-    .resident-directory-stat-cards {
-        grid-template-columns: 1fr;
-    }
-
+@media (max-width: 480px) {
     .resident-directory-main {
+        width: calc(100% - 68px);
+        margin-left: 68px;
         padding: 18px 10px 25px;
     }
 
@@ -764,8 +992,22 @@
         font-size: 10px;
     }
 
+    .resident-directory-stat-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .resident-directory-stat-card {
+        padding: 15px;
+    }
+
     .resident-directory-panel-heading {
         padding: 16px;
+    }
+
+    .resident-directory-notice {
+        margin-right: 12px;
+        margin-left: 12px;
+        padding: 10px;
     }
 
     .resident-directory-filters {
@@ -773,7 +1015,50 @@
     }
 
     .resident-directory-results {
-        padding-left: 16px;
         padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .resident-directory-empty {
+        padding: 36px 17px;
+    }
+
+    .resident-directory-modal-overlay {
+        align-items: flex-end;
+        padding: 8px;
+    }
+
+    .resident-directory-modal {
+        max-height: 94vh;
+        border-radius: 12px 12px 8px 8px;
+    }
+
+    .resident-directory-modal-header {
+        padding: 18px 16px 15px;
+    }
+
+    .resident-directory-modal-header h2 {
+        font-size: 17px;
+    }
+
+    .resident-directory-modal-body {
+        padding: 18px 16px;
+    }
+
+    .resident-directory-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .resident-directory-detail-grid .resident-directory-detail-full {
+        grid-column: auto;
+    }
+
+    .resident-directory-modal-footer {
+        flex-wrap: wrap;
+    }
+
+    .resident-directory-modal-footer button {
+        flex: 1;
     }
 }
