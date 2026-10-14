@@ -9,9 +9,9 @@
    RGB: 86, 63, 107
 
    Page-specific styling:
-   - pages/Home.css       → public landing page
-   - pages/Auth/Auth.css  → sign-in and registration
-   - App.css              → application shell and dashboards
+   - home.css  → Aishwariya's Home/Landing Page
+   - auth.css  → Linda's Login/Register
+   - App.css   → Tabassum's Dashboard and system pages
    ========================================================= */
 
 
