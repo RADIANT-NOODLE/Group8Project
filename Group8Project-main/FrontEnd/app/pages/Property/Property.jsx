@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPropertyById } from "../../data/propertyStorage";
-import {
-    getSessionUser,
-    updateSessionUser,
-} from "../../services/session.js";
 import "./Property.css";
 
 /*
@@ -68,16 +64,25 @@ export default function Property() {
             return;
         }
 
-        const storedUser =
-            getSessionUser();
+        const loggedIn =
+            localStorage.getItem("valoraLoggedIn") === "true";
 
-        if (!storedUser) {
+        const storedUser =
+            localStorage.getItem("valoraUser");
+
+        if (!loggedIn || !storedUser) {
             setCurrentUser(null);
             setIsSaved(false);
             return;
-        }        try {
+        }
 
-            const user = storedUser;
+        try {
+
+            const user = JSON.parse(storedUser);
+
+            if (!user) {
+                return;
+            }
 
             const savedProperties =
                 Array.isArray(user.savedProperties)
@@ -106,15 +111,15 @@ export default function Property() {
                 )
             ].slice(0, 5);
 
-            /*
-            Only the session module may write the stored user, so the
-            saved/recently-viewed fields stay in the one session contract.
-            */
+            const updatedUser = {
+                ...user,
+                recentlyViewed: updatedRecentlyViewed
+            };
 
-            const updatedUser =
-                updateSessionUser({
-                    recentlyViewed: updatedRecentlyViewed
-                });
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(updatedUser)
+            );
 
             setCurrentUser(updatedUser);
 
@@ -138,10 +143,13 @@ export default function Property() {
 
     const handleSaveProperty = () => {
 
-        const storedUser =
-            getSessionUser();
+        const loggedIn =
+            localStorage.getItem("valoraLoggedIn") === "true";
 
-        if (!storedUser) {
+        const storedUser =
+            localStorage.getItem("valoraUser");
+
+        if (!loggedIn || !storedUser) {
             window.location.href = "/login";
             return;
         }
@@ -152,7 +160,7 @@ export default function Property() {
 
         try {
 
-            const user = storedUser;
+            const user = JSON.parse(storedUser);
 
             const savedProperties =
                 Array.isArray(user.savedProperties)
@@ -168,10 +176,15 @@ export default function Property() {
                             String(property.id).toLowerCase()
                     );
 
-                const updatedUser =
-                    updateSessionUser({
-                        savedProperties: updatedSavedProperties
-                    });
+                const updatedUser = {
+                    ...user,
+                    savedProperties: updatedSavedProperties
+                };
+
+                localStorage.setItem(
+                    "valoraUser",
+                    JSON.stringify(updatedUser)
+                );
 
                 setCurrentUser(updatedUser);
                 setIsSaved(false);
@@ -191,10 +204,15 @@ export default function Property() {
                     ? savedProperties
                     : [...savedProperties, property.id];
 
-            const updatedUser =
-                updateSessionUser({
-                    savedProperties: updatedSavedProperties
-                });
+            const updatedUser = {
+                ...user,
+                savedProperties: updatedSavedProperties
+            };
+
+            localStorage.setItem(
+                "valoraUser",
+                JSON.stringify(updatedUser)
+            );
 
             setCurrentUser(updatedUser);
             setIsSaved(true);
@@ -229,7 +247,7 @@ export default function Property() {
                         className="property-logo-link"
                     >
                         <img
-                            src="/assets/valora-logo.svg"
+                            src="/ValoraLogo.jpeg"
                             alt="VALORA Logo"
                         />
                     </Link>
@@ -786,7 +804,7 @@ export default function Property() {
                     className="property-logo-link"
                 >
                     <img
-                        src="/assets/valora-logo.svg"
+                        src="/ValoraLogo.jpeg"
                         alt="VALORA Logo"
                     />
                 </Link>
