@@ -7,8 +7,6 @@ import {
     getProperties,
 } from "../data/propertyStorage";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
-import { getSessionUser } from "../services/session.js";
-import { ROLES, toRole } from "../services/roleMap.js";
 import "./RequestToSell.css";
 
 
@@ -58,7 +56,11 @@ function RequestToSell() {
     ===================================================== */
 
     const storedUser =
-        getSessionUser();
+        JSON.parse(
+            localStorage.getItem(
+                "valoraUser"
+            ) || "null"
+        );
 
 
     const userName = storedUser
@@ -68,14 +70,8 @@ function RequestToSell() {
         : "";
 
 
-    /*
-    The session carries the backend's role values (`resident`,
-    `investor`). Comparing against display strings ("Resident")
-    refused every resident, who is exactly who this page is for.
-    */
-
     const userRole =
-        toRole(storedUser?.role);
+        storedUser?.role || "";
 
 
     /* =====================================================
@@ -137,8 +133,8 @@ function RequestToSell() {
     ===================================================== */
 
     if (
-        userRole !== ROLES.resident &&
-        userRole !== ROLES.investor
+        userRole !== "Resident" &&
+        userRole !== "Investor"
     ) {
 
         return (
