@@ -1,6 +1,8 @@
+
 /* =========================================================
    VALORA - AGENT EDIT LISTINGS
    Shared VALORA Purple Theme
+   Uses DashboardSidebar for shared navigation
 ========================================================= */
 
 :root {
@@ -24,13 +26,13 @@
     --shadow: 0 4px 18px rgba(35, 28, 43, 0.07);
 }
 
-
 /* =========================================================
    PAGE
 ========================================================= */
 
 .agent-edit-layout {
     min-height: 100vh;
+    width: 100%;
     display: flex;
     background: var(--page-background);
     color: var(--text-dark);
@@ -40,247 +42,26 @@
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+    box-sizing: border-box;
 }
 
+.agent-edit-layout *,
+.agent-edit-layout *::before,
+.agent-edit-layout *::after {
+    box-sizing: border-box;
+}
 
 /* =========================================================
-   SIDEBAR
-========================================================= */
-
-.agent-edit-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 250px;
-    height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-
-    background: var(--valora-purple);
-
-    color: #ffffff;
-
-    z-index: 100;
-
-    box-shadow:
-        4px 0 18px rgba(32, 22, 42, 0.12);
-}
-
-
-/* =========================================================
-   LOGO
-========================================================= */
-
-.agent-edit-brand {
-    height: 92px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 18px 24px;
-
-    border-bottom:
-        1px solid rgba(255, 255, 255, 0.12);
-}
-
-.agent-edit-brand img {
-    width: 155px;
-    max-width: 100%;
-    height: auto;
-
-    display: block;
-
-    object-fit: contain;
-}
-
-
-/* =========================================================
-   SIDEBAR USER
-========================================================= */
-
-.agent-edit-user {
-    display: flex;
-    align-items: center;
-
-    gap: 12px;
-
-    padding: 22px 20px;
-
-    border-bottom:
-        1px solid rgba(255, 255, 255, 0.12);
-}
-
-.agent-edit-avatar {
-    width: 42px;
-    height: 42px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: rgba(255, 255, 255, 0.16);
-
-    color: #ffffff;
-
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.agent-edit-user-info {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 3px;
-}
-
-.agent-edit-user-info strong {
-    color: #ffffff;
-
-    font-size: 14px;
-    font-weight: 600;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.agent-edit-user-info span {
-    color: rgba(255, 255, 255, 0.68);
-
-    font-size: 12px;
-}
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-.agent-edit-nav {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 5px;
-
-    padding: 20px 13px;
-}
-
-.agent-edit-nav a {
-    min-height: 46px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
-
-    padding: 0 14px;
-
-    border-radius: 8px;
-
-    color: rgba(255, 255, 255, 0.76);
-
-    text-decoration: none;
-
-    font-size: 14px;
-    font-weight: 500;
-
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-.agent-edit-nav a svg {
-    flex-shrink: 0;
-}
-
-.agent-edit-nav a:hover {
-    background:
-        rgba(255, 255, 255, 0.10);
-
-    color: #ffffff;
-}
-
-.agent-edit-nav a.active {
-    background: #ffffff;
-
-    color: var(--valora-purple);
-
-    font-weight: 600;
-
-    box-shadow:
-        0 2px 8px rgba(25, 17, 34, 0.10);
-}
-
-
-/* =========================================================
-   SIDEBAR BOTTOM
-========================================================= */
-
-.agent-edit-sidebar-bottom {
-    padding: 15px 13px;
-
-    border-top:
-        1px solid rgba(255, 255, 255, 0.12);
-}
-
-.agent-edit-sidebar-bottom button {
-    width: 100%;
-    min-height: 46px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
-
-    padding: 0 14px;
-
-    border: 0;
-    border-radius: 8px;
-
-    background: transparent;
-
-    color: rgba(255, 255, 255, 0.76);
-
-    font: inherit;
-    font-size: 14px;
-    font-weight: 500;
-
-    cursor: pointer;
-
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-.agent-edit-sidebar-bottom button:hover {
-    background:
-        rgba(255, 255, 255, 0.10);
-
-    color: #ffffff;
-}
-
-
-/* =========================================================
-   MAIN
+   MAIN CONTENT
+   Shared DashboardSidebar width: 220px
 ========================================================= */
 
 .agent-edit-main {
-    width: calc(100% - 250px);
-
+    width: calc(100% - 220px);
+    min-width: 0;
     min-height: 100vh;
-
-    margin-left: 250px;
+    margin-left: 220px;
 }
-
 
 /* =========================================================
    TOP BAR
@@ -288,26 +69,18 @@
 
 .agent-edit-topbar {
     min-height: 92px;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    gap: 30px;
-
+    gap: 24px;
     padding: 20px 34px;
-
     background: #ffffff;
-
-    border-bottom:
-        1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .agent-edit-topbar h1 {
     margin: 0;
-
     color: var(--text-dark);
-
     font-size: 26px;
     line-height: 1.25;
     font-weight: 700;
@@ -315,75 +88,21 @@
 
 .agent-edit-topbar p {
     margin: 7px 0 0;
-
     color: var(--text-medium);
-
     font-size: 14px;
+    line-height: 1.5;
 }
-
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-.agent-edit-profile {
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-}
-
-.agent-edit-profile-avatar {
-    width: 40px;
-    height: 40px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: var(--valora-purple-light);
-
-    color: var(--valora-purple);
-
-    font-size: 14px;
-    font-weight: 700;
-}
-
-.agent-edit-profile > div:last-child {
-    display: flex;
-    flex-direction: column;
-
-    gap: 2px;
-}
-
-.agent-edit-profile strong {
-    color: var(--text-dark);
-
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.agent-edit-profile span {
-    color: var(--text-light);
-
-    font-size: 12px;
-}
-
 
 /* =========================================================
    CONTENT
 ========================================================= */
 
 .agent-edit-content {
-    padding: 30px 34px 50px;
-
+    width: 100%;
     max-width: 1700px;
-
     margin: 0 auto;
+    padding: 30px 34px 50px;
 }
-
 
 /* =========================================================
    MESSAGE
@@ -392,47 +111,53 @@
 .agent-edit-message {
     display: flex;
     align-items: flex-start;
-
     gap: 12px;
-
     margin-bottom: 22px;
-
     padding: 14px 16px;
-
     background: var(--valora-purple-light);
-
-    border:
-        1px solid rgba(86, 63, 107, 0.16);
-
+    border: 1px solid rgba(86, 63, 107, 0.16);
     border-radius: 9px;
 }
 
 .agent-edit-message-icon {
     width: 28px;
     height: 28px;
-
     flex-shrink: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border-radius: 50%;
-
     background: var(--valora-purple);
-
     color: #ffffff;
 }
 
 .agent-edit-message p {
+    flex: 1;
     margin: 4px 0 0;
-
     color: var(--text-dark);
-
     font-size: 13px;
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
+.agent-edit-message-close {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--valora-purple);
+    cursor: pointer;
+}
+
+.agent-edit-message-close:hover {
+    background: rgba(86, 63, 107, 0.1);
+}
 
 /* =========================================================
    STATS
@@ -440,76 +165,53 @@
 
 .agent-edit-stats {
     display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 18px;
-
     margin-bottom: 24px;
 }
 
 .agent-edit-stat-card {
     min-height: 110px;
-
     display: flex;
     flex-direction: column;
     justify-content: center;
-
     padding: 20px 22px;
-
     background: var(--card-background);
-
-    border:
-        1px solid var(--border);
-
+    border: 1px solid var(--border);
     border-radius: 10px;
-
     box-shadow: var(--shadow);
 }
 
 .agent-edit-stat-card span {
     margin-bottom: 9px;
-
     color: var(--text-medium);
-
     font-size: 13px;
     font-weight: 500;
 }
 
 .agent-edit-stat-card strong {
     color: var(--valora-purple);
-
     font-size: 28px;
     line-height: 1;
-
     font-weight: 700;
 }
 
-
 /* =========================================================
-   CARD
+   CARDS
 ========================================================= */
 
 .agent-edit-card {
-    background: var(--card-background);
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 10px;
-
-    box-shadow: var(--shadow);
-
-    overflow: hidden;
-
     margin-bottom: 24px;
+    overflow: hidden;
+    background: var(--card-background);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
 }
 
 .agent-edit-editor {
     overflow: visible;
 }
-
 
 /* =========================================================
    CARD HEADER
@@ -519,44 +221,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 20px;
-
     padding: 24px 26px;
-
-    border-bottom:
-        1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .agent-edit-card-header h2 {
     margin: 0;
-
     color: var(--text-dark);
-
     font-size: 19px;
     font-weight: 700;
 }
 
 .agent-edit-card-header p {
     margin: 6px 0 0;
-
     color: var(--text-medium);
-
     font-size: 13px;
     line-height: 1.5;
 }
 
 .agent-edit-section-label {
     margin-bottom: 6px;
-
     color: var(--valora-purple);
-
     font-size: 11px;
     font-weight: 700;
-
     letter-spacing: 0.08em;
 }
-
 
 /* =========================================================
    TABLE
@@ -564,48 +254,34 @@
 
 .agent-edit-table-wrapper {
     width: 100%;
-
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .agent-edit-table {
     width: 100%;
-
-    border-collapse: collapse;
-
     min-width: 1100px;
+    border-collapse: collapse;
 }
 
 .agent-edit-table th {
     padding: 14px 16px;
-
     background: #fafafa;
-
     color: var(--text-medium);
-
-    border-bottom:
-        1px solid var(--border);
-
+    border-bottom: 1px solid var(--border);
     font-size: 11px;
     font-weight: 700;
-
     text-align: left;
-
     text-transform: uppercase;
-
     letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
 .agent-edit-table td {
     padding: 17px 16px;
-
     color: var(--text-dark);
-
-    border-bottom:
-        1px solid #eeeeef;
-
+    border-bottom: 1px solid #eeeeef;
     font-size: 13px;
-
     vertical-align: middle;
 }
 
@@ -619,42 +295,33 @@
 
 .agent-edit-table td strong {
     display: block;
-
     color: var(--text-dark);
-
     font-size: 13px;
     font-weight: 600;
 }
 
 .agent-edit-table td small {
     display: block;
-
     margin-top: 4px;
-
     color: var(--text-light);
-
     font-size: 11px;
 }
 
 .agent-edit-photo-count {
     display: flex;
     flex-direction: column;
-
     gap: 3px;
 }
 
 .agent-edit-photo-count span {
     color: var(--text-dark);
-
     font-size: 12px;
 }
 
 .agent-edit-photo-count small {
     margin: 0;
-
     color: var(--text-light);
 }
-
 
 /* =========================================================
    STATUS
@@ -663,29 +330,20 @@
 .agent-edit-status-cell {
     display: flex;
     flex-direction: column;
-
     align-items: flex-start;
-
     gap: 5px;
 }
 
 .agent-edit-status {
     display: inline-flex;
     align-items: center;
-
     min-height: 26px;
-
     padding: 4px 9px;
-
     border-radius: 20px;
-
     background: #f1f1f3;
-
     color: var(--text-medium);
-
     font-size: 11px;
     font-weight: 600;
-
     white-space: nowrap;
 }
 
@@ -709,7 +367,6 @@
     color: var(--danger);
 }
 
-
 /* =========================================================
    TABLE ACTIONS
 ========================================================= */
@@ -717,29 +374,22 @@
 .agent-edit-actions {
     display: flex;
     align-items: center;
-
     gap: 7px;
 }
 
 .agent-edit-btn {
     min-height: 34px;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     gap: 6px;
-
     padding: 0 11px;
-
     border-radius: 6px;
-
     font: inherit;
     font-size: 11px;
     font-weight: 600;
-
+    white-space: nowrap;
     cursor: pointer;
-
     transition:
         background 0.2s ease,
         border-color 0.2s ease,
@@ -747,35 +397,26 @@
 }
 
 .agent-edit-btn-primary {
-    border:
-        1px solid var(--valora-purple);
-
+    border: 1px solid var(--valora-purple);
     background: var(--valora-purple);
-
     color: #ffffff;
 }
 
 .agent-edit-btn-primary:hover {
     background: var(--valora-purple-dark);
-
     border-color: var(--valora-purple-dark);
 }
 
 .agent-edit-btn-danger {
-    border:
-        1px solid #e2c4c2;
-
+    border: 1px solid #e2c4c2;
     background: #ffffff;
-
     color: var(--danger);
 }
 
 .agent-edit-btn-danger:hover {
     background: #fdf0ef;
-
     border-color: #d9aaa7;
 }
-
 
 /* =========================================================
    EMPTY STATE
@@ -787,52 +428,38 @@
 
 .agent-edit-empty {
     min-height: 270px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     padding: 35px;
 }
 
 .agent-edit-empty-icon {
     width: 56px;
     height: 56px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     margin-bottom: 15px;
-
     border-radius: 50%;
-
     background: var(--valora-purple-light);
-
     color: var(--valora-purple);
 }
 
 .agent-edit-empty strong {
     color: var(--text-dark);
-
     font-size: 15px;
 }
 
 .agent-edit-empty p {
     max-width: 480px;
-
     margin: 8px 0 0;
-
     color: var(--text-medium);
-
     font-size: 13px;
-
     text-align: center;
-
     line-height: 1.6;
 }
-
 
 /* =========================================================
    CLOSE BUTTON
@@ -840,119 +467,86 @@
 
 .agent-edit-close-btn {
     min-height: 36px;
-
     display: inline-flex;
     align-items: center;
-
     gap: 7px;
-
     padding: 0 13px;
-
-    border:
-        1px solid var(--border);
-
+    border: 1px solid var(--border);
     border-radius: 6px;
-
     background: #ffffff;
-
     color: var(--text-medium);
-
     font: inherit;
     font-size: 12px;
     font-weight: 600;
-
+    white-space: nowrap;
     cursor: pointer;
 }
 
 .agent-edit-close-btn:hover {
     border-color: var(--valora-purple);
-
     color: var(--valora-purple);
 }
 
-
 /* =========================================================
-   INFORMATION BOX
+   ASSIGNMENT INFORMATION
 ========================================================= */
 
 .agent-edit-info-box {
     margin: 24px 26px 0;
-
-    border:
-        1px solid #ddd6e4;
-
+    border: 1px solid #ddd6e4;
     border-radius: 9px;
-
     background: #faf8fb;
+    overflow: hidden;
 }
 
 .agent-edit-info-header {
     padding: 18px 20px;
-
-    border-bottom:
-        1px solid #e4dfe7;
+    border-bottom: 1px solid #e4dfe7;
 }
 
 .agent-edit-info-header h3 {
     margin: 0;
-
     color: var(--text-dark);
-
     font-size: 15px;
     font-weight: 700;
 }
 
 .agent-edit-info-header p {
     margin: 5px 0 0;
-
     color: var(--text-medium);
-
     font-size: 12px;
+    line-height: 1.5;
 }
 
 .agent-edit-info-grid {
     display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1px;
-
     background: #e4dfe7;
 }
 
 .agent-edit-info-grid > div {
     min-width: 0;
-
     padding: 16px 20px;
-
     background: #faf8fb;
 }
 
 .agent-edit-info-grid span {
     display: block;
-
     margin-bottom: 6px;
-
     color: var(--text-light);
-
     font-size: 11px;
     font-weight: 600;
-
     text-transform: uppercase;
-
     letter-spacing: 0.04em;
 }
 
 .agent-edit-info-grid strong {
     color: var(--text-dark);
-
     font-size: 13px;
     font-weight: 600;
-
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
-
 
 /* =========================================================
    FORM
@@ -972,42 +566,33 @@
 
 .agent-edit-form-heading h3 {
     margin: 0;
-
     color: var(--text-dark);
-
     font-size: 16px;
     font-weight: 700;
 }
 
 .agent-edit-form-heading p {
     margin: 5px 0 0;
-
     color: var(--text-medium);
-
     font-size: 12px;
-
     line-height: 1.5;
 }
 
 .agent-edit-form-grid {
     display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 18px;
 }
 
 .agent-edit-field {
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
 
 .agent-edit-field label {
     margin-bottom: 7px;
-
     color: var(--text-dark);
-
     font-size: 12px;
     font-weight: 600;
 }
@@ -1016,24 +601,14 @@
 .agent-edit-field select,
 .agent-edit-field textarea {
     width: 100%;
-
-    box-sizing: border-box;
-
-    border:
-        1px solid #d7d9dd;
-
+    min-width: 0;
+    border: 1px solid #d7d9dd;
     border-radius: 7px;
-
     background: #ffffff;
-
     color: var(--text-dark);
-
     font: inherit;
-
     font-size: 13px;
-
     outline: none;
-
     transition:
         border-color 0.2s ease,
         box-shadow 0.2s ease;
@@ -1042,15 +617,12 @@
 .agent-edit-field input,
 .agent-edit-field select {
     height: 44px;
-
     padding: 0 12px;
 }
 
 .agent-edit-field textarea {
     padding: 12px;
-
     resize: vertical;
-
     line-height: 1.5;
 }
 
@@ -1058,15 +630,18 @@
 .agent-edit-field select:focus,
 .agent-edit-field textarea:focus {
     border-color: var(--valora-purple);
+    box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.10);
+}
 
-    box-shadow:
-        0 0 0 3px rgba(86, 63, 107, 0.10);
+.agent-edit-field input:disabled {
+    background: #f1f1f3;
+    color: var(--text-light);
+    cursor: not-allowed;
 }
 
 .agent-edit-description-field {
     margin-top: 18px;
 }
-
 
 /* =========================================================
    PHOTO SECTIONS
@@ -1074,76 +649,53 @@
 
 .agent-edit-photo-section {
     margin-top: 28px;
-
     padding-top: 28px;
-
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 }
 
 .agent-edit-photo-grid {
     display: grid;
-
-    grid-template-columns:
-        repeat(auto-fill, minmax(190px, 1fr));
-
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 16px;
 }
 
 .agent-edit-photo-card {
+    min-width: 0;
     overflow: hidden;
-
-    border:
-        1px solid var(--border);
-
+    border: 1px solid var(--border);
     border-radius: 8px;
-
     background: #ffffff;
 }
 
 .agent-edit-photo-image {
     width: 100%;
     height: 150px;
-
-    background: #f0f1f3;
-
     overflow: hidden;
+    background: #f0f1f3;
 }
 
 .agent-edit-photo-image img {
     width: 100%;
     height: 100%;
-
     display: block;
-
     object-fit: cover;
 }
 
 .agent-edit-photo-remove {
     width: 100%;
     min-height: 40px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     gap: 6px;
-
     padding: 8px 10px;
-
     border: 0;
-
-    border-top:
-        1px solid var(--border);
-
+    border-top: 1px solid var(--border);
     background: #ffffff;
-
     color: var(--danger);
-
     font: inherit;
     font-size: 11px;
     font-weight: 600;
-
     cursor: pointer;
 }
 
@@ -1153,84 +705,60 @@
 
 .agent-edit-photo-remove:disabled {
     background: #f5f5f6;
-
     color: var(--text-light);
-
     cursor: not-allowed;
 }
 
 .agent-edit-photo-status {
     min-height: 40px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     padding: 8px 10px;
-
-    border-top:
-        1px solid var(--border);
-
+    border-top: 1px solid var(--border);
     color: var(--warning);
-
     background: #fffaf1;
-
     font-size: 11px;
     font-weight: 600;
-
     text-align: center;
 }
 
 .agent-edit-photo-status-warning {
     color: var(--danger);
-
     background: #fdf5f4;
 }
 
 .agent-edit-photo-file-name {
     min-height: 38px;
-
     display: flex;
     align-items: center;
-
     padding: 8px 10px;
-
-    border-top:
-        1px solid var(--border);
-
+    border-top: 1px solid var(--border);
     color: var(--text-medium);
-
     font-size: 11px;
-
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .agent-edit-photo-empty {
     min-height: 130px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     gap: 8px;
-
-    border:
-        1px dashed #d4d5d9;
-
+    padding: 20px;
+    border: 1px dashed #d4d5d9;
     border-radius: 8px;
-
     background: #fafafa;
-
     color: var(--text-light);
 }
 
 .agent-edit-photo-empty p {
     margin: 0;
-
     font-size: 12px;
+    text-align: center;
+    line-height: 1.5;
 }
-
 
 /* =========================================================
    UPLOAD
@@ -1238,38 +766,25 @@
 
 .agent-edit-upload-section {
     margin-top: 28px;
-
     padding-top: 28px;
-
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 }
 
 .agent-edit-upload-box {
+    position: relative;
     min-height: 170px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     gap: 8px;
-
     padding: 25px;
-
-    border:
-        1px dashed #c8c0cf;
-
+    border: 1px dashed #c8c0cf;
     border-radius: 9px;
-
     background: #faf8fb;
-
     color: var(--text-medium);
-
     text-align: center;
-
     cursor: pointer;
-
     transition:
         border-color 0.2s ease,
         background 0.2s ease;
@@ -1277,47 +792,43 @@
 
 .agent-edit-upload-box:hover {
     border-color: var(--valora-purple);
-
     background: #f7f3f9;
 }
 
 .agent-edit-upload-box input {
     position: absolute;
-
     width: 1px;
     height: 1px;
-
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
     opacity: 0;
+}
 
-    pointer-events: none;
+.agent-edit-upload-box:focus-within {
+    outline: 2px solid var(--valora-purple);
+    outline-offset: 3px;
 }
 
 .agent-edit-upload-icon {
     width: 48px;
     height: 48px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     margin-bottom: 4px;
-
     border-radius: 50%;
-
     background: var(--valora-purple-light);
-
     color: var(--valora-purple);
 }
 
 .agent-edit-upload-box strong {
     color: var(--text-dark);
-
     font-size: 13px;
 }
 
 .agent-edit-upload-box span {
     color: var(--text-light);
-
     font-size: 11px;
 }
 
@@ -1325,24 +836,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 15px;
-
     margin: 22px 0 14px;
 }
 
 .agent-edit-selected-heading strong {
     color: var(--text-dark);
-
     font-size: 13px;
 }
 
 .agent-edit-selected-heading span {
     color: var(--text-medium);
-
     font-size: 12px;
 }
-
 
 /* =========================================================
    FORM ACTIONS
@@ -1351,38 +857,26 @@
 .agent-edit-form-actions {
     display: flex;
     align-items: center;
-
+    flex-wrap: wrap;
     gap: 10px;
-
     margin-top: 30px;
-
     padding-top: 24px;
-
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 }
 
 .agent-edit-submit-btn,
 .agent-edit-cancel-btn {
     min-height: 44px;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     gap: 8px;
-
     padding: 0 17px;
-
     border-radius: 7px;
-
     font: inherit;
-
     font-size: 12px;
     font-weight: 600;
-
     cursor: pointer;
-
     transition:
         background 0.2s ease,
         border-color 0.2s ease,
@@ -1390,155 +884,79 @@
 }
 
 .agent-edit-submit-btn {
-    border:
-        1px solid var(--valora-purple);
-
+    border: 1px solid var(--valora-purple);
     background: var(--valora-purple);
-
     color: #ffffff;
 }
 
 .agent-edit-submit-btn:hover {
     background: var(--valora-purple-dark);
-
     border-color: var(--valora-purple-dark);
 }
 
 .agent-edit-cancel-btn {
-    border:
-        1px solid var(--border);
-
+    border: 1px solid var(--border);
     background: #ffffff;
-
     color: var(--text-medium);
 }
 
 .agent-edit-cancel-btn:hover {
     border-color: var(--valora-purple);
-
     color: var(--valora-purple);
 }
 
-
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE CONTENT
+   Sidebar responsiveness remains controlled by the shared
+   DashboardSidebar component and its own stylesheet.
 ========================================================= */
 
 @media (max-width: 1200px) {
-
-    .agent-edit-sidebar {
-        width: 220px;
-    }
-
-    .agent-edit-main {
-        width: calc(100% - 220px);
-
-        margin-left: 220px;
-    }
-
     .agent-edit-content {
         padding-left: 24px;
         padding-right: 24px;
     }
 
     .agent-edit-stats {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .agent-edit-info-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .agent-edit-form-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
 }
 
-
 @media (max-width: 850px) {
-
-    .agent-edit-sidebar {
-        width: 205px;
-    }
-
-    .agent-edit-main {
-        width: calc(100% - 205px);
-
-        margin-left: 205px;
-    }
-
     .agent-edit-topbar {
         padding: 18px 22px;
-    }
-
-    .agent-edit-profile {
-        display: none;
     }
 
     .agent-edit-content {
         padding: 22px 18px 40px;
     }
 
+    .agent-edit-card-header {
+        padding: 21px;
+    }
+
+    .agent-edit-info-box {
+        margin-left: 21px;
+        margin-right: 21px;
+    }
+
+    .agent-edit-editor form {
+        padding-left: 21px;
+        padding-right: 21px;
+    }
 }
 
-
 @media (max-width: 650px) {
-
-    .agent-edit-layout {
-        display: block;
-    }
-
-    .agent-edit-sidebar {
-        position: relative;
-
-        width: 100%;
-        height: auto;
-
-        min-height: auto;
-    }
-
-    .agent-edit-brand {
-        height: 76px;
-    }
-
-    .agent-edit-user {
-        display: none;
-    }
-
-    .agent-edit-nav {
-        display: grid;
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        padding: 12px;
-
-        gap: 6px;
-    }
-
-    .agent-edit-nav a {
-        min-height: 42px;
-
-        font-size: 12px;
-    }
-
-    .agent-edit-sidebar-bottom {
-        display: none;
-    }
-
-    .agent-edit-main {
-        width: 100%;
-
-        margin-left: 0;
-    }
-
     .agent-edit-topbar {
         min-height: auto;
-
         padding: 20px 18px;
     }
 
@@ -1546,31 +964,44 @@
         font-size: 22px;
     }
 
+    .agent-edit-content {
+        padding: 18px 12px 30px;
+    }
+
     .agent-edit-stats {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .agent-edit-stat-card {
+        min-height: 90px;
     }
 
     .agent-edit-info-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
 
     .agent-edit-form-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
 
     .agent-edit-card-header {
         align-items: flex-start;
-
         flex-direction: column;
+        padding: 19px;
+    }
+
+    .agent-edit-info-box {
+        margin: 18px 19px 0;
+    }
+
+    .agent-edit-editor form {
+        padding: 0 19px 22px;
     }
 
     .agent-edit-form-actions {
-        flex-direction: column;
-
         align-items: stretch;
+        flex-direction: column;
     }
 
     .agent-edit-submit-btn,
@@ -1578,4 +1009,25 @@
         width: 100%;
     }
 
+    .agent-edit-photo-grid {
+        grid-template-columns: repeat(
+            auto-fill,
+            minmax(145px, 1fr)
+        );
+        gap: 12px;
+    }
+
+    .agent-edit-photo-image {
+        height: 125px;
+    }
+
+    .agent-edit-selected-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .agent-edit-message {
+        padding: 12px;
+    }
 }
