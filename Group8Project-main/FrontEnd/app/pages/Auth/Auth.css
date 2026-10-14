@@ -1,3 +1,4 @@
+
 /* =========================================================
    VALORA AUTHENTICATION
    LOGIN + REGISTER + REGISTRATION PENDING
@@ -6,6 +7,11 @@
 * {
     box-sizing: border-box;
 }
+
+
+/* =========================================================
+   AUTH PAGE
+========================================================= */
 
 .auth-page {
     min-height: 100vh;
@@ -16,6 +22,7 @@
     background: #f5f3f7;
     color: #1f1f1f;
 }
+
 
 /* =========================================================
    AUTH CARD
@@ -32,6 +39,7 @@
     border-radius: 14px;
     box-shadow: 0 12px 40px rgba(40, 30, 50, 0.10);
 }
+
 
 /* =========================================================
    LEFT SIDEBAR
@@ -70,6 +78,7 @@
     border-radius: 50%;
 }
 
+
 /* =========================================================
    LOGO
 ========================================================= */
@@ -85,6 +94,7 @@
     max-width: 100%;
     height: auto;
 }
+
 
 /* =========================================================
    SIDEBAR CONTENT
@@ -121,6 +131,7 @@
     line-height: 1.7;
 }
 
+
 /* =========================================================
    RIGHT FORM PANEL
 ========================================================= */
@@ -153,6 +164,7 @@
     line-height: 1.6;
 }
 
+
 /* =========================================================
    ERROR MESSAGE
 ========================================================= */
@@ -171,23 +183,6 @@
     line-height: 1.5;
 }
 
-.auth-hint {
-    margin-top: 7px;
-    color: #777777;
-    font-size: 12.5px;
-}
-
-.auth-account-note {
-    margin-top: 4px;
-    margin-bottom: 20px;
-    padding: 13px 15px;
-    border: 1px solid #e4e0e7;
-    border-radius: 10px;
-    background: #f5f3f7;
-    color: #463256;
-    font-size: 13.5px;
-    line-height: 1.55;
-}
 
 /* =========================================================
    FORM
@@ -203,22 +198,19 @@
     gap: 15px;
 }
 
-/*
-The label and the control are separate rules on purpose.
-They were merged by an earlier cleanup, which gave the
-label the control's box (border, background, radius,
-half the field's height) and the field wrapper the same
-treatment — the wrapper rendered as a second empty input
-behind every field. Keep them apart.
-*/
+.auth-field,
+.form-group {
+    margin-bottom: 17px;
+}
 
 .auth-field label,
-.form-group label {
+.form-group label,
+.auth-role > label {
     display: block;
-    margin-bottom: 6px;
-    color: #252525;
-    font-family: inherit;
-    font-size: 13px;
+    margin-bottom: 7px;
+    color: #343434;
+    font-size: 12px;
+    font-weight: 650;
 }
 
 .auth-field input,
@@ -239,11 +231,152 @@ behind every field. Keep them apart.
         box-shadow 0.2s ease;
 }
 
+.auth-field input::placeholder,
+.form-group input::placeholder {
+    color: #a0a0a0;
+}
+
 .auth-field input:focus,
 .form-group input:focus,
 .auth-form-content select:focus {
     border-color: #563f6b;
     box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.09);
+}
+
+
+/* =========================================================
+   ROLE SECTION
+========================================================= */
+
+.auth-role {
+    margin: 7px 0 23px;
+}
+
+.role-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.role-option {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    border: 1px solid #dcd8df;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #555555;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.role-option:hover {
+    border-color: #bcb2c5;
+    background: #faf9fb;
+}
+
+.role-option.selected {
+    border-color: #563f6b;
+    background: #f0ebf4;
+    color: #563f6b;
+    font-weight: 650;
+}
+
+.role-option input,
+.radio-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.role-option span {
+    font-size: 11px;
+    text-align: center;
+}
+
+
+/* =========================================================
+   PROPERTY REGISTRATION SECTION
+========================================================= */
+
+.property-registration-section {
+    padding: 22px;
+    margin: 4px 0 24px;
+    border: 1px solid #e3dfe6;
+    border-radius: 10px;
+    background: #faf9fb;
+}
+
+.section-heading {
+    padding-bottom: 17px;
+    margin-bottom: 19px;
+    border-bottom: 1px solid #e4e0e7;
+}
+
+.section-heading h3 {
+    margin: 0;
+    color: #2a2a2a;
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.section-heading p {
+    margin: 5px 0 0;
+    color: #7a7a7a;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   RADIO GROUPS
+========================================================= */
+
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.radio-option {
+    position: relative;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 17px;
+    border: 1px solid #d9d5dd;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #555555;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.radio-option:hover {
+    border-color: #bbb2c3;
+}
+
+.radio-option.selected {
+    border-color: #563f6b;
+    background: #f0ebf4;
+    color: #563f6b;
+    font-weight: 650;
+}
+
+.radio-option span {
+    font-size: 12px;
+}
+
+.finance-options {
+    gap: 8px;
 }
 
 
@@ -281,6 +414,7 @@ behind every field. Keep them apart.
     transform: translateY(1px);
 }
 
+
 /* =========================================================
    AUTH LINKS
 ========================================================= */
@@ -315,9 +449,96 @@ behind every field. Keep them apart.
     font-weight: 500;
 }
 
+
+/* =========================================================
+   REGISTRATION PENDING ICON
+========================================================= */
+
+.pending-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    background: #f0ebf4;
+    color: #563f6b;
+}
+
+.pending-icon svg {
+    display: block;
+}
+
+
 /* =========================================================
    REGISTRATION PENDING
+   YELLOW REVIEW NOTIFICATION
 ========================================================= */
+
+.pending-message {
+    padding: 20px;
+    margin: 22px 0;
+    border: 1px solid #f0d778;
+    border-left: 5px solid #e0ad25;
+    border-radius: 9px;
+    background: #fff3cd;
+    color: #664d03;
+    text-align: left;
+}
+
+.pending-message-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: #856404;
+}
+
+.pending-message-heading svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #856404;
+}
+
+.pending-message h3 {
+    margin: 0 0 9px;
+    color: #856404;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.pending-message p {
+    margin: 0 0 10px;
+    color: #664d03;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.pending-message p:last-child {
+    margin-bottom: 0;
+}
+
+.pending-message .pending-message-note {
+    padding-top: 12px;
+    border-top: 1px solid #ead58b;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   REGISTRATION PENDING HOME BUTTON
+========================================================= */
+
+.auth-home-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+}
+
 
 /* =========================================================
    SCROLLBAR
@@ -340,12 +561,12 @@ behind every field. Keep them apart.
     background: #aaa1b0;
 }
 
+
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE - TABLETS
 ========================================================= */
 
 @media (max-width: 950px) {
-
     .auth-page {
         padding: 20px;
     }
@@ -358,10 +579,17 @@ behind every field. Keep them apart.
         padding: 36px 32px;
     }
 
+    .role-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-@media (max-width: 760px) {
 
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
     .auth-page {
         align-items: flex-start;
         padding: 15px;
@@ -405,8 +633,12 @@ behind every field. Keep them apart.
     }
 }
 
-@media (max-width: 520px) {
 
+/* =========================================================
+   RESPONSIVE - SMALL MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
     .auth-page {
         padding: 0;
     }
@@ -449,4 +681,40 @@ behind every field. Keep them apart.
         gap: 0;
     }
 
+    .role-options {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .property-registration-section {
+        padding: 17px;
+    }
+
+    .radio-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .finance-options {
+        grid-template-columns: 1fr;
+    }
+
+    .pending-message {
+        padding: 16px;
+    }
+
+    .pending-message-heading h3 {
+        font-size: 14px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 350px) {
+    .role-options,
+    .radio-group {
+        grid-template-columns: 1fr;
+    }
 }
