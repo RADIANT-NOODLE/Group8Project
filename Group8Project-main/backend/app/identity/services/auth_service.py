@@ -30,6 +30,8 @@ class AuthService:
             unit_no=payload.unit_no,
         )
 
+        if not user.hoa_approved:
+            raise CredentialsException("Your account is pending HOA approval. Please wait for an administrator to approve you.")
         return self._build_auth_response(user)
 
     async def login(self, payload: LoginRequest) -> AuthResponse:
@@ -55,3 +57,9 @@ class AuthService:
             token_type="bearer",
             user=UserResponse.model_validate(user),
         )
+
+if not User.hoa_approved:
+    raise CredentialsException(
+        "Your account is pending HOA approval. "
+        "Please wait for an administrator to approve you."
+    )
