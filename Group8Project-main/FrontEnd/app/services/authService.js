@@ -1,4 +1,5 @@
-import { authMode, environment } from './environment.js';
+test
+  import { authMode, environment } from './environment.js';
 import * as authApi from './authApi.js';
 import * as mockAuthService from './mockAuthService.js';
 
