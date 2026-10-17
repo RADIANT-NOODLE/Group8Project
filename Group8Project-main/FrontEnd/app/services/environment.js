@@ -11,7 +11,7 @@ function parseBoolean(value) {
 }
 
 export const environment = Object.freeze({
-  apiBaseUrl: readValue('VITE_API_BASE_URL', 'http://localhost:8000').replace(/\/+$/, ''),
+  apiBaseUrl: readValue('VITE_API_BASE_URL', 'http://127.0.0.1:8000').replace(/\/+$/, ''),
   useMockAuth: parseBoolean(readValue('VITE_USE_MOCK_AUTH', 'false')),
 });
 
