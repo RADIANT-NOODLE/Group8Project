@@ -252,11 +252,22 @@ function getCurrentUser() {
 }
 
 /* CHECK APPROVAL STATUS */
+/*
 function isUserApproved(user) {
     const status = String(user?.status || "")
         .trim()
         .toLowerCase();
 
+    return status === "approved" || status === "active";
+}
+*/
+function isUserApproved(user) {
+    if (!user) return false;
+
+    if (user.hoa_approved === true) return true;
+
+    const status = String(user?.status || "").trim().toLowerCase();
+    
     return status === "approved" || status === "active";
 }
 
