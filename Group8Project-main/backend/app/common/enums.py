@@ -9,6 +9,7 @@ class UserRole(str, Enum):
     estate_agent = "estate_agent"
     hoa_admin = "hoa_admin"
     service_provider = "service_provider"
+    head_admin = "head_admin"
 
 
 class ComplaintStatus(str, Enum):
