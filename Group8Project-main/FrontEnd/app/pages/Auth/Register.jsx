@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { register } from "../../services/authService.js";
 import "./Auth.css";
 
 function Register() {
@@ -51,7 +52,7 @@ function Register() {
         setError("");
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         setError("");
 
@@ -68,6 +69,15 @@ function Register() {
             return;
         }
 
+        // 2. Password length validation
+        if (password.length < 8) {
+            setError(
+                "Password must be at least 8 characters long."
+            );
+            return;
+        }
+
+        // 3. Property user validation
         if (isPropertyUser) {
             if (!propertyGoal) {
                 setError(
@@ -109,112 +119,36 @@ function Register() {
             }
         }
 
-        let existingUsers = [];
+        // 4. map frontend role to backend role
+        const roleMap = {
+            "Resident": "resident",
+            "Investor": "investor",
+            "Estate Agent": "estate_agent",
+            "HOA Admin": "hoa_admin",
+            "Head Admin": "head_admin",
+        };
+        const backendRole = roleMap[role] || "resident";
 
         try {
-            const storedUsers =
-                localStorage.getItem("valoraUsers");
-
-            if (storedUsers) {
-                const parsedUsers = JSON.parse(storedUsers);
-
-                if (Array.isArray(parsedUsers)) {
-                    existingUsers = parsedUsers;
-                }
-            }
-        } catch (error) {
-            console.error(
-                "Unable to read existing users:",
-                error
-            );
-
-            existingUsers = [];
+            await register({
+                first_name: firstName.trim,
+                last_name: lastName.trim(),
+                full_name: `${firstName.trim()} ${lastName.trim()}`,
+                email: email.trim().toLowerCase(),
+                password,
+                role: backendRole,
+            });
+        
+            navigate("/registration-pending");
+        } catch (err) {
+            const message =
+                err?.body?.detail ||
+                err?.body?.message ||
+                err?.message ||
+                "Registration failed. Please try again.";
+            setError(message);
         }
 
-        const normalizedEmail =
-            email.trim().toLowerCase();
-
-        const emailExists = existingUsers.some(
-            (user) =>
-                user &&
-                user.email &&
-                user.email.toLowerCase() === normalizedEmail
-        );
-
-        if (emailExists) {
-            setError(
-                "An account with this email address already exists."
-            );
-            return;
-        }
-
-        const newUser = {
-            id: `user-${Date.now()}`,
-
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-
-            email: email.trim(),
-            password,
-
-            role,
-
-            status: "Pending",
-
-            propertyGoal: isPropertyUser
-                ? propertyGoal
-                : "",
-
-            monthlyIncome:
-                isPropertyUser &&
-                propertyGoal === "Rent"
-                    ? monthlyIncome
-                    : "",
-
-            rentalBudget:
-                isPropertyUser &&
-                propertyGoal === "Rent"
-                    ? rentalBudget
-                    : "",
-
-            propertyBudget:
-                isPropertyUser &&
-                propertyGoal === "Buy"
-                    ? propertyBudget
-                    : "",
-
-            financeMethod:
-                isPropertyUser &&
-                propertyGoal === "Buy"
-                    ? financeMethod
-                    : "",
-
-            savedProperties: [],
-            recentlyViewed: [],
-            myProperty: null,
-            enquiries: [],
-            viewingRequests: []
-        };
-
-        existingUsers.push(newUser);
-
-        localStorage.setItem(
-            "valoraUsers",
-            JSON.stringify(existingUsers)
-        );
-
-        localStorage.setItem(
-            "valoraUser",
-            JSON.stringify(newUser)
-        );
-
-        /*
-         * Registration is pending approval.
-         * Do NOT mark the user as logged in yet.
-         */
-        localStorage.removeItem("valoraLoggedIn");
-
-        navigate("/registration-pending");
     };
 
     return (
@@ -496,6 +430,26 @@ function Register() {
 
                                         <span>
                                             HOA Admin
+                                        </span>
+                                    </label>
+
+                                    <label
+                                         className={`role-option ${
+                                            role === "Head Admin" ? "selected" : ""
+                                         }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value="Head Admin"
+                                            checked={role === "Head Admin"}
+                                            onChange={() =>
+                                                handleRoleChange("Head Admin")
+                                            }
+                                        />
+
+                                        <span>
+                                            Head Admin
                                         </span>
                                     </label>
 
