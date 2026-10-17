@@ -1,5 +1,4 @@
-test
-  import { authMode, environment } from './environment.js';
+import { authMode, environment } from './environment.js';
 import * as authApi from './authApi.js';
 import * as mockAuthService from './mockAuthService.js';
 
@@ -169,3 +168,5 @@ export function logout() {
   }
   clearSession();
 }
+
+/* test commit */
