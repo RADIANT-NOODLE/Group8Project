@@ -1,4 +1,6 @@
 """Identity Pydantic schemas — request and response models."""
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 from app.common.enums import UserRole
@@ -43,3 +45,14 @@ class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+class UserSummary(BaseModel):
+    user_id: int = Field(..., serialization_alias="id")
+    email: str
+    full_name: str
+    role: str
+    unit_no: str | None
+    email_verified: bool
+    hoa_approved: bool
+
+    model_config = {"from_attributes": True, "populate_by_name": True}
