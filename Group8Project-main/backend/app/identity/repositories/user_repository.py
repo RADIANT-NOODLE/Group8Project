@@ -39,3 +39,24 @@ class UserRepository:
         await self._db.commit()
         await self._db.refresh(user)
         return user
+
+    async def list_pending(self) -> list[User]:
+        """Return all users awaiting HOA approval, oldest first."""
+        result = await self._db.execute(
+            select(User)
+            .where(User.hoa_approved == False)  
+            .order_by(User.created_at.asc())
+        )
+        return list(result.scalars().all())
+
+    async def set_approval(self, user: User, approved: bool) -> User:
+        """Set the hoa_approved flag and persist it."""
+        user.hoa_approved = approved
+        await self._db.commit()
+        await self._db.refresh(user)
+        return user
+
+    async def delete(self, user: User) -> None:
+        """Delete a user from the database."""
+        await self._db.delete(user)
+        await self._db.commit()
