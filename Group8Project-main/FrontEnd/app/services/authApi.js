@@ -1,3 +1,4 @@
+/* test */
 import { apiRequest } from './apiClient.js';
 
 function registrationPayload(payload) {
