@@ -1,0 +1,682 @@
+
+/* =========================================================
+   VALORA RESIDENT COMPLAINTS
+   Uses the shared DashboardSidebar component and CSS.
+========================================================= */
+
+.resident-complaints-layout {
+    min-height: 100vh;
+    display: flex;
+    background: #f5f3f7;
+    color: #242027;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =========================================================
+   MAIN CONTENT
+   Must match DashboardSidebar.css:
+   220px desktop, 200px at 900px,
+   170px at 700px, 68px at 480px.
+========================================================= */
+
+.resident-complaints-main {
+    width: calc(100% - 220px);
+    min-width: 0;
+    min-height: 100vh;
+    margin-left: 220px;
+    padding: 30px 34px 45px;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.resident-complaints-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    margin-bottom: 28px;
+}
+
+.resident-complaints-eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: #563f6b;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.resident-complaints-top-bar h2 {
+    margin: 0;
+    color: #29232e;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.resident-complaints-top-bar p {
+    max-width: 700px;
+    margin: 7px 0 0;
+    color: #858087;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   ADMIN PROFILE
+========================================================= */
+
+.resident-complaints-admin-label {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    flex-shrink: 0;
+    color: #4d4650;
+}
+
+.resident-complaints-admin-avatar {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #ded9e1;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.resident-complaints-admin-label > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.resident-complaints-admin-label strong {
+    max-width: 180px;
+    overflow: hidden;
+    color: #39323d;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resident-complaints-admin-label > div > span {
+    color: #89838b;
+    font-size: 11px;
+}
+
+/* =========================================================
+   FEEDBACK MESSAGES
+========================================================= */
+
+.resident-complaints-notice,
+.resident-complaints-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 13px 15px;
+    border: 1px solid;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.resident-complaints-notice {
+    border-color: #cfe7d2;
+    background: #f1faf2;
+    color: #276738;
+}
+
+.resident-complaints-error {
+    border-color: #f0caca;
+    background: #fff4f4;
+    color: #a52d2d;
+}
+
+.resident-complaints-notice button,
+.resident-complaints-error button {
+    flex-shrink: 0;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+/* =========================================================
+   ACCESS MESSAGES
+========================================================= */
+
+.resident-complaints-message {
+    max-width: 700px;
+    padding: 25px;
+}
+
+.resident-complaints-message h2 {
+    margin: 0 0 9px;
+    color: #29232e;
+    font-size: 22px;
+}
+
+.resident-complaints-message p {
+    margin: 0;
+    color: #77717a;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   STAT CARDS
+========================================================= */
+
+.resident-complaints-stat-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.resident-complaints-stat-card {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 18px;
+    border: 1px solid #e4e0e7;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+}
+
+.resident-complaints-stat-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #f0ebf4;
+    color: #563f6b;
+}
+
+.resident-complaints-stat-content {
+    min-width: 0;
+}
+
+.resident-complaints-stat-card p {
+    margin: 0 0 7px;
+    color: #77717a;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.resident-complaints-stat-card h3 {
+    margin: 0;
+    color: #29232e;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.resident-complaints-stat-card small {
+    display: block;
+    margin-top: 7px;
+    color: #9a949c;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.resident-complaints-panel {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 20px;
+    border: 1px solid #e4e0e7;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+    overflow: hidden;
+}
+
+.resident-complaints-panel-heading {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.resident-complaints-panel-heading h3 {
+    margin: 0;
+    color: #302a34;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.resident-complaints-panel-heading p {
+    margin: 6px 0 0;
+    color: #89838b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.resident-complaints-record-count {
+    flex-shrink: 0;
+    padding: 7px 10px;
+    border: 1px solid #e2dce5;
+    border-radius: 6px;
+    background: #faf8fb;
+    color: #6d6472;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.resident-complaints-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.resident-complaints-toolbar label {
+    flex-shrink: 0;
+    color: #514a55;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.resident-complaints-toolbar input {
+    width: 100%;
+    max-width: 370px;
+    min-height: 40px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #dcd6e2;
+    border-radius: 7px;
+    outline: none;
+    background: #ffffff;
+    color: #302b35;
+    font-family: inherit;
+    font-size: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resident-complaints-toolbar input:focus {
+    border-color: #563f6b;
+    box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.1);
+}
+
+.resident-complaints-toolbar input::placeholder {
+    color: #a09aa5;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.resident-complaints-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.resident-complaints-table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.resident-complaints-table th {
+    padding: 13px 15px;
+    border-bottom: 1px solid #ebe8ed;
+    background: #faf9fb;
+    color: #817a84;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    white-space: nowrap;
+}
+
+.resident-complaints-table td {
+    padding: 14px 15px;
+    border-bottom: 1px solid #f0edf1;
+    color: #514b54;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.resident-complaints-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.resident-complaints-table tbody tr:hover {
+    background: #fcfbfd;
+}
+
+.resident-complaints-id {
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.resident-complaints-resident {
+    min-width: 145px;
+}
+
+.resident-complaints-resident strong {
+    display: block;
+    color: #39323d;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.resident-complaints-resident small {
+    display: block;
+    max-width: 180px;
+    margin-top: 5px;
+    color: #9a949c;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.resident-complaints-empty {
+    padding: 35px 20px !important;
+    color: #77717a !important;
+    text-align: center;
+    line-height: 1.7;
+}
+
+/* =========================================================
+   PRIORITY BADGES
+========================================================= */
+
+.resident-complaints-priority-high,
+.resident-complaints-priority-normal {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    padding: 0 9px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.resident-complaints-priority-high {
+    background: #fff0f0;
+    color: #a52d2d;
+}
+
+.resident-complaints-priority-normal {
+    background: #f3f1f4;
+    color: #746c77;
+}
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.resident-complaints-status-resolved,
+.resident-complaints-status-progress,
+.resident-complaints-status-acknowledged,
+.resident-complaints-status-cancelled,
+.resident-complaints-status-submitted {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    padding: 0 9px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.resident-complaints-status-resolved {
+    background: #e6f5e9;
+    color: #28763a;
+}
+
+.resident-complaints-status-progress {
+    background: #fff2dc;
+    color: #8b5b00;
+}
+
+.resident-complaints-status-acknowledged {
+    background: #e9e1f0;
+    color: #563f6b;
+}
+
+.resident-complaints-status-cancelled {
+    background: #f0f0f2;
+    color: #686570;
+}
+
+.resident-complaints-status-submitted {
+    background: #eee7f3;
+    color: #563f6b;
+}
+
+/* =========================================================
+   STATUS SELECT
+========================================================= */
+
+.resident-complaints-status-select {
+    width: 145px;
+    max-width: 100%;
+    min-height: 36px;
+    padding: 0 9px;
+    border: 1px solid #dcd6e2;
+    border-radius: 6px;
+    outline: none;
+    background: #ffffff;
+    color: #514a55;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resident-complaints-status-select:hover {
+    border-color: #bfb5c6;
+}
+
+.resident-complaints-status-select:focus {
+    border-color: #563f6b;
+    box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.08);
+}
+
+/* =========================================================
+   COMPLAINT STATUS FLOW
+========================================================= */
+
+.resident-complaints-status-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 25px 22px;
+}
+
+.resident-complaints-status-step {
+    min-width: 0;
+}
+
+.resident-complaints-step-number {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 11px;
+    border: 1px solid #dfd8e4;
+    border-radius: 7px;
+    background: #f5f1f7;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.resident-complaints-status-step strong {
+    display: block;
+    color: #3b343f;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.resident-complaints-status-step p {
+    margin: 6px 0 0;
+    color: #89828c;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.resident-complaints-flow-line {
+    width: 28px;
+    height: 1px;
+    background: #ddd7e0;
+}
+
+/* =========================================================
+   RESPONSIVE — LARGE TABLET
+========================================================= */
+
+@media (max-width: 1200px) {
+    .resident-complaints-main {
+        padding: 28px 24px 40px;
+    }
+
+    .resident-complaints-stat-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .resident-complaints-status-flow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .resident-complaints-flow-line {
+        display: none;
+    }
+}
+
+/* Keep main content aligned with the shared sidebar. */
+@media (max-width: 900px) {
+    .resident-complaints-main {
+        width: calc(100% - 200px);
+        margin-left: 200px;
+        padding: 26px 20px 36px;
+    }
+
+    .resident-complaints-top-bar h2 {
+        font-size: 24px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE — TABLET / SMALL LAPTOP
+========================================================= */
+
+@media (max-width: 700px) {
+    .resident-complaints-main {
+        width: calc(100% - 170px);
+        margin-left: 170px;
+        padding: 23px 16px 32px;
+    }
+
+    .resident-complaints-top-bar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .resident-complaints-admin-label {
+        align-self: flex-start;
+    }
+
+    .resident-complaints-panel-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .resident-complaints-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .resident-complaints-toolbar input {
+        max-width: none;
+    }
+
+    .resident-complaints-status-flow {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+    .resident-complaints-main {
+        width: calc(100% - 68px);
+        margin-left: 68px;
+        padding: 21px 12px 28px;
+    }
+
+    .resident-complaints-top-bar h2 {
+        font-size: 22px;
+    }
+
+    .resident-complaints-top-bar p {
+        font-size: 12px;
+    }
+
+    .resident-complaints-stat-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .resident-complaints-stat-card {
+        padding: 15px;
+    }
+
+    .resident-complaints-panel-heading {
+        padding: 16px;
+    }
+
+    .resident-complaints-toolbar {
+        padding: 15px;
+    }
+
+    .resident-complaints-status-flow {
+        padding: 20px 16px;
+    }
+}

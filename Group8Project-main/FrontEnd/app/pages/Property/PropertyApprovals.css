@@ -1,0 +1,910 @@
+
+/* =========================================================
+   VALORA PROPERTY APPROVALS
+   Shared DashboardSidebar + Consistent Purple Theme
+========================================================= */
+
+.property-approvals-layout {
+    min-height: 100vh;
+    background: #f5f5f7;
+    color: #202124;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.property-approvals-main {
+    min-height: 100vh;
+    margin-left: 220px;
+    padding: 30px 34px 45px;
+    box-sizing: border-box;
+    transition: margin-left 0.2s ease;
+}
+
+.property-approvals-main * {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.property-approvals-header {
+    min-height: 75px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 25px;
+}
+
+.property-approvals-eyebrow {
+    margin: 0 0 6px;
+    color: #563f6b;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+}
+
+.property-approvals-header h2 {
+    margin: 0;
+    color: #28212d;
+    font-size: 25px;
+    line-height: 1.25;
+    font-weight: 800;
+}
+
+.property-approvals-description {
+    margin: 7px 0 0;
+    color: #77717e;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.property-approvals-header-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 2px;
+    flex-shrink: 0;
+}
+
+.property-approvals-header-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #563f6b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.property-approvals-header-user strong {
+    display: block;
+    color: #332b38;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.property-approvals-header-user span {
+    display: block;
+    margin-top: 3px;
+    color: #827a88;
+    font-size: 10px;
+}
+
+/* =========================================================
+   ICONS USED WITHIN THIS PAGE
+========================================================= */
+
+.property-approvals-icon {
+    width: 17px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.property-approvals-icon svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* =========================================================
+   STATUS MESSAGE
+========================================================= */
+
+.property-approvals-message {
+    position: relative;
+    margin-bottom: 20px;
+    padding: 16px 45px 16px 17px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e5ddea;
+    border-left: 4px solid #563f6b;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(45, 30, 55, 0.04);
+}
+
+.property-approvals-message-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #eee8f2;
+    color: #563f6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.property-approvals-message strong {
+    display: block;
+    color: #352c3b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.property-approvals-message p {
+    margin: 5px 0 0;
+    color: #716879;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.property-approvals-dismiss {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #827889;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.property-approvals-dismiss:hover {
+    background: #f1edf4;
+    color: #563f6b;
+}
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+.property-approvals-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.property-approvals-stat-card {
+    min-width: 0;
+    min-height: 145px;
+    padding: 19px;
+    background: #ffffff;
+    border: 1px solid #e9e6ed;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(45, 30, 55, 0.035);
+}
+
+.property-approvals-stat-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.property-approvals-stat-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.property-approvals-stat-icon.pending {
+    background: #eee8f2;
+    color: #563f6b;
+}
+
+.property-approvals-stat-icon.published {
+    background: #e9f1ec;
+    color: #3d7250;
+}
+
+.property-approvals-stat-icon.changes {
+    background: #f0ebf4;
+    color: #70557f;
+}
+
+.property-approvals-stat-icon.rejected {
+    background: #f3e9ec;
+    color: #87515d;
+}
+
+.property-approvals-stat-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.property-approvals-stat-label {
+    color: #756c7c;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.45px;
+    line-height: 1.5;
+}
+
+.property-approvals-stat-number {
+    display: block;
+    margin-top: 16px;
+    color: #302735;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.property-approvals-stat-card p {
+    margin: 8px 0 0;
+    color: #827a88;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   MAIN CARDS
+========================================================= */
+
+.property-approvals-card,
+.property-approvals-review-card {
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e9e6ed;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(45, 30, 55, 0.035);
+}
+
+.property-approvals-review-card {
+    margin-top: 22px;
+    padding-bottom: 22px;
+}
+
+.property-approvals-card-header {
+    padding: 21px 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid #eeeaf1;
+}
+
+.property-approvals-card-header h3 {
+    margin: 0;
+    color: #342c39;
+    font-size: 15px;
+    line-height: 1.4;
+    font-weight: 800;
+}
+
+.property-approvals-card-header p {
+    margin: 6px 0 0;
+    color: #827a88;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.property-approvals-section-label {
+    margin: 0 0 7px !important;
+    color: #563f6b !important;
+    font-size: 9px !important;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.property-approvals-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.property-approvals-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.property-approvals-table th {
+    padding: 15px 13px;
+    text-align: left;
+    color: #756c7c;
+    background: #faf9fb;
+    border-bottom: 1px solid #eae6ed;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.55px;
+    white-space: nowrap;
+}
+
+.property-approvals-table th.center,
+.property-approvals-table td.center {
+    text-align: center;
+}
+
+.property-approvals-table th.right,
+.property-approvals-table td.right {
+    text-align: right;
+}
+
+.property-approvals-table td {
+    padding: 16px 13px;
+    color: #665d6d;
+    border-bottom: 1px solid #f0edf2;
+    vertical-align: middle;
+}
+
+.property-approvals-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.property-approvals-table tbody tr:hover {
+    background: #fcfbfd;
+}
+
+.property-approvals-table td strong {
+    display: block;
+    color: #3d3542;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.property-approvals-table td small {
+    display: block;
+    margin-top: 4px;
+    color: #928998;
+    font-size: 9px;
+}
+
+.property-approvals-table td.price {
+    color: #4a4050;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.property-approvals-type-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    padding: 4px 9px;
+    background: #f1edf4;
+    color: #5d496a;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.property-approvals-photo-count {
+    display: inline-flex;
+    min-width: 27px;
+    height: 27px;
+    align-items: center;
+    justify-content: center;
+    background: #eee8f2;
+    color: #563f6b;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.property-approvals-empty {
+    padding: 55px 20px !important;
+    text-align: center !important;
+}
+
+.property-approvals-empty-icon {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: #eee8f2;
+    color: #563f6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.property-approvals-empty strong {
+    display: block;
+    color: #4a4050;
+    font-size: 12px;
+}
+
+.property-approvals-empty span {
+    display: block;
+    max-width: 360px;
+    margin: 7px auto 0;
+    color: #827a88;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.property-approvals-primary-btn,
+.property-approvals-secondary-btn,
+.property-approvals-danger-btn,
+.property-approvals-close-btn {
+    min-height: 38px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    cursor: pointer;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.property-approvals-primary-btn:focus-visible,
+.property-approvals-secondary-btn:focus-visible,
+.property-approvals-danger-btn:focus-visible,
+.property-approvals-close-btn:focus-visible,
+.property-approvals-dismiss:focus-visible {
+    outline: 2px solid #8e75a3;
+    outline-offset: 2px;
+}
+
+.property-approvals-primary-btn {
+    background: #563f6b;
+    border: 1px solid #563f6b;
+    color: #ffffff;
+}
+
+.property-approvals-primary-btn:hover {
+    background: #463256;
+    border-color: #463256;
+}
+
+.property-approvals-secondary-btn {
+    background: #ffffff;
+    border: 1px solid #d9d1df;
+    color: #563f6b;
+}
+
+.property-approvals-secondary-btn:hover {
+    background: #f5f1f7;
+    border-color: #bdb0c5;
+}
+
+.property-approvals-danger-btn {
+    background: #ffffff;
+    border: 1px solid #dfcbd0;
+    color: #87515d;
+}
+
+.property-approvals-danger-btn:hover {
+    background: #f8eff1;
+    border-color: #cdaeb5;
+}
+
+.property-approvals-close-btn {
+    background: #ffffff;
+    border: 1px solid #d9d1df;
+    color: #665d6d;
+    flex-shrink: 0;
+}
+
+.property-approvals-close-btn:hover {
+    background: #f5f1f7;
+    color: #563f6b;
+}
+
+.property-approvals-primary-btn svg,
+.property-approvals-secondary-btn svg,
+.property-approvals-danger-btn svg,
+.property-approvals-close-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* =========================================================
+   REVIEW SUB-CARDS
+========================================================= */
+
+.property-approvals-sub-card {
+    margin: 20px 22px 0;
+    padding: 20px;
+    background: #faf9fb;
+    border: 1px solid #eeeaf1;
+    border-radius: 9px;
+}
+
+.property-approvals-sub-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 16px;
+}
+
+.property-approvals-sub-header h3 {
+    margin: 0;
+    color: #3b3241;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.property-approvals-sub-header p {
+    margin: 6px 0 0;
+    color: #827a88;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.property-approvals-summary-list {
+    border-top: 1px solid #eeeaf1;
+}
+
+.property-approvals-summary-row {
+    min-height: 39px;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid #eeeaf1;
+}
+
+.property-approvals-summary-row:last-child {
+    border-bottom: none;
+}
+
+.property-approvals-summary-row strong {
+    color: #5a5060;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.property-approvals-summary-row span {
+    color: #3f3645;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.property-approvals-description-block {
+    margin-top: 18px;
+}
+
+.property-approvals-description-block strong {
+    display: block;
+    margin-bottom: 7px;
+    color: #3b3241;
+    font-size: 11px;
+}
+
+.property-approvals-description-block p,
+.property-approvals-review-message {
+    margin: 0;
+    color: #716879;
+    font-size: 11px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.property-approvals-review-message {
+    padding: 13px;
+    background: #ffffff;
+    border: 1px solid #eeeaf1;
+    border-radius: 7px;
+}
+
+/* =========================================================
+   PHOTO SECTIONS
+========================================================= */
+
+.property-approvals-photo-heading-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #eee8f2;
+    color: #563f6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.property-approvals-photo-heading-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.property-approvals-no-photos {
+    padding: 30px 16px;
+    background: #ffffff;
+    border: 1px dashed #ddd5e2;
+    border-radius: 8px;
+    color: #827a88;
+    font-size: 11px;
+    text-align: center;
+}
+
+.property-approvals-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.property-approvals-photo-item {
+    min-width: 0;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e8e3eb;
+    border-radius: 8px;
+}
+
+.property-approvals-photo-item img {
+    width: 100%;
+    height: 160px;
+    display: block;
+    object-fit: cover;
+    background: #f1edf4;
+}
+
+.property-approvals-photo-item span {
+    display: block;
+    padding: 10px;
+    color: #716879;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================================================
+   REVIEW TEXTAREA
+========================================================= */
+
+.property-approvals-textarea {
+    width: 100%;
+    min-height: 125px;
+    padding: 13px 14px;
+    border: 1px solid #dcd5e2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #3b3241;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.property-approvals-textarea::placeholder {
+    color: #a39aa9;
+}
+
+.property-approvals-textarea:focus {
+    border-color: #563f6b;
+    box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.09);
+}
+
+/* =========================================================
+   REVIEW ACTIONS
+========================================================= */
+
+.property-approvals-actions {
+    margin: 20px 22px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================
+   RESPONSIVE LAYOUT
+   These widths match the shared DashboardSidebar.
+========================================================= */
+
+@media (max-width: 1100px) {
+    .property-approvals-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .property-approvals-main {
+        padding: 26px 24px 38px;
+    }
+}
+
+@media (max-width: 900px) {
+    .property-approvals-main {
+        margin-left: 200px;
+        padding: 24px 20px 35px;
+    }
+
+    .property-approvals-header {
+        gap: 20px;
+    }
+
+    .property-approvals-photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .property-approvals-main {
+        margin-left: 170px;
+        padding: 22px 16px 30px;
+    }
+
+    .property-approvals-header {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .property-approvals-header-user {
+        display: none;
+    }
+
+    .property-approvals-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .property-approvals-stat-card {
+        padding: 15px;
+    }
+
+    .property-approvals-card-header {
+        padding: 18px;
+    }
+
+    .property-approvals-sub-card {
+        margin: 16px 16px 0;
+        padding: 16px;
+    }
+
+    .property-approvals-actions {
+        margin: 16px 16px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .property-approvals-main {
+        margin-left: 68px;
+        padding: 18px 12px 25px;
+    }
+
+    .property-approvals-header {
+        margin-bottom: 18px;
+    }
+
+    .property-approvals-header h2 {
+        font-size: 22px;
+    }
+
+    .property-approvals-description {
+        font-size: 11px;
+    }
+
+    .property-approvals-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .property-approvals-stat-card {
+        min-height: auto;
+        padding: 15px;
+    }
+
+    .property-approvals-stat-number {
+        font-size: 25px;
+    }
+
+    .property-approvals-card-header {
+        padding: 16px;
+    }
+
+    .property-approvals-card-header h3 {
+        font-size: 14px;
+    }
+
+    .property-approvals-sub-card {
+        margin: 12px 10px 0;
+        padding: 13px;
+    }
+
+    .property-approvals-summary-row {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .property-approvals-summary-row strong,
+    .property-approvals-summary-row span {
+        font-size: 10px;
+    }
+
+    .property-approvals-photo-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .property-approvals-photo-item img {
+        height: 190px;
+    }
+
+    .property-approvals-actions {
+        margin: 14px 10px 0;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .property-approvals-primary-btn,
+    .property-approvals-secondary-btn,
+    .property-approvals-danger-btn,
+    .property-approvals-close-btn {
+        width: 100%;
+    }
+
+    .property-approvals-message {
+        padding-left: 12px;
+    }
+}

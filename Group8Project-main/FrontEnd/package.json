@@ -1,0 +1,25 @@
+{
+  "name": "valora-frontend",
+  "private": true,
+  "version": "0.8.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/dev-server.mjs --preview",
+    "test": "npm run test:phase2 && npm run test:phase3 && npm run test:phase3-api && npm run test:phase5 && npm run test:phase6",
+    "test:phase2": "node --test tests/phase2-roles.test.mjs",
+    "test:phase3": "node --test tests/phase3-auth.test.mjs",
+    "test:phase3-api": "node --test tests/phase3-api-modules.test.mjs",
+    "test:phase5": "node --test tests/phase5-hardening.test.mjs",
+    "test:phase6": "node --test tests/phase6-api.test.mjs"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0"
+  }
+}

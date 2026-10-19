@@ -1,0 +1,715 @@
+
+/* =========================================================
+   VALORA ROI PAGE
+   Shared navigation is styled by DashboardSidebar.css
+========================================================= */
+
+.roi-page {
+    --roi-primary: #563f6b;
+    --roi-primary-dark: #463256;
+    --roi-purple-light: #f0ebf4;
+    --roi-border: #e4e0e7;
+    --roi-text: #302a34;
+    --roi-muted: #89838b;
+
+    min-height: 100vh;
+    display: flex;
+    background: #f5f3f7;
+    color: #242027;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.roi-page *,
+.roi-page *::before,
+.roi-page *::after {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   MAIN CONTENT
+   Shared sidebar default width: 220px
+========================================================= */
+
+.roi-main {
+    width: calc(100% - 220px);
+    min-width: 0;
+    min-height: 100vh;
+    margin-left: 220px;
+    padding: 30px 34px 45px;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.roi-top-bar {
+    margin-bottom: 24px;
+}
+
+.roi-eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--roi-primary);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+}
+
+.roi-top-bar h2 {
+    margin: 0;
+    color: #29232e;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.roi-top-bar p {
+    margin: 6px 0 0;
+    color: #858087;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   INTRODUCTION
+========================================================= */
+
+.roi-intro-panel {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 18px;
+    padding: 20px;
+    border: 1px solid var(--roi-border);
+    border-radius: 9px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+}
+
+.roi-intro-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-intro-panel h3 {
+    margin: 0;
+    color: var(--roi-text);
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.roi-intro-panel p {
+    max-width: 780px;
+    margin: 6px 0 0;
+    color: var(--roi-muted);
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.roi-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 18px;
+    align-items: start;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.roi-panel {
+    min-width: 0;
+    border: 1px solid var(--roi-border);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+    overflow: hidden;
+}
+
+.roi-panel-heading {
+    padding: 18px 20px;
+    border-bottom: 1px solid #ebe8ed;
+}
+
+.roi-panel-heading h3 {
+    margin: 0;
+    color: var(--roi-text);
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.roi-panel-heading p {
+    margin: 5px 0 0;
+    color: var(--roi-muted);
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.roi-form {
+    display: flex;
+    flex-direction: column;
+    gap: 17px;
+    padding: 20px;
+}
+
+.roi-form-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.roi-form-field label {
+    margin-bottom: 7px;
+    color: #4c4451;
+    font-size: 9px;
+    font-weight: 650;
+}
+
+.roi-form-field input,
+.roi-form-field select {
+    width: 100%;
+    min-width: 0;
+    height: 39px;
+    padding: 0 11px;
+    border: 1px solid #d9d5dd;
+    border-radius: 6px;
+    outline: none;
+    background: #ffffff;
+    color: #39333d;
+    font-family: inherit;
+    font-size: 10px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.roi-form-field input::placeholder {
+    color: #a19ba3;
+}
+
+.roi-form-field input:hover,
+.roi-form-field select:hover {
+    border-color: #c7c0ca;
+}
+
+.roi-form-field input:focus,
+.roi-form-field select:focus {
+    border-color: var(--roi-primary);
+    box-shadow: 0 0 0 3px rgba(86, 63, 107, 0.08);
+}
+
+/* =========================================================
+   INPUT WRAPPERS
+========================================================= */
+
+.roi-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.roi-input-wrapper input {
+    padding-left: 38px;
+}
+
+.roi-input-prefix,
+.roi-input-icon {
+    position: absolute;
+    left: 12px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a828e;
+    pointer-events: none;
+}
+
+.roi-input-prefix {
+    font-size: 10px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   CALCULATE BUTTON
+========================================================= */
+
+.roi-calculate-button {
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 4px;
+    padding: 10px 14px;
+    border: 1px solid var(--roi-primary);
+    border-radius: 6px;
+    background: var(--roi-primary);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.roi-calculate-button:hover {
+    border-color: var(--roi-primary-dark);
+    background: var(--roi-primary-dark);
+}
+
+.roi-calculate-button:focus-visible {
+    outline: 3px solid rgba(86, 63, 107, 0.25);
+    outline-offset: 3px;
+}
+
+.roi-calculate-button:active {
+    transform: translateY(1px);
+}
+
+/* =========================================================
+   EMPTY RESULT
+========================================================= */
+
+.roi-empty-result {
+    min-height: 390px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 35px;
+    text-align: center;
+}
+
+.roi-empty-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    border-radius: 50%;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-empty-result h3 {
+    margin: 0;
+    color: #3b3440;
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.roi-empty-result p {
+    max-width: 280px;
+    margin: 8px 0 0;
+    color: #918a94;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   RESULTS CONTENT
+========================================================= */
+
+.roi-results-content {
+    min-width: 0;
+    padding: 20px;
+}
+
+/* =========================================================
+   MAIN ROI RESULT
+========================================================= */
+
+.roi-main-result {
+    padding: 22px;
+    border-radius: 8px;
+    background: var(--roi-primary);
+    color: #ffffff;
+    text-align: center;
+}
+
+.roi-main-result span {
+    display: block;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+.roi-main-result h2 {
+    margin: 8px 0 5px;
+    color: #ffffff;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.roi-main-result p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   METRICS
+========================================================= */
+
+.roi-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.roi-metric {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px;
+    border: 1px solid #e7e3e9;
+    border-radius: 7px;
+    background: #faf9fb;
+}
+
+.roi-metric-icon {
+    width: 31px;
+    height: 31px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-metric > div:last-child {
+    min-width: 0;
+}
+
+.roi-metric p {
+    margin: 0 0 4px;
+    color: #89828c;
+    font-size: 8px;
+    line-height: 1.4;
+}
+
+.roi-metric strong {
+    display: block;
+    color: #3d3641;
+    font-size: 10px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   PROJECTION
+========================================================= */
+
+.roi-projection-box {
+    margin-top: 12px;
+    padding: 17px;
+    border: 1px solid #e1dbe5;
+    border-radius: 8px;
+    background: #faf8fb;
+}
+
+.roi-projection-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.roi-projection-header span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--roi-primary);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+}
+
+.roi-projection-header h3 {
+    margin: 0;
+    color: #3c3541;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.roi-projection-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-projection-box > p {
+    margin: 17px 0 5px;
+    color: #8c858f;
+    font-size: 8px;
+}
+
+.roi-projection-box > h2 {
+    margin: 0;
+    color: var(--roi-text);
+    font-size: 23px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.roi-projection-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 13px;
+    border-top: 1px solid #e7e1e9;
+}
+
+.roi-projection-details > div {
+    min-width: 0;
+}
+
+.roi-projection-details span {
+    display: block;
+    margin-bottom: 4px;
+    color: #918a94;
+    font-size: 8px;
+}
+
+.roi-projection-details strong {
+    color: #4b4350;
+    font-size: 10px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   TOTAL RETURN
+========================================================= */
+
+.roi-total-return {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 15px 17px;
+    border: 1px solid #e2dce6;
+    border-radius: 7px;
+    background: #ffffff;
+}
+
+.roi-total-return span {
+    display: block;
+    margin-bottom: 4px;
+    color: #8c858f;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+}
+
+.roi-total-return strong {
+    color: var(--roi-primary);
+    font-size: 17px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   EXPLANATION
+========================================================= */
+
+.roi-explanation {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid #e7e2e9;
+    border-radius: 7px;
+    background: #faf9fb;
+}
+
+.roi-explanation-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--roi-purple-light);
+    color: var(--roi-primary);
+}
+
+.roi-explanation > div:last-child {
+    min-width: 0;
+}
+
+.roi-explanation strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #403843;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.roi-explanation p {
+    margin: 0 0 6px;
+    color: #89828c;
+    font-size: 8px;
+    line-height: 1.6;
+}
+
+.roi-explanation p:last-child {
+    margin-bottom: 0;
+}
+
+/* =========================================================
+   LARGE TABLET
+========================================================= */
+
+@media (max-width: 1150px) {
+    .roi-main {
+        padding: 28px 25px 40px;
+    }
+
+    .roi-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .roi-input-panel,
+    .roi-results-panel {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   SHARED SIDEBAR RESPONSIVE WIDTH: 200px
+========================================================= */
+
+@media (max-width: 900px) {
+    .roi-main {
+        width: calc(100% - 200px);
+        margin-left: 200px;
+        padding: 25px 20px 35px;
+    }
+}
+
+/* =========================================================
+   SHARED SIDEBAR RESPONSIVE WIDTH: 170px
+========================================================= */
+
+@media (max-width: 700px) {
+    .roi-main {
+        width: calc(100% - 170px);
+        margin-left: 170px;
+        padding: 22px 16px 30px;
+    }
+
+    .roi-top-bar h2 {
+        font-size: 22px;
+    }
+
+    .roi-intro-panel {
+        padding: 17px;
+    }
+
+    .roi-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   Shared sidebar responsive width: 68px
+========================================================= */
+
+@media (max-width: 480px) {
+    .roi-main {
+        width: calc(100% - 68px);
+        margin-left: 68px;
+        padding: 18px 12px 25px;
+    }
+
+    .roi-top-bar h2 {
+        font-size: 21px;
+    }
+
+    .roi-top-bar p {
+        font-size: 10px;
+    }
+
+    .roi-intro-panel {
+        gap: 11px;
+        padding: 15px;
+    }
+
+    .roi-intro-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .roi-panel-heading {
+        padding: 16px;
+    }
+
+    .roi-form,
+    .roi-results-content {
+        padding: 16px;
+    }
+
+    .roi-metrics {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .roi-main-result {
+        padding: 19px 15px;
+    }
+
+    .roi-main-result h2 {
+        font-size: 34px;
+    }
+
+    .roi-projection-details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .roi-total-return {
+        padding: 14px;
+    }
+
+    .roi-total-return strong {
+        font-size: 15px;
+    }
+}
