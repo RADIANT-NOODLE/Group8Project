@@ -148,6 +148,7 @@ const PUBLIC_PATHS = Object.freeze([
   '/',
   '/login',
   '/register',
+  '/registration-pending',
   '/properties',
   '/property/:propertyId',
   /* The catch-all route the router falls back to is not a screen. */

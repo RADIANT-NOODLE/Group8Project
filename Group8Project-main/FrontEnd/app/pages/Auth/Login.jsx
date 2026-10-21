@@ -1,76 +1,59 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { login } from "../../services/authService.js";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
+import { getLoginErrorMessage } from "../../services/authErrorMessages.js";
+import { getSafeNextPath } from "../../services/navigation.js";
+import { dashboardPathForRole } from "../../services/roleMap.js";
+import { login } from "../../services/session.js";
+
 import "./Auth.css";
 
 function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError("");
 
-        if (!email.trim() || !password) {
+        if (!email.trim() || !password.trim()) {
             setError("Please enter your email address and password.");
             return;
         }
 
-        setLoading(true);
+        setIsSubmitting(true);
 
         try {
-            // Call the real backend
-            const result = await login({ email, password });
+            const { user } = await login({
+                email: email.trim(),
+                password,
+            });
 
-            // Backend response shape (typical FastAPI):
-            // { access_token, token_type, user: {...} }
-            const { access_token, user } = result;
+            const role = String(user?.role || "").trim().toLowerCase();
+            const isAdmin = role === "hoa_admin" || role === "head_admin";
 
-            if (!access_token || !user) {
-                setError("Login failed: unexpected response from server.");
+            if (user?.hoa_approved === false && !isAdmin) {
+                navigate("/registration-pending", { replace: true });
                 return;
             }
 
-            const normalizedUser = {
-                ...user,
-                id: user.id ?? user.user_id,
-                firstName: user.first_name ?? user.firstName ?? "",
-                lastName: user.last_name ?? user.lastName ?? "",
-                fullName: user.full_name ?? user.fullName ?? "",
-                status: user.hoa_approved ? "Approved" : "Pending",
-            };
-            
-            // Store auth info
-            localStorage.setItem("access_token", access_token);
-            localStorage.setItem("valora_token", access_token);
-            localStorage.setItem("valoraUser", JSON.stringify(normalizedUser));
-            localStorage.setItem("valoraUserEmail", normalizedUser.email);
-            localStorage.setItem("valoraLoggedIn", "true");
-
-            // Role-based redirect
-            const role = String(user.role || "").trim().toLowerCase();
-
-            if (role === "hoa_admin" || role === "head_admin" || role === "admin") {
-                navigate("/head-admin");
-            } else if (role === "estate_agent" || role === "agent") {
-                navigate("/dashboard");
-            } else {
-                navigate("/dashboard");
-            }
-        } catch (err) {
-            // Extract error message from backend
-            const message =
-                err?.body?.detail ||
-                err?.body?.message ||
-                err?.message ||
-                "Login failed. Please check your email and password.";
-            setError(message);
+            const targetPath = dashboardPathForRole(user?.role);
+            navigate(
+                getSafeNextPath(
+                    location.search,
+                    targetPath
+                ),
+                { replace: true }
+            );
+        } catch (loginError) {
+            setError(getLoginErrorMessage(loginError));
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -80,12 +63,19 @@ function Login() {
                 {/* LEFT SIDE */}
                 <div className="auth-sidebar">
                     <div className="auth-logo">
-                        <img src="/ValoraLogo.jpeg" alt="VALORA" />
+                        <img
+                            src="/assets/valora-logo.svg"
+                            alt="VALORA"
+                        />
                     </div>
 
                     <div className="auth-sidebar-content">
-                        <p className="auth-eyebrow">PROPERTY &amp; COMMUNITY</p>
+                        <p className="auth-eyebrow">
+                            PROPERTY &amp; COMMUNITY
+                        </p>
+
                         <h1>Welcome Back</h1>
+
                         <p>
                             Sign in to access your VALORA property and
                             community platform.
@@ -109,45 +99,50 @@ function Login() {
                         )}
 
                         <form onSubmit={handleSubmit}>
+                            {/* EMAIL */}
                             <div className="auth-field">
                                 <label htmlFor="email">Email Address</label>
                                 <input
                                     id="email"
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(event) => setEmail(event.target.value)}
                                     placeholder="Enter email address"
-                                    autoComplete="username"
+                                    autoComplete="email"
                                     required
                                 />
                             </div>
 
+                            {/* PASSWORD */}
                             <div className="auth-field">
                                 <label htmlFor="password">Password</label>
                                 <input
                                     id="password"
                                     type="password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(event) => setPassword(event.target.value)}
                                     placeholder="Enter password"
                                     autoComplete="current-password"
                                     required
                                 />
                             </div>
 
+                            {/* LOGIN BUTTON */}
                             <button
                                 type="submit"
                                 className="auth-submit"
-                                disabled={loading}
+                                disabled={isSubmitting}
                             >
-                                {loading ? "Logging in..." : "Login"}
+                                {isSubmitting ? "Signing in…" : "Login"}
                             </button>
 
+                            {/* REGISTER */}
                             <div className="auth-switch">
                                 Don't have an account?{" "}
                                 <Link to="/register">Register</Link>
                             </div>
 
+                            {/* HOME */}
                             <div className="auth-home-link">
                                 <Link to="/">Back to Home</Link>
                             </div>
