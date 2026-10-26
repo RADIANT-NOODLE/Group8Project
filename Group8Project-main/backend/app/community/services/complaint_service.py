@@ -1,36 +1,55 @@
-from collections import Counter
-from decimal import ROUND_HALF_UP, Decimal
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.common.pagination import Page
 from app.common.datetime_utils import utcnow
 from app.common.enums import ComplaintStatus, UserRole
 from app.community.models.complaint import Complaint
 from app.community.repositories.complaint_repository import ComplaintRepository
 from app.community.schemas.complaint import (
     ComplaintCreate,
+    ComplaintEventResponse,
     ComplaintResponse,
     ComplaintStatsResponse,
     ComplaintStatusUpdate,
-    PaginatedComplaintsResponse,
 )
-from app.core.exceptions import ForbiddenException, NotFoundException
+from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException
 from app.identity.models.user import User
+from app.identity.repositories.account_support_repository import AccountSupportRepository
+from app.identity.services.estate_authorization_service import (
+    EstateAccess,
+    EstateAuthorizationService,
+)
 from app.property.repositories.property_repository import PropertyRepository
-
-_RESOLVED_STATUSES = (ComplaintStatus.resolved.value, ComplaintStatus.closed.value)
 
 
 class ComplaintService:
     def __init__(self, db: AsyncSession) -> None:
+        self._db = db
+        self._notifications = AccountSupportRepository(db)
         self._repo = ComplaintRepository(db)
         self._property_repo = PropertyRepository(db)
+        self._estate_authorization = EstateAuthorizationService(db)
+
+    async def reopen(self, complaint_id: int, note: str, actor: User, *, estate_id: int):
+        access = await self._estate_authorization.resolve_access(actor, estate_id)
+        complaint = await self._repo.lock_in_estate(complaint_id=complaint_id, estate_id=estate_id)
+        if complaint is None:
+            raise NotFoundException('Complaint not found.')
+        if not access.is_estate_admin and complaint.user_id != actor.user_id:
+            raise ForbiddenException('Only the reporting resident or estate manager may reopen this complaint.')
+        if complaint.status not in ('resolved', 'rated', 'closed'):
+            raise ConflictException('Only a resolved complaint can be reopened.')
+        old_status = complaint.status
+        complaint.status = 'submitted'
+        complaint.reviewed_at = complaint.assigned_at = complaint.started_at = complaint.resolved_at = None
+        complaint.assigned_to = None
+        await self._repo.record_transition(complaint=complaint, actor_user_id=actor.user_id,
+            from_status=old_status, to_status='submitted', note=note, commit=False)
+        await self._db.commit()
+        await self._db.refresh(complaint)
+        return self._to_response(complaint, actor)
 
     # ---- helpers -------------------------------------------------------
-
-    @staticmethod
-    def _is_admin(user: User) -> bool:
-        return user.role == UserRole.hoa_admin.value
 
     @staticmethod
     def _to_response(complaint: Complaint, viewer: User) -> ComplaintResponse:
@@ -40,25 +59,42 @@ class ComplaintService:
             response.user_id = None
         return response
 
-    async def _get_or_404(self, complaint_id: int) -> Complaint:
-        complaint = await self._repo.get_by_id(complaint_id)
+    async def _get_or_404_in_estate(self, *, complaint_id: int, estate_id: int) -> Complaint:
+        complaint = await self._repo.get_by_id_in_estate(
+            complaint_id=complaint_id, estate_id=estate_id
+        )
         if complaint is None:
             raise NotFoundException(f"Complaint with id {complaint_id} was not found.")
         return complaint
 
     # ---- use cases -----------------------------------------------------
 
-    async def create_complaint(self, payload: ComplaintCreate, user: User) -> ComplaintResponse:
-        if await self._property_repo.get_by_id(payload.unit_id) is None:
+    async def create_complaint(
+        self, payload: ComplaintCreate, user: User, *, estate_id: int
+    ) -> ComplaintResponse:
+        access = await self._estate_authorization.resolve_access(user, estate_id)
+        property_ = await self._property_repo.get_by_id_in_estate(
+            unit_id=payload.unit_id, estate_id=estate_id
+        )
+        if property_ is None:
             raise NotFoundException(f"Property with id {payload.unit_id} was not found.")
+        if not access.is_estate_admin:
+            if payload.unit_id not in access.property_ids:
+                raise ForbiddenException("You can only report issues for your assigned property.")
+
         complaint = await self._repo.create(
             user_id=user.user_id,
             unit_id=payload.unit_id,
+            estate_id=estate_id,
             category=payload.category.strip(),
             description=payload.description.strip(),
+            priority=payload.priority,
             is_anonymous=payload.is_anonymous,
-            photo_url=payload.photo_url,
+            commit=False,
         )
+        await self._notifications.notify_admins(estate_id=estate_id, kind='complaint_submitted',
+            resource_id=complaint.complaint_id)
+        await self._db.commit()
         return self._to_response(complaint, user)
 
     async def list_complaints(
@@ -66,81 +102,100 @@ class ComplaintService:
         user: User,
         *,
         page: int,
-        page_size: int,
+        size: int,
+        sort: str = "-created_at",
         unit_id: int | None = None,
         status: str | None = None,
         category: str | None = None,
-    ) -> PaginatedComplaintsResponse:
-        # HOA admins see every complaint; everyone else only sees their own
-        scope_user_id = None if self._is_admin(user) else user.user_id
-        filters = dict(user_id=scope_user_id, unit_id=unit_id, status=status, category=category)
+        estate_id: int,
+    ) -> Page[ComplaintResponse]:
+        access = await self._estate_authorization.resolve_access(user, estate_id)
+        # HOA admins see every complaint; everyone else only sees their own.
+        scope_user_id = None if access.is_estate_admin else user.user_id
+        filters = dict(
+            user_id=scope_user_id,
+            unit_id=unit_id,
+            estate_id=estate_id,
+            status=status,
+            category=category,
+        )
         complaints = await self._repo.search(
-            offset=(page - 1) * page_size, limit=page_size, **filters
+            offset=(page - 1) * size, limit=size, sort=sort, **filters
         )
         total = await self._repo.count(**filters)
-        return PaginatedComplaintsResponse(
-            count=total,
+        return Page[ComplaintResponse](
+            items=[self._to_response(c, user) for c in complaints],
+            total=total,
             page=page,
-            page_size=page_size,
-            complaints=[self._to_response(c, user) for c in complaints],
+            size=size,
         )
 
-    async def get_complaint(self, complaint_id: int, user: User) -> ComplaintResponse:
-        complaint = await self._get_or_404(complaint_id)
-        if not self._is_admin(user) and complaint.user_id != user.user_id:
+    async def get_complaint(
+        self, complaint_id: int, user: User, *, estate_id: int
+    ) -> ComplaintResponse:
+        access = await self._estate_authorization.resolve_access(user, estate_id)
+        complaint = await self._get_or_404_in_estate(complaint_id=complaint_id, estate_id=estate_id)
+        if not access.is_estate_admin and complaint.user_id != user.user_id:
             raise ForbiddenException("You can only view your own complaints.")
         return self._to_response(complaint, user)
 
     async def update_status(
-        self, complaint_id: int, payload: ComplaintStatusUpdate, admin: User
+        self, complaint_id: int, payload: ComplaintStatusUpdate, admin: User, *, estate_id: int
     ) -> ComplaintResponse:
-        complaint = await self._get_or_404(complaint_id)
+        await self._estate_authorization.require_role(
+            actor=admin, estate_id=estate_id, allowed_roles=(UserRole.hoa_admin.value,)
+        )
+        complaint = await self._get_or_404_in_estate(complaint_id=complaint_id, estate_id=estate_id)
         new_status = payload.status.value
+        # Enforce C4 and B6: only submitted -> reviewed allowed through this endpoint
+        if (
+            new_status != ComplaintStatus.reviewed.value
+            or complaint.status != ComplaintStatus.submitted.value
+        ):
+            raise ConflictException(
+                f"Complaint cannot transition from {complaint.status} to {new_status}."
+            )
+        old_status = complaint.status or ComplaintStatus.submitted.value
         complaint.status = new_status
-        if payload.assigned_to is not None:
-            complaint.assigned_to = payload.assigned_to
-        if new_status in _RESOLVED_STATUSES:
-            if complaint.resolved_at is None:
-                complaint.resolved_at = utcnow()
-        else:
-            complaint.resolved_at = None
-        complaint = await self._repo.save(complaint)
+        now = utcnow()
+        complaint.reviewed_at = now
+        complaint = await self._repo.record_transition(
+            complaint=complaint,
+            actor_user_id=admin.user_id,
+            from_status=old_status,
+            to_status=new_status,
+            note=payload.note.strip() if payload.note else None,
+            commit=False,
+        )
+        if hasattr(self, '_notifications'):
+            await self._notifications.notify(estate_id=estate_id, user_ids={complaint.user_id},
+                kind='complaint_reviewed', resource_id=complaint.complaint_id)
+            await self._db.commit()
+            await self._db.refresh(complaint)
         return self._to_response(complaint, admin)
 
-    async def get_stats(self) -> ComplaintStatsResponse:
-        complaints = await self._repo.get_all()
-        total = len(complaints)
+    async def list_events(
+        self, complaint_id: int, user: User, *, estate_id: int
+    ) -> list[ComplaintEventResponse]:
+        access = await self._estate_authorization.resolve_access(user, estate_id)
+        complaint = await self._get_or_404_in_estate(complaint_id=complaint_id, estate_id=estate_id)
+        if not access.is_estate_admin and complaint.user_id != user.user_id:
+            raise ForbiddenException("You can only view your own complaints.")
 
-        by_status = Counter(c.status for c in complaints)
-        by_category = Counter(c.category for c in complaints)
+        events = await self._repo.list_events(complaint_id=complaint_id)
+        is_anon = bool(complaint.is_anonymous)
+        event_responses = []
+        for event in events:
+            evt_resp = ComplaintEventResponse.model_validate(event)
+            if is_anon and user.user_id != complaint.user_id:
+                if evt_resp.actor_user_id == complaint.user_id:
+                    evt_resp.actor_user_id = None
+            event_responses.append(evt_resp)
+        return event_responses
 
-        resolved = [c for c in complaints if c.status in _RESOLVED_STATUSES]
-        resolution_rate_pct = (
-            (Decimal(len(resolved)) / Decimal(total) * Decimal("100")).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-            if total > 0
-            else Decimal("0.00")
+    async def get_stats(self, admin: User, *, estate_id: int) -> ComplaintStatsResponse:
+        await self._estate_authorization.require_role(
+            actor=admin, estate_id=estate_id, allowed_roles=(UserRole.hoa_admin.value,)
         )
-
-        resolution_hours = [
-            Decimal((c.resolved_at - c.created_at).total_seconds()) / Decimal(3600)
-            for c in resolved
-            if c.resolved_at is not None and c.created_at is not None
-        ]
-        avg_resolution_hours = (
-            (sum(resolution_hours) / Decimal(len(resolution_hours))).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-            if resolution_hours
-            else None
-        )
-
-        return ComplaintStatsResponse(
-            total=total,
-            by_status=dict(by_status),
-            by_category=dict(by_category),
-            resolution_rate_pct=resolution_rate_pct,
-            avg_resolution_hours=avg_resolution_hours,
-        )
-
+        stats = await self._repo.get_stats_aggregates(estate_id=estate_id)
+        return ComplaintStatsResponse(**stats)

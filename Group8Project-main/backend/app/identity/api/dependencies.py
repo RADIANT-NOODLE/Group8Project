@@ -22,20 +22,45 @@ async def get_current_user(
     """Decode JWT and return the authenticated user ORM object."""
     try:
         payload = decode_access_token(token)
-        user_id: str | None = payload.get("sub")
-        if user_id is None:
+        if "exp" not in payload:
             raise CredentialsException()
-    except JWTError:
+        user_id_raw = payload.get("sub")
+        if user_id_raw is None:
+            raise CredentialsException()
+        if not isinstance(user_id_raw, (str, int)):
+            raise CredentialsException()
+        if isinstance(user_id_raw, str) and not user_id_raw.isdigit():
+            raise CredentialsException()
+        user_id = int(user_id_raw)
+    except (JWTError, TypeError, ValueError, CredentialsException):
         raise CredentialsException()
 
     repo = UserRepository(db)
-    user = await repo.get_by_id(int(user_id))
+    user = await repo.get_by_id(user_id)
     if user is None:
         raise CredentialsException()
+    if payload.get('version', 0) != (getattr(user, 'auth_version', 0) or 0):
+        raise CredentialsException('Your session has expired. Sign in again.')
+    if user.role in ('investor', 'estate_agent', 'casual_visitor'):
+        raise ForbiddenException('This account role has been retired. Contact the estate office.')
     return user
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+
+
+async def get_current_user_optional(
+    token: Annotated[str | None, Depends(oauth2_scheme_optional)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> User | None:
+    if not token:
+        return None
+    try:
+        return await get_current_user(token, db)
+    except Exception:
+        return None
 
 
 def require_roles(*roles: str):

@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.identity.api.dependencies import CurrentUser, require_roles
 from app.identity.models.user import User
 from app.property.schemas.sale import PaginatedSalesResponse, SaleCreate, SaleResponse
-from app.property.services.sales_service import SaleService
+from app.property.services.sale_service import SaleService
 
 router = APIRouter(prefix="/sales", tags=["sales"])
 
@@ -37,8 +37,8 @@ async def get_sale(
 async def create_sale(
     payload: SaleCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _actor: Annotated[
+    actor: Annotated[
         User, require_roles(UserRole.estate_agent.value, UserRole.hoa_admin.value)
     ],
 ) -> SaleResponse:
-    return await SaleService(db).create_sale(payload)
+    return await SaleService(db).create_sale(payload, actor)

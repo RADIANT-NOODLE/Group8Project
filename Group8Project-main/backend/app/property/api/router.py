@@ -1,11 +1,24 @@
-"""Property domain router: properties, listings and sales."""
+"""Management property router: units, estate profile, directory and photos.
+
+The public directory (`public_router`) is mounted here too, but note that it takes
+**no authentication**: it is the only unauthenticated router in the API and it
+lives in `app/property/api/public.py` with its own allow-list DTOs.
+"""
 from fastapi import APIRouter
 
-from app.property.api.listings import router as listings_router
+from app.property.api.estates import router as estates_router
 from app.property.api.properties import router as properties_router
-from app.property.api.sales import router as sales_router
+from app.property.api.public import router as public_router
 
-router = APIRouter()
-router.include_router(properties_router)
-router.include_router(listings_router)
-router.include_router(sales_router)
+
+def create_router(enable_legacy_routes: bool | None = None) -> APIRouter:
+    # The compatibility argument cannot reactivate the retired marketplace.
+    # Historical models/migrations remain available for archive and restoration.
+    router = APIRouter()
+    router.include_router(properties_router)
+    router.include_router(estates_router)
+    router.include_router(public_router)
+    return router
+
+
+router = create_router()

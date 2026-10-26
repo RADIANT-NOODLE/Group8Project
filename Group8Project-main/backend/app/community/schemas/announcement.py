@@ -29,6 +29,7 @@ class AnnouncementUpdate(BaseModel):
 
 class AnnouncementResponse(BaseModel):
     announcement_id: int = Field(..., serialization_alias="id")
+    estate_id: int | None
     title: str
     message: str
     created_by: int
@@ -36,11 +37,4 @@ class AnnouncementResponse(BaseModel):
     created_at: datetime | None
     updated_at: datetime | None
 
-    model_config = {"from_attributes": True, "populate_by_name": True}
-
-
-class PaginatedAnnouncementsResponse(BaseModel):
-    count: int
-    page: int
-    page_size: int
-    announcements: list[AnnouncementResponse]
+    model_config = {"from_attributes": True, "populate_by_name": True, "serialize_by_alias": True}
