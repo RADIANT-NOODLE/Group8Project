@@ -51,6 +51,7 @@ import CommunityAnalytics
 
 /* AI */
 import AITrainingData from "./pages/AI/AITrainingData";
+import Intelligence from "./pages/AI/Intelligence";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
@@ -537,6 +538,16 @@ function App() {
                         <HOAAdminRoute>
                             <AITrainingData />
                         </HOAAdminRoute>
+                    }
+                />
+
+                {/* VALORA INTELLIGENCE */}
+                <Route
+                    path="/intelligence"
+                    element={
+                        <ProtectedRoute>
+                            <Intelligence />
+                        </ProtectedRoute>
                     }
                 />
 

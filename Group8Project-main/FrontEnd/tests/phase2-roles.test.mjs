@@ -82,6 +82,10 @@ test('route access follows the matrix', () => {
   assert.equal(roles.canAccessRoute('resident', '/maintenance'), true);
   assert.equal(roles.canAccessRoute('hoa_admin', '/maintenance'), true);
   assert.equal(roles.canAccessRoute('investor', '/maintenance'), false);
+  for (const role of ['resident', 'investor', 'estate_agent', 'hoa_admin']) {
+    assert.equal(roles.canAccessRoute(role, '/intelligence'), true);
+  }
+  assert.equal(roles.canAccessRoute('service_provider', '/intelligence'), false);
 
   /* public pages */
   assert.equal(roles.canAccessRoute('', '/properties'), true);

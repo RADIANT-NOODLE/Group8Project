@@ -167,11 +167,12 @@ const SHARED_PATHS = Object.freeze([
 /** Screens that belong to one role's workspace. Keyed by role value, so the
  *  index below can be built without a second lookup. */
 export const ROLE_PATHS = Object.freeze({
-  [ROLES.resident]: Object.freeze(['/property', '/valuation', '/request-to-sell', '/complaints', '/maintenance', '/resident-directory']),
-  [ROLES.investor]: Object.freeze(['/property', '/valuation', '/roi']),
-  [ROLES.estateAgent]: Object.freeze(['/agent-listings', '/agent-edit-listings', '/agent-inquiries', '/valuation']),
+  [ROLES.resident]: Object.freeze(['/property', '/valuation', '/request-to-sell', '/complaints', '/maintenance', '/resident-directory', '/intelligence']),
+  [ROLES.investor]: Object.freeze(['/property', '/valuation', '/roi', '/intelligence']),
+  [ROLES.estateAgent]: Object.freeze(['/agent-listings', '/agent-edit-listings', '/agent-inquiries', '/valuation', '/intelligence']),
   [ROLES.hoaAdmin]: Object.freeze([
     '/maintenance',
+    '/intelligence',
     '/resident-directory',
     '/resident-complaints',
     '/property-requests',

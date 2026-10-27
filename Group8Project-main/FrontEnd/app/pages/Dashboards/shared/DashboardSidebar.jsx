@@ -263,6 +263,7 @@ const navigation = {
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
+        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
     ],
 
     Investor: [
@@ -272,6 +273,7 @@ const navigation = {
         { label: "ROI Analysis", path: "/roi", icon: "roi" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
+        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
     ],
 
     "Estate Agent": [
@@ -282,6 +284,7 @@ const navigation = {
         { label: "AI Valuation", path: "/valuation", icon: "valuation" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
+        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
     ],
 
     "HOA Admin": [
@@ -295,6 +298,7 @@ const navigation = {
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
         { label: "Community Analytics", path: "/community-analytics", icon: "analytics" },
+        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
         { label: "AI Training Data", path: "/ai-training-data", icon: "ai" },
         { label: "Landing Page Settings", path: "/landing-page-settings", icon: "settings" },
     ],
@@ -317,6 +321,7 @@ const navigation = {
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
         { label: "Community Analytics", path: "/community-analytics", icon: "analytics" },
+        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
         { label: "AI Training Data", path: "/ai-training-data", icon: "ai" },
         { label: "Landing Page Settings", path: "/landing-page-settings", icon: "settings" },
     ],

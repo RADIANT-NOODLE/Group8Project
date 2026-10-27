@@ -68,4 +68,5 @@ store. The remaining pages still read and write the local storage modules in [`a
 | `/properties`, `/property/:propertyId` | public property browsing |
 | `/login`, `/register` | authentication |
 | `/dashboard` | signed-in workspace, rendered per role |
+| `/intelligence` | property-scoped complaints and work-order insights |
 | `/head-admin`, `/registration-requests`, `/user-management` | estate administration (`hoa_admin`) |
