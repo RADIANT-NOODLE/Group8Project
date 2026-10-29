@@ -1,7 +1,8 @@
 # linking login/reg page - kai
 
-from fastapi import APIRouter, Depends, HTTPException, status, FastAPI
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from app.database import get_db
 from app.models import User
 from pydantic import BaseModel
@@ -10,8 +11,7 @@ import re
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
-from typing import Optional
+from typing import Optional, List
 
 router = APIRouter()
 
@@ -24,13 +24,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Password hashing
 def hash_password(password: str) -> str:
-    # Hash the password using bcrypt
     password_bytes = password.encode('utf-8')[:72]
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Verify the password using bcrypt
     try:
         plain_bytes = plain_password.encode('utf-8')[:72]
         hashed_bytes = hashed_password.encode('utf-8')
@@ -46,16 +44,28 @@ class UserRegister(BaseModel):
     role: str = "resident"
     unit_no: Optional[str] = None
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class UserUpdate(BaseModel):
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
 
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+class UserDashboardResponse(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    role: str
+
+    class Config:
+        from_attributes = True
 
 # Helper Functions
-# Function to create JWt access token
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
@@ -63,10 +73,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -81,41 +91,37 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.email == token_data.email).first()
+    result = await db.execute(select(User).filter(User.email == token_data.email))
+    user = result.scalars().first()
+    
     if user is None:
         raise credentials_exception
     return user
 
+async def require_hoa_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["hoa_admin", "head_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action."
+        )
+    return current_user
 
 # AUTH ENDPOINTS
-@router.get("/api/users")
-def get_all_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return {"count": len(users), "users": users}
-
-
-# User registration endpoint
-@router.post("/api/auth/register")
-def register_user(user: UserRegister, db: Session = Depends(get_db)):
-
-    # check if email already exists
-    existing_user = db.query(User).filter(User.email == user.email).first()
+@router.post("/auth/register")
+async def register_user(user: UserRegister, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).filter(User.email == user.email))
+    existing_user = result.scalars().first()
+    
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Validate email format
     if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", user.email):
         raise HTTPException(status_code=400, detail="Invalid email format")
 
-    # Validate password strength
     if len(user.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
 
-
-    # Hash the password
     hashed_password = hash_password(user.password)
-
-    # Create new user
     new_user = User(
         email=user.email,
         password_hash=hashed_password,
@@ -127,9 +133,8 @@ def register_user(user: UserRegister, db: Session = Depends(get_db)):
     )
 
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
+    await db.commit() 
+    await db.refresh(new_user) 
     return {
         "message": "User registered successfully",
         "user": {
@@ -140,34 +145,19 @@ def register_user(user: UserRegister, db: Session = Depends(get_db)):
         }
     }
 
-# User login endpoint
-@router.post("/api/auth/login")
-def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/auth/login")
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    
+    result = await db.execute(select(User).filter(User.email == form_data.username))
+    user = result.scalars().first()
 
-    # find user by email
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user:
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # verify password using bcrypt
-    if not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not user.hoa_approved:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account is pending HOA approval."
-        )
-
-    # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email, "role": user.role, "user_id": user.user_id}, 
@@ -183,14 +173,33 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
             "full_name": user.full_name,
             "role": user.role,
             "unit_no": user.unit_no
-            "hoa_approved": user.hoa_approved,
-            "email_verified": user.email_verified,
         }
     }
 
-# Endpoint to get current user info
-@router.get("/api/users/me")
-def get_me(current_user: User = Depends(get_current_user)):
+@router.get("/users/")
+async def get_all_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+
+    return {
+        "count": len(users), 
+        "users": [
+            {
+                "id": u.user_id,
+                "email": u.email,
+                "full_name": u.full_name,
+                "role": u.role,
+                "hoa_approved": u.hoa_approved,
+                "unit_no": u.unit_no
+            } for u in users
+        ]
+    }
+
+@router.get("/users/me")
+async def get_me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.user_id,
         "email": current_user.email,
@@ -201,71 +210,134 @@ def get_me(current_user: User = Depends(get_current_user)):
         "hoa_approved": current_user.hoa_approved
     }
 
-# HOA APPROVAL ENDPOINTS
-# ----------------------
+@router.put("/users/me")
+async def update_current_user(
+    user_update: UserUpdate, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if user_update.email != current_user.email:
+        
+        result = await db.execute(select(User).filter(User.email == user_update.email))
+        existing_user = result.scalars().first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered by another account")
+        
+        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", user_update.email):
+            raise HTTPException(status_code=400, detail="Invalid email format")
 
-def require_hoa_admin(current_user: User = Depends(get_current_user)):
-    if current_user.role not in ("hoa_admin", "head_admin"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to perform this action."
-        )
-    return current_user
+    current_user.full_name = user_update.full_name
+    current_user.email = user_update.email
+    if user_update.phone is not None:
+        current_user.phone = user_update.phone
 
-@router.get("/api/users/pending")
-def list_pending_users(current_user: User = Depends(require_hoa_admin), db: Session = Depends(get_db)):
-    pending = (db.query(User).filter(User.hoa_approved == False).order_by(User.user_id).all())
+    await db.commit() 
+    await db.refresh(current_user) 
 
-    return {"count": len(pending), 
-            "users": [
-                 {
-                   "user_id": u.user_id,
-                    "email": u.email,
-                    "full_name": u.full_name,
-                    "role": u.role,
-                "unit_no": u.unit_no
-                } for u in pending
-             ],
+    return {
+        "id": current_user.user_id,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "role": current_user.role,
+        "unit_no": current_user.unit_no,
+        "email_verified": current_user.email_verified,
+        "hoa_approved": current_user.hoa_approved
     }
 
-@router.post("/api/users/{user_id}/approve")
-def approve_user(user_id: int, current_user: User = Depends(require_hoa_admin), db: Session = Depends(get_db),
+@router.put("/users/me/password")
+async def update_password(
+    passwords: PasswordUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    user = db.query(User).filter(User.user_id == user_id).first()
+    if not verify_password(passwords.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+
+    if len(passwords.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters long")
+
+    current_user.password_hash = hash_password(passwords.new_password)
+    await db.commit() 
+
+    return {"message": "Password updated successfully"}
+
+# HOA Admin Dashboard endpoints
+@router.get("/users/pending")
+async def get_pending_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_hoa_admin)
+):
+    result = await db.execute(select(User).filter(User.hoa_approved == False))
+    pending_users = result.scalars().all()
+    
+    return [
+        {
+            "id": u.user_id,
+            "email": u.email,
+            "full_name": u.full_name,
+            "role": u.role
+        } for u in pending_users
+    ]
+
+@router.get("/users/approved")
+async def get_approved_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_hoa_admin)
+):
+    result = await db.execute(select(User).filter(User.hoa_approved == True))
+    approved_users = result.scalars().all()
+    
+    return [
+        {
+            "id": u.user_id,
+            "email": u.email,
+            "full_name": u.full_name,
+            "role": u.role
+        } for u in approved_users
+    ]
+
+@router.post("/users/{user_id}/approve")
+async def approve_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_hoa_admin)
+):
+    result = await db.execute(select(User).filter(User.user_id == user_id))
+    user = result.scalars().first()
+    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     user.hoa_approved = True
-    db.commit()
-    db.refresh(user)
+    await db.commit() 
+    await db.refresh(user) 
+    
+    return {"message": "User approved successfully"}
 
-    return {"message": f"User {user.email} has been approved.",
-            "user": {
-                "user_id": user.user_id,
-                "email:": user.email,
-                "hoa_approved": user.hoa_approved,
-            },
-    }    
-
-@router.post("/api/users/{user_id}/reject")
-def reject_user(
+@router.post("/users/{user_id}/reject")
+async def reject_user(
     user_id: int,
-    current_user: User = Depends(require_hoa_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_hoa_admin)
 ):
-    """Reject a pending user (deletes them from the DB)."""
-    user = db.query(User).filter(User.user_id == user_id).first()
+    
+    result = await db.execute(select(User).filter(User.user_id == user_id))
+    user = result.scalars().first()
+    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.delete(user) 
+    await db.commit() 
+    
+    return {"message": "User rejected and deleted successfully"}
 
-    db.delete(user)
-    db.commit()
-
-    return {"message": f"User {user.email} rejected and removed."}
-
-@router.get("/api/users/{user_id}")
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_id == user_id).first()
+@router.get("/users/{user_id}")
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
+   
+    result = await db.execute(select(User).filter(User.user_id == user_id))
+    user = result.scalars().first()
+    
     if not user:
-        return {"error": "User not found"}
+        raise HTTPException(status_code=404, detail="User not found")
     return user

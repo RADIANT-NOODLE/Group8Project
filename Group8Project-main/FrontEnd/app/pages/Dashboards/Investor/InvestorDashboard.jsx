@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use } from "react";
 import { Link } from "react-router-dom";
 
 import DashboardSidebar from "../shared/DashboardSidebar";
@@ -11,9 +11,10 @@ INVESTOR DASHBOARD
 =========================================================
 */
 
-function InvestorDashboard({
-  user,
-}) {
+function InvestorDashboard({ user}) {
+  if (!user) {
+    return<div>Loading...</div>;
+  }
 
   return (
     <div className="investor-dashboard-layout">
@@ -38,7 +39,7 @@ function InvestorDashboard({
             </span>
 
             <h1>
-              Welcome back, {user.firstName || "Investor"}
+              Welcome back, {user?.firstName || "Investor"}
             </h1>
 
             <p>
@@ -51,7 +52,7 @@ function InvestorDashboard({
           <div className="investor-dashboard-header-user">
 
             <div className="investor-dashboard-header-avatar">
-              {user.initials}
+              {user?.initials || "IN"}
             </div>
 
           </div>

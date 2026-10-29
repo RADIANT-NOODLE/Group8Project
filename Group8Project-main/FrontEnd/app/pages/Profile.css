@@ -728,3 +728,77 @@
     }
 
 }
+
+/* =========================================================
+   PASSWORD CHANGE MODAL
+========================================================= */
+
+.password-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background-color: rgba(41, 36, 45, 0.6); /* Semi-transparent dark background */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    z-index: 1000; /* Ensures it sits on top of the sidebar and everything else */
+    
+    /* Optional: subtle fade-in animation */
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.password-modal {
+    background: #ffffff;
+    padding: 24px 28px;
+    border-radius: 12px;
+    
+    width: 100%;
+    max-width: 400px;
+    
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e8e3eb;
+
+    animation: slideUp 0.3s ease-out;
+}
+
+.password-modal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    
+    color: #29242d;
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.password-modal .resident-profile-form-field {
+    margin-bottom: 16px;
+}
+
+/* Modal Button Adjustments */
+.password-modal .resident-profile-edit-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.password-modal .resident-profile-save-button,
+.password-modal .resident-profile-cancel-button {
+    flex: 1; /* Makes both buttons equal width */
+    justify-content: center;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

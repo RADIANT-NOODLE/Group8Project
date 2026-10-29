@@ -40,12 +40,13 @@ function normalizeUser(source = {}, fallback = {}) {
    */
   return {
     ...source,
-    id: source.id ?? fallback.id,
+    id: source.id ?? source.user_id ?? fallback.id,
     first_name: String(source.first_name ?? fallback.first_name ?? nameParts[0] ?? '').trim(),
     last_name: String(source.last_name ?? fallback.last_name ?? nameParts.slice(1).join(' ')).trim(),
     full_name: fullName,
     email: String(source.email ?? fallback.email ?? '').trim().toLowerCase(),
     role: String(source.role ?? fallback.role ?? '').trim(),
+    hoa_approved: source.hoa_approved ?? fallback.hoa_approved ?? false,
   };
 }
 
@@ -64,6 +65,25 @@ function saveSession(result) {
   const storage = getStorage();
   storage.setItem(TOKEN_KEY, validated.access_token);
   storage.setItem(USER_KEY, JSON.stringify(validated.user));
+
+  // Maintain backward-compatibility for legacy components reading valoraUser/valoraLoggedIn
+  const normalizedUser = {
+    ...validated.user,
+    id: validated.user.id,
+    firstName: validated.user.first_name,
+    lastName: validated.user.last_name,
+    fullName: validated.user.full_name,
+    status: validated.user.hoa_approved ? 'Approved' : 'Pending',
+  };
+  storage.setItem('access_token', validated.access_token);
+  storage.setItem('valoraUser', JSON.stringify(normalizedUser));
+  storage.setItem('valoraUserEmail', validated.user.email);
+  if (validated.user.hoa_approved) {
+    storage.setItem('valoraLoggedIn', 'true');
+  } else {
+    storage.removeItem('valoraLoggedIn');
+  }
+
   return validated;
 }
 
@@ -71,6 +91,10 @@ function clearSession() {
   const storage = getStorage();
   storage.removeItem(TOKEN_KEY);
   storage.removeItem(USER_KEY);
+  storage.removeItem('access_token');
+  storage.removeItem('valoraUser');
+  storage.removeItem('valoraLoggedIn');
+  storage.removeItem('valoraUserEmail');
 }
 
 async function normalizeApiAuthResponse(response, fallback) {

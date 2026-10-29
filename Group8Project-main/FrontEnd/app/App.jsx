@@ -22,40 +22,35 @@ import PropertyManagement from "./pages/Property/PropertyManagement";
 
 /* DASHBOARDS */
 import Dashboard from "./pages/Dashboard";
-import HeadAdminDashboard
-    from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
+import HeadAdminDashboard from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
+import HOAAdminDashboard from "./pages/Dashboards/HOAAdmin/HOAAdminDashboard";
+import EstateAgentDashboard from "./pages/Dashboards/EstateAgent/EstateAgentDashboard"
+import InvestorDashboard from "./pages/Dashboards/Investor/InvestorDashboard";
 
 /* HOA ADMIN */
-import LandingPageSettings
-    from "./pages/Dashboards/HOAAdmin/LandingPageSettings";
+import LandingPageSettings from "./pages/Dashboards/HOAAdmin/LandingPageSettings";
 
 /* RESIDENT */
 import RequestToSell from "./pages/RequestToSell";
 import Complaints from "./pages/Complaints";
-import ResidentComplaints
-    from "./pages/Complaints/ResidentComplaints";
-import ResidentDirectory
-    from "./pages/Resident/ResidentDirectory";
+import ResidentComplaints from "./pages/Complaints/ResidentComplaints";
+import ResidentDirectory from "./pages/Resident/ResidentDirectory";
 
 /* MAINTENANCE */
 import Maintenance from "./pages/Maintenance/Maintenance";
 
 /* COMMUNITY */
 import Providers from "./pages/Community/Providers";
-import CommunityAnnouncements
-    from "./pages/Announcements/CommunityAnnouncements";
-import Announcements
-    from "./pages/Announcements/Announcements";
-import CommunityAnalytics
-    from "./pages/Community/CommunityAnalytics";
+import CommunityAnnouncements from "./pages/Announcements/CommunityAnnouncements";
+import Announcements from "./pages/Announcements/Announcements";
+import CommunityAnalytics from "./pages/Community/CommunityAnalytics";
 
 /* AI */
 import AITrainingData from "./pages/AI/AITrainingData";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
-import AgentEditListings
-    from "./pages/EstateAgent/AgentEditListings";
+import AgentEditListings from "./pages/EstateAgent/AgentEditListings";
 import AgentInquiries from "./pages/EstateAgent/AgentInquiries";
 
 /* INVESTOR */
@@ -63,10 +58,8 @@ import Valuation from "./pages/Investor/Valuation";
 import ROI from "./pages/Investor/ROI";
 
 /* HEAD ADMIN */
-import RegistrationRequests
-    from "./pages/HeadAdmin/RegistrationRequests";
-import UserManagement
-    from "./pages/HeadAdmin/UserManagement";
+import RegistrationRequests from "./pages/HeadAdmin/RegistrationRequests";
+import UserManagement from "./pages/HeadAdmin/UserManagement";
 
 /* PROFILE */
 import Profile from "./pages/Profile";
@@ -153,6 +146,7 @@ function normalizeRole(roleValue) {
             "hoa admin",
             "hoa administrator",
             "administrator",
+            "hoa_admin",
         ].includes(role)
     ) {
         return "HOA Admin";
@@ -163,6 +157,7 @@ function normalizeRole(roleValue) {
             "head admin",
             "headadministrator",
             "head administrator",
+            "head_admin",
         ].includes(role)
     ) {
         return "Head Admin";
@@ -178,7 +173,7 @@ function normalizeRole(roleValue) {
         return "Investor";
     }
 
-    if (role === "estate agent") {
+    if (role === "estate agent" || role === "estate_agent") {
         return "Estate Agent";
     }
 
@@ -252,15 +247,6 @@ function getCurrentUser() {
 }
 
 /* CHECK APPROVAL STATUS */
-/*
-function isUserApproved(user) {
-    const status = String(user?.status || "")
-        .trim()
-        .toLowerCase();
-
-    return status === "approved" || status === "active";
-}
-*/
 function isUserApproved(user) {
     if (!user) return false;
 
@@ -317,7 +303,29 @@ function HOAAdminRoute({ children }) {
         return <Navigate to="/registration-pending" replace />;
     }
 
-    if (!["Head Admin", "HOA Admin"].includes(user.role)) {
+    // accept the backend format ("hoa_admin") and the frontend format ("HOA Admin")
+    const role = String(user.role || "").toLowerCase();
+    if (!["head admin", "hoa admin", "head_admin", "hoa_admin"].includes(role)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+}
+
+/* INVESTOR ROUTE */
+function InvestorRoute({ children }) {
+    const user = getCurrentUser();
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (!isUserApproved(user)) {
+        return <Navigate to="/registration-pending" replace />;
+    }
+
+    // If the logged-in user is NOT an investor, kick them to the generic dashboard
+    if (user.role !== "Investor") {
         return <Navigate to="/dashboard" replace />;
     }
 
@@ -336,11 +344,19 @@ function AdminManagementRoute({ children }) {
         return <Navigate to="/registration-pending" replace />;
     }
 
-    if (!["Head Admin", "HOA Admin"].includes(user.role)) {
+    // accept lowercase roles
+    const role = String(user.role || "").toLowerCase();
+    if (!["head admin", "hoa admin", "head_admin", "hoa_admin"].includes(role)) {
         return <Navigate to="/dashboard" replace />;
     }
 
     return children;
+}
+
+/* INVESTOR WRAPPER */
+function InvestorDashboardWrapper() {
+    const user = getCurrentUser();
+    return <InvestorDashboard user={user} />;
 }
 
 /* APP */
@@ -409,6 +425,38 @@ function App() {
                         <HeadAdminRoute>
                             <HeadAdminDashboard />
                         </HeadAdminRoute>
+                    }
+                />
+
+                {/* HOA ADMIN DASHBOARD */}
+                <Route
+                    path="/hoa-admin"
+                    element={
+                        <HOAAdminRoute>
+                            <HOAAdminDashboard />
+                        </HOAAdminRoute>
+                    }
+                />
+
+             
+
+                {/* ESTATE AGENT DASHBOARD */}
+                <Route
+                    path="/agent-dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <EstateAgentDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* INVESTOR DASHBOARD */}
+                <Route
+                    path="/investor-dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <InvestorDashboardWrapper/>
+                        </ProtectedRoute>
                     }
                 />
 
