@@ -1,0 +1,1024 @@
+
+import { useEffect, useMemo, useState } from "react";
+import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import "./CommunityAnnouncements.css";
+
+const STORAGE_KEY = "valoraCommunityAnnouncements";
+const UPDATE_EVENT = "valora:community-announcements-updated";
+
+/* =========================================================
+   ICONS
+========================================================= */
+
+function Icon({ type, size = 20 }) {
+    const paths = {
+        announcement: (
+            <>
+                <path d="M4 10.5h3l8-4v11l-8-4H4z" />
+                <path d="M7 13.5v4" />
+                <path d="M17 9c1.5.5 2.5 1.5 2.5 3s-1 2.5-2.5 3" />
+            </>
+        ),
+        plus: <path d="M12 5v14M5 12h14" />,
+        eye: (
+            <>
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" />
+                <circle cx="12" cy="12" r="2.5" />
+            </>
+        ),
+        edit: (
+            <>
+                <path d="M4 20h4L19 9a2.12 2.12 0 0 0-3-3L5 17v3z" />
+                <path d="M13.5 7.5l3 3" />
+            </>
+        ),
+        trash: (
+            <>
+                <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
+            </>
+        ),
+        filter: (
+            <>
+                <path d="M4 6h16M7 12h10M10 18h4" />
+            </>
+        ),
+        close: <path d="m6 6 12 12M18 6 6 18" />,
+        file: (
+            <>
+                <path d="M6 3h8l4 4v14H6z" />
+                <path d="M14 3v5h5M9 12h6M9 16h6" />
+            </>
+        ),
+        calendar: (
+            <>
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M16 3v4M8 3v4M3 10h18" />
+            </>
+        ),
+    };
+
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            {paths[type] || paths.file}
+        </svg>
+    );
+}
+
+/* =========================================================
+   STORAGE
+   No demo announcements are created.
+
+   Every save dispatches a custom event so other VALORA
+   components in the same tab can refresh immediately.
+========================================================= */
+
+function readAnnouncements() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+
+        if (!saved) return [];
+
+        const parsed = JSON.parse(saved);
+
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.error("Unable to load announcements:", error);
+        return [];
+    }
+}
+
+function writeAnnouncements(items) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+
+    window.dispatchEvent(
+        new CustomEvent(UPDATE_EVENT, {
+            detail: { announcements: items },
+        })
+    );
+}
+
+/* =========================================================
+   MAIN COMPONENT
+========================================================= */
+
+function CommunityAnnouncements() {
+    const [announcements, setAnnouncements] = useState(
+        readAnnouncements
+    );
+
+    const [category, setCategory] = useState("All");
+    const [search, setSearch] = useState("");
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [viewing, setViewing] = useState(null);
+    const [message, setMessage] = useState("");
+    const [formError, setFormError] = useState("");
+
+    const emptyForm = {
+        title: "",
+        category: "",
+        date: "",
+        content: "",
+        status: "Draft",
+    };
+
+    const [form, setForm] = useState({ ...emptyForm });
+
+    /* =====================================================
+       LISTEN FOR SHARED ANNOUNCEMENT CHANGES
+    ===================================================== */
+
+    useEffect(() => {
+        function refreshFromStorage(event) {
+            if (
+                event.key === STORAGE_KEY ||
+                event.key === null
+            ) {
+                setAnnouncements(readAnnouncements());
+            }
+        }
+
+        function refreshFromAnnouncementEvent() {
+            setAnnouncements(readAnnouncements());
+        }
+
+        window.addEventListener("storage", refreshFromStorage);
+
+        window.addEventListener(
+            UPDATE_EVENT,
+            refreshFromAnnouncementEvent
+        );
+
+        return () => {
+            window.removeEventListener(
+                "storage",
+                refreshFromStorage
+            );
+
+            window.removeEventListener(
+                UPDATE_EVENT,
+                refreshFromAnnouncementEvent
+            );
+        };
+    }, []);
+
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
+
+    const publishedCount = announcements.filter(
+        item => item.status === "Published"
+    ).length;
+
+    const draftCount = announcements.filter(
+        item => item.status === "Draft"
+    ).length;
+
+    /* =====================================================
+       SEARCH AND CATEGORY FILTER
+    ===================================================== */
+
+    const filteredAnnouncements = useMemo(() => {
+        return announcements.filter(item => {
+            const matchesCategory =
+                category === "All" ||
+                item.category === category;
+
+            const query = search.trim().toLowerCase();
+
+            const matchesSearch =
+                !query ||
+                item.title?.toLowerCase().includes(query) ||
+                item.content?.toLowerCase().includes(query);
+
+            return matchesCategory && matchesSearch;
+        });
+    }, [announcements, category, search]);
+
+    /* =====================================================
+       SAVE ANNOUNCEMENTS
+    ===================================================== */
+
+    function persist(nextAnnouncements) {
+        try {
+            writeAnnouncements(nextAnnouncements);
+
+            setAnnouncements(nextAnnouncements);
+            setMessage("Announcements updated successfully.");
+            setFormError("");
+        } catch (error) {
+            console.error("Unable to save announcements:", error);
+
+            setFormError(
+                "Unable to save changes in this browser. Please check available storage."
+            );
+        }
+    }
+
+    /* =====================================================
+       CREATE ANNOUNCEMENT
+    ===================================================== */
+
+    function openCreateForm() {
+        setEditingId(null);
+        setForm({ ...emptyForm });
+        setFormError("");
+        setMessage("");
+        setShowForm(true);
+        setViewing(null);
+    }
+
+    /* =====================================================
+       EDIT ANNOUNCEMENT
+    ===================================================== */
+
+    function openEditForm(announcement) {
+        setEditingId(announcement.id);
+
+        setForm({
+            title: announcement.title || "",
+            category: announcement.category || "",
+            date: announcement.date || "",
+            content: announcement.content || "",
+            status: announcement.status || "Draft",
+        });
+
+        setFormError("");
+        setMessage("");
+        setShowForm(true);
+        setViewing(null);
+    }
+
+    /* =====================================================
+       SUBMIT CREATE / EDIT FORM
+    ===================================================== */
+
+    function handleSubmit(event) {
+        event.preventDefault();
+
+        if (!form.title.trim()) {
+            setFormError("Please enter an announcement title.");
+            return;
+        }
+
+        if (!form.category.trim()) {
+            setFormError("Please enter or select a category.");
+            return;
+        }
+
+        if (!form.content.trim()) {
+            setFormError("Please enter the announcement message.");
+            return;
+        }
+
+        const now = new Date().toISOString();
+
+        let nextAnnouncements;
+
+        if (editingId) {
+            nextAnnouncements = announcements.map(item =>
+                item.id === editingId
+                    ? {
+                          ...item,
+                          ...form,
+                          title: form.title.trim(),
+                          category: form.category.trim(),
+                          content: form.content.trim(),
+                          updatedAt: now,
+                      }
+                    : item
+            );
+        } else {
+            const newAnnouncement = {
+                id: `ANN-${Date.now()}`,
+                ...form,
+                title: form.title.trim(),
+                category: form.category.trim(),
+                content: form.content.trim(),
+                createdAt: now,
+                updatedAt: now,
+            };
+
+            nextAnnouncements = [
+                newAnnouncement,
+                ...announcements,
+            ];
+        }
+
+        persist(nextAnnouncements);
+
+        setShowForm(false);
+        setEditingId(null);
+        setForm({ ...emptyForm });
+        setCategory("All");
+        setSearch("");
+    }
+
+    /* =====================================================
+       PUBLISH / UNPUBLISH
+    ===================================================== */
+
+    function togglePublished(announcement) {
+        const nextStatus =
+            announcement.status === "Published"
+                ? "Draft"
+                : "Published";
+
+        const updated = announcements.map(item =>
+            item.id === announcement.id
+                ? {
+                      ...item,
+                      status: nextStatus,
+                      updatedAt: new Date().toISOString(),
+                  }
+                : item
+        );
+
+        persist(updated);
+    }
+
+    /* =====================================================
+       DELETE ANNOUNCEMENT
+    ===================================================== */
+
+    function deleteAnnouncement(announcement) {
+        const confirmed = window.confirm(
+            `Delete "${announcement.title}"? This cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        persist(
+            announcements.filter(
+                item => item.id !== announcement.id
+            )
+        );
+
+        if (viewing?.id === announcement.id) {
+            setViewing(null);
+        }
+
+        if (editingId === announcement.id) {
+            setEditingId(null);
+            setShowForm(false);
+            setForm({ ...emptyForm });
+        }
+    }
+
+    /* =====================================================
+       FORMATTING HELPERS
+    ===================================================== */
+
+    function formatDate(value) {
+        if (!value) return "Not specified";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        return date.toLocaleDateString("en-ZA", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        });
+    }
+
+    function getStatusClass(status) {
+        return (status || "Draft")
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+    }
+
+    const categories = [
+        ...new Set(
+            announcements
+                .map(item => item.category)
+                .filter(Boolean)
+        ),
+    ];
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
+    return (
+        <div className="community-announcements-page">
+            <DashboardSidebar />
+
+            <main className="community-announcements-main">
+
+                {/* PAGE HEADER */}
+
+                <section className="community-announcements-top-bar">
+                    <p className="community-announcements-eyebrow">
+                        <span className="community-announcements-eyebrow-dot" />
+                        Community Management
+                    </p>
+
+                    <h1>Community Announcements</h1>
+
+                    <p>
+                        Keep your residents informed with important
+                        community news, notices and updates.
+                    </p>
+                </section>
+
+                {/* SUCCESS MESSAGE */}
+
+                {message && (
+                    <div
+                        className="community-announcements-message success"
+                        role="status"
+                    >
+                        <span className="community-announcements-message-indicator" />
+
+                        {message}
+
+                        <button
+                            type="button"
+                            onClick={() => setMessage("")}
+                            aria-label="Dismiss success message"
+                        >
+                            <Icon type="close" size={15} />
+                        </button>
+                    </div>
+                )}
+
+                {/* GENERAL ERROR */}
+
+                {formError && !showForm && (
+                    <div
+                        className="community-announcements-message error"
+                        role="alert"
+                    >
+                        {formError}
+
+                        <button
+                            type="button"
+                            onClick={() => setFormError("")}
+                            aria-label="Dismiss error message"
+                        >
+                            <Icon type="close" size={15} />
+                        </button>
+                    </div>
+                )}
+
+                {/* STATISTICS */}
+
+                <section className="community-announcements-stat-cards">
+
+                    <div className="community-announcements-stat-card">
+                        <div className="community-announcements-stat-icon">
+                            <Icon type="announcement" size={23} />
+                        </div>
+
+                        <div className="community-announcements-stat-content">
+                            <p>Total Announcements</p>
+                            <h3>{announcements.length}</h3>
+                            <small>All created announcements</small>
+                        </div>
+                    </div>
+
+                    <div className="community-announcements-stat-card">
+                        <div className="community-announcements-stat-icon published-icon">
+                            <Icon type="file" size={23} />
+                        </div>
+
+                        <div className="community-announcements-stat-content">
+                            <p>Published</p>
+                            <h3>{publishedCount}</h3>
+                            <small>Published community updates</small>
+                        </div>
+                    </div>
+
+                    <div className="community-announcements-stat-card">
+                        <div className="community-announcements-stat-icon draft-icon">
+                            <Icon type="edit" size={23} />
+                        </div>
+
+                        <div className="community-announcements-stat-content">
+                            <p>Drafts</p>
+                            <h3>{draftCount}</h3>
+                            <small>Announcements not published</small>
+                        </div>
+                    </div>
+
+                </section>
+
+                {/* ANNOUNCEMENTS PANEL */}
+
+                <section className="community-announcements-panel community-announcements-large-panel">
+
+                    <div className="community-announcements-panel-heading">
+                        <div className="community-announcements-panel-title">
+                            <span className="community-announcements-section-label">
+                                ANNOUNCEMENTS
+                            </span>
+
+                            <h3>Manage Announcements</h3>
+
+                            <p>
+                                Create and manage important updates
+                                for your community.
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="community-announcements-primary-btn"
+                            onClick={openCreateForm}
+                        >
+                            <Icon type="plus" size={17} />
+                            Create Announcement
+                        </button>
+                    </div>
+
+                    {/* SEARCH AND FILTERS */}
+
+                    {announcements.length > 0 && (
+                        <div className="community-announcements-filter-row">
+                            <div className="community-announcements-search-wrap">
+                                <Icon type="filter" size={18} />
+
+                                <input
+                                    type="search"
+                                    className="community-announcements-search"
+                                    placeholder="Search by title or message..."
+                                    value={search}
+                                    onChange={event =>
+                                        setSearch(event.target.value)
+                                    }
+                                    aria-label="Search announcements"
+                                />
+                            </div>
+
+                            <div className="community-announcements-category-filter">
+                                <label htmlFor="announcement-category-filter">
+                                    Category
+                                </label>
+
+                                <select
+                                    id="announcement-category-filter"
+                                    className="community-announcements-filter-select"
+                                    value={category}
+                                    onChange={event =>
+                                        setCategory(event.target.value)
+                                    }
+                                    aria-label="Filter announcements by category"
+                                >
+                                    <option value="All">
+                                        All Categories
+                                    </option>
+
+                                    {categories.map(itemCategory => (
+                                        <option
+                                            key={itemCategory}
+                                            value={itemCategory}
+                                        >
+                                            {itemCategory}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* EMPTY STATE OR ANNOUNCEMENTS TABLE */}
+
+                    {filteredAnnouncements.length === 0 ? (
+                        <div className="community-announcements-empty">
+
+                            <div className="community-announcements-empty-decoration community-announcements-empty-decoration-one" />
+                            <div className="community-announcements-empty-decoration community-announcements-empty-decoration-two" />
+
+                            <div className="community-announcements-empty-content">
+
+                                <div className="community-announcements-empty-icon">
+                                    <Icon type="announcement" size={35} />
+                                </div>
+
+                                <span className="community-announcements-empty-label">
+                                    {announcements.length === 0
+                                        ? "YOUR COMMUNITY, CONNECTED"
+                                        : "SEARCH RESULTS"}
+                                </span>
+
+                                <h3>
+                                    {announcements.length === 0
+                                        ? "Your community story starts here"
+                                        : "No announcements found"}
+                                </h3>
+
+                                <p>
+                                    {announcements.length === 0
+                                        ? "Share important news, maintenance notices, upcoming events and community updates with your residents. Your announcements will appear here once you create them."
+                                        : "We couldn't find any announcements matching your search or selected category. Try adjusting your search or filters."}
+                                </p>
+
+                                {announcements.length === 0 ? (
+                                    <button
+                                        type="button"
+                                        className="community-announcements-primary-btn community-announcements-empty-btn"
+                                        onClick={openCreateForm}
+                                    >
+                                        <Icon type="plus" size={17} />
+                                        Create Your First Announcement
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="community-announcements-secondary-btn"
+                                        onClick={() => {
+                                            setSearch("");
+                                            setCategory("All");
+                                        }}
+                                    >
+                                        Clear Search and Filters
+                                    </button>
+                                )}
+
+                                {announcements.length === 0 && (
+                                    <span className="community-announcements-empty-note">
+                                        <Icon type="file" size={14} />
+                                        No sample data. Your content stays yours.
+                                    </span>
+                                )}
+
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="community-announcements-table-container">
+
+                            <table className="community-announcements-data-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Announcement</th>
+                                        <th>Category</th>
+                                        <th>Relevant Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {filteredAnnouncements.map(announcement => (
+                                        <tr key={announcement.id}>
+
+                                            <td>
+                                                <strong>
+                                                    {announcement.title}
+                                                </strong>
+
+                                                <span className="community-announcements-id">
+                                                    {announcement.id}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className="community-announcements-category-badge">
+                                                    {announcement.category}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className="community-announcements-date-cell">
+                                                    <Icon type="calendar" size={14} />
+                                                    {formatDate(announcement.date)}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span
+                                                    className={`community-announcements-status-badge ${getStatusClass(announcement.status)}`}
+                                                >
+                                                    <span className="community-announcements-status-dot" />
+                                                    {announcement.status || "Draft"}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div className="community-announcements-action-buttons">
+
+                                                    <button
+                                                        type="button"
+                                                        className="community-announcements-secondary-btn"
+                                                        onClick={() =>
+                                                            setViewing(announcement)
+                                                        }
+                                                    >
+                                                        <Icon type="eye" size={14} />
+                                                        View
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="community-announcements-secondary-btn"
+                                                        onClick={() =>
+                                                            openEditForm(announcement)
+                                                        }
+                                                    >
+                                                        <Icon type="edit" size={14} />
+                                                        Edit
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className={`community-announcements-secondary-btn ${announcement.status === "Published" ? "unpublish-btn" : "publish-btn"}`}
+                                                        onClick={() =>
+                                                            togglePublished(announcement)
+                                                        }
+                                                    >
+                                                        {announcement.status === "Published"
+                                                            ? "Unpublish"
+                                                            : "Publish"}
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="community-announcements-secondary-btn delete-btn"
+                                                        onClick={() =>
+                                                            deleteAnnouncement(announcement)
+                                                        }
+                                                        aria-label={`Delete ${announcement.title}`}
+                                                    >
+                                                        <Icon type="trash" size={14} />
+                                                        Delete
+                                                    </button>
+
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    ))}
+                                </tbody>
+
+                            </table>
+                        </div>
+                    )}
+
+                </section>
+
+                {/* CREATE / EDIT FORM */}
+
+                {showForm && (
+                    <section
+                        className="community-announcements-panel community-announcements-form-panel"
+                        id="announcement-form"
+                    >
+                        <div className="community-announcements-panel-heading">
+
+                            <div className="community-announcements-panel-title">
+                                <span className="community-announcements-section-label">
+                                    ANNOUNCEMENT DETAILS
+                                </span>
+
+                                <h3>
+                                    {editingId
+                                        ? "Edit Announcement"
+                                        : "Create Announcement"}
+                                </h3>
+
+                                <p>
+                                    Enter the information you want to
+                                    share with your community.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="community-announcements-secondary-btn"
+                                onClick={() => {
+                                    setShowForm(false);
+                                    setFormError("");
+                                }}
+                            >
+                                <Icon type="close" size={15} />
+                                Close
+                            </button>
+                        </div>
+
+                        {formError && (
+                            <div
+                                className="community-announcements-message error"
+                                role="alert"
+                            >
+                                {formError}
+                            </div>
+                        )}
+
+                        <form
+                            className="community-announcements-form"
+                            onSubmit={handleSubmit}
+                        >
+                            <div className="community-announcements-form-grid">
+
+                                <label>
+                                    <span>Announcement Title *</span>
+
+                                    <input
+                                        type="text"
+                                        value={form.title}
+                                        onChange={event =>
+                                            setForm({
+                                                ...form,
+                                                title: event.target.value,
+                                            })
+                                        }
+                                        placeholder="e.g. Scheduled Water Maintenance"
+                                        required
+                                    />
+                                </label>
+
+                                <label>
+                                    <span>Category *</span>
+
+                                    <input
+                                        type="text"
+                                        list="announcement-categories"
+                                        value={form.category}
+                                        onChange={event =>
+                                            setForm({
+                                                ...form,
+                                                category: event.target.value,
+                                            })
+                                        }
+                                        placeholder="Enter or select a category"
+                                        required
+                                    />
+
+                                    <datalist id="announcement-categories">
+                                        {categories.map(item => (
+                                            <option key={item} value={item} />
+                                        ))}
+                                    </datalist>
+                                </label>
+
+                                <label>
+                                    <span>Relevant Date (optional)</span>
+
+                                    <input
+                                        type="date"
+                                        value={form.date}
+                                        onChange={event =>
+                                            setForm({
+                                                ...form,
+                                                date: event.target.value,
+                                            })
+                                        }
+                                    />
+                                </label>
+
+                                <label>
+                                    <span>Publication Status</span>
+
+                                    <select
+                                        value={form.status}
+                                        onChange={event =>
+                                            setForm({
+                                                ...form,
+                                                status: event.target.value,
+                                            })
+                                        }
+                                    >
+                                        <option value="Draft">Draft</option>
+                                        <option value="Published">Published</option>
+                                    </select>
+                                </label>
+
+                                <label className="community-announcements-full-width">
+                                    <span>Announcement Message *</span>
+
+                                    <textarea
+                                        rows="7"
+                                        value={form.content}
+                                        onChange={event =>
+                                            setForm({
+                                                ...form,
+                                                content: event.target.value,
+                                            })
+                                        }
+                                        placeholder="Write the full announcement and include any important details..."
+                                        required
+                                    />
+                                </label>
+
+                            </div>
+
+                            <div className="community-announcements-form-actions">
+
+                                <button
+                                    type="submit"
+                                    className="community-announcements-primary-btn"
+                                >
+                                    <Icon
+                                        type={editingId ? "edit" : "plus"}
+                                        size={16}
+                                    />
+
+                                    {editingId
+                                        ? "Save Changes"
+                                        : "Create Announcement"}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="community-announcements-secondary-btn"
+                                    onClick={() => {
+                                        setShowForm(false);
+                                        setFormError("");
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+
+                            </div>
+                        </form>
+                    </section>
+                )}
+
+                {/* VIEW ANNOUNCEMENT DETAILS */}
+
+                {viewing && (
+                    <section className="community-announcements-panel community-announcements-detail-panel">
+
+                        <div className="community-announcements-panel-heading">
+
+                            <div className="community-announcements-panel-title">
+                                <span className="community-announcements-section-label">
+                                    ANNOUNCEMENT DETAILS
+                                </span>
+
+                                <h3>{viewing.title}</h3>
+
+                                <p>
+                                    {viewing.category}
+                                    {" · "}
+                                    {viewing.status}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="community-announcements-secondary-btn"
+                                onClick={() => setViewing(null)}
+                            >
+                                <Icon type="close" size={15} />
+                                Close
+                            </button>
+
+                        </div>
+
+                        <div className="community-announcements-detail-body">
+
+                            <div className="community-announcements-detail-meta">
+                                <span className="community-announcements-category-badge">
+                                    {viewing.category}
+                                </span>
+
+                                <span className={`community-announcements-status-badge ${getStatusClass(viewing.status)}`}>
+                                    <span className="community-announcements-status-dot" />
+                                    {viewing.status}
+                                </span>
+
+                                <span className="community-announcements-date-cell">
+                                    <Icon type="calendar" size={15} />
+                                    {formatDate(viewing.date)}
+                                </span>
+                            </div>
+
+                            <p className="community-announcements-detail-content">
+                                {viewing.content}
+                            </p>
+
+                            <button
+                                type="button"
+                                className="community-announcements-primary-btn"
+                                onClick={() => openEditForm(viewing)}
+                            >
+                                <Icon type="edit" size={15} />
+                                Edit Announcement
+                            </button>
+
+                        </div>
+                    </section>
+                )}
+
+            </main>
+        </div>
+    );
+}
+
+export default CommunityAnnouncements;

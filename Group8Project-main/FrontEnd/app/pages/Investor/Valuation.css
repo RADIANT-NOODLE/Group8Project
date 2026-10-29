@@ -1,0 +1,796 @@
+/* =========================================================
+   VALORA AI VALUATION
+   SAME PAGE POSITIONING AS REQUEST TO SELL
+========================================================= */
+
+.valuation-page {
+    width: 100%;
+    min-height: 100vh;
+
+    background: #f5f3f7;
+    color: #29242d;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.valuation-main {
+    width: calc(100% - 220px);
+    min-height: 100vh;
+
+    margin-left: 220px;
+
+    padding: 42px 30px 55px;
+
+    box-sizing: border-box;
+
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.valuation-top-bar {
+    width: 100%;
+
+    margin: 0 0 24px;
+
+    min-width: 0;
+}
+
+.valuation-eyebrow {
+    display: block;
+
+    margin: 0 0 7px;
+
+    color: #563f6b;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+}
+
+.valuation-top-bar h1 {
+    margin: 0;
+
+    color: #29242d;
+
+    font-size: 29px;
+    font-weight: 700;
+
+    line-height: 1.25;
+}
+
+.valuation-top-bar > div > p:last-child {
+    max-width: 700px;
+
+    margin: 8px 0 0;
+
+    color: #77727b;
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   TWO-COLUMN LAYOUT
+========================================================= */
+
+.valuation-layout {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(300px, 0.9fr)
+        minmax(360px, 1.1fr);
+
+    gap: 20px;
+
+    align-items: start;
+
+    min-width: 0;
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.valuation-panel {
+    width: 100%;
+    min-width: 0;
+
+    padding: 24px;
+
+    border: 1px solid #e4e0e7;
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 3px 14px rgba(40, 30, 50, 0.045);
+
+    box-sizing: border-box;
+}
+
+.valuation-result-panel {
+    min-height: 500px;
+}
+
+
+/* =========================================================
+   PANEL HEADING
+========================================================= */
+
+.valuation-panel-heading {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin-bottom: 22px;
+}
+
+.valuation-heading-icon {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #f1edf4;
+
+    color: #563f6b;
+}
+
+.valuation-heading-icon svg {
+    display: block;
+}
+
+.valuation-panel-heading h2 {
+    margin: 0;
+
+    color: #302a34;
+
+    font-size: 16px;
+    font-weight: 650;
+
+    line-height: 1.35;
+}
+
+.valuation-panel-heading p {
+    margin: 5px 0 0;
+
+    color: #89828c;
+
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.valuation-form {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+.valuation-form-field {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: 16px;
+}
+
+.valuation-form-field label {
+    margin-bottom: 7px;
+
+    color: #4d4652;
+
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.valuation-optional {
+    margin-left: 5px;
+
+    color: #9a939d;
+
+    font-size: 9px;
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.valuation-form input,
+.valuation-form select {
+    width: 100%;
+
+    min-height: 41px;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d9d5dd;
+    border-radius: 7px;
+
+    outline: none;
+
+    background: #ffffff;
+    color: #353038;
+
+    font-family: inherit;
+    font-size: 11px;
+
+    box-sizing: border-box;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.valuation-form input::placeholder {
+    color: #aaa4ac;
+}
+
+.valuation-form input:hover,
+.valuation-form select:hover {
+    border-color: #c5bec9;
+}
+
+.valuation-form input:focus,
+.valuation-form select:focus {
+    border-color: #563f6b;
+
+    box-shadow:
+        0 0 0 3px rgba(86, 63, 107, 0.08);
+}
+
+
+/* =========================================================
+   INPUT WRAPPERS
+========================================================= */
+
+.valuation-input-wrapper {
+    position: relative;
+
+    width: 100%;
+}
+
+.valuation-input-wrapper > span:first-child {
+    position: absolute;
+
+    left: 11px;
+    top: 50%;
+
+    display: flex;
+    align-items: center;
+
+    color: #8b838f;
+
+    transform: translateY(-50%);
+
+    pointer-events: none;
+}
+
+.valuation-input-wrapper input {
+    padding-left: 36px;
+}
+
+.valuation-input-suffix {
+    position: absolute;
+
+    right: 12px;
+    top: 50%;
+
+    color: #8b838f;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    transform: translateY(-50%);
+
+    pointer-events: none;
+}
+
+.valuation-input-wrapper input:has(+ .valuation-input-suffix) {
+    padding-right: 42px;
+}
+
+.valuation-currency {
+    position: absolute;
+
+    left: 12px;
+    top: 50%;
+
+    color: #8b838f;
+
+    font-size: 11px;
+    font-weight: 650;
+
+    transform: translateY(-50%);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+========================================================= */
+
+.valuation-submit {
+    width: 100%;
+
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 6px;
+
+    padding: 10px 18px;
+
+    border: 1px solid #563f6b;
+    border-radius: 7px;
+
+    background: #563f6b;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.valuation-submit:hover {
+    border-color: #463256;
+
+    background: #463256;
+}
+
+.valuation-submit:active {
+    transform: translateY(1px);
+}
+
+.valuation-submit svg {
+    display: block;
+}
+
+
+/* =========================================================
+   EMPTY RESULT
+========================================================= */
+
+.valuation-empty-result {
+    min-height: 390px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    text-align: center;
+}
+
+.valuation-empty-icon {
+    width: 62px;
+    height: 62px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 17px;
+
+    border-radius: 50%;
+
+    background: #f1edf4;
+
+    color: #563f6b;
+}
+
+.valuation-empty-icon svg {
+    display: block;
+}
+
+.valuation-empty-result h3 {
+    margin: 0;
+
+    color: #38313d;
+
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.valuation-empty-result p {
+    max-width: 290px;
+
+    margin: 8px 0 0;
+
+    color: #8a838d;
+
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   MAIN RESULT
+========================================================= */
+
+.valuation-main-result {
+    padding: 23px 18px;
+
+    border: 1px solid #e5e0e8;
+    border-radius: 10px;
+
+    background: #f7f5f8;
+
+    text-align: center;
+}
+
+.valuation-main-result > span {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #827a87;
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.valuation-main-result h2 {
+    margin: 0;
+
+    color: #563f6b;
+
+    font-size: 30px;
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+.valuation-main-result p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    margin: 8px 0 0;
+
+    color: #7f7785;
+
+    font-size: 10px;
+}
+
+.valuation-main-result p svg {
+    color: #563f6b;
+}
+
+
+/* =========================================================
+   METRICS
+========================================================= */
+
+.valuation-metrics {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+.valuation-metric {
+    min-width: 0;
+
+    padding: 14px;
+
+    border: 1px solid #e8e4ea;
+    border-radius: 8px;
+
+    background: #ffffff;
+}
+
+.valuation-metric > span {
+    width: 29px;
+    height: 29px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 9px;
+
+    border-radius: 7px;
+
+    background: #f1edf4;
+
+    color: #563f6b;
+}
+
+.valuation-metric > span svg {
+    display: block;
+}
+
+.valuation-metric p {
+    margin: 0 0 5px;
+
+    color: #827b86;
+
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+.valuation-metric strong {
+    display: block;
+
+    overflow: hidden;
+
+    color: #403843;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   INVESTMENT PROJECTION
+========================================================= */
+
+.valuation-roi-box {
+    margin-top: 15px;
+
+    padding: 19px;
+
+    border-radius: 10px;
+
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.valuation-roi-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+.valuation-roi-heading > svg {
+    flex-shrink: 0;
+
+    margin-top: 2px;
+
+    opacity: 0.85;
+}
+
+.valuation-roi-box h3 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.valuation-roi-box p {
+    margin: 6px 0 0;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    font-size: 9px;
+    line-height: 1.55;
+}
+
+.valuation-roi-box h2 {
+    margin: 18px 0 0;
+
+    color: #ffffff;
+
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.valuation-roi-box > p:last-child {
+    margin-top: 4px;
+
+    color: rgba(255, 255, 255, 0.65);
+}
+
+
+/* =========================================================
+   VALORA NOTE
+========================================================= */
+
+.valuation-note {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 10px;
+
+    margin-top: 15px;
+    padding: 14px;
+
+    border: 1px solid #e3dde7;
+    border-left: 3px solid #563f6b;
+    border-radius: 8px;
+
+    background: #faf9fb;
+}
+
+.valuation-note-icon {
+    width: 25px;
+    height: 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #f0ebf4;
+
+    color: #563f6b;
+}
+
+.valuation-note-icon svg {
+    display: block;
+}
+
+.valuation-note strong {
+    display: block;
+
+    color: #4a414e;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.valuation-note p {
+    margin: 5px 0 0;
+
+    color: #817984;
+
+    font-size: 9px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .valuation-main {
+        width: calc(100% - 200px);
+        margin-left: 200px;
+
+        padding: 36px 25px 45px;
+    }
+
+    .valuation-layout {
+        grid-template-columns:
+            minmax(280px, 0.9fr)
+            minmax(320px, 1.1fr);
+    }
+}
+
+
+@media (max-width: 800px) {
+
+    .valuation-main {
+        width: calc(100% - 170px);
+        margin-left: 170px;
+
+        padding: 30px 20px 40px;
+    }
+
+    .valuation-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .valuation-result-panel {
+        min-height: auto;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .valuation-main {
+        width: calc(100% - 68px);
+        margin-left: 68px;
+
+        padding: 25px 15px 35px;
+    }
+
+    .valuation-top-bar {
+        margin-bottom: 22px;
+    }
+
+    .valuation-top-bar h1 {
+        font-size: 24px;
+    }
+
+    .valuation-top-bar > div > p:last-child {
+        font-size: 11px;
+    }
+
+    .valuation-panel {
+        padding: 18px;
+    }
+
+    .valuation-panel-heading {
+        gap: 9px;
+    }
+
+    .valuation-heading-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .valuation-panel-heading h2 {
+        font-size: 14px;
+    }
+
+    .valuation-panel-heading p {
+        font-size: 9px;
+    }
+
+    .valuation-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .valuation-main-result h2 {
+        font-size: 25px;
+    }
+
+    .valuation-roi-box h2 {
+        font-size: 21px;
+    }
+}

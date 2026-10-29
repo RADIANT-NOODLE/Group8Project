@@ -1,0 +1,804 @@
+/* =========================================================
+   VALORA RESIDENT PROFILE
+   SAME PAGE POSITIONING AS VALUATION / PROVIDERS
+========================================================= */
+
+.resident-profile-layout {
+    width: 100%;
+    min-height: 100vh;
+
+    background: #f5f3f7;
+    color: #29242d;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.resident-profile-main {
+    width: calc(100% - 220px);
+    min-height: 100vh;
+
+    margin-left: 220px;
+
+    padding: 42px 30px 55px;
+
+    box-sizing: border-box;
+
+    overflow-x: hidden;
+
+    background: #f5f3f7;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.resident-profile-topbar {
+    width: 100%;
+
+    margin-bottom: 28px;
+}
+
+.resident-profile-eyebrow {
+    margin: 0 0 7px;
+
+    color: #563f6b;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.resident-profile-topbar h2 {
+    margin: 0;
+
+    color: #29242d;
+
+    font-size: 28px;
+    font-weight: 750;
+
+    line-height: 1.2;
+}
+
+.resident-profile-topbar > div > p:last-child {
+    margin: 8px 0 0;
+
+    color: #77717d;
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   PROFILE HEADER
+========================================================= */
+
+.resident-profile-header-card {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+
+    width: 100%;
+
+    padding: 20px;
+
+    margin-bottom: 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #e8e3eb;
+    border-radius: 10px;
+
+    box-shadow:
+        0 2px 8px rgba(30, 20, 40, 0.04);
+
+    box-sizing: border-box;
+}
+
+.resident-profile-avatar {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #563f6b;
+    color: #ffffff;
+
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.resident-profile-header-info {
+    min-width: 0;
+}
+
+.resident-profile-header-info span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #563f6b;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+}
+
+.resident-profile-header-info h1 {
+    margin: 0;
+
+    color: #29242d;
+
+    font-size: 20px;
+    font-weight: 750;
+
+    line-height: 1.25;
+}
+
+.resident-profile-header-info p {
+    margin: 5px 0 0;
+
+    color: #77717d;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   PANEL
+========================================================= */
+
+.resident-profile-panel {
+    width: 100%;
+
+    margin-bottom: 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #e8e3eb;
+    border-radius: 10px;
+
+    box-shadow:
+        0 2px 8px rgba(30, 20, 40, 0.04);
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   PANEL HEADING
+========================================================= */
+
+.resident-profile-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #eeeaf0;
+}
+
+.resident-profile-panel-heading h3 {
+    margin: 0;
+
+    color: #29242d;
+
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.resident-profile-panel-heading p {
+    margin: 5px 0 0;
+
+    color: #87818c;
+
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   EDIT BUTTON
+========================================================= */
+
+.resident-profile-edit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 36px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #563f6b;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #563f6b;
+
+    font-family: inherit;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.resident-profile-edit-button:hover {
+    background: #563f6b;
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   PROFILE DETAILS
+========================================================= */
+
+.resident-profile-details-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 1px;
+
+    margin: 20px 22px;
+
+    background: #eeeaf0;
+
+    border: 1px solid #eeeaf0;
+    border-radius: 8px;
+
+    overflow: hidden;
+}
+
+.resident-profile-detail {
+    min-width: 0;
+
+    padding: 15px;
+
+    background: #ffffff;
+}
+
+.resident-profile-detail span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #8a848f;
+
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.resident-profile-detail strong {
+    display: block;
+
+    color: #302b34;
+
+    font-size: 10px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   EDIT FORM
+========================================================= */
+
+.resident-profile-edit-form {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 16px 18px;
+
+    padding: 20px 22px;
+}
+
+.resident-profile-form-field {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+.resident-profile-form-field label {
+    color: #514b55;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.resident-profile-form-field input {
+    width: 100%;
+
+    min-height: 36px;
+
+    box-sizing: border-box;
+
+    padding: 8px 10px;
+
+    border: 1px solid #ddd7e1;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #403a45;
+
+    font-family: inherit;
+
+    font-size: 9px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.resident-profile-form-field input:focus {
+    border-color: #563f6b;
+
+    box-shadow:
+        0 0 0 3px rgba(86, 63, 107, 0.08);
+}
+
+.resident-profile-edit-buttons {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 2px;
+}
+
+.resident-profile-save-button,
+.resident-profile-cancel-button {
+    min-height: 34px;
+
+    padding: 7px 12px;
+
+    border-radius: 7px;
+
+    font-family: inherit;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.resident-profile-save-button {
+    border: 1px solid #563f6b;
+
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.resident-profile-save-button:hover {
+    background: #463256;
+    border-color: #463256;
+}
+
+.resident-profile-cancel-button {
+    border: 1px solid #ddd7e1;
+
+    background: #ffffff;
+    color: #625c66;
+}
+
+.resident-profile-cancel-button:hover {
+    background: #f5f2f7;
+}
+
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+.resident-profile-settings-list {
+    display: flex;
+    flex-direction: column;
+
+    padding: 8px 22px 20px;
+}
+
+.resident-profile-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 14px 0;
+
+    border-bottom: 1px solid #eeeaf0;
+}
+
+.resident-profile-setting-item:last-child {
+    border-bottom: 0;
+}
+
+.resident-profile-setting-info {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    min-width: 0;
+}
+
+.resident-profile-setting-icon {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #f1edf4;
+    color: #563f6b;
+}
+
+.resident-profile-setting-info > div:last-child {
+    min-width: 0;
+}
+
+.resident-profile-setting-info strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #302b34;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.resident-profile-setting-info span {
+    display: block;
+
+    color: #817b86;
+
+    font-size: 8px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   TOGGLE
+========================================================= */
+
+.resident-profile-toggle {
+    position: relative;
+
+    width: 42px;
+    height: 22px;
+
+    flex-shrink: 0;
+}
+
+.resident-profile-toggle input {
+    width: 0;
+    height: 0;
+
+    opacity: 0;
+}
+
+.resident-profile-toggle-slider {
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 30px;
+
+    background: #d4d1d7;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease;
+}
+
+.resident-profile-toggle-slider::before {
+    content: "";
+
+    position: absolute;
+
+    width: 16px;
+    height: 16px;
+
+    left: 3px;
+    top: 3px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.18);
+
+    transition:
+        transform 0.2s ease;
+}
+
+.resident-profile-toggle input:checked
++ .resident-profile-toggle-slider {
+    background: #563f6b;
+}
+
+.resident-profile-toggle input:checked
++ .resident-profile-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+.resident-profile-security-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
+    padding: 18px 22px 22px;
+}
+
+.resident-profile-security-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 34px;
+
+    padding: 7px 12px;
+
+    border: 1px solid #ddd7e1;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #625c66;
+
+    font-family: inherit;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.resident-profile-security-actions button:hover {
+    border-color: #563f6b;
+
+    background: #f5f2f7;
+
+    color: #563f6b;
+}
+
+.resident-profile-security-actions button:last-child:hover {
+    border-color: #563f6b;
+
+    background: #563f6b;
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   SAME BREAKPOINTS AS OTHER DASHBOARD PAGES
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .resident-profile-main {
+        width: calc(100% - 200px);
+
+        margin-left: 200px;
+
+        padding: 36px 25px 45px;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .resident-profile-main {
+        width: calc(100% - 170px);
+
+        margin-left: 170px;
+
+        padding: 34px 20px 45px;
+    }
+
+    .resident-profile-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .resident-profile-edit-form {
+        grid-template-columns: 1fr;
+    }
+
+    .resident-profile-edit-buttons {
+        grid-column: auto;
+    }
+
+    .resident-profile-panel-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .resident-profile-main {
+        width: calc(100% - 68px);
+
+        margin-left: 68px;
+
+        padding: 28px 14px 35px;
+    }
+
+    .resident-profile-topbar h2 {
+        font-size: 23px;
+    }
+
+    .resident-profile-header-card {
+        padding: 17px;
+    }
+
+    .resident-profile-avatar {
+        width: 50px;
+        height: 50px;
+
+        font-size: 18px;
+    }
+
+    .resident-profile-header-info h1 {
+        font-size: 17px;
+    }
+
+    .resident-profile-panel-heading {
+        padding: 17px;
+    }
+
+    .resident-profile-details-grid {
+        margin: 17px;
+    }
+
+    .resident-profile-edit-form {
+        padding: 17px;
+    }
+
+    .resident-profile-settings-list {
+        padding: 7px 17px 17px;
+    }
+
+    .resident-profile-security-actions {
+        padding: 15px 17px 17px;
+    }
+
+    .resident-profile-setting-item {
+        align-items: flex-start;
+    }
+
+}
+
+/* =========================================================
+   PASSWORD CHANGE MODAL
+========================================================= */
+
+.password-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background-color: rgba(41, 36, 45, 0.6); /* Semi-transparent dark background */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    z-index: 1000; /* Ensures it sits on top of the sidebar and everything else */
+    
+    /* Optional: subtle fade-in animation */
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.password-modal {
+    background: #ffffff;
+    padding: 24px 28px;
+    border-radius: 12px;
+    
+    width: 100%;
+    max-width: 400px;
+    
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e8e3eb;
+
+    animation: slideUp 0.3s ease-out;
+}
+
+.password-modal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    
+    color: #29242d;
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.password-modal .resident-profile-form-field {
+    margin-bottom: 16px;
+}
+
+/* Modal Button Adjustments */
+.password-modal .resident-profile-edit-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.password-modal .resident-profile-save-button,
+.password-modal .resident-profile-cancel-button {
+    flex: 1; /* Makes both buttons equal width */
+    justify-content: center;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

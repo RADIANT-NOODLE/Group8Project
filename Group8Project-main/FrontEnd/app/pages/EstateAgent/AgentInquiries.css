@@ -1,0 +1,405 @@
+/* =========================================================
+   VALORA - AGENT INQUIRIES
+   Shared professional purple dashboard theme
+========================================================= */
+
+.agent-inquiries-page {
+    min-height: 100vh;
+    display: flex;
+    background: #f5f5f7;
+    color: #202124;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =========================================================
+   MAIN CONTENT
+   Matches DashboardSidebar.css
+========================================================= */
+
+.agent-inquiries-main {
+    flex: 1;
+    min-width: 0;
+    width: calc(100% - 220px);
+    margin-left: 220px;
+    padding: 30px 34px 45px;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.agent-inquiries-topbar {
+    min-height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 28px;
+}
+
+.agent-inquiries-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 8px;
+    color: #7a7a80;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.agent-inquiries-breadcrumb span {
+    color: #b0b0b5;
+}
+
+.agent-inquiries-topbar h1 {
+    margin: 0;
+    color: #222126;
+    font-size: 28px;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.agent-inquiries-topbar p {
+    margin: 7px 0 0;
+    color: #77777e;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   STAT CARDS
+========================================================= */
+
+.agent-inquiries-stat-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.agent-inquiries-stat-card {
+    min-height: 108px;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e8e8eb;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.025);
+    box-sizing: border-box;
+}
+
+.agent-inquiries-stat-icon {
+    width: 43px;
+    height: 43px;
+    border-radius: 9px;
+    background: #f0ebf4;
+    color: #563f6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.agent-inquiries-stat-icon svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.agent-inquiries-stat-card span {
+    display: block;
+    color: #77777e;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.agent-inquiries-stat-card strong {
+    display: block;
+    margin-top: 5px;
+    color: #28272d;
+    font-size: 25px;
+    line-height: 1;
+    font-weight: 700;
+}
+
+/* =========================================================
+   MAIN PANEL
+========================================================= */
+
+.agent-inquiries-panel {
+    background: #ffffff;
+    border: 1px solid #e5e5e8;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
+    overflow: hidden;
+}
+
+.agent-inquiries-panel-heading {
+    padding: 23px 25px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 25px;
+    border-bottom: 1px solid #e8e8eb;
+    box-sizing: border-box;
+}
+
+.agent-inquiries-panel-heading h2 {
+    margin: 0;
+    color: #29282e;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.agent-inquiries-panel-heading p {
+    margin: 6px 0 0;
+    color: #818188;
+    font-size: 13px;
+}
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.agent-inquiries-filter {
+    min-width: 180px;
+}
+
+.agent-inquiries-filter label {
+    display: block;
+    margin-bottom: 6px;
+    color: #6f6f76;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.agent-inquiries-filter select {
+    width: 100%;
+    height: 38px;
+    padding: 0 34px 0 11px;
+    border: 1px solid #d9d9dd;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #333238;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.agent-inquiries-filter select:focus {
+    border-color: #563f6b;
+    box-shadow: 0 0 0 2px rgba(86, 63, 107, 0.1);
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.agent-inquiries-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.agent-inquiries-table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+}
+
+.agent-inquiries-table th {
+    padding: 14px 18px;
+    background: #fafafa;
+    border-bottom: 1px solid #e7e7ea;
+    color: #6e6e75;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    white-space: nowrap;
+}
+
+.agent-inquiries-table td {
+    padding: 17px 18px;
+    border-bottom: 1px solid #eeeeef;
+    color: #4d4c53;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.agent-inquiries-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.agent-inquiries-table tbody tr:hover {
+    background: #fcfbfd;
+}
+
+/* =========================================================
+   BUYER
+========================================================= */
+
+.agent-inquiries-buyer strong {
+    display: block;
+    color: #29282e;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.agent-inquiries-buyer small {
+    display: block;
+    margin-top: 4px;
+    color: #8a8a90;
+    font-size: 11px;
+}
+
+.agent-inquiries-property-name {
+    color: #563f6b;
+    font-weight: 600;
+}
+
+/* =========================================================
+   STATUS SELECT
+========================================================= */
+
+.agent-inquiries-status-select {
+    min-width: 145px;
+    height: 34px;
+    padding: 0 29px 0 9px;
+    border: 1px solid #dcdce0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #4a494f;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.agent-inquiries-status-select:focus {
+    border-color: #563f6b;
+    box-shadow: 0 0 0 2px rgba(86, 63, 107, 0.1);
+}
+
+.agent-inquiries-status-select.status-new {
+    color: #563f6b;
+    border-color: #cfc2d8;
+}
+
+.agent-inquiries-status-select.status-contacted {
+    color: #444444;
+}
+
+.agent-inquiries-status-select.status-viewing-scheduled {
+    color: #563f6b;
+}
+
+.agent-inquiries-status-select.status-closed {
+    color: #777777;
+}
+
+/* =========================================================
+   VIEW BUTTON
+========================================================= */
+
+.agent-inquiries-view-btn {
+    min-width: 62px;
+    height: 34px;
+    padding: 0 13px;
+    border: 1px solid #563f6b;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #563f6b;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.agent-inquiries-view-btn:hover {
+    background: #563f6b;
+    color: #ffffff;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.agent-inquiries-empty {
+    padding: 55px 20px !important;
+    color: #88888e !important;
+    text-align: center;
+    font-size: 13px !important;
+}
+
+/* =========================================================
+   RESPONSIVE LAYOUT
+   Matches DashboardSidebar.css breakpoints
+========================================================= */
+
+@media (max-width: 1100px) {
+    .agent-inquiries-stat-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .agent-inquiries-main {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+        padding: 25px 22px 40px;
+    }
+}
+
+@media (max-width: 700px) {
+    .agent-inquiries-main {
+        margin-left: 170px;
+        width: calc(100% - 170px);
+        padding: 22px 16px 35px;
+    }
+
+    .agent-inquiries-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .agent-inquiries-stat-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .agent-inquiries-panel-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .agent-inquiries-filter {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .agent-inquiries-main {
+        margin-left: 68px;
+        width: calc(100% - 68px);
+        padding: 20px 12px 30px;
+    }
+
+    .agent-inquiries-topbar h1 {
+        font-size: 24px;
+    }
+}
