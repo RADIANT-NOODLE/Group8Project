@@ -938,3 +938,56 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+/* =========================================================
+   HEADER ACTION BUTTONS (Refresh & Add Property)
+========================================================= */
+.property-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.property-refresh-button,
+.property-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px; /* Forces both buttons to have the same height */
+    padding: 0 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* Refresh Button Style */
+.property-refresh-button {
+    background-color: #ffffff;
+    color: #563f6b;
+    border: 1px solid #563f6b;
+}
+
+.property-refresh-button:hover {
+    background-color: #f5f3f7;
+}
+
+/* Add Property Button Style */
+.property-add-button {
+    background-color: #563f6b;
+    color: #ffffff;
+    border: 1px solid #563f6b;
+}
+
+.property-add-button:hover {
+    background-color: #463256;
+}
+
+/* annimation */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}

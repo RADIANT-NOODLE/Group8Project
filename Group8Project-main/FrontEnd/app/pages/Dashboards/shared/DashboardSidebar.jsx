@@ -288,6 +288,7 @@ const navigation = {
     "HOA Admin": [
         { label: "Dashboard", path: "/hoa-admin", icon: "dashboard" },
         { label: "Registration Requests", path: "/registration-requests", icon: "registration" },
+        { label: "Properties", path: "/property-management", icon: "property" },
         { label: "Property Requests", path: "/property-requests", icon: "property" },
         { label: "Property Approvals", path: "/property-approvals", icon: "property" },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },

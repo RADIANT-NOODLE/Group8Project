@@ -20,6 +20,20 @@ function HOAAdminDashboard({ user }) {
   const [complaintsCount, setComplaintsCount] = useState(0);
   const [propertiesCount, setPropertiesCount] = useState(0);
 
+      
+  const [propertyForm, setPropertyForm] = useState({
+      unit_no: "",
+      complex_name: "",
+      street_address: "",
+      suburb: "",
+      property_type: "Apartment",
+      bedrooms: "",
+      bathrooms: "",
+      size_m2: ""
+    });
+
+  const [successMessage, setSuccessMessage] = useState("");
+
   // Fetch all users to get accurate stats
     // Fetch all data to get accurate stats
   const fetchDashboardData = async () => {
@@ -136,11 +150,83 @@ function HOAAdminDashboard({ user }) {
     }
   };
 
+    const handleAddProperty = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    unit_no: propertyForm.unit_no,
+                    complex_name: propertyForm.complex_name,
+                    street_address: propertyForm.street_address,
+                    suburb: propertyForm.suburb,
+                    size_m2: Number(propertyForm.size_m2) || null,
+                    property_type: propertyForm.property_type,
+                    bedrooms: Number(propertyForm.bedrooms),
+                    bathrooms: Number(propertyForm.bathrooms)
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                console.log("FULL BACKEND ERROR:", errData);
+
+                let errorMsg = "Failed to add property";
+                if (Array.isArray(errData.detail)) {
+                  errorMsg = errData.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join(", ");
+                } else if (typeof errData.detail === 'string') {
+                    errorMsg = errData.detail;
+                }
+                throw new Error(errorMsg);
+              }
+              
+            setSuccessMessage("Property added successfully!");
+            setPropertyForm({ unit_no: "", complex_name: "", street_address: "", property_type: "Apartment", bedrooms: 1, bathrooms: 1 });
+            setTimeout(() => setSuccessMessage(""), 3000);
+            await fetchDashboardData();
+
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+
   return (
     <div className="hoa-admin-dashboard-layout">
       <DashboardSidebar suppliedUser={user} />
 
       <main className="hoa-admin-dashboard-main dashboard-main-content">
+
+                {/* SUCCESS TOAST NOTIFICATION */}
+        {successMessage && (
+            <div style={{
+                position: "fixed",
+                top: "20px",
+                right: "20px",
+                background: "#f0fdf4",
+                color: "#166534",
+                border: "1px solid #bbf7d0",
+                padding: "15px 25px",
+                borderRadius: "8px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                zIndex: 9999,
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                fontWeight: "600",
+                animation: "slideIn 0.3s ease-out"
+            }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                </svg>
+                {successMessage}
+            </div>
+        )}
         
         {/* =================================================
             HEADER
@@ -468,6 +554,80 @@ function HOAAdminDashboard({ user }) {
             </div>
           </section>
 
+          {/* =================================================
+              ADD PROPERTY FORM
+          ================================================= */}
+          <section className="hoa-admin-dashboard-card hoa-admin-dashboard-wide-card">
+            <div className="hoa-admin-dashboard-card-header">
+              <div>
+                <h2>Register New Property</h2>
+                <p>Add a new unit to the VALORA estate.</p>
+              </div>
+            </div>
+            
+            <form onSubmit={handleAddProperty} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", padding: "20px" }}>
+                <input 
+                    placeholder="Unit ID (e.g. 101)" 
+                    value={propertyForm.unit_no} 
+                    onChange={e => setPropertyForm({...propertyForm, unit_no: e.target.value})} 
+                    required 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                <input 
+                    placeholder="Estate Name" 
+                    value={propertyForm.complex_name} 
+                    onChange={e => setPropertyForm({...propertyForm, complex_name: e.target.value})} 
+                    required 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                <input 
+                    placeholder="Address" 
+                    value={propertyForm.street_address} 
+                    onChange={e => setPropertyForm({...propertyForm, street_address: e.target.value})} 
+                    required 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                                <input 
+                    placeholder="Suburb" 
+                    value={propertyForm.suburb} 
+                    onChange={e => setPropertyForm({...propertyForm, suburb: e.target.value})} 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                <input 
+                    type="number"
+                    placeholder="Size (m²)" 
+                    value={propertyForm.size_m2} 
+                    onChange={e => setPropertyForm({...propertyForm, size_m2: e.target.value})} 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                <select 
+                    value={propertyForm.property_type} 
+                    onChange={e => setPropertyForm({...propertyForm, property_type: e.target.value})}
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                >
+                    <option value="Apartment">Apartment</option>
+                    <option value="House">House</option>
+                    <option value="Townhouse">Townhouse</option>
+                </select>
+                <input 
+                    type="number" 
+                    placeholder="Bedrooms" 
+                    value={propertyForm.bedrooms} 
+                    onChange={e => setPropertyForm({...propertyForm, bedrooms: e.target.value})} 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                <input 
+                    type="number" 
+                    placeholder="Bathrooms" 
+                    value={propertyForm.bathrooms} 
+                    onChange={e => setPropertyForm({...propertyForm, bathrooms: e.target.value})} 
+                    style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }}
+                />
+                <button type="submit" className="hoa-admin-dashboard-action" style={{ gridColumn: "1 / -1", background: "#563f6b", color: "white", padding: "12px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px", width: "fit-content", marginTop: "10px" }}>
+                    Add Property to Database
+                </button>
+            </form>
+          </section>
         </div>
       </main>
     </div>

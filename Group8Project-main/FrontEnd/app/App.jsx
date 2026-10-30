@@ -398,13 +398,13 @@ function App() {
                     }
                 />
 
-                {/* HEAD ADMIN PROPERTY MANAGEMENT */}
+                {/* PROPERTY MANAGEMENT */}
                 <Route
                     path="/property-management"
                     element={
-                        <HeadAdminRoute>
+                        <HOAAdminRoute>
                             <PropertyManagement />
-                        </HeadAdminRoute>
+                        </HOAAdminRoute>
                     }
                 />
 
