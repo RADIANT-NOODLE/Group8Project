@@ -11,11 +11,16 @@ export default function MyProperty() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        const fetchMyProperty = async () => {
-            if (!user) return;
+        
+            if (user === undefined) return;
 
-            setLoading(true);
-            setError("");
+            if (user === null) {
+                setLoading(false);
+                return;
+            }
+
+            const fetchMyProperty = async () => {
+                setLoading(true);
 
             try {
                 const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");

@@ -128,7 +128,7 @@ export function getSession() {
    * write and the profile write. Clearing here would cancel a valid sign-in.
    * Only logout() removes the session.
    */
-  if (!token || !user?.id || !user?.email || !user?.role) {
+  if (!token || (!user?.id && !user?.user_id) || !user?.email || !user?.role) {
     return { token: null, user: null };
   }
 

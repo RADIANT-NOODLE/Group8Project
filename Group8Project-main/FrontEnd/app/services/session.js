@@ -16,6 +16,9 @@ let snapshot = readStorage();
 
 const listeners = new Set();
 
+let cachedUser = null;
+let cachedRawUser = null;
+
 function readStorage() {
   try {
     return authService.getSession();
@@ -65,8 +68,10 @@ export function subscribe(listener) {
  * Returns `null` when nobody is signed in.
  */
 export function getSessionUser(rawUser = getSessionSnapshot().user) {
-  if (!rawUser || !rawUser.id) return null;
+  if (!rawUser || (!rawUser.id && !rawUser.user_id)) return null;
 
+  // MEMOIZATION : If the rawUser has not changed, return the cached user
+  if (cachedRawUser === rawUser) return cachedUser;
   const fullName = String(rawUser.full_name ?? '').trim();
   const nameParts = fullName.split(/\s+/).filter(Boolean);
 
@@ -79,8 +84,9 @@ export function getSessionUser(rawUser = getSessionSnapshot().user) {
 
   const role = toRole(rawUser.role);
 
-  return {
-    ...rawUser,
+  cachedRawUser = rawUser;
+  cachedUser = {
+    id: rawUser.id || rawUser.user_id,
     full_name: fullName,
     firstName,
     lastName,
@@ -91,6 +97,8 @@ export function getSessionUser(rawUser = getSessionSnapshot().user) {
     roleLabel: roleLabel(role),
     isAdministrator: isAdministrator(role),
   };
+
+  return cachedUser;
 }
 
 /**
@@ -130,7 +138,7 @@ export function useSession() {
   return {
     token: session.token,
     user: getSessionUser(session.user),
-    isAuthenticated: Boolean(session.token && session.user?.id),
+    isAuthenticated: Boolean(session.token && (session.user?.id || session.user?.user_id)),
     login,
     register,
     logout,
