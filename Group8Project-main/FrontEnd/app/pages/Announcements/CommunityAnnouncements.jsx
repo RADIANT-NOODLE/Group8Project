@@ -1,10 +1,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { useSession } from "../../services/session";
+import {
+    createAnnouncement,
+    deleteAnnouncement as deleteAnnouncementRequest,
+    listAnnouncements,
+    updateAnnouncement,
+} from "../../services/announcementApi";
 import "./CommunityAnnouncements.css";
-
-const STORAGE_KEY = "valoraCommunityAnnouncements";
-const UPDATE_EVENT = "valora:community-announcements-updated";
 
 /* =========================================================
    ICONS
@@ -75,46 +79,40 @@ function Icon({ type, size = 20 }) {
 }
 
 /* =========================================================
-   STORAGE
-   No demo announcements are created.
-
-   Every save dispatches a custom event so other VALORA
-   components in the same tab can refresh immediately.
+   API
+   Announcements are stored by the backend so every resident
+   sees what the HOA publishes (they used to live in this
+   browser's localStorage only).
 ========================================================= */
 
-function readAnnouncements() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-
-        if (!saved) return [];
-
-        const parsed = JSON.parse(saved);
-
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-        console.error("Unable to load announcements:", error);
-        return [];
-    }
+/** The shape this screen renders, from an announcement the API returned. */
+function toViewModel(announcement) {
+    return {
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.message,
+        category: announcement.category,
+        status: announcement.isPublished ? "Published" : "Draft",
+        date: announcement.createdAt,
+        createdAt: announcement.createdAt,
+        updatedAt: announcement.updatedAt,
+        expiresAt: announcement.expiresAt,
+    };
 }
 
-function writeAnnouncements(items) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-
-    window.dispatchEvent(
-        new CustomEvent(UPDATE_EVENT, {
-            detail: { announcements: items },
-        })
-    );
-}
+const ADMIN_ROLES = ["hoa_admin", "head_admin"];
 
 /* =========================================================
    MAIN COMPONENT
 ========================================================= */
 
 function CommunityAnnouncements() {
-    const [announcements, setAnnouncements] = useState(
-        readAnnouncements
-    );
+    const { user } = useSession();
+    const isAdmin = ADMIN_ROLES.includes(String(user?.role || "").toLowerCase());
+
+    const [announcements, setAnnouncements] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [category, setCategory] = useState("All");
     const [search, setSearch] = useState("");
@@ -135,42 +133,34 @@ function CommunityAnnouncements() {
     const [form, setForm] = useState({ ...emptyForm });
 
     /* =====================================================
-       LISTEN FOR SHARED ANNOUNCEMENT CHANGES
+       LOAD ANNOUNCEMENTS FROM THE API
+       Admins also see drafts and expired announcements.
     ===================================================== */
 
+    async function loadAnnouncements() {
+        try {
+            const page = await listAnnouncements({ pageSize: 100, includeExpired: true });
+            setAnnouncements(page.items.map(toViewModel));
+            setFormError("");
+        } catch (error) {
+            console.error("Unable to load announcements:", error);
+            setFormError(
+                error?.status === 0
+                    ? "Could not connect to the server. Please try again."
+                    : error?.message || "Unable to load announcements."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
-        function refreshFromStorage(event) {
-            if (
-                event.key === STORAGE_KEY ||
-                event.key === null
-            ) {
-                setAnnouncements(readAnnouncements());
-            }
+        if (isAdmin) {
+            loadAnnouncements();
+        } else {
+            setLoading(false);
         }
-
-        function refreshFromAnnouncementEvent() {
-            setAnnouncements(readAnnouncements());
-        }
-
-        window.addEventListener("storage", refreshFromStorage);
-
-        window.addEventListener(
-            UPDATE_EVENT,
-            refreshFromAnnouncementEvent
-        );
-
-        return () => {
-            window.removeEventListener(
-                "storage",
-                refreshFromStorage
-            );
-
-            window.removeEventListener(
-                UPDATE_EVENT,
-                refreshFromAnnouncementEvent
-            );
-        };
-    }, []);
+    }, [isAdmin]);
 
     /* =====================================================
        STATISTICS
@@ -206,22 +196,28 @@ function CommunityAnnouncements() {
     }, [announcements, category, search]);
 
     /* =====================================================
-       SAVE ANNOUNCEMENTS
+       SAVE HELPER
+       Runs an API call, then reloads the list so the screen
+       always shows what the server actually stored.
     ===================================================== */
 
-    function persist(nextAnnouncements) {
-        try {
-            writeAnnouncements(nextAnnouncements);
+    async function save(action, successMessage) {
+        setIsSaving(true);
 
-            setAnnouncements(nextAnnouncements);
-            setMessage("Announcements updated successfully.");
+        try {
+            await action();
+            await loadAnnouncements();
+            setMessage(successMessage);
             setFormError("");
+            return true;
         } catch (error) {
             console.error("Unable to save announcements:", error);
-
             setFormError(
-                "Unable to save changes in this browser. Please check available storage."
+                (error?.message || "Unable to save the announcement.").replace(/Value error,\s*/gi, "")
             );
+            return false;
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -263,7 +259,7 @@ function CommunityAnnouncements() {
        SUBMIT CREATE / EDIT FORM
     ===================================================== */
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault();
 
         if (!form.title.trim()) {
@@ -281,41 +277,26 @@ function CommunityAnnouncements() {
             return;
         }
 
-        const now = new Date().toISOString();
+        const fields = {
+            title: form.title.trim(),
+            message: form.content.trim(),
+            category: form.category.trim(),
+            isPublished: form.status === "Published",
+        };
 
-        let nextAnnouncements;
+        const saved = await save(
+            () =>
+                editingId
+                    ? updateAnnouncement(editingId, fields)
+                    : createAnnouncement(fields),
+            editingId
+                ? "Announcement updated successfully."
+                : fields.isPublished
+                    ? "Announcement published. Residents can now see it."
+                    : "Announcement saved as a draft."
+        );
 
-        if (editingId) {
-            nextAnnouncements = announcements.map(item =>
-                item.id === editingId
-                    ? {
-                          ...item,
-                          ...form,
-                          title: form.title.trim(),
-                          category: form.category.trim(),
-                          content: form.content.trim(),
-                          updatedAt: now,
-                      }
-                    : item
-            );
-        } else {
-            const newAnnouncement = {
-                id: `ANN-${Date.now()}`,
-                ...form,
-                title: form.title.trim(),
-                category: form.category.trim(),
-                content: form.content.trim(),
-                createdAt: now,
-                updatedAt: now,
-            };
-
-            nextAnnouncements = [
-                newAnnouncement,
-                ...announcements,
-            ];
-        }
-
-        persist(nextAnnouncements);
+        if (!saved) return;
 
         setShowForm(false);
         setEditingId(null);
@@ -328,41 +309,34 @@ function CommunityAnnouncements() {
        PUBLISH / UNPUBLISH
     ===================================================== */
 
-    function togglePublished(announcement) {
-        const nextStatus =
-            announcement.status === "Published"
-                ? "Draft"
-                : "Published";
+    async function togglePublished(announcement) {
+        const publish = announcement.status !== "Published";
 
-        const updated = announcements.map(item =>
-            item.id === announcement.id
-                ? {
-                      ...item,
-                      status: nextStatus,
-                      updatedAt: new Date().toISOString(),
-                  }
-                : item
+        await save(
+            () => updateAnnouncement(announcement.id, { isPublished: publish }),
+            publish ? "Announcement published." : "Announcement moved back to drafts."
         );
-
-        persist(updated);
     }
 
     /* =====================================================
        DELETE ANNOUNCEMENT
     ===================================================== */
 
-    function deleteAnnouncement(announcement) {
+    async function deleteAnnouncement(announcement) {
         const confirmed = window.confirm(
             `Delete "${announcement.title}"? This cannot be undone.`
         );
 
         if (!confirmed) return;
 
-        persist(
-            announcements.filter(
-                item => item.id !== announcement.id
-            )
+        const deleted = await save(
+            async () => {
+                await deleteAnnouncementRequest(announcement.id);
+            },
+            "Announcement deleted."
         );
+
+        if (!deleted) return;
 
         if (viewing?.id === announcement.id) {
             setViewing(null);
@@ -412,6 +386,25 @@ function CommunityAnnouncements() {
     /* =====================================================
        RENDER
     ===================================================== */
+
+    if (!isAdmin) {
+        return (
+            <div className="community-announcements-page">
+                <DashboardSidebar />
+
+                <main className="community-announcements-main">
+                    <section className="community-announcements-top-bar">
+                        <h1>Community Announcements</h1>
+                        <p>
+                            Only HOA administrators can manage announcements.
+                            You can read published announcements on the
+                            Announcements page.
+                        </p>
+                    </section>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="community-announcements-page">
@@ -539,6 +532,7 @@ function CommunityAnnouncements() {
                             type="button"
                             className="community-announcements-primary-btn"
                             onClick={openCreateForm}
+                            disabled={loading}
                         >
                             <Icon type="plus" size={17} />
                             Create Announcement

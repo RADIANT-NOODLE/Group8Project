@@ -12,6 +12,10 @@ class UserRole(str, Enum):
     head_admin = "head_admin"
 
 
+# A head admin can do everything an HOA admin can.
+ADMIN_ROLES = (UserRole.hoa_admin.value, UserRole.head_admin.value)
+
+
 class ComplaintStatus(str, Enum):
     submitted = "submitted"
     under_review = "under_review"
@@ -31,3 +35,15 @@ class ListingStatus(str, Enum):
     active = "active"
     sold = "sold"
     withdrawn = "withdrawn"
+
+
+class PropertyRequestType(str, Enum):
+    sell = "sell"
+    rent = "rent"
+
+
+class PropertyRequestStatus(str, Enum):
+    pending_review = "pending_review"   # waiting for the HOA
+    approved = "approved"               # HOA approved, no agent yet
+    rejected = "rejected"
+    assigned = "assigned"               # an estate agent is handling it

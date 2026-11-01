@@ -4,7 +4,7 @@
  * Public reads: the landing page, the property list and one property. A unit id
  * is an integer (`properties.unit_id`), never the old `VAL-001` display code.
  */
-import { apiRequest } from './apiClient.js';
+import { apiRequest, getApiBaseUrl } from './apiClient.js';
 import { buildQuery, readPage, toDecimal, toNumber, toStringOrNull } from './apiResponse.js';
 
 const BASE_PATH = '/api/v1/properties';
@@ -19,6 +19,10 @@ export function toProperty(record) {
     sizeM2: toDecimal(record?.size_m2),
     bedrooms: toNumber(record?.bedrooms),
     bathrooms: toNumber(record?.bathrooms),
+    imageUrl: toStringOrNull(record?.image_url),
+    photos: Array.isArray(record?.photos)
+      ? record.photos.map((photo) => ({ id: toNumber(photo?.id), url: toStringOrNull(photo?.url) }))
+      : [],
   };
 }
 
@@ -77,4 +81,34 @@ export function createProperty({ unitNo, complexName, streetAddress, suburb, siz
       bathrooms: bathrooms ?? null,
     },
   }).then(toProperty);
+}
+
+
+/** HOA and head admins: add a photo (JPEG, PNG or WebP, up to 5 MB). Returns the updated property. */
+export async function uploadPropertyPhoto(propertyId, file) {
+  const form = new FormData();
+  form.append('file', file);
+
+  return toProperty(
+    await apiRequest(`${BASE_PATH}/${encodeURIComponent(propertyId)}/photos`, {
+      method: 'POST',
+      body: form,
+    }),
+  );
+}
+
+/** HOA and head admins: remove one photo. Returns the updated property. */
+export async function deletePropertyPhoto(propertyId, photoId) {
+  return toProperty(
+    await apiRequest(
+      `${BASE_PATH}/${encodeURIComponent(propertyId)}/photos/${encodeURIComponent(photoId)}`,
+      { method: 'DELETE' },
+    ),
+  );
+}
+
+/** Photo URLs come back relative to the API (`/uploads/...`); make them loadable. */
+export function photoSrc(url) {
+  if (!url) return null;
+  return /^https?:\/\//i.test(url) ? url : `${getApiBaseUrl()}${url}`;
 }

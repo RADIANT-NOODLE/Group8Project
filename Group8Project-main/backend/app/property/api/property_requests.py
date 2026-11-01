@@ -1,160 +1,94 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlalchemy.future import select
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.common.enums import PropertyRequestStatus, UserRole
 from app.db.session import get_db
 from app.identity.api.dependencies import CurrentUser, require_roles
 from app.identity.models.user import User
-from app.property.models.property_request import PropertyRequest
-from app.property.schemas.property_request import PropertyRequestResponse # <--- IMPORT SCHEMA
-from app.common.enums import UserRole
+from app.property.schemas.property_request import (
+    PaginatedPropertyRequestsResponse,
+    PropertyRequestAssign,
+    PropertyRequestCreate,
+    PropertyRequestReject,
+    PropertyRequestResponse,
+)
+from app.property.services.property_request_service import PropertyRequestService
 
-router = APIRouter(prefix="/property-requests", tags=["Property Requests"])
+router = APIRouter(prefix="/property-requests", tags=["property requests"])
 
-class PropertyRequestCreate(BaseModel):
-    unit_id: int          
-    request_type: str
-    asking_price: float
-    rental_period: str | None = None
-    financial_information: str | None = None
-    additional_details: str | None = None
+AdminOnly = Annotated[
+    User, require_roles(UserRole.hoa_admin.value, UserRole.head_admin.value)
+]
+OwnerOnly = Annotated[
+    User, require_roles(UserRole.resident.value, UserRole.investor.value)
+]
 
-@router.post("", status_code=201)
-async def create_property_request(
-    payload: PropertyRequestCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: CurrentUser,
-):
-    new_request = PropertyRequest(
-        requester_id=current_user.user_id,  
-        unit_id=payload.unit_id,             
-        request_type=payload.request_type,
-        asking_price=payload.asking_price,
-        rental_period=payload.rental_period,
-        financial_information=payload.financial_information,
-        additional_details=payload.additional_details,
-        status="Pending",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    db.add(new_request)
-    await db.commit()
-    await db.refresh(new_request)
-    
-    return {
-        "message": "Request submitted successfully", 
-        "request_id": new_request.request_id
-    }
 
-AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]
-
-# GET ALL REQUESTS (For the HOA Admin dashboard)
-@router.get("", response_model=List[PropertyRequestResponse]) # <--- ADD response_model
+@router.get("", response_model=PaginatedPropertyRequestsResponse)
 async def list_property_requests(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
-):
-
-    # build query base
-    stmt = select(PropertyRequest).options(selectinload(PropertyRequest.requester),
-                                           selectinload(PropertyRequest.property))
-    # SECURITY CHECK: If the user is an Estate Agent, only show their assigned requests
-    if current_user.role == "estate_agent":
-        stmt = stmt.where(PropertyRequest.assigned_agent_id == current_user.user_id)
-    # If the user is not an admin AND not an agent, deny access
-    elif current_user.role not in ["hoa_admin", "head_admin"]:
-        raise HTTPException(status_code=403, detail="Not authorized to view property requests.")
-
-    stmt = stmt.order_by(PropertyRequest.created_at.desc())
-
-    result = await db.execute(stmt)
-    requests = result.scalars().all()
-    
-    # Format the response to include the names the frontend needs
-    formatted = []
-    for req in requests:
-        formatted.append({
-            "request_id": req.request_id,
-            "requester_id": req.requester_id,
-            "requester_name": req.requester.full_name if req.requester else "Unknown",
-            "requester_role": req.requester.role if req.requester else "Unknown",
-            "unit_id": req.unit_id,
-            "unit_no": req.property.unit_no if req.property else "Unknown",
-            "request_type": req.request_type,
-            "asking_price": req.asking_price,
-            "rental_period": req.rental_period,
-            "financial_information": req.financial_information,
-            "additional_details": req.additional_details,
-            "status": req.status,
-            "rejection_reason": req.rejection_reason,
-            "assigned_agent_id": req.assigned_agent_id,
-            "created_at": req.created_at,
-            "updated_at": req.updated_at
-        })
-    return formatted
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 50,
+    status: Annotated[PropertyRequestStatus | None, Query()] = None,
+    unit_id: Annotated[int | None, Query(ge=1)] = None,
+) -> PaginatedPropertyRequestsResponse:
+    """HOA admins see all requests, estate agents the ones assigned to them, others their own."""
+    return await PropertyRequestService(db).list_requests(
+        current_user,
+        page=page,
+        page_size=page_size,
+        status=status.value if status else None,
+        unit_id=unit_id,
+    )
 
 
-# APPROVE A REQUEST
-@router.patch("/{request_id}/approve")
-async def approve_request(
+@router.get("/{request_id}", response_model=PropertyRequestResponse)
+async def get_property_request(
     request_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _admin: AdminOnly,
-):
-    stmt = select(PropertyRequest).where(PropertyRequest.request_id == request_id)
-    result = await db.execute(stmt)
-    req = result.scalars().first()
-    
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-        
-    req.status = "Approved"
-    await db.commit()
-    return {"message": "Request approved"}
+    current_user: CurrentUser,
+) -> PropertyRequestResponse:
+    return await PropertyRequestService(db).get_request(request_id, current_user)
 
 
-# REJECT A REQUEST
-@router.patch("/{request_id}/reject")
-async def reject_request(
-    request_id: int,
-    payload: dict,
+@router.post("", response_model=PropertyRequestResponse, status_code=201)
+async def create_property_request(
+    payload: PropertyRequestCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _admin: AdminOnly,
-):
-    stmt = select(PropertyRequest).where(PropertyRequest.request_id == request_id)
-    result = await db.execute(stmt)
-    req = result.scalars().first()
-    
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-        
-    req.status = "Rejected"
-    req.rejection_reason = payload.get("reason", "No reason provided")
-    await db.commit()
-    return {"message": "Request rejected"}
+    current_user: OwnerOnly,
+) -> PropertyRequestResponse:
+    """A resident or investor asks the HOA to sell or rent a unit."""
+    return await PropertyRequestService(db).create_request(payload, current_user)
 
 
-# ASSIGN AN AGENT
-@router.patch("/{request_id}/assign")
-async def assign_agent(
+@router.post("/{request_id}/approve", response_model=PropertyRequestResponse)
+async def approve_property_request(
     request_id: int,
-    payload: dict,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _admin: AdminOnly,
-):
-    stmt = select(PropertyRequest).where(PropertyRequest.request_id == request_id)
-    result = await db.execute(stmt)
-    req = result.scalars().first()
-    
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-        
-    req.assigned_agent_id = payload.get("agent_id")
-    req.status = "Assigned"
-    await db.commit()
-    return {"message": "Agent assigned"}
+    admin: AdminOnly,
+) -> PropertyRequestResponse:
+    return await PropertyRequestService(db).approve(request_id, admin)
+
+
+@router.post("/{request_id}/reject", response_model=PropertyRequestResponse)
+async def reject_property_request(
+    request_id: int,
+    payload: PropertyRequestReject,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: AdminOnly,
+) -> PropertyRequestResponse:
+    return await PropertyRequestService(db).reject(request_id, payload, admin)
+
+
+@router.post("/{request_id}/assign-agent", response_model=PropertyRequestResponse)
+async def assign_estate_agent(
+    request_id: int,
+    payload: PropertyRequestAssign,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: AdminOnly,
+) -> PropertyRequestResponse:
+    """Assign an approved estate agent to an approved request."""
+    return await PropertyRequestService(db).assign_agent(request_id, payload, admin)

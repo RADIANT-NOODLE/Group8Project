@@ -17,7 +17,9 @@ from app.identity.models.user import User
 
 router = APIRouter(prefix="/announcements", tags=["announcements"])
 
-AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]
+AdminOnly = Annotated[
+    User, require_roles(UserRole.hoa_admin.value, UserRole.head_admin.value)
+]
 
 
 @router.get("", response_model=PaginatedAnnouncementsResponse)

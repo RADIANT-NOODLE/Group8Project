@@ -513,3 +513,14 @@
         padding: 30px 17px;
     }
 }
+
+.announcements-load-error {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid #e3c9c9;
+    border-left: 3px solid #8a3b3b;
+    border-radius: 7px;
+    background: #fbf3f3;
+    color: #5b2a2a;
+    font-size: 13px;
+}

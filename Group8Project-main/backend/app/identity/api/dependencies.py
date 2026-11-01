@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.common.enums import UserRole
 from app.core.exceptions import CredentialsException, ForbiddenException
 from app.core.security import decode_access_token
 from app.db.session import get_db
@@ -22,13 +23,15 @@ async def get_current_user(
     try:
         payload = decode_access_token(token)
         user_id: str | None = payload.get("sub")
-        if user_id is None:
+        # single-purpose tokens (e.g. password reset) must never act as a login token
+        if user_id is None or payload.get("purpose") is not None:
             raise CredentialsException()
-    except JWTError:
+        user_id_int = int(user_id)
+    except (JWTError, ValueError):
         raise CredentialsException()
 
     repo = UserRepository(db)
-    user = await repo.get_by_id(int(user_id))
+    user = await repo.get_by_id(user_id_int)
     if user is None:
         raise CredentialsException()
     return user
@@ -40,8 +43,13 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 def require_roles(*roles: str):
     """Factory that returns a dependency enforcing one of the given roles."""
 
+    # A head admin has every HOA admin permission.
+    allowed = set(roles)
+    if UserRole.hoa_admin.value in allowed:
+        allowed.add(UserRole.head_admin.value)
+
     async def _check(current_user: CurrentUser) -> User:
-        if current_user.role not in roles:
+        if current_user.role not in allowed:
             raise ForbiddenException(
                 f"This action requires one of the following roles: {', '.join(roles)}."
             )

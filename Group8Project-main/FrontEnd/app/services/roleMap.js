@@ -152,6 +152,8 @@ const PUBLIC_PATHS = Object.freeze([
   '/',
   '/login',
   '/register',
+  '/forgot-password',
+  '/reset-password',
   '/registration-pending',
   '/properties',
   '/property/:propertyId',
@@ -172,9 +174,9 @@ const SHARED_PATHS = Object.freeze([
 /** Screens that belong to one role's workspace. Keyed by role value, so the
  *  index below can be built without a second lookup. */
 export const ROLE_PATHS = Object.freeze({
-  [ROLES.resident]: Object.freeze(['/property', '/valuation', '/request-to-sell', '/complaints', '/maintenance', '/resident-directory']),
+  [ROLES.resident]: Object.freeze(['/property', '/request-to-sell', '/complaints', '/resident-directory']),
   [ROLES.investor]: Object.freeze(['/property', '/valuation', '/roi']),
-  [ROLES.estateAgent]: Object.freeze(['/agent-listings', '/agent-edit-listings', '/agent-inquiries', '/valuation']),
+  [ROLES.estateAgent]: Object.freeze(['/agent-listings', '/agent-edit-listings', '/agent-inquiries']),
   [ROLES.hoaAdmin]: Object.freeze([
     '/maintenance',
     '/resident-directory',
@@ -185,6 +187,7 @@ export const ROLE_PATHS = Object.freeze({
     '/ai-training-data',
     '/head-admin',
     '/registration-requests',
+    '/create-agent',
     '/user-management',
   ]),
   [ROLES.serviceProvider]: Object.freeze([]),

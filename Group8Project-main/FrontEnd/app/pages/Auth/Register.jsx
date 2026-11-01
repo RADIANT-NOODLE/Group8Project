@@ -4,10 +4,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { getRegistrationErrorMessage } from "../../services/authErrorMessages.js";
 import { dashboardPathForRole, ROLES } from "../../services/roleMap.js";
 import { register } from "../../services/session.js";
+import {
+    checkPasswordRules,
+    validatePhone,
+    validateRegistrationPassword,
+} from "../../services/validation.js";
+import PasswordRequirements from "./PasswordRequirements.jsx";
 
 import "./Auth.css";
-
-const MINIMUM_PASSWORD_LENGTH = 8;
 
 function Register() {
     const navigate = useNavigate();
@@ -15,6 +19,7 @@ function Register() {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,10 +38,15 @@ function Register() {
             return;
         }
 
-        if (password.length < MINIMUM_PASSWORD_LENGTH) {
-            setError(
-                `Choose a password of at least ${MINIMUM_PASSWORD_LENGTH} characters.`
-            );
+        const phoneProblem = validatePhone(phone);
+        if (phoneProblem) {
+            setError(phoneProblem);
+            return;
+        }
+
+        const passwordProblem = validateRegistrationPassword(password);
+        if (passwordProblem) {
+            setError(passwordProblem);
             return;
         }
 
@@ -47,6 +57,7 @@ function Register() {
                 first_name: firstName.trim(),
                 last_name: lastName.trim(),
                 email: email.trim().toLowerCase(),
+                phone: phone.trim(),
                 password,
                 role: ROLES.resident,
             });
@@ -155,6 +166,22 @@ function Register() {
                                 />
                             </div>
 
+                            {/* PHONE */}
+                            <div className="auth-field">
+                                <label htmlFor="phone">Phone Number</label>
+                                <input
+                                    id="phone"
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(event) =>
+                                        setPhone(event.target.value)
+                                    }
+                                    placeholder="e.g. +27 82 123 4567"
+                                    autoComplete="tel"
+                                    maxLength={20}
+                                />
+                            </div>
+
                             {/* PASSWORD */}
                             <div className="auth-field">
                                 <label htmlFor="password">Password</label>
@@ -167,12 +194,14 @@ function Register() {
                                     }
                                     placeholder="Create a password"
                                     autoComplete="new-password"
-                                    minLength={MINIMUM_PASSWORD_LENGTH}
+                                    aria-describedby="password-requirements"
                                     required
                                 />
-                                <p className="auth-hint">
-                                    At least {MINIMUM_PASSWORD_LENGTH} characters.
-                                </p>
+                                <PasswordRequirements
+                                    id="password-requirements"
+                                    rules={checkPasswordRules(password)}
+                                    touched={password.length > 0}
+                                />
                             </div>
 
                             {/* ACCOUNT TYPE */}

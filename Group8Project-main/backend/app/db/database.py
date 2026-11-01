@@ -16,8 +16,9 @@ from app.identity.models.login_attempt import LoginAttempts  # noqa: F401
 from app.property.models.property import Property  # noqa: F401
 from app.property.models.listing import Listing  # noqa: F401
 from app.property.models.sale import Sale  # noqa: F401
-from app.property.models.property_request import PropertyRequest
-from app.property.models.inquiry import Inquiry
+from app.property.models.property_request import PropertyRequest  # noqa: F401
+from app.property.models.property_photo import PropertyPhoto  # noqa: F401
+from app.property.models.inquiry import Inquiry  # noqa: F401
 
 # Community domain
 from app.community.models.complaint import Complaint  # noqa: F401

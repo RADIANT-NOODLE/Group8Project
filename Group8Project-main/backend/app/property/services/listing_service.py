@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.enums import UserRole
+from app.common.enums import ADMIN_ROLES, UserRole
 from app.core.exceptions import ForbiddenException, NotFoundException
 from app.identity.models.user import User
 from app.property.models.listing import Listing
@@ -67,7 +67,7 @@ class ListingService:
         self, listing_id: int, payload: ListingUpdate, actor: User
     ) -> ListingResponse:
         listing = await self._get_or_404(listing_id)
-        if actor.role != UserRole.hoa_admin.value and listing.agent_id != actor.user_id:
+        if actor.role not in ADMIN_ROLES and listing.agent_id != actor.user_id:
             raise ForbiddenException("You can only edit your own listings.")
 
         changes = payload.model_dump(exclude_unset=True)

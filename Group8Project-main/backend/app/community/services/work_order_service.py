@@ -1,7 +1,9 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.datetime_utils import utcnow
-from app.common.enums import UserRole, WorkOrderStatus
+from app.common.enums import ADMIN_ROLES, UserRole, WorkOrderStatus
 from app.community.models.maintenance_work_order import MaintenanceworkOrder
 from app.community.repositories.complaint_repository import ComplaintRepository
 from app.community.repositories.work_order_repository import WorkOrderRepository
@@ -14,12 +16,15 @@ from app.community.schemas.work_order import (
 )
 from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException
 from app.identity.models.user import User
+from app.providers.repositories.review_repository import ReviewRepository
 from app.providers.repositories.service_provider_repository import ServiceProviderRepository
 
 
 class WorkOrderService:
     def __init__(self, db: AsyncSession) -> None:
+        self._db = db
         self._repo = WorkOrderRepository(db)
+        self._review_repo = ReviewRepository(db)
         self._complaint_repo = ComplaintRepository(db)
         self._provider_repo = ServiceProviderRepository(db)
 
@@ -37,8 +42,12 @@ class WorkOrderService:
         complaint_id: int | None = None,
         provider_id: int | None = None,
         status: str | None = None,
+        user: User | None = None,
     ) -> PaginatedWorkOrdersResponse:
         filters = dict(complaint_id=complaint_id, provider_id=provider_id, status=status)
+        if user is not None and user.role not in ADMIN_ROLES:
+            # Residents only ever see work orders raised from their own complaints.
+            filters["complaint_owner_id"] = user.user_id
         work_orders = await self._repo.search(
             offset=(page - 1) * page_size, limit=page_size, **filters
         )
@@ -52,7 +61,7 @@ class WorkOrderService:
 
     async def get_work_order(self, work_order_id: int, user: User) -> WorkOrderResponse:
         work_order = await self._get_or_404(work_order_id)
-        if user.role != UserRole.hoa_admin.value:
+        if user.role not in ADMIN_ROLES:
             complaint = await self._complaint_repo.get_by_id(work_order.complaint_id)
             if complaint is None or complaint.user_id != user.user_id:
                 raise ForbiddenException("You can only view work orders for your own complaints.")
@@ -112,5 +121,16 @@ class WorkOrderService:
             raise ConflictException("This work order has already been rated.")
 
         work_order.resident_rating = payload.rating
+        await self._db.flush()
+
+        # keep the provider's cached rating in step with the new rating (same transaction)
+        provider = await self._provider_repo.get_by_id(work_order.provider_id)
+        if provider is not None:
+            avg, count = await self._review_repo.rating_summary(provider.provider_id)
+            provider.total_reviews = count
+            provider.avg_rating = (
+                avg.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) if avg is not None else None
+            )
+
         work_order = await self._repo.save(work_order)
         return WorkOrderResponse.model_validate(work_order)

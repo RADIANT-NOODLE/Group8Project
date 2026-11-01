@@ -78,8 +78,8 @@ test('route access follows the matrix', () => {
     }
   }
 
-  /* screens two roles share */
-  assert.equal(roles.canAccessRoute('resident', '/maintenance'), true);
+  /* maintenance belongs to the administrators; AI valuation to investors */
+  assert.equal(roles.canAccessRoute('resident', '/maintenance'), false);
   assert.equal(roles.canAccessRoute('hoa_admin', '/maintenance'), true);
   assert.equal(roles.canAccessRoute('investor', '/maintenance'), false);
 

@@ -802,3 +802,32 @@
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+/* password policy checklist inside the change-password modal */
+.password-modal .auth-password-rules {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.password-modal .auth-password-rule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #777777;
+}
+
+.password-modal .auth-password-rule-met { color: #2f6b45; }
+.password-modal .auth-password-rule-unmet { color: #8a3b3b; }
+.password-modal .auth-password-rule-mark { width: 14px; text-align: center; font-weight: 700; }
+.password-modal .auth-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.password-modal { max-height: 90vh; overflow-y: auto; }

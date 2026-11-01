@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { roleLabel } from "../../services/userApi";
 import "./RegistrationRequests.css";
 
 /* =========================================================
@@ -10,7 +11,7 @@ import "./RegistrationRequests.css";
 function normalizeRole(value) {
     const role = String(value || "").trim().toLowerCase();
 
-    if (["head admin", "head administrator", "headadministrator"].includes(role)) {
+    if (["head admin", "head administrator", "headadministrator", "head_admin"].includes(role)) {
         return "Head Admin";
     }
 
@@ -141,8 +142,12 @@ function RegistrationRequests() {
             
             if (!response.ok) throw new Error(`Failed to ${actionType} user`);
             
-            // Remove user from the list in the UI
-            setAllUsers(allUsers.filter(u => u.id !== actionUserId));
+            // Approved users stay in the list (now approved); rejected users are deleted by the API.
+            setAllUsers(previous =>
+                isApprove
+                    ? previous.map(u => (u.id === actionUserId ? { ...u, hoa_approved: true } : u))
+                    : previous.filter(u => u.id !== actionUserId)
+            );
 
             // Show success alert
             setModalConfig({
@@ -287,7 +292,7 @@ function RegistrationRequests() {
 
                                             <td>
                                                 <span className="registration-requests-role">
-                                                    {normalizeRole(user.role) || "Not specified"}
+                                                    {roleLabel(user.role) || "Not specified"}
                                                 </span>
                                             </td>
 

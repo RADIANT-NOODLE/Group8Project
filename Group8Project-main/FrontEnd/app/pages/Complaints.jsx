@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
+import { createComplaint, listComplaints, updateComplaintStatus } from "../services/complaintApi";
+import { findUnitIdByUnitNo, listProperties } from "../services/propertyApi";
+import { listWorkOrders } from "../services/workOrderApi";
+import { COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
 import "./Complaints.css";
 
 const COMPLAINT_CATEGORIES = [
@@ -12,16 +16,6 @@ const COMPLAINT_CATEGORIES = [
     "Other",
 ];
 
-const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
-
-const STATUSES = [
-    "Submitted",
-    "Acknowledged",
-    "In Progress",
-    "Resolved",
-    "Cancelled",
-];
-
 // Helper to read the logged-in user from local storage
 function readUser() {
     try {
@@ -31,24 +25,16 @@ function readUser() {
     }
 }
 
-function normaliseRole(value = "") {
-    const role = String(value).trim().toLowerCase();
-    if (role.includes("head admin")) return "Head Admin";
-    if (role.includes("hoa") || role.includes("homeowners association")) return "HOA Admin";
-    if (role.includes("estate agent")) return "Estate Agent";
-    if (role.includes("investor") || role === "buyer") return "Investor";
-    if (role.includes("resident") || role === "property owner") return "Resident";
-    return value || "User";
-}
-
+/* Roles are the API's values ("resident", "hoa_admin", ...). */
 function getUserRole(user) {
-    return normaliseRole(user?.role || user?.userType || user?.accountType || "");
+    return String(user?.role || "").trim().toLowerCase();
 }
 
 function getUserName(user) {
     if (!user) return "";
     return (
         user.fullName ||
+        user.full_name ||
         user.name ||
         [user.firstName, user.lastName].filter(Boolean).join(" ") ||
         user.email ||
@@ -77,27 +63,33 @@ function CameraIcon() {
 
 function statusClass(status) {
     const classes = {
-        Submitted: "complaints-status-submitted",
-        Acknowledged: "complaints-status-acknowledged",
-        "In Progress": "complaints-status-progress",
-        Resolved: "complaints-status-resolved",
-        Cancelled: "complaints-status-cancelled",
+        submitted: "complaints-status-submitted",
+        under_review: "complaints-status-acknowledged",
+        in_progress: "complaints-status-progress",
+        resolved: "complaints-status-resolved",
+        closed: "complaints-status-cancelled",
     };
-    return classes[status] || classes.Submitted;
+    return classes[status] || classes.submitted;
 }
 
 export default function Complaints() {
     const [user, setUser] = useState(readUser);
     const [complaints, setComplaints] = useState([]);
+    const [workOrders, setWorkOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [category, setCategory] = useState("Security");
     const [description, setDescription] = useState("");
-    const [priority, setPriority] = useState("Low");
-    
+    const [isAnonymous, setIsAnonymous] = useState(false);
+
+    // a complaint belongs to a unit (an integer id in the database)
+    const [properties, setProperties] = useState([]);
+    const [unitId, setUnitId] = useState("");
+
     const [complaintImage, setComplaintImage] = useState("");
     const [imageName, setImageName] = useState("");
-    
+
     const [search, setSearch] = useState("");
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [notice, setNotice] = useState("");
@@ -105,84 +97,87 @@ export default function Complaints() {
 
     const role = getUserRole(user);
     const userName = getUserName(user);
-    const isAdmin = role === "HOA Admin" || role === "Head Admin";
-    const canSubmit = ["Resident", "Investor", "Estate Agent"].includes(role);
+    const isAdmin = role === "hoa_admin" || role === "head_admin";
+    // the API only lets residents (and HOA admins) file complaints
+    const canSubmit = role === "resident" || role === "hoa_admin";
 
-    // 1. Fetch data from API
+    // 1. Fetch data from API (the API already limits residents to their own complaints)
     const fetchComplaints = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch("http://127.0.0.1:8000/api/v1/complaints", {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const page = await listComplaints({ pageSize: 100 });
+            setComplaints(page.items);
 
-            if (response.ok) {
-                const data = await response.json();
-                // Handle both direct arrays and wrapped objects
-                const list = Array.isArray(data) ? data : (data.complaints || data.items || []);
-                setComplaints(list);
-            } else {
-                setError("Failed to load complaints from the server.");
+            // residents see the work done on their own complaints
+            try {
+                const orders = await listWorkOrders({ pageSize: 100 });
+                setWorkOrders(orders.items);
+            } catch {
+                setWorkOrders([]); // listing work orders is HOA-only; per-complaint view is best effort
             }
+
+            setError("");
         } catch (err) {
             console.error(err);
-            setError("Could not connect to the backend server.");
+            setError(
+                err?.status === 0
+                    ? "Could not connect to the backend server."
+                    : err?.message || "Failed to load complaints from the server."
+            );
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        setUser(readUser());
+        const currentUser = readUser();
+        setUser(currentUser);
         fetchComplaints();
+
+        // find the resident's unit, and the unit list as a fallback choice
+        (async () => {
+            try {
+                const [{ items }, ownUnit] = await Promise.all([
+                    listProperties({ pageSize: 100 }),
+                    findUnitIdByUnitNo(currentUser?.unit_no ?? currentUser?.unitNo),
+                ]);
+                setProperties(items);
+                if (ownUnit) setUnitId(String(ownUnit));
+            } catch (err) {
+                console.error("Unable to load units:", err);
+            }
+        })();
     }, []);
 
-    // 2. Filter based on role
-    const visibleComplaints = useMemo(() => {
-        if (isAdmin) return complaints;
-        
-        // For residents, match by user id from the backend (user_id)
-        // If your backend returns user_id, we filter on that. Otherwise fallback to email match.
-        return complaints.filter((complaint) => {
-            return complaint.email === user?.email || 
-                   complaint.user_id === user?.id ||
-                   complaint.userId === user?.id;
-        });
-    }, [complaints, isAdmin, user]);
-
+    // 2. Filter by search
     const filteredComplaints = useMemo(() => {
         const term = search.trim().toLowerCase();
-        if (!term) return visibleComplaints;
-        return visibleComplaints.filter((complaint) =>
+        if (!term) return complaints;
+        return complaints.filter((complaint) =>
             [
-                complaint.complaint_id,
                 complaint.id,
                 complaint.category,
                 complaint.description,
-                complaint.priority,
-                complaint.status,
-                complaint.full_name,
-                complaint.submitterName,
+                complaintStatusLabel(complaint.rawStatus),
             ]
                 .filter(Boolean)
                 .some((value) => String(value).toLowerCase().includes(term))
         );
-    }, [visibleComplaints, search]);
+    }, [complaints, search]);
 
     // 3. Counts
     const counts = useMemo(() => {
+        const count = (status) => complaints.filter((item) => item.status === status).length;
         return {
-            total: visibleComplaints.length,
-            submitted: visibleComplaints.filter((item) => item.status === "Submitted").length,
-            acknowledged: visibleComplaints.filter((item) => item.status === "Acknowledged").length,
-            inProgress: visibleComplaints.filter((item) => item.status === "In Progress").length,
-            resolved: visibleComplaints.filter((item) => item.status === "Resolved").length,
-            cancelled: visibleComplaints.filter((item) => item.status === "Cancelled").length,
+            total: complaints.length,
+            submitted: count("submitted"),
+            underReview: count("under_review"),
+            inProgress: count("in_progress"),
+            resolved: count("resolved") + count("closed"),
         };
-    }, [visibleComplaints]);
+    }, [complaints]);
 
-    // 4. Handle Image 
+    // 4. Handle Image
     async function handleImageUpload(event) {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -215,87 +210,62 @@ export default function Complaints() {
         setNotice("");
 
         if (!canSubmit) return setError("Your account role cannot submit complaints.");
-        if (!description.trim()) return setError("Please describe the complaint before submitting.");
+        if (!unitId) return setError("Select the unit this complaint is about.");
+        if (description.trim().length < 5) return setError("Please describe the complaint (at least 5 characters).");
+
+        setIsSubmitting(true);
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            
-            const response = await fetch("http://127.0.0.1:8000/api/v1/complaints", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    category: category,
-                    description: description.trim(),
-                    priority: priority,
-                    user_id: user?.id || user?.user_id,
-                    unit_id: user?.unit_no || null,
-                    photo_url: complaintImage || null 
-                })
+            // `photo_url` is a 500 character column, so an inline photo cannot be stored yet.
+            // There is no photo upload endpoint; send the complaint without it rather than failing.
+            const photoUrl = complaintImage && complaintImage.length <= 500 ? complaintImage : null;
+
+            await createComplaint({
+                unitId,
+                category,
+                description,
+                isAnonymous,
+                photoUrl,
             });
 
-            if (!response.ok) {
-                const errData = await response.json();
-                console.log("FULL BACKEND ERROR:", errData);
-                
-                // If the error detail is an array (FastAPI validation error), map it to a string
-                let errorMsg = "Failed to submit complaint";
-                if (Array.isArray(errData.detail)) {
-                    errorMsg = errData.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join(", ");
-                } else if (typeof errData.detail === 'string') {
-                    errorMsg = errData.detail;
-                }
-                throw new Error(errorMsg);
-            }
-
-            // Reset form
             setDescription("");
             setCategory("Security");
-            setPriority("Low");
+            setIsAnonymous(false);
             setComplaintImage("");
             setImageName("");
-            setNotice("Complaint submitted successfully to the database!");
-            
+            setNotice(
+                complaintImage && !photoUrl
+                    ? "Complaint submitted. The photo could not be saved yet (photo uploads are not available), so it was left out."
+                    : "Complaint submitted successfully."
+            );
+
             // Refresh the list
             await fetchComplaints();
-
         } catch (err) {
-            if (typeof err === "object" && err !== null) {
-                setError(JSON.stringify(err));
-            } else {
-                setError(String(err.message));
-            }
+            setError(
+                (err?.message || "Failed to submit the complaint.").replace(/Value error,\s*/gi, "")
+            );
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
     // 6. Update Status (Admin Only)
     async function updateStatus(complaintId, nextStatus) {
-        if (!isAdmin || !STATUSES.includes(nextStatus)) return;
+        if (!isAdmin || !COMPLAINT_STATUSES.some((status) => status.value === nextStatus)) return;
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/complaints/${complaintId}/status`, {
-                method: "PATCH",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ status: nextStatus })
-            });
-
-            if (!response.ok) throw new Error("Failed to update status.");
-
+            await updateComplaintStatus(complaintId, { status: nextStatus });
             await fetchComplaints();
-            setNotice(`Complaint updated to "${nextStatus}".`);
+            setNotice(`Complaint updated to "${complaintStatusLabel(nextStatus)}".`);
             setError("");
-
         } catch (err) {
-            setError(err.message);
+            setError(err?.message || "Failed to update status.");
         }
     }
+
+    const workOrdersFor = (complaintId) =>
+        workOrders.filter((order) => order.complaintId === complaintId);
 
     return (
         <div className="complaints-layout">
@@ -340,8 +310,8 @@ export default function Complaints() {
                                 <strong>{loading ? "..." : counts.submitted}</strong>
                             </div>
                             <div className="complaints-stat-card">
-                                <span>Acknowledged</span>
-                                <strong>{loading ? "..." : counts.acknowledged}</strong>
+                                <span>Under review</span>
+                                <strong>{loading ? "..." : counts.underReview}</strong>
                             </div>
                             <div className="complaints-stat-card">
                                 <span>In Progress</span>
@@ -364,6 +334,23 @@ export default function Complaints() {
                                     </div>
 
                                     <form className="complaints-form" onSubmit={submitComplaint}>
+                                        <label htmlFor="complaint-unit">Unit</label>
+                                        <select
+                                            id="complaint-unit"
+                                            value={unitId}
+                                            onChange={(event) => setUnitId(event.target.value)}
+                                            required
+                                        >
+                                            <option value="">Select the unit this is about</option>
+                                            {properties.map((property) => (
+                                                <option key={property.id} value={property.id}>
+                                                    {[property.unitNo && `Unit ${property.unitNo}`, property.complexName]
+                                                        .filter(Boolean)
+                                                        .join(" — ") || `Unit #${property.id}`}
+                                                </option>
+                                            ))}
+                                        </select>
+
                                         <label htmlFor="complaint-category">Complaint Category</label>
                                         <select
                                             id="complaint-category"
@@ -382,6 +369,7 @@ export default function Complaints() {
                                             onChange={(event) => setDescription(event.target.value)}
                                             placeholder="Describe the issue clearly..."
                                             rows={5}
+                                            minLength={5}
                                             maxLength={5000}
                                             required
                                         />
@@ -414,19 +402,18 @@ export default function Complaints() {
                                             </div>
                                         )}
 
-                                        <label htmlFor="complaint-priority">Priority</label>
-                                        <select
-                                            id="complaint-priority"
-                                            value={priority}
-                                            onChange={(event) => setPriority(event.target.value)}
-                                        >
-                                            {PRIORITIES.map((item) => (
-                                                <option key={item} value={item}>{item}</option>
-                                            ))}
-                                        </select>
+                                        <label className="complaints-checkbox" htmlFor="complaint-anonymous">
+                                            <input
+                                                id="complaint-anonymous"
+                                                type="checkbox"
+                                                checked={isAnonymous}
+                                                onChange={(event) => setIsAnonymous(event.target.checked)}
+                                            />
+                                            <span>Hide my name from other people (the HOA will not see who sent it)</span>
+                                        </label>
 
-                                        <button type="submit" className="complaints-submit-btn" disabled={loading}>
-                                            {loading ? "Submitting..." : "Submit Complaint"}
+                                        <button type="submit" className="complaints-submit-btn" disabled={isSubmitting}>
+                                            {isSubmitting ? "Submitting..." : "Submit Complaint"}
                                         </button>
                                     </form>
                                 </section>
@@ -458,7 +445,6 @@ export default function Complaints() {
                                                 <th>Complaint ID</th>
                                                 {isAdmin && <th>Submitted By</th>}
                                                 <th>Category</th>
-                                                <th>Priority</th>
                                                 <th>Date</th>
                                                 <th>Status</th>
                                                 <th>Details</th>
@@ -466,46 +452,38 @@ export default function Complaints() {
                                         </thead>
                                         <tbody>
                                             {loading ? (
-                                                <tr><td colSpan={isAdmin ? 7 : 6} className="complaints-empty">Loading...</td></tr>
+                                                <tr><td colSpan={isAdmin ? 6 : 5} className="complaints-empty">Loading...</td></tr>
                                             ) : filteredComplaints.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={isAdmin ? 7 : 6} className="complaints-empty">
+                                                    <td colSpan={isAdmin ? 6 : 5} className="complaints-empty">
                                                         No complaints found.
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 filteredComplaints.map((complaint) => (
-                                                    <tr key={complaint.complaint_id || complaint.id}>
-                                                        <td>{complaint.complaint_id || complaint.id}</td>
+                                                    <tr key={complaint.id}>
+                                                        <td>#{complaint.id}</td>
                                                         {isAdmin && (
                                                             <td>
-                                                                <strong>{complaint.full_name || complaint.submitterName || "Unknown user"}</strong>
-                                                                <small>{complaint.role || complaint.submitterRole || "Resident"}</small>
+                                                                <strong>
+                                                                    {complaint.userId == null ? "Anonymous" : `Resident #${complaint.userId}`}
+                                                                </strong>
                                                             </td>
                                                         )}
                                                         <td>{complaint.category}</td>
-                                                        <td>
-                                                            <span className={
-                                                                ["High", "Urgent"].includes(complaint.priority)
-                                                                    ? "complaints-priority-high"
-                                                                    : "complaints-priority-normal"
-                                                            }>
-                                                                {complaint.priority}
-                                                            </span>
-                                                        </td>
-                                                        <td>{formatDate(complaint.created_at || complaint.createdAt)}</td>
+                                                        <td>{formatDate(complaint.createdAt)}</td>
                                                         <td>
                                                             <span className={statusClass(complaint.status)}>
-                                                                {complaint.status}
+                                                                {complaintStatusLabel(complaint.rawStatus)}
                                                             </span>
                                                             {isAdmin && (
                                                                 <select
                                                                     className="complaints-status-select"
-                                                                    value={complaint.status}
-                                                                    onChange={(event) => updateStatus(complaint.complaint_id || complaint.id, event.target.value)}
+                                                                    value={complaint.status || "submitted"}
+                                                                    onChange={(event) => updateStatus(complaint.id, event.target.value)}
                                                                 >
-                                                                    {STATUSES.map((item) => (
-                                                                        <option key={item} value={item}>{item}</option>
+                                                                    {COMPLAINT_STATUSES.map((item) => (
+                                                                        <option key={item.value} value={item.value}>{item.label}</option>
                                                                     ))}
                                                                 </select>
                                                             )}
@@ -538,20 +516,37 @@ export default function Complaints() {
                         <div className="complaints-modal-header">
                             <div>
                                 <span className="complaints-eyebrow">COMPLAINT DETAILS</span>
-                                <h3>{selectedComplaint.complaint_id || selectedComplaint.id}</h3>
+                                <h3>#{selectedComplaint.id}</h3>
                             </div>
                             <button type="button" className="complaints-modal-close" onClick={() => setSelectedComplaint(null)}>×</button>
                         </div>
 
                         <dl className="complaints-detail-list">
                             <div><dt>Category</dt><dd>{selectedComplaint.category}</dd></div>
-                            <div><dt>Priority</dt><dd>{selectedComplaint.priority}</dd></div>
-                            <div><dt>Date submitted</dt><dd>{formatDate(selectedComplaint.created_at || selectedComplaint.createdAt)}</dd></div>
-                            <div><dt>Status</dt><dd><span className={statusClass(selectedComplaint.status)}>{selectedComplaint.status}</span></dd></div>
+                            <div><dt>Date submitted</dt><dd>{formatDate(selectedComplaint.createdAt)}</dd></div>
+                            <div><dt>Status</dt><dd><span className={statusClass(selectedComplaint.status)}>{complaintStatusLabel(selectedComplaint.rawStatus)}</span></dd></div>
+                            {selectedComplaint.resolvedAt && (
+                                <div><dt>Resolved</dt><dd>{formatDate(selectedComplaint.resolvedAt)}</dd></div>
+                            )}
+                            {selectedComplaint.assignedTo && (
+                                <div><dt>Assigned to</dt><dd>{selectedComplaint.assignedTo}</dd></div>
+                            )}
                             <div className="complaints-detail-description">
                                 <dt>Description</dt>
                                 <dd>{selectedComplaint.description}</dd>
                             </div>
+                            {workOrdersFor(selectedComplaint.id).length > 0 && (
+                                <div className="complaints-detail-description">
+                                    <dt>Maintenance work</dt>
+                                    <dd>
+                                        {workOrdersFor(selectedComplaint.id).map((order) => (
+                                            <div key={order.id}>
+                                                Work order #{order.id} — {order.status.replace("_", " ")}
+                                            </div>
+                                        ))}
+                                    </dd>
+                                </div>
+                            )}
                         </dl>
 
                         {isAdmin && (
@@ -559,14 +554,14 @@ export default function Complaints() {
                                 <label htmlFor="modal-complaint-status">Update Complaint Status</label>
                                 <select
                                     id="modal-complaint-status"
-                                    value={selectedComplaint.status}
+                                    value={selectedComplaint.status || "submitted"}
                                     onChange={(event) => {
-                                        updateStatus(selectedComplaint.complaint_id || selectedComplaint.id, event.target.value);
-                                        setSelectedComplaint({...selectedComplaint, status: event.target.value});
+                                        updateStatus(selectedComplaint.id, event.target.value);
+                                        setSelectedComplaint({ ...selectedComplaint, status: event.target.value, rawStatus: event.target.value });
                                     }}
                                 >
-                                    {STATUSES.map((item) => (
-                                        <option key={item} value={item}>{item}</option>
+                                    {COMPLAINT_STATUSES.map((item) => (
+                                        <option key={item.value} value={item.value}>{item.label}</option>
                                     ))}
                                 </select>
                             </div>

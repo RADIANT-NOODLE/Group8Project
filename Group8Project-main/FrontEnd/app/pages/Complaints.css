@@ -776,3 +776,18 @@
         padding: 17px;
     }
 }
+
+.complaints-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 4px 0 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    cursor: pointer;
+}
+
+.complaints-checkbox input {
+    margin-top: 3px;
+    width: auto;
+}

@@ -6,14 +6,23 @@ React 19 single-page app for the VALORA estate platform. The source lives in [`a
 ## Install
 
 - Node.js 20 or newer
-- Docker Desktop (for the database and the API)
+- Python 3.12
+- A Neon (hosted PostgreSQL) database
 
 ## Run it
 
-Backend — from `backend/`. This starts Postgres and the API, and runs the migrations on startup:
+Database — create a project in Neon and copy its connection string into `backend/.env` as
+`DATABASE_URL`, starting with `postgresql+asyncpg://` (see `.env.example`).
+
+Backend — from `backend/`:
 
 ```
-docker compose up -d --build db api
+py -3 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Frontend — from `FrontEnd/`:
@@ -27,22 +36,11 @@ Open http://localhost:4173. The API is at http://localhost:8000, with its docs a
 http://localhost:8000/docs. No backend handy? Set `VITE_USE_MOCK_AUTH=true` in `FrontEnd/.env` to run
 the app on the built-in mock instead.
 
-## Run the API without Docker
+`backend/.env` is read by `app/core/config.py`: keep `DATABASE_URL`, set `SECRET_KEY`, and leave
+`DATABASE_SSL=false` for a local database.
 
-From `backend/`, with Python 3.12:
-
-```
-py -3 -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-docker compose up -d db
-copy .env.example .env
-python -m alembic upgrade head
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-In `.env`, keep `DATABASE_URL` and rename `JWT_SECRET` to `SECRET_KEY` — `app/core/config.py` reads
-those two names.
+Estate agents cannot register themselves. An HOA administrator creates their account from
+**Create Agent Account** in the sidebar.
 
 ## Checks
 

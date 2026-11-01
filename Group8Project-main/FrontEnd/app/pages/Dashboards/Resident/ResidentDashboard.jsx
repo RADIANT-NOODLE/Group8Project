@@ -1,88 +1,97 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../../../services/session";
 import DashboardSidebar from "../shared/DashboardSidebar";
+import { listAnnouncements } from "../../../services/announcementApi";
+import { apiRequest } from "../../../services/apiClient";
+import { listComplaints } from "../../../services/complaintApi";
+import { listWorkOrders } from "../../../services/workOrderApi";
 import "./ResidentDashboard.css";
 
-function ResidentDashboard() {
-    const { user } = useSession();
-    
-    // States
+async function readPublishedAnnouncements() {
+    const page = await listAnnouncements({ pageSize: 20 });
+
+    return page.items.map(announcement => ({
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.message,
+        category: announcement.category,
+        date: announcement.createdAt,
+    }));
+}
+
+function formatAnnouncementDate(dateValue) {
+    if (!dateValue) return "Community announcement";
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return "Community announcement";
+
+    return date.toLocaleDateString("en-ZA", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+}
+
+function ResidentDashboard({ user: suppliedUser }) {
+    const { user: sessionUser } = useSession();
+    const user = suppliedUser || sessionUser || {};
+
     const [myProperty, setMyProperty] = useState(null);
     const [complaintsCount, setComplaintsCount] = useState(0);
     const [maintenanceCount, setMaintenanceCount] = useState(0);
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 1. Fetch ALL data at once
-    useEffect(() => {
-        const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-        
-        if (!token) {
-            setLoading(false);
-            return;
+    const loadDashboard = useCallback(async () => {
+        const results = await Promise.allSettled([
+            apiRequest("/api/v1/resident-directory"),
+            listComplaints({ pageSize: 100 }),
+            listWorkOrders({ pageSize: 100 }),
+            readPublishedAnnouncements(),
+        ]);
+        const [directory, complaints, workOrders, published] = results;
+
+        if (directory.status === "fulfilled") {
+            const payload = directory.value;
+            const records = Array.isArray(payload)
+                ? payload
+                : payload?.items || payload?.records || (payload?.unit_no ? [payload] : []);
+
+            setMyProperty(
+                records.length > 0
+                    ? {
+                          unit_no: records[0].unit_no,
+                          complex_name: records[0].complex_name,
+                          address: records[0].street_address,
+                      }
+                    : null
+            );
         }
 
-        const headers = { "Authorization": `Bearer ${token}` };
+        if (complaints.status === "fulfilled") setComplaintsCount(complaints.value.items.length);
+        if (workOrders.status === "fulfilled") setMaintenanceCount(workOrders.value.items.length);
+        if (published.status === "fulfilled") setAnnouncements(published.value);
 
-        // Use Promise.all to fetch everything in parallel
-        Promise.all([
-            fetch("http://127.0.0.1:8000/api/v1/resident-directory", { headers }).then(r => r.ok ? r.json() : []),
-            fetch("http://127.0.0.1:8000/api/v1/complaints", { headers }).then(r => r.ok ? r.json() : []),
-            fetch("http://127.0.0.1:8000/api/v1/maintenance", { headers }).then(r => r.ok ? r.json() : []),
-            fetch("http://127.0.0.1:8000/api/v1/announcements", { headers }).then(r => r.ok ? r.json() : [])
-        ])
-        .then(([propertyData, complaintsData, maintenanceData, announcementsData]) => {
-            
-            // --- 1. Process Property ---
-            let propertyRecords = [];
-            if (Array.isArray(propertyData)) propertyRecords = propertyData;
-            else if (propertyData.items) propertyRecords = propertyData.items;
-            else if (propertyData.unit_no) propertyRecords = [propertyData];
-
-            if (propertyRecords.length > 0) {
-                setMyProperty({
-                    unit_no: propertyRecords[0].unit_no,
-                    complex_name: propertyRecords[0].complex_name,
-                    address: propertyRecords[0].street_address
-                });
+        results.forEach((result) => {
+            if (result.status === "rejected") {
+                console.error("Unable to load part of the dashboard:", result.reason);
             }
-
-            // --- 2. Process Complaints ---
-            let complaintRecords = [];
-            if (Array.isArray(complaintsData)) complaintRecords = complaintsData;
-            else if (complaintsData.items) complaintRecords = complaintsData.items;
-            else if (complaintsData.complaints) complaintRecords = complaintsData.complaints;
-            setComplaintsCount(complaintRecords.length);
-
-            // --- 3. Process Maintenance ---
-            let maintenanceRecords = [];
-            if (Array.isArray(maintenanceData)) maintenanceRecords = maintenanceData;
-            else if (maintenanceData.items) maintenanceRecords = maintenanceData.items;
-            else if (maintenanceData.work_orders) maintenanceRecords = maintenanceData.work_orders;
-            setMaintenanceCount(maintenanceRecords.length);
-
-            // --- 4. Process Announcements ---
-            let announcementRecords = [];
-            if (Array.isArray(announcementsData)) announcementRecords = announcementsData;
-            else if (announcementsData.items) announcementRecords = announcementsData.items;
-            else if (announcementsData.announcements) announcementRecords = announcementsData.announcements;
-            
-            // Filter only published announcements
-            const published = announcementRecords.filter(a => 
-                String(a.status || "").toLowerCase() === "published"
-            );
-            setAnnouncements(published);
-
-        })
-        .catch((err) => {
-            console.error("Failed to load dashboard data:", err);
-        })
-        .finally(() => {
-            setLoading(false);
         });
 
+        setLoading(false);
     }, []);
+
+    useEffect(() => {
+        loadDashboard();
+
+        window.addEventListener("focus", loadDashboard);
+
+        return () => {
+            window.removeEventListener("focus", loadDashboard);
+        };
+    }, [loadDashboard]);
 
     const firstName = user?.firstName || user?.fullName?.split(" ")[0] || "Resident";
     const initials = user?.initials || firstName.charAt(0).toUpperCase();
@@ -258,15 +267,11 @@ function ResidentDashboard() {
                                 </span>
                                 <span>Complaints</span>
                             </Link>
-                            <Link to="/maintenance" className="resident-dashboard-quick-action">
-                                <span className="resident-dashboard-quick-action-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                        <path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.2 2.2-2.8-.8-.8-2.8 2.8-2.2Z" />
-                                    </svg>
-                                </span>
-                                <span>Maintenance</span>
-                            </Link>
-                            <Link to="/announcements" className="resident-dashboard-quick-action">
+
+                            <Link
+                                to="/announcements"
+                                className="resident-dashboard-quick-action"
+                            >
                                 <span className="resident-dashboard-quick-action-icon">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M4 11v2a2 2 0 0 0 2 2h2l3 5h2l-1.5-5H14l6 3V6l-6 3H6a2 2 0 0 0-2 2Z" />

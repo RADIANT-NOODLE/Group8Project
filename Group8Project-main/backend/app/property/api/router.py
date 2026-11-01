@@ -1,14 +1,15 @@
-"""Property domain router: properties, listings and sales."""
+"""Property domain router: properties, listings, sales, requests and inquiries."""
 from fastapi import APIRouter
 
+from app.property.api.inquiries import router as inquiries_router
 from app.property.api.listings import router as listings_router
 from app.property.api.properties import router as properties_router
-from app.property.api.sales import router as sales_router
 from app.property.api.property_requests import router as property_requests_router
-from app.property.api.inquiries import router as inquiries_router
+from app.property.api.sales import router as sales_router
+
 router = APIRouter()
 router.include_router(properties_router)
 router.include_router(listings_router)
-router.include_router(sales_router)
 router.include_router(property_requests_router)
+router.include_router(sales_router)
 router.include_router(inquiries_router)

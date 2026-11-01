@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.community.models.complaint import Complaint
 from app.community.models.maintenance_work_order import MaintenanceworkOrder
 
 
@@ -18,7 +19,15 @@ class WorkOrderRepository:
         complaint_id: int | None,
         provider_id: int | None,
         status: str | None,
+        complaint_owner_id: int | None = None,
     ) -> Select:
+        if complaint_owner_id is not None:
+            # Only work orders raised from this user's own complaints.
+            stmt = stmt.where(
+                MaintenanceworkOrder.complaint_id.in_(
+                    select(Complaint.complaint_id).where(Complaint.user_id == complaint_owner_id)
+                )
+            )
         if complaint_id is not None:
             stmt = stmt.where(MaintenanceworkOrder.complaint_id == complaint_id)
         if provider_id is not None:
@@ -35,10 +44,15 @@ class WorkOrderRepository:
         complaint_id: int | None = None,
         provider_id: int | None = None,
         status: str | None = None,
+        complaint_owner_id: int | None = None,
     ) -> list[MaintenanceworkOrder]:
         stmt = select(MaintenanceworkOrder).order_by(MaintenanceworkOrder.work_order_id.desc())
         stmt = self._apply_filters(
-            stmt, complaint_id=complaint_id, provider_id=provider_id, status=status
+            stmt,
+            complaint_id=complaint_id,
+            provider_id=provider_id,
+            status=status,
+            complaint_owner_id=complaint_owner_id,
         )
         result = await self._db.execute(stmt.offset(offset).limit(limit))
         return list(result.scalars().all())
@@ -49,10 +63,15 @@ class WorkOrderRepository:
         complaint_id: int | None = None,
         provider_id: int | None = None,
         status: str | None = None,
+        complaint_owner_id: int | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(MaintenanceworkOrder)
         stmt = self._apply_filters(
-            stmt, complaint_id=complaint_id, provider_id=provider_id, status=status
+            stmt,
+            complaint_id=complaint_id,
+            provider_id=provider_id,
+            status=status,
+            complaint_owner_id=complaint_owner_id,
         )
         result = await self._db.execute(stmt)
         return int(result.scalar_one())

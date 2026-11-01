@@ -90,7 +90,7 @@ async def update_inquiry_status(
     if not inquiry:
         raise HTTPException(status_code=404, detail="Inquiry not found")
         
-    if inquiry.agent_id != current_user.user_id:
+    if inquiry.agent_id != current_user.user_id and current_user.role not in ("hoa_admin", "head_admin"):
         raise HTTPException(status_code=403, detail="Not authorized to edit this inquiry")
         
     inquiry.status = payload.status

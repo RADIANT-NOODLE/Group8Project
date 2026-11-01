@@ -791,3 +791,14 @@
         margin: 40px auto;
     }
 }
+
+.form-hint {
+    margin: 8px 0 0;
+    color: #777777;
+    font-size: 13px;
+}
+
+.primary-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}

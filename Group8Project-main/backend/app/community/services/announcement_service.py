@@ -11,6 +11,8 @@ from app.community.schemas.announcement import (
     PaginatedAnnouncementsResponse,
 )
 from app.core.exceptions import NotFoundException
+
+_ADMIN_ROLES = (UserRole.hoa_admin.value, UserRole.head_admin.value)
 from app.identity.models.user import User
 
 
@@ -22,7 +24,7 @@ class AnnouncementService:
         self, user: User, *, page: int, page_size: int, include_expired: bool = False
     ) -> PaginatedAnnouncementsResponse:
         # only HOA admins may see expired announcements
-        show_expired = include_expired and user.role == UserRole.hoa_admin.value
+        show_expired = include_expired and user.role in _ADMIN_ROLES
         now = utcnow()
         items = await self._repo.search(
             offset=(page - 1) * page_size,
@@ -41,7 +43,8 @@ class AnnouncementService:
     async def get_announcement(self, announcement_id: int, user: User) -> AnnouncementResponse:
         announcement = await self._get_or_404(announcement_id)
         is_expired = announcement.expires_at is not None and announcement.expires_at <= utcnow()
-        if is_expired and user.role != UserRole.hoa_admin.value:
+        is_hidden = is_expired or not announcement.is_published
+        if is_hidden and user.role not in _ADMIN_ROLES:
             raise NotFoundException(f"Announcement with id {announcement_id} was not found.")
         return AnnouncementResponse.model_validate(announcement)
 
@@ -51,6 +54,8 @@ class AnnouncementService:
         announcement = await self._repo.create(
             title=payload.title.strip(),
             message=payload.message.strip(),
+            category=payload.category.strip() or "General",
+            is_published=payload.is_published,
             created_by=admin.user_id,
             expires_at=payload.expires_at,
         )
@@ -61,7 +66,7 @@ class AnnouncementService:
     ) -> AnnouncementResponse:
         announcement = await self._get_or_404(announcement_id)
         changes = payload.model_dump(exclude_unset=True)
-        for required_field in ("title", "message"):
+        for required_field in ("title", "message", "category", "is_published"):
             if required_field in changes and changes[required_field] is None:
                 del changes[required_field]
         for field, value in changes.items():

@@ -1,14 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { getComplaintStats, listComplaints, updateComplaintStatus } from "../../services/complaintApi";
+import { listProviders } from "../../services/providerApi";
+import { createWorkOrder, listWorkOrders, updateWorkOrder } from "../../services/workOrderApi";
+import {
+    COMPLAINT_STATUSES,
+    WORK_ORDER_STATUSES,
+    complaintStatusLabel,
+    complaintStatusTone,
+    workOrderStatusLabel,
+} from "../../services/statusMap";
 import "./ResidentComplaints.css";
 
-const STATUSES = [
-    "Submitted",
-    "Acknowledged",
-    "In Progress",
-    "Resolved",
-    "Cancelled",
-];
+const RESOLVED_STATUSES = ["resolved", "closed"];
 
 // Helper to read the logged-in user from local storage
 function readUser() {
@@ -20,7 +24,7 @@ function readUser() {
 }
 
 function normaliseRole(value = "") {
-    const role = String(value).trim().toLowerCase();
+    const role = String(value).trim().toLowerCase().replace(/_/g, " ");
 
     if (role.includes("head admin")) return "Head Admin";
     if (
@@ -63,19 +67,18 @@ function formatDate(value) {
 
 function getStatusClass(status) {
     const classes = {
-        Submitted: "resident-complaints-status-submitted",
-        Acknowledged: "resident-complaints-status-acknowledged",
-        "In Progress": "resident-complaints-status-progress",
-        Resolved: "resident-complaints-status-resolved",
-        Cancelled: "resident-complaints-status-cancelled",
+        submitted: "resident-complaints-status-submitted",
+        under_review: "resident-complaints-status-acknowledged",
+        in_progress: "resident-complaints-status-progress",
+        resolved: "resident-complaints-status-resolved",
+        closed: "resident-complaints-status-cancelled",
     };
-    return classes[status] || classes.Submitted;
+    return classes[status] || classes.submitted;
 }
 
-function getPriorityClass(priority) {
-    return ["High", "Urgent"].includes(priority)
-        ? "resident-complaints-priority-high"
-        : "resident-complaints-priority-normal";
+function submitterLabel(complaint) {
+    if (complaint.isAnonymous && complaint.userId == null) return "Anonymous";
+    return complaint.userId == null ? "Unknown" : `Resident #${complaint.userId}`;
 }
 
 function Icon({ name, size = 19 }) {
@@ -128,35 +131,47 @@ function Icon({ name, size = 19 }) {
 export default function ResidentComplaints() {
     const [user, setUser] = useState(readUser);
     const [complaints, setComplaints] = useState([]);
+    const [workOrders, setWorkOrders] = useState([]);
+    const [providers, setProviders] = useState([]);
+    const [serverStats, setServerStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [notice, setNotice] = useState("");
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
 
+    // work order dialog
+    const [orderTarget, setOrderTarget] = useState(null);
+    const [orderForm, setOrderForm] = useState({ providerId: "", jobCost: "", estimatedCompletionDate: "" });
+    const [orderError, setOrderError] = useState("");
+    const [isSavingOrder, setIsSavingOrder] = useState(false);
+
     const role = getUserRole(user);
     const userName = getUserName(user);
     const isAdmin = role === "HOA Admin" || role === "Head Admin";
 
-    // 1. Fetch real data from the API
+    // 1. Fetch complaints, their work orders and the providers that can be assigned
     const fetchComplaints = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch("http://127.0.0.1:8000/api/v1/complaints", {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const [complaintPage, orderPage, providerPage, stats] = await Promise.all([
+                listComplaints({ pageSize: 100 }),
+                listWorkOrders({ pageSize: 100 }),
+                listProviders(),
+                getComplaintStats().catch(() => null),
+            ]);
 
-            if (response.ok) {
-                const data = await response.json();
-                // Handle both direct arrays and wrapped objects
-                const list = Array.isArray(data) ? data : (data.complaints || data.items || []);
-                setComplaints(list);
-            } else {
-                setError("Failed to load complaints from the server.");
-            }
+            setComplaints(complaintPage.items);
+            setWorkOrders(orderPage.items);
+            setProviders(providerPage.items);
+            setServerStats(stats);
+            setError("");
         } catch (err) {
             console.error("Fetch error:", err);
-            setError("Could not connect to the backend server.");
+            setError(
+                err?.status === 403
+                    ? "You do not have permission to view complaints."
+                    : "Could not load complaints from the server. Please try again."
+            );
         } finally {
             setLoading(false);
         }
@@ -168,30 +183,36 @@ export default function ResidentComplaints() {
         fetchComplaints();
     }, []);
 
+    const ordersByComplaint = useMemo(() => {
+        const map = new Map();
+        workOrders.forEach((order) => {
+            map.set(order.complaintId, [...(map.get(order.complaintId) || []), order]);
+        });
+        return map;
+    }, [workOrders]);
+
+    const providerName = (providerId) =>
+        providers.find((provider) => provider.id === providerId)?.fullName || `Provider #${providerId}`;
+
     // 3. Filter and Search
     const filteredComplaints = useMemo(() => {
         const term = search.trim().toLowerCase();
-        const sorted = [...complaints].sort((a, b) => {
-            const aDate = new Date(a.created_at || a.createdAt || a.date || 0).getTime();
-            const bDate = new Date(b.created_at || b.createdAt || b.date || 0).getTime();
-            return bDate - aDate;
-        });
+        const sorted = [...complaints].sort(
+            (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        );
 
         if (!term) return sorted;
 
         return sorted.filter((complaint) =>
             [
                 complaint.id,
-                complaint.complaint_id,
-                complaint.full_name, 
-                complaint.submitterName,
-                complaint.unit,
+                submitterLabel(complaint),
+                complaint.unitId,
                 complaint.category,
                 complaint.description,
-                complaint.priority,
-                complaint.status,
+                complaintStatusLabel(complaint.status),
             ]
-                .filter(Boolean)
+                .filter((value) => value !== null && value !== undefined && value !== "")
                 .some((value) => String(value).toLowerCase().includes(term))
         );
     }, [complaints, search]);
@@ -199,10 +220,10 @@ export default function ResidentComplaints() {
     // 4. Stats Calculation
     const stats = useMemo(() => ({
         total: complaints.length,
-        active: complaints.filter((item) => item.status !== "Resolved" && item.status !== "Cancelled").length,
-        resolved: complaints.filter((item) => item.status === "Resolved").length,
-        highPriority: complaints.filter((item) => ["High", "Urgent"].includes(item.priority)).length,
-    }), [complaints]);
+        active: complaints.filter((item) => !RESOLVED_STATUSES.includes(item.status)).length,
+        resolved: complaints.filter((item) => RESOLVED_STATUSES.includes(item.status)).length,
+        withWorkOrder: complaints.filter((item) => ordersByComplaint.has(item.id)).length,
+    }), [complaints, ordersByComplaint]);
 
     // 5. Update status via API
     async function updateStatus(complaintId, nextStatus) {
@@ -211,32 +232,91 @@ export default function ResidentComplaints() {
             return;
         }
 
-        if (!STATUSES.includes(nextStatus)) return;
+        if (!COMPLAINT_STATUSES.some((status) => status.value === nextStatus)) return;
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            
-            // Use the ID from the database (complaint_id) if 'id' doesn't exist
-            const idToUse = complaintId;
+            await updateComplaintStatus(complaintId, { status: nextStatus });
+            await fetchComplaints();
 
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/complaints/${idToUse}/status`, {
-                method: "PATCH",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ status: nextStatus })
+            setError("");
+            setNotice(`Complaint status updated to "${complaintStatusLabel(nextStatus)}".`);
+        } catch (err) {
+            setError(err?.message || "Failed to update the complaint status.");
+        }
+    }
+
+    // 6. Work orders: assign a provider to a complaint
+    function openWorkOrderDialog(complaint) {
+        setOrderTarget(complaint);
+        setOrderForm({ providerId: "", jobCost: "", estimatedCompletionDate: "" });
+        setOrderError("");
+    }
+
+    function closeWorkOrderDialog() {
+        setOrderTarget(null);
+        setOrderError("");
+    }
+
+    async function submitWorkOrder(event) {
+        event.preventDefault();
+        setOrderError("");
+
+        if (!orderForm.providerId) {
+            setOrderError("Select the service provider who will do the work.");
+            return;
+        }
+
+        const cost = orderForm.jobCost.trim();
+        if (cost && (!Number.isFinite(Number(cost)) || Number(cost) < 0)) {
+            setOrderError("The estimated cost must be a positive number.");
+            return;
+        }
+
+        setIsSavingOrder(true);
+
+        try {
+            await createWorkOrder({
+                complaintId: orderTarget.id,
+                providerId: orderForm.providerId,
+                jobCost: cost ? Number(cost) : null,
+                estimatedCompletionDate: orderForm.estimatedCompletionDate
+                    ? new Date(`${orderForm.estimatedCompletionDate}T17:00:00`).toISOString()
+                    : null,
             });
 
-            if (!response.ok) throw new Error("Failed to update status in database");
+            // an assigned complaint is now being worked on
+            if (["submitted", "under_review"].includes(orderTarget.status)) {
+                await updateComplaintStatus(orderTarget.id, { status: "in_progress" });
+            }
 
-            // Re-fetch from the API so the table and stats update automatically
+            closeWorkOrderDialog();
             await fetchComplaints();
-            
+            setNotice(`Work order created for complaint #${orderTarget.id}.`);
             setError("");
-            setNotice(`Complaint status updated to "${nextStatus}".`);
         } catch (err) {
-            setError(err.message);
+            setOrderError(err?.message || "Unable to create the work order.");
+        } finally {
+            setIsSavingOrder(false);
+        }
+    }
+
+    async function changeWorkOrderStatus(order, nextStatus) {
+        try {
+            await updateWorkOrder(order.id, { status: nextStatus });
+
+            // finished work resolves the complaint it came from
+            if (nextStatus === "completed") {
+                const complaint = complaints.find((item) => item.id === order.complaintId);
+                if (complaint && !RESOLVED_STATUSES.includes(complaint.status)) {
+                    await updateComplaintStatus(complaint.id, { status: "resolved" });
+                }
+            }
+
+            await fetchComplaints();
+            setError("");
+            setNotice(`Work order #${order.id} is now "${workOrderStatusLabel(nextStatus)}".`);
+        } catch (err) {
+            setError(err?.message || "Unable to update the work order.");
         }
     }
 
@@ -277,7 +357,7 @@ export default function ResidentComplaints() {
                     <div>
                         <span className="resident-complaints-eyebrow">COMMUNITY MANAGEMENT</span>
                         <h2>Resident Complaints</h2>
-                        <p>Review complaints submitted across VALORA and update their progress.</p>
+                        <p>Review complaints submitted across VALORA, assign service providers and update their progress.</p>
                     </div>
 
                     <div className="resident-complaints-admin-label">
@@ -306,10 +386,10 @@ export default function ResidentComplaints() {
                 )}
 
                 <section className="resident-complaints-stat-cards" aria-label="Complaint statistics">
-                    <StatCard icon="total" label="Total Complaints" value={loading ? "..." : stats.total} description="All submitted complaints" />
+                    <StatCard icon="total" label="Total Complaints" value={loading ? "..." : serverStats?.total ?? stats.total} description="All submitted complaints" />
                     <StatCard icon="active" label="Active Complaints" value={loading ? "..." : stats.active} description="Require attention" />
-                    <StatCard icon="resolved" label="Resolved" value={loading ? "..." : stats.resolved} description="Successfully resolved" />
-                    <StatCard icon="urgent" label="High Priority" value={loading ? "..." : stats.highPriority} description="High or urgent complaints" />
+                    <StatCard icon="resolved" label="Resolved" value={loading ? "..." : stats.resolved} description="Resolved or closed" />
+                    <StatCard icon="urgent" label="With Work Orders" value={loading ? "..." : stats.withWorkOrder} description="A provider is assigned" />
                 </section>
 
                 <section className="resident-complaints-panel">
@@ -342,9 +422,9 @@ export default function ResidentComplaints() {
                                     <th>Submitted By</th>
                                     <th>Unit</th>
                                     <th>Category</th>
-                                    <th>Priority</th>
                                     <th>Date</th>
                                     <th>Status</th>
+                                    <th>Work Order</th>
                                     <th>Update Status</th>
                                 </tr>
                             </thead>
@@ -361,58 +441,80 @@ export default function ResidentComplaints() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredComplaints.map((complaint) => (
-                                        <tr key={complaint.complaint_id || complaint.id}>
-                                            <td>
-                                                <strong className="resident-complaints-id">
-                                                    {complaint.complaint_id || complaint.id}
-                                                </strong>
-                                            </td>
+                                    filteredComplaints.map((complaint) => {
+                                        const orders = ordersByComplaint.get(complaint.id) || [];
 
-                                            <td>
-                                                <div className="resident-complaints-resident">
-                                                    <strong>
-                                                        {complaint.full_name || complaint.submitterName || complaint.resident || "Unknown user"}
-                                                    </strong>
-                                                    <small>
-                                                        {complaint.role || complaint.submitterRole || "Resident"}
-                                                    </small>
-                                                </div>
-                                            </td>
+                                        return (
+                                            <tr key={complaint.id}>
+                                                <td>
+                                                    <strong className="resident-complaints-id">#{complaint.id}</strong>
+                                                </td>
 
-                                            <td>{complaint.unit || "—"}</td>
-                                            <td>{complaint.category || "Other"}</td>
+                                                <td>
+                                                    <div className="resident-complaints-resident">
+                                                        <strong>{submitterLabel(complaint)}</strong>
+                                                        <small>{complaint.isAnonymous ? "Anonymous complaint" : "Resident"}</small>
+                                                    </div>
+                                                </td>
 
-                                            <td>
-                                                <span className={getPriorityClass(complaint.priority)}>
-                                                    {complaint.priority || "Low"}
-                                                </span>
-                                            </td>
+                                                <td>{complaint.unitId ? `Unit #${complaint.unitId}` : "—"}</td>
+                                                <td title={complaint.description}>{complaint.category || "Other"}</td>
+                                                <td>{formatDate(complaint.createdAt)}</td>
 
-                                            <td>
-                                                {formatDate(complaint.created_at || complaint.createdAt || complaint.date)}
-                                            </td>
+                                                <td>
+                                                    <span className={getStatusClass(complaint.status)}>
+                                                        {complaintStatusLabel(complaint.rawStatus)}
+                                                    </span>
+                                                </td>
 
-                                            <td>
-                                                <span className={getStatusClass(complaint.status)}>
-                                                    {complaint.status || "Submitted"}
-                                                </span>
-                                            </td>
+                                                <td>
+                                                    <div className="resident-complaints-workorders">
+                                                        {orders.map((order) => (
+                                                            <div key={order.id} className="resident-complaints-workorder">
+                                                                <span>
+                                                                    {providerName(order.providerId)}
+                                                                    {order.residentRating ? ` · ★ ${order.residentRating}` : ""}
+                                                                </span>
+                                                                <select
+                                                                    className="resident-complaints-status-select"
+                                                                    aria-label={`Work order ${order.id} status`}
+                                                                    value={order.status}
+                                                                    onChange={(event) => changeWorkOrderStatus(order, event.target.value)}
+                                                                >
+                                                                    {WORK_ORDER_STATUSES.map((status) => (
+                                                                        <option key={status.value} value={status.value}>{status.label}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        ))}
+                                                        {!RESOLVED_STATUSES.includes(complaint.status) && (
+                                                            <button
+                                                                type="button"
+                                                                className="resident-complaints-link-button"
+                                                                onClick={() => openWorkOrderDialog(complaint)}
+                                                            >
+                                                                {orders.length ? "Add work order" : "Create work order"}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
 
-                                            <td>
-                                                <select
-                                                    className="resident-complaints-status-select"
-                                                    aria-label={`Update status for ${complaint.complaint_id || complaint.id}`}
-                                                    value={STATUSES.includes(complaint.status) ? complaint.status : "Submitted"}
-                                                    onChange={(event) => updateStatus(complaint.complaint_id || complaint.id, event.target.value)}
-                                                >
-                                                    {STATUSES.map((status) => (
-                                                        <option key={status} value={status}>{status}</option>
-                                                    ))}
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                <td>
+                                                    <select
+                                                        className="resident-complaints-status-select"
+                                                        aria-label={`Update status for complaint ${complaint.id}`}
+                                                        data-tone={complaintStatusTone(complaint.status)}
+                                                        value={complaint.status || "submitted"}
+                                                        onChange={(event) => updateStatus(complaint.id, event.target.value)}
+                                                    >
+                                                        {COMPLAINT_STATUSES.map((status) => (
+                                                            <option key={status.value} value={status.value}>{status.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -423,16 +525,16 @@ export default function ResidentComplaints() {
                     <div className="resident-complaints-panel-heading">
                         <div>
                             <h3>Complaint Management Process</h3>
-                            <p>Monitor each complaint from submission through resolution or cancellation.</p>
+                            <p>Monitor each complaint from submission through a provider's work order to resolution.</p>
                         </div>
                     </div>
 
                     <div className="resident-complaints-status-flow">
                         {[
                             { number: "01", title: "Submitted", description: "A user submits a complaint." },
-                            { number: "02", title: "Acknowledged", description: "An administrator acknowledges it." },
-                            { number: "03", title: "In Progress", description: "The issue is being addressed." },
-                            { number: "04", title: "Resolved", description: "The reported issue is resolved." },
+                            { number: "02", title: "Under review", description: "An administrator reviews it." },
+                            { number: "03", title: "Work order", description: "A service provider is assigned and works on it." },
+                            { number: "04", title: "Resolved", description: "The job is completed and the complaint resolved." },
                         ].map((step, index, steps) => (
                             <React.Fragment key={step.number}>
                                 <div className="resident-complaints-status-step">
@@ -446,6 +548,66 @@ export default function ResidentComplaints() {
                     </div>
                 </section>
             </main>
+
+            {orderTarget && (
+                <div
+                    className="resident-complaints-modal-backdrop"
+                    onMouseDown={(event) => { if (event.target === event.currentTarget) closeWorkOrderDialog(); }}
+                >
+                    <form className="resident-complaints-modal" role="dialog" aria-modal="true" onSubmit={submitWorkOrder}>
+                        <h3>Create work order</h3>
+                        <p className="resident-complaints-modal-lead">
+                            Complaint #{orderTarget.id} · {orderTarget.category}
+                        </p>
+                        <p className="resident-complaints-modal-description">{orderTarget.description}</p>
+
+                        {orderError && <div className="resident-complaints-error" role="alert"><span>{orderError}</span></div>}
+
+                        <label htmlFor="work-order-provider">Service provider</label>
+                        <select
+                            id="work-order-provider"
+                            value={orderForm.providerId}
+                            onChange={(event) => setOrderForm({ ...orderForm, providerId: event.target.value })}
+                            required
+                        >
+                            <option value="">
+                                {providers.length ? "Select a provider" : "No service providers yet"}
+                            </option>
+                            {providers.map((provider) => (
+                                <option key={provider.id} value={provider.id}>
+                                    {provider.fullName} — {provider.trade}
+                                    {provider.avgRating != null ? ` (★ ${provider.avgRating.toFixed(1)})` : ""}
+                                </option>
+                            ))}
+                        </select>
+
+                        <label htmlFor="work-order-cost">Estimated cost (R, optional)</label>
+                        <input
+                            id="work-order-cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={orderForm.jobCost}
+                            onChange={(event) => setOrderForm({ ...orderForm, jobCost: event.target.value })}
+                        />
+
+                        <label htmlFor="work-order-date">Expected completion (optional)</label>
+                        <input
+                            id="work-order-date"
+                            type="date"
+                            value={orderForm.estimatedCompletionDate}
+                            onChange={(event) => setOrderForm({ ...orderForm, estimatedCompletionDate: event.target.value })}
+                        />
+
+                        <div className="resident-complaints-modal-actions">
+                            <button type="button" onClick={closeWorkOrderDialog}>Cancel</button>
+                            <button type="submit" disabled={isSavingOrder || !providers.length}>
+                                {isSavingOrder ? "Saving…" : "Create work order"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }

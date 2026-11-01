@@ -1,145 +1,302 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { getProperties } from "../../data/propertyStorage";
+import {
+    ensureLocalPropertyForRequest,
+    getPropertyRequests,
+} from "../../data/propertyRequests";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import { useSession } from "../../services/session";
+import { useNavigate } from "react-router-dom";
 import "./AgentListings.css";
 
 function AgentListings() {
     const navigate = useNavigate();
-    const { user } = useSession();
 
-    const [assignedListings, setAssignedListings] = useState([]);
-    const [existingListings, setExistingListings] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [properties, setProperties] = useState([]);
+    const [propertyRequests, setPropertyRequests] = useState([]);
 
-    const [viewModal, setViewModal] = useState({ isOpen: false, data: null });
+    const [currentUser] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("valoraUser") || "null");
+        } catch {
+            return null;
+        }
+    });
 
-    // 1. Fetch assigned requests AND existing listings
+    const [loadError, setLoadError] = useState("");
+
     useEffect(() => {
-        const fetchMyAssignments = async () => {
-            if (!user) return;
+        let cancelled = false;
 
+        async function load() {
             try {
-                const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-                const headers = { "Authorization": `Bearer ${token}` };
+                // the API only returns the requests assigned to this agent
+                const requests = (await getPropertyRequests()) || [];
+                if (cancelled) return;
 
-                // Fetch both in parallel
-                const [reqRes, listRes] = await Promise.all([
-                    fetch("http://127.0.0.1:8000/api/v1/property-requests", { headers }),
-                    fetch("http://127.0.0.1:8000/api/v1/listings", { headers })
-                ]);
-                
-                // Process Requests
-                if (reqRes.ok) {
-                    const reqData = await reqRes.json();
-                    const requests = reqData.items || reqData.requests || reqData || [];
-                    const myRequests = requests.filter(r => 
-                        String(r.assigned_agent_id) === String(user.id) && r.status === "Assigned"
-                    );
-                    setAssignedListings(myRequests);
+                requests.forEach((request) => ensureLocalPropertyForRequest(request));
+                setProperties(getProperties() || []);
+                setPropertyRequests(requests);
+                setLoadError("");
+            } catch (error) {
+                console.error("Unable to load assigned property requests:", error);
+                if (!cancelled) {
+                    setProperties(getProperties() || []);
+                    setLoadError("Unable to load your assigned properties. Please try again.");
                 }
-
-                // Process Listings
-                if (listRes.ok) {
-                    const listData = await listRes.json();
-                    const allListings = listData.listings || listData.items || listData || [];
-                    const myListings = allListings.filter(l => 
-                        String(l.agent_id) === String(user.id)
-                    );
-                    setExistingListings(myListings);
-                }
-                
-            } catch (err) {
-                console.error("Failed to fetch agent listings:", err);
-            } finally {
-                setLoading(false);
             }
+        }
+
+        load();
+
+        return () => {
+            cancelled = true;
         };
+    }, []);
 
-        fetchMyAssignments();
-    }, [user]);
+    const currentAgentName =
+        currentUser?.name ||
+        currentUser?.fullName ||
+        `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim();
 
-    // 2. Display Helpers
-    const formatPrice = (price) => {
-        if (!price) return "Not set";
-        return `R${Number(price).toLocaleString()}`;
+    const assignedRequests = propertyRequests.filter((request) => {
+        if (currentUser?.id && request.assignedAgentId) {
+            return String(request.assignedAgentId) === String(currentUser.id);
+        }
+
+        return Boolean(
+            request.assignedAgentName &&
+            currentAgentName &&
+            request.assignedAgentName === currentAgentName
+        );
+    });
+
+    const assignedListings = assignedRequests.map((request) => ({
+        request,
+        property: properties.find(
+            (item) => String(item.id) === String(request.propertyId)
+        ) || null,
+    }));
+
+    const getListingStatus = ({ property }) =>
+        property?.listing?.listingStatus || "Not Listed";
+
+    const getListingPrice = ({ request, property }) => {
+        const listing = property?.listing || {};
+
+        if (request.requestType === "Sell" || listing.listingType === "For Sale") {
+            const price = listing.askingPrice || request.askingPrice;
+            return price ? `R${Number(price).toLocaleString()}` : "Price not set";
+        }
+
+        if (request.requestType === "Rent" || listing.listingType === "For Rent") {
+            const price = listing.rentalPrice || request.rentalPrice;
+            return price
+                ? `R${Number(price).toLocaleString()} / month`
+                : "Rental price not set";
+        }
+
+        return "Not listed";
     };
 
-    const handleView = (request) => {
-        setViewModal({ isOpen: true, data: request });
+    const getListingType = ({ request, property }) => {
+        if (request.requestType === "Sell") return "For Sale";
+        if (request.requestType === "Rent") return "For Rent";
+
+        return property?.listing?.listingType || "Not Listed";
     };
+
+    const getOwnerName = ({ request, property }) =>
+        request.requesterName ||
+        property?.listing?.ownerName ||
+        "Owner not assigned";
+
+    const getViews = ({ property }) => property?.listing?.views || 0;
+    const getInquiries = ({ property }) => property?.listing?.inquiries || 0;
+    const getRequestStatus = ({ request }) => request.status || "Assigned";
 
     const totalListings = assignedListings.length;
-    const totalInquiries = 0; 
 
-    // 3. Icons 
-    const icons = {
-        property: (<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V7l8-4 8 4v14" /><path d="M8 21v-5h8v5M8 10h2M14 10h2M8 13h2M14 13h2" /></svg>),
-        active: (<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m5 12 4 4L19 6" /></svg>),
-        offers: (<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14v12H5zM8 7V5h8v2M8 12h8" /></svg>),
-        inquiries: (<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4zM8 9h8M8 13h5" /></svg>),
+    const activeListings = assignedListings.filter(
+        (listing) => getListingStatus(listing) === "Published"
+    ).length;
+
+    const underOffer = assignedListings.filter(
+        (listing) => getListingStatus(listing) === "Under Offer"
+    ).length;
+
+    const totalInquiries = assignedListings.reduce(
+        (total, listing) => total + Number(getInquiries(listing)),
+        0
+    );
+
+    const handleView = ({ request, property }) => {
+        const listing = property?.listing || {};
+
+        alert(
+            `${property?.unitNumber || request.propertyAddress || request.propertyId || "Property"}\n\n` +
+            `Owner: ${getOwnerName({ request, property })}\n` +
+            `Property Type: ${property?.propertyType || request.propertyType || "Not specified"}\n` +
+            `Bedrooms: ${property?.bedrooms || request.bedrooms || "Not specified"}\n` +
+            `Bathrooms: ${property?.bathrooms || request.bathrooms || "Not specified"}\n` +
+            `Property Size: ${property?.size || property?.area || request.propertySize || "Not specified"}\n\n` +
+            `Listing Type: ${getListingType({ request, property })}\n` +
+            `Price: ${getListingPrice({ request, property })}\n` +
+            `Request Status: ${getRequestStatus({ request })}\n` +
+            `Listing Status: ${getListingStatus({ property })}\n` +
+            `HOA Approval: ${listing.hoaApprovalStatus || "Not Submitted"}`
+        );
     };
 
-    if (loading) {
-        return (
-            <div className="agent-listings-page">
-                <DashboardSidebar suppliedUser={user} />
-                <main className="agent-listings-main" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                    <h2>Loading your assigned listings...</h2>
-                </main>
-            </div>
+    const handleEditListing = ({ request, property }) => {
+        if (!property) {
+            alert("The property record linked to this request could not be found.");
+            return;
+        }
+
+        localStorage.setItem(
+            "valoraAgentSelectedProperty",
+            JSON.stringify({
+                propertyId: property.id,
+                requestId: request.id,
+            })
         );
-    }
+
+        navigate(`/agent-edit-listings?propertyId=${property.id}`);
+    };
+
+    const handleAddListing = () => {
+        alert(
+            "New listings are created through the HOA property request and agent assignment process."
+        );
+    };
+
+    const icons = {
+        property: (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 21V7l8-4 8 4v14" />
+                <path d="M8 21v-5h8v5M8 10h2M14 10h2M8 13h2M14 13h2" />
+            </svg>
+        ),
+        active: (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m5 12 4 4L19 6" />
+            </svg>
+        ),
+        offers: (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14v12H5zM8 7V5h8v2M8 12h8" />
+            </svg>
+        ),
+        inquiries: (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 5h16v11H8l-4 4zM8 9h8M8 13h5" />
+            </svg>
+        ),
+    };
+
+    const statCards = [
+        {
+            label: "Assigned Listings",
+            value: totalListings,
+            description: "Properties assigned to you",
+            icon: icons.property,
+        },
+        {
+            label: "Active Listings",
+            value: activeListings,
+            description: "Currently published",
+            icon: icons.active,
+        },
+        {
+            label: "Under Offer",
+            value: underOffer,
+            description: "Pending sales",
+            icon: icons.offers,
+        },
+        {
+            label: "Total Inquiries",
+            value: totalInquiries,
+            description: "Buyer inquiries",
+            icon: icons.inquiries,
+        },
+    ];
 
     return (
         <div className="agent-listings-page">
-            <DashboardSidebar suppliedUser={user} />
+            {/* SHARED SIDEBAR */}
+            <DashboardSidebar suppliedUser={currentUser} />
 
             <main className="agent-listings-main">
                 <header className="agent-listings-topbar">
                     <div>
                         <div className="agent-listings-breadcrumb">
-                            <span>Estate Agent</span><span>/</span><span>My Listings</span>
+                            <span>Estate Agent</span>
+                            <span>/</span>
+                            <span>My Listings</span>
                         </div>
+
                         <h1>My Listings</h1>
-                        <p>Manage properties assigned to you by the HOA.</p>
+
+                        <p>
+                            Manage properties assigned to you by the HOA.
+                        </p>
                     </div>
+
                     <div className="agent-listings-profile">
                         <div className="agent-listings-profile-circle">
-                            {user?.initials || "EA"}
+                            {currentUser?.initials ||
+                                `${currentUser?.firstName?.charAt(0) || ""}${currentUser?.lastName?.charAt(0) || ""}` ||
+                                "EA"}
                         </div>
+
                         <div>
-                            <strong>{user?.fullName || "Estate Agent"}</strong>
+                            <strong>
+                                {currentAgentName || "Estate Agent"}
+                            </strong>
                             <span>Estate Agent</span>
                         </div>
                     </div>
                 </header>
 
+                {loadError && (
+                    <div className="agent-listings-empty" role="alert">
+                        {loadError}
+                    </div>
+                )}
+
                 <section className="agent-listings-stat-cards">
-                    <div className="agent-listings-stat-card">
-                        <div className="agent-listings-stat-icon">{icons.property}</div>
-                        <div><span>Assigned Listings</span><strong>{totalListings}</strong><small>Properties assigned to you</small></div>
-                    </div>
-                    <div className="agent-listings-stat-card">
-                        <div className="agent-listings-stat-icon">{icons.active}</div>
-                        <div><span>Active Listings</span><strong>{existingListings.length}</strong><small>Currently published</small></div>
-                    </div>
-                    <div className="agent-listings-stat-card">
-                        <div className="agent-listings-stat-icon">{icons.offers}</div>
-                        <div><span>Under Offer</span><strong>0</strong><small>Pending sales</small></div>
-                    </div>
-                    <div className="agent-listings-stat-card">
-                        <div className="agent-listings-stat-icon">{icons.inquiries}</div>
-                        <div><span>Total Inquiries</span><strong>{totalInquiries}</strong><small>Buyer inquiries</small></div>
-                    </div>
+                    {statCards.map((card) => (
+                        <div className="agent-listings-stat-card" key={card.label}>
+                            <div className="agent-listings-stat-icon">
+                                {card.icon}
+                            </div>
+
+                            <div>
+                                <span>{card.label}</span>
+                                <strong>{card.value}</strong>
+                                <small>{card.description}</small>
+                            </div>
+                        </div>
+                    ))}
                 </section>
 
                 <section className="agent-listings-panel">
                     <div className="agent-listings-panel-heading">
                         <div>
                             <h2>Assigned Properties</h2>
-                            <p>Properties approved by the HOA and assigned to you.</p>
+                            <p>
+                                Properties approved by the HOA and assigned
+                                to you for listing management.
+                            </p>
                         </div>
+
+                        <button
+                            className="agent-listings-primary-btn"
+                            onClick={handleAddListing}
+                        >
+                            Add Listing
+                        </button>
                     </div>
 
                     <div className="agent-listings-table-container">
@@ -152,55 +309,112 @@ function AgentListings() {
                                     <th>Price</th>
                                     <th>Request Status</th>
                                     <th>Listing Status</th>
+                                    <th>Views</th>
+                                    <th>Inquiries</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
+
                             <tbody>
                                 {assignedListings.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="agent-listings-empty">
+                                        <td colSpan="9" className="agent-listings-empty">
                                             No properties have been assigned to you yet.
                                         </td>
                                     </tr>
                                 ) : (
-                                    assignedListings.map((request) => {
-                                        // Check if a listing exists for this unit
-                                        const listing = existingListings.find(l => String(l.unit_id) === String(request.unit_id));
-                                        
+                                    assignedListings.map(({ request, property }) => {
+                                        const listingStatus = getListingStatus({ property });
+                                        const requestStatus = getRequestStatus({ request });
+
                                         return (
-                                            <tr key={request.request_id}>
+                                            <tr key={request.id}>
                                                 <td>
-                                                    <div className="agent-listings-primary-text">Unit {request.unit_no || request.unit_id}</div>
+                                                    <div className="agent-listings-primary-text">
+                                                        {property?.unitNumber ||
+                                                            request.propertyAddress ||
+                                                            request.propertyId ||
+                                                            "Property"}
+                                                    </div>
+                                                    <small>
+                                                        {request.propertyId || property?.id}
+                                                        {" • "}
+                                                        {property?.propertyType ||
+                                                            request.propertyType ||
+                                                            "Property"}
+                                                    </small>
                                                 </td>
+
                                                 <td>
-                                                    <div className="agent-listings-primary-text">{request.requester_name || "Unknown"}</div>
+                                                    <div className="agent-listings-primary-text">
+                                                        {getOwnerName({ request, property })}
+                                                    </div>
+                                                    <small>
+                                                        {request.requesterEmail || "No email"}
+                                                    </small>
                                                 </td>
+
                                                 <td>
-                                                    <div className="agent-listings-primary-text">{request.request_type}</div>
-                                                    <small>Request #{request.request_id}</small>
+                                                    <div className="agent-listings-primary-text">
+                                                        {getListingType({ request, property })}
+                                                    </div>
+                                                    <small>Request {request.id}</small>
                                                 </td>
+
                                                 <td>
-                                                    <strong className="agent-listings-price">{formatPrice(request.asking_price)}</strong>
+                                                    <strong className="agent-listings-price">
+                                                        {getListingPrice({ request, property })}
+                                                    </strong>
                                                 </td>
+
                                                 <td>
-                                                    <span className="agent-listings-status status-approved">{request.status}</span>
+                                                    <span
+                                                        className={`agent-listings-status ${
+                                                            requestStatus === "Assigned to Estate Agent"
+                                                                ? "status-approved"
+                                                                : "status-default"
+                                                        }`}
+                                                    >
+                                                        {requestStatus}
+                                                    </span>
                                                 </td>
+
                                                 <td>
-                                                    {/* DYNAMIC LISTING STATUS */}
-                                                    {listing ? (
-                                                        <span className="agent-listings-status status-published" style={{ background: "#e8f5e9", color: "#2e7d32" }}>
-                                                            {listing.status || "Active"}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="agent-listings-status status-default">Not Listed</span>
-                                                    )}
+                                                    <span
+                                                        className={`agent-listings-status ${
+                                                            listingStatus === "Published"
+                                                                ? "status-published"
+                                                                : listingStatus === "Pending HOA Approval"
+                                                                ? "status-pending"
+                                                                : listingStatus === "Changes Requested"
+                                                                ? "status-rejected"
+                                                                : "status-default"
+                                                        }`}
+                                                    >
+                                                        {listingStatus}
+                                                    </span>
                                                 </td>
+
+                                                <td>{getViews({ property })}</td>
+                                                <td>{getInquiries({ property })}</td>
+
                                                 <td>
                                                     <div className="agent-listings-actions">
-                                                        <button className="agent-listings-secondary-btn" onClick={() => handleView(request)}>
+                                                        <button
+                                                            className="agent-listings-secondary-btn"
+                                                            onClick={() =>
+                                                                handleView({ request, property })
+                                                            }
+                                                        >
                                                             View
                                                         </button>
-                                                        <button className="agent-listings-primary-small-btn" onClick={() => navigate(`/agent-edit-listings?requestId=${request.request_id}`)}>
+
+                                                        <button
+                                                            className="agent-listings-primary-small-btn"
+                                                            onClick={() =>
+                                                                handleEditListing({ request, property })
+                                                            }
+                                                        >
                                                             Edit
                                                         </button>
                                                     </div>
@@ -213,60 +427,68 @@ function AgentListings() {
                         </table>
                     </div>
                 </section>
-            </main>
 
-            {/* VIEW MODAL */}
-            {viewModal.isOpen && viewModal.data && (
-                <div className="valora-modal-overlay">
-                    <div className="valora-modal" style={{ maxWidth: "500px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-                            <h3 style={{ margin: 0, color: "#29242d", fontSize: "18px" }}>Request Details</h3>
-                            <button 
-                                onClick={() => setViewModal({ isOpen: false, data: null })}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "#77717d", fontSize: "20px" }}
-                            >
-                                ×
+                <section className="agent-listings-grid">
+                    <div className="agent-listings-panel">
+                        <div className="agent-listings-panel-heading">
+                            <div>
+                                <h2>Listing Actions</h2>
+                                <p>Manage your assigned property listings.</p>
+                            </div>
+                        </div>
+
+                        <div className="agent-listings-quick-actions">
+                            <button type="button" onClick={handleAddListing}>
+                                Add New Listing
                             </button>
-                        </div>
-                        
-                        <div style={{ display: "grid", gap: "12px", marginBottom: "20px" }}>
-                            <div>
-                                <span style={{ fontSize: "11px", color: "#77717d", display: "block", marginBottom: "2px" }}>Property</span>
-                                <strong style={{ color: "#29242d" }}>Unit {viewModal.data.unit_no}</strong>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: "11px", color: "#77717d", display: "block", marginBottom: "2px" }}>Requester</span>
-                                <strong style={{ color: "#29242d" }}>{viewModal.data.requester_name}</strong>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: "11px", color: "#77717d", display: "block", marginBottom: "2px" }}>Request Type</span>
-                                <strong style={{ color: "#29242d" }}>{viewModal.data.request_type}</strong>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: "11px", color: "#77717d", display: "block", marginBottom: "2px" }}>Asking Price</span>
-                                <strong style={{ color: "#29242d" }}>{formatPrice(viewModal.data.asking_price)}</strong>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: "11px", color: "#77717d", display: "block", marginBottom: "2px" }}>Financial Info</span>
-                                <p style={{ margin: 0, color: "#29242d", fontSize: "13px" }}>{viewModal.data.financial_information || "None provided"}</p>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: "11px", color: "#77717d", display: "block", marginBottom: "2px" }}>Additional Details</span>
-                                <p style={{ margin: 0, color: "#29242d", fontSize: "13px" }}>{viewModal.data.additional_details || "None provided"}</p>
-                            </div>
-                        </div>
 
-                        <div className="valora-modal-actions">
-                            <button 
-                                className="valora-modal-btn valora-modal-btn-cancel"
-                                onClick={() => setViewModal({ isOpen: false, data: null })}
+                            <button
+                                type="button"
+                                onClick={() => navigate("/agent-edit-listings")}
                             >
-                                Close
+                                Edit Listings
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => navigate("/agent-inquiries")}
+                            >
+                                View Inquiries
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+
+                    <div className="agent-listings-panel">
+                        <div className="agent-listings-panel-heading">
+                            <div>
+                                <h2>Listing Overview</h2>
+                                <p>
+                                    Current status of your assigned properties.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="agent-listings-summary">
+                            <div>
+                                <span>Assigned</span>
+                                <strong>{totalListings}</strong>
+                            </div>
+                            <div>
+                                <span>Published</span>
+                                <strong>{activeListings}</strong>
+                            </div>
+                            <div>
+                                <span>Under Offer</span>
+                                <strong>{underOffer}</strong>
+                            </div>
+                            <div>
+                                <span>Inquiries</span>
+                                <strong>{totalInquiries}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
     );
 }

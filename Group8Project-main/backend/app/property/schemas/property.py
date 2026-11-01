@@ -3,6 +3,11 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 
+class PropertyPhotoResponse(BaseModel):
+    id: int
+    url: str
+
+
 class PropertyResponse(BaseModel):
     unit_id: int = Field(..., serialization_alias="id")
     unit_no: str
@@ -12,6 +17,9 @@ class PropertyResponse(BaseModel):
     size_m2: Decimal | None
     bedrooms: int | None
     bathrooms: int | None
+    # filled in by PropertyService; the first photo is the cover image
+    image_url: str | None = None
+    photos: list[PropertyPhotoResponse] = []
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

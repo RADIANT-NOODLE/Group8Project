@@ -1,24 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { listAnnouncements } from "../../services/announcementApi";
 import "./Announcements.css";
 
-const STORAGE_KEY = "valoraCommunityAnnouncements";
-const UPDATED_EVENT = "valora:community-announcements-updated";
+/**
+ * Published announcements from the API. The API only returns what a resident
+ * may see (published and not expired), so nothing is filtered here.
+ */
+async function readAnnouncements() {
+    const page = await listAnnouncements({ pageSize: 100 });
 
-function readAnnouncements() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-
-        if (!saved) {
-            return [];
-        }
-
-        const parsed = JSON.parse(saved);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-        console.error("Unable to read VALORA community announcements:", error);
-        return [];
-    }
+    return page.items.map((announcement) => ({
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.message,
+        category: announcement.category,
+        status: "Published",
+        date: announcement.createdAt,
+        createdAt: announcement.createdAt,
+        expiresAt: announcement.expiresAt,
+    }));
 }
 
 function getAnnouncementDate(announcement) {
@@ -209,19 +210,20 @@ function Announcements() {
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState("all");
     const [announcements, setAnnouncements] = useState([]);
+    const [loadError, setLoadError] = useState("");
 
-    const refreshAnnouncements = useCallback(() => {
-        setAnnouncements(readAnnouncements());
+    const refreshAnnouncements = useCallback(async () => {
+        try {
+            setAnnouncements(await readAnnouncements());
+            setLoadError("");
+        } catch (error) {
+            console.error("Unable to load community announcements:", error);
+            setLoadError("Unable to load announcements right now. Please try again.");
+        }
     }, []);
 
     useEffect(() => {
         refreshAnnouncements();
-
-        const handleStorageChange = (event) => {
-            if (!event.key || event.key === STORAGE_KEY) {
-                refreshAnnouncements();
-            }
-        };
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === "visible") {
@@ -229,8 +231,6 @@ function Announcements() {
             }
         };
 
-        window.addEventListener("storage", handleStorageChange);
-        window.addEventListener(UPDATED_EVENT, refreshAnnouncements);
         window.addEventListener("focus", refreshAnnouncements);
         document.addEventListener(
             "visibilitychange",
@@ -238,8 +238,6 @@ function Announcements() {
         );
 
         return () => {
-            window.removeEventListener("storage", handleStorageChange);
-            window.removeEventListener(UPDATED_EVENT, refreshAnnouncements);
             window.removeEventListener("focus", refreshAnnouncements);
             document.removeEventListener(
                 "visibilitychange",
@@ -339,6 +337,12 @@ function Announcements() {
                         </p>
                     </div>
                 </header>
+
+                {loadError && (
+                    <p className="announcements-load-error" role="alert">
+                        {loadError}
+                    </p>
+                )}
 
                 <section
                     className="announcements-panel announcements-controls"

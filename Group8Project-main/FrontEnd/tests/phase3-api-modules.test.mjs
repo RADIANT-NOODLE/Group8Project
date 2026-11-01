@@ -164,6 +164,8 @@ test('properties: list maps the page and sends only the given filters', async ()
     sizeM2: 128,
     bedrooms: 3,
     bathrooms: 2,
+    imageUrl: null,
+    photos: [],
   });
 });
 
@@ -431,6 +433,8 @@ test('announcements: create and delete', async () => {
       assert.deepEqual(JSON.parse(options.body), {
         title: 'Water shutdown',
         message: 'Tuesday 09:00–13:00.',
+        category: 'General',
+        is_published: true,
         expires_at: null,
       });
     },

@@ -2,10 +2,12 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
+from app.property import storage
 
 
 # 1. Initialize logging before doing anything else
@@ -50,5 +52,9 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "ok", "environment": settings.ENVIRONMENT}
+
+# uploaded property photos
+storage.ensure_dirs()
+app.mount("/uploads", StaticFiles(directory=storage.UPLOAD_ROOT), name="uploads")
 
 app.include_router(api_router)

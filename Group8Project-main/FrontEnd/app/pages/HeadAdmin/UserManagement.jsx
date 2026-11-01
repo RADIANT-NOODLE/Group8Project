@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { approveUser, listUsers, rejectUser, revokeUser, roleLabel } from "../../services/userApi";
 import "./UserManagement.css";
 
 /* =========================================================
@@ -69,224 +70,119 @@ function Icon({ name, size = 18 }) {
 
 /* =========================================================
    USER MANAGEMENT
+   Reads and changes accounts through the users API.
+   An account is either Approved (hoa_approved) or Pending.
 ========================================================= */
 
+const isHeadAdmin = (user) => user.role === "head_admin";
+const statusOf = (user) => (user.hoa_approved ? "Approved" : "Pending");
+
+function getSignedInUserId() {
+  try {
+    return JSON.parse(localStorage.getItem("valoraUser") || "null")?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function UserManagement() {
-  const [users, setUsers] = useState(() => {
-    try {
-      const storedUsers = JSON.parse(
-        localStorage.getItem("valoraUsers") || "[]"
-      );
-
-      return Array.isArray(storedUsers) ? storedUsers : [];
-    } catch {
-      return [];
-    }
-  });
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busyId, setBusyId] = useState(null);
   const [filter, setFilter] = useState("All");
+  const myId = getSignedInUserId();
 
-  /* =====================================================
-     REFRESH USER DATA
-  ===================================================== */
-
-  function refreshUsers() {
+  const refreshUsers = useCallback(async () => {
     try {
-      const updatedUsers = JSON.parse(
-        localStorage.getItem("valoraUsers") || "[]"
-      );
-
-      setUsers(Array.isArray(updatedUsers) ? updatedUsers : []);
-    } catch {
-      setUsers([]);
-      alert("Unable to load the saved user accounts.");
+      setUsers(await listUsers());
+      setError("");
+    } catch (loadError) {
+      console.error("Unable to load users:", loadError);
+      setError(loadError?.message || "Unable to load the user accounts.");
+    } finally {
+      setLoading(false);
     }
-  }
+  }, []);
 
-  /* =====================================================
-     UPDATE USER DATA
-  ===================================================== */
+  useEffect(() => {
+    refreshUsers();
+  }, [refreshUsers]);
 
-  function updateUsers(updatedUsers) {
+  async function runAction(user, action, successMessage) {
+    setBusyId(user.id);
+    setError("");
+    setNotice("");
+
     try {
-      localStorage.setItem(
-        "valoraUsers",
-        JSON.stringify(updatedUsers)
-      );
-
-      setUsers(updatedUsers);
-    } catch {
-      alert("Unable to save the user account changes.");
+      await action(user.id);
+      setNotice(successMessage);
+      await refreshUsers();
+    } catch (actionError) {
+      setError(actionError?.message || "That action could not be completed.");
+    } finally {
+      setBusyId(null);
     }
   }
 
-  /* =====================================================
-     APPROVE USER
-  ===================================================== */
+  const approve = (user) =>
+    runAction(user, approveUser, `${user.full_name} has been approved.`);
 
-  function approveUser(userId) {
-    const updatedUsers = users.map((user) =>
-      user.id === userId
-        ? {
-            ...user,
-            status: "Approved",
-            approvedAt: new Date().toISOString(),
-            rejectionReason: "",
-          }
-        : user
-    );
+  const revoke = (user) => {
+    if (!window.confirm(`Revoke access for ${user.full_name}? They will return to Pending.`)) return;
+    runAction(user, revokeUser, `Access revoked for ${user.full_name}.`);
+  };
 
-    updateUsers(updatedUsers);
-    alert("User account approved successfully.");
-  }
-
-  /* =====================================================
-     REJECT USER
-  ===================================================== */
-
-  function rejectUser(userId) {
-    const reason = window.prompt(
-      "Please enter a reason for rejecting this account:"
-    );
-
-    if (reason === null) return;
-
-    const updatedUsers = users.map((user) =>
-      user.id === userId
-        ? {
-            ...user,
-            status: "Rejected",
-            rejectionReason:
-              reason.trim() ||
-              "Account access was not approved.",
-          }
-        : user
-    );
-
-    updateUsers(updatedUsers);
-    alert("User account rejected.");
-  }
-
-  /* =====================================================
-     REACTIVATE REJECTED USER
-  ===================================================== */
-
-  function reactivateUser(userId) {
-    const updatedUsers = users.map((user) =>
-      user.id === userId
-        ? {
-            ...user,
-            status: "Pending",
-            rejectionReason: "",
-          }
-        : user
-    );
-
-    updateUsers(updatedUsers);
-    alert("User account has been returned to Pending status.");
-  }
-
-  /* =====================================================
-     REMOVE USER
-  ===================================================== */
-
-  function removeUser(userId) {
-    const userToRemove = users.find(
-      (user) => user.id === userId
-    );
-
-    if (!userToRemove) return;
-
-    if (
-      String(userToRemove.role || "").trim().toLowerCase() ===
-      "head admin"
-    ) {
-      alert("The system Head Admin account cannot be removed.");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Are you sure you want to remove ${userToRemove.firstName || ""} ${userToRemove.lastName || ""} from VALORA?`
-    );
-
-    if (!confirmed) return;
-
-    const updatedUsers = users.filter(
-      (user) => user.id !== userId
-    );
-
-    updateUsers(updatedUsers);
-    alert("User account removed.");
-  }
-
-  /* =====================================================
-     FILTER USERS
-  ===================================================== */
+  const remove = (user) => {
+    if (!window.confirm(`Remove ${user.full_name} from VALORA? This deletes the account and cannot be undone.`)) return;
+    runAction(user, rejectUser, `${user.full_name} has been removed.`);
+  };
 
   const filteredUsers =
-    filter === "All"
-      ? users
-      : users.filter((user) => user.status === filter);
+    filter === "All" ? users : users.filter((user) => statusOf(user) === filter);
 
-  /* =====================================================
-     COUNTS
-  ===================================================== */
-
-  const pendingCount = users.filter(
-    (user) => user.status === "Pending"
-  ).length;
-
-  const approvedCount = users.filter(
-    (user) => user.status === "Approved"
-  ).length;
-
-  const rejectedCount = users.filter(
-    (user) => user.status === "Rejected"
-  ).length;
+  const pendingCount = users.filter((user) => !user.hoa_approved).length;
+  const approvedCount = users.filter((user) => user.hoa_approved).length;
 
   const roleCounts = {
-    residents: users.filter(
-      (user) => user.role === "Resident"
-    ).length,
-    investors: users.filter(
-      (user) => user.role === "Investor"
-    ).length,
-    agents: users.filter(
-      (user) => user.role === "Estate Agent"
-    ).length,
-    hoaAdmins: users.filter(
-      (user) => user.role === "HOA Admin"
-    ).length,
+    residents: users.filter((user) => user.role === "resident").length,
+    investors: users.filter((user) => user.role === "investor").length,
+    agents: users.filter((user) => user.role === "estate_agent").length,
+    hoaAdmins: users.filter((user) => user.role === "hoa_admin").length,
   };
 
   return (
     <div className="user-management-page">
-      {/* ONE SHARED SIDEBAR — SAME COMPONENT AS HEAD ADMIN DASHBOARD */}
       <DashboardSidebar />
 
-      {/* MAIN CONTENT */}
       <main className="user-management-main">
         <div className="user-management-header">
           <div>
-            <p className="user-management-eyebrow">
-              HEAD ADMINISTRATION
-            </p>
-
+            <p className="user-management-eyebrow">HEAD ADMINISTRATION</p>
             <h1>User Management</h1>
-
             <p className="user-management-subtitle">
-              View and manage all VALORA user accounts
-              and their access status.
+              View and manage all VALORA user accounts and their access status.
             </p>
           </div>
         </div>
 
-        {/* STATISTICS */}
+        {error && (
+          <div className="user-management-empty" role="alert">
+            <h3>Something went wrong</h3>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {notice && (
+          <div className="user-management-empty" role="status">
+            <p>{notice}</p>
+          </div>
+        )}
+
         <div className="user-management-stats">
           <div className="user-management-stat-card">
-            <div className="user-management-stat-icon">
-              <Icon name="users" size={19} />
-            </div>
+            <div className="user-management-stat-icon"><Icon name="users" size={19} /></div>
             <div>
               <span>Total Users</span>
               <strong>{users.length}</strong>
@@ -295,9 +191,7 @@ function UserManagement() {
           </div>
 
           <div className="user-management-stat-card">
-            <div className="user-management-stat-icon">
-              <Icon name="check" size={19} />
-            </div>
+            <div className="user-management-stat-icon"><Icon name="check" size={19} /></div>
             <div>
               <span>Approved</span>
               <strong>{approvedCount}</strong>
@@ -306,77 +200,48 @@ function UserManagement() {
           </div>
 
           <div className="user-management-stat-card">
-            <div className="user-management-stat-icon">
-              <Icon name="pending" size={19} />
-            </div>
+            <div className="user-management-stat-icon"><Icon name="pending" size={19} /></div>
             <div>
               <span>Pending</span>
               <strong>{pendingCount}</strong>
               <small>Awaiting approval</small>
             </div>
           </div>
-
-          <div className="user-management-stat-card">
-            <div className="user-management-stat-icon">
-              <Icon name="rejected" size={19} />
-            </div>
-            <div>
-              <span>Rejected</span>
-              <strong>{rejectedCount}</strong>
-              <small>Restricted accounts</small>
-            </div>
-          </div>
         </div>
 
-        {/* REGISTERED USERS */}
         <section className="user-management-panel">
           <div className="user-management-panel-heading">
             <div>
               <h2>All Registered Users</h2>
-              <p>
-                Manage account status and review user roles
-                across the VALORA system.
-              </p>
+              <p>Manage account status and review user roles across the VALORA system.</p>
             </div>
 
-            <button
-              type="button"
-              className="user-management-refresh"
-              onClick={refreshUsers}
-            >
+            <button type="button" className="user-management-refresh" onClick={refreshUsers}>
               <Icon name="refresh" size={15} />
               <span>Refresh</span>
             </button>
           </div>
 
-          {/* FILTERS */}
           <div className="user-management-filters">
-            {["All", "Approved", "Pending", "Rejected"].map(
-              (status) => (
-                <button
-                  type="button"
-                  key={status}
-                  className={filter === status ? "active" : ""}
-                  onClick={() => setFilter(status)}
-                >
-                  {status === "All" ? "All Users" : status}
-                </button>
-              )
-            )}
+            {["All", "Approved", "Pending"].map((status) => (
+              <button
+                type="button"
+                key={status}
+                className={filter === status ? "active" : ""}
+                onClick={() => setFilter(status)}
+              >
+                {status === "All" ? "All Users" : status}
+              </button>
+            ))}
           </div>
 
-          {/* USER TABLE */}
-          {filteredUsers.length === 0 ? (
+          {loading ? (
+            <div className="user-management-empty"><p>Loading users...</p></div>
+          ) : filteredUsers.length === 0 ? (
             <div className="user-management-empty">
-              <div className="user-management-empty-icon">
-                <Icon name="users" size={22} />
-              </div>
-
+              <div className="user-management-empty-icon"><Icon name="users" size={22} /></div>
               <h3>No users found</h3>
-
-              <p>
-                There are no accounts matching the selected filter.
-              </p>
+              <p>There are no accounts matching the selected filter.</p>
             </div>
           ) : (
             <div className="user-management-table-wrapper">
@@ -392,107 +257,68 @@ function UserManagement() {
                 </thead>
 
                 <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id}>
-                      <td>
-                        <strong>
-                          {user.firstName} {user.lastName}
-                        </strong>
-                      </td>
+                  {filteredUsers.map((user) => {
+                    const protectedAccount = isHeadAdmin(user) || user.id === myId;
 
-                      <td>{user.email}</td>
+                    return (
+                      <tr key={user.id}>
+                        <td><strong>{user.full_name}</strong></td>
+                        <td>{user.email}</td>
+                        <td><span className="user-management-role">{roleLabel(user.role)}</span></td>
+                        <td>
+                          <span className={`user-management-status ${user.hoa_approved ? "approved" : "pending"}`}>
+                            {statusOf(user)}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="user-management-actions">
+                            {protectedAccount ? (
+                              <span className="user-management-system-account">
+                                {isHeadAdmin(user) ? "System Account" : "You"}
+                              </span>
+                            ) : (
+                              <>
+                                {!user.hoa_approved ? (
+                                  <button
+                                    type="button"
+                                    className="user-management-primary-btn"
+                                    disabled={busyId === user.id}
+                                    onClick={() => approve(user)}
+                                  >
+                                    Approve
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="user-management-secondary-btn"
+                                    disabled={busyId === user.id}
+                                    onClick={() => revoke(user)}
+                                  >
+                                    Revoke Access
+                                  </button>
+                                )}
 
-                      <td>
-                        <span className="user-management-role">
-                          {user.role}
-                        </span>
-                      </td>
-
-                      <td>
-                        <span
-                          className={`user-management-status ${
-                            user.status === "Approved"
-                              ? "approved"
-                              : user.status === "Rejected"
-                              ? "rejected"
-                              : "pending"
-                          }`}
-                        >
-                          {user.status || "Pending"}
-                        </span>
-                      </td>
-
-                      <td>
-                        <div className="user-management-actions">
-                          {user.status === "Pending" && (
-                            <>
-                              <button
-                                type="button"
-                                className="user-management-primary-btn"
-                                onClick={() => approveUser(user.id)}
-                              >
-                                Approve
-                              </button>
-
-                              <button
-                                type="button"
-                                className="user-management-secondary-btn"
-                                onClick={() => rejectUser(user.id)}
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-
-                          {user.status === "Approved" &&
-                            String(user.role || "").trim().toLowerCase() !==
-                              "head admin" && (
-                              <button
-                                type="button"
-                                className="user-management-secondary-btn"
-                                onClick={() => rejectUser(user.id)}
-                              >
-                                Revoke Access
-                              </button>
+                                <button
+                                  type="button"
+                                  className="user-management-secondary-btn"
+                                  disabled={busyId === user.id}
+                                  onClick={() => remove(user)}
+                                >
+                                  Remove
+                                </button>
+                              </>
                             )}
-
-                          {user.status === "Rejected" && (
-                            <>
-                              <button
-                                type="button"
-                                className="user-management-primary-btn"
-                                onClick={() => reactivateUser(user.id)}
-                              >
-                                Review Again
-                              </button>
-
-                              <button
-                                type="button"
-                                className="user-management-secondary-btn"
-                                onClick={() => removeUser(user.id)}
-                              >
-                                Remove
-                              </button>
-                            </>
-                          )}
-
-                          {String(user.role || "").trim().toLowerCase() ===
-                            "head admin" && (
-                            <span className="user-management-system-account">
-                              System Account
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </section>
 
-        {/* ROLE SUMMARY */}
         <section className="user-management-panel">
           <div className="user-management-panel-heading">
             <div>
@@ -503,33 +329,25 @@ function UserManagement() {
 
           <div className="user-management-role-grid">
             <div className="user-management-role-card">
-              <div className="user-management-role-icon">
-                <Icon name="users" size={18} />
-              </div>
+              <div className="user-management-role-icon"><Icon name="users" size={18} /></div>
               <span>Residents</span>
               <strong>{roleCounts.residents}</strong>
             </div>
 
             <div className="user-management-role-card">
-              <div className="user-management-role-icon">
-                <Icon name="people" size={18} />
-              </div>
+              <div className="user-management-role-icon"><Icon name="people" size={18} /></div>
               <span>Investors</span>
               <strong>{roleCounts.investors}</strong>
             </div>
 
             <div className="user-management-role-card">
-              <div className="user-management-role-icon">
-                <Icon name="property" size={18} />
-              </div>
+              <div className="user-management-role-icon"><Icon name="property" size={18} /></div>
               <span>Estate Agents</span>
               <strong>{roleCounts.agents}</strong>
             </div>
 
             <div className="user-management-role-card">
-              <div className="user-management-role-icon">
-                <Icon name="profile" size={18} />
-              </div>
+              <div className="user-management-role-icon"><Icon name="profile" size={18} /></div>
               <span>HOA Admins</span>
               <strong>{roleCounts.hoaAdmins}</strong>
             </div>

@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.schemas.living_score import LivingScoreResponse
@@ -11,12 +11,13 @@ from app.db.session import get_db
 from app.identity.api.dependencies import require_roles
 from app.identity.models.user import User
 from app.property.schemas.property import PaginatedPropertiesResponse, PropertyCreate, PropertyResponse, PropertyUpdate
+from app.property.storage import MAX_PHOTO_BYTES
 from app.property.services.property_service import PropertyService
 
 router = APIRouter(prefix="/properties", tags=["property"])
 
 # <--- DEFINE AdminOnly HERE SO THE PATCH ENDPOINT CAN USE IT
-AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]
+AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]  # head admins pass too
 
 
 @router.get("", response_model=PaginatedPropertiesResponse)
@@ -77,3 +78,27 @@ async def update_property(
 ) -> PropertyResponse:
     """Update a property's details (HOA admins only)."""
     return await PropertyService(db).update_property(property_id, payload)
+
+
+@router.post("/{property_id}/photos", response_model=PropertyResponse, status_code=201)
+async def upload_property_photo(
+    property_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+    file: Annotated[UploadFile, File(description="JPEG, PNG or WebP, up to 5 MB")],
+) -> PropertyResponse:
+    """Add a photo to a property (HOA and head admins). The first photo is the cover image."""
+    # read one byte past the limit so an oversized file is detected without loading all of it
+    data = await file.read(MAX_PHOTO_BYTES + 1)
+    return await PropertyService(db).add_photo(property_id, data)
+
+
+@router.delete("/{property_id}/photos/{photo_id}", response_model=PropertyResponse)
+async def delete_property_photo(
+    property_id: int,
+    photo_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+) -> PropertyResponse:
+    """Remove a photo from a property (HOA and head admins)."""
+    return await PropertyService(db).delete_photo(property_id, photo_id)

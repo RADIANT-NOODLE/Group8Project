@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import DashboardSidebar from "../shared/DashboardSidebar";
+import { getComplaintStats } from "../../../services/complaintApi";
+import { listProperties } from "../../../services/propertyApi";
+import { listUsers } from "../../../services/userApi";
 import "./HeadAdminDashboard.css";
 
 /*
@@ -248,9 +251,58 @@ function HeadAdminDashboard() {
     =====================================================
     */
 
+    const [stats, setStats] = useState({
+        users: null,
+        pending: null,
+        properties: null,
+        openComplaints: null,
+    });
+    const [loadError, setLoadError] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadStats = useCallback(async () => {
+        setIsLoading(true);
+
+        // Each figure loads on its own, so one failing endpoint doesn't blank the rest.
+        const [users, properties, complaints] = await Promise.allSettled([
+            listUsers(),
+            listProperties({ pageSize: 1 }),
+            getComplaintStats(),
+        ]);
+
+        setStats({
+            users: users.status === "fulfilled" ? users.value.length : null,
+            pending:
+                users.status === "fulfilled"
+                    ? users.value.filter((account) => !account.hoa_approved).length
+                    : null,
+            properties: properties.status === "fulfilled" ? properties.value.count : null,
+            openComplaints:
+                complaints.status === "fulfilled"
+                    ? Object.entries(complaints.value.byStatus || {})
+                          .filter(([status]) => !["resolved", "closed"].includes(status))
+                          .reduce((sum, [, count]) => sum + Number(count || 0), 0)
+                    : null,
+        });
+
+        const failed = [users, properties, complaints].filter((r) => r.status === "rejected");
+        setLoadError(
+            failed.length
+                ? "Some figures could not be loaded. Check that the API is running and try Refresh."
+                : ""
+        );
+        setIsLoading(false);
+    }, []);
+
+    useEffect(() => {
+        loadStats();
+    }, [loadStats]);
+
     function refreshDashboard() {
-        window.location.reload();
+        loadStats();
     }
+
+    const show = (value) => (isLoading ? "…" : value ?? "—");
 
     /*
     =====================================================
@@ -341,28 +393,34 @@ function HeadAdminDashboard() {
                 <section className="head-admin-stats">
                     <StatCard
                         label="Total Users"
-                        value="—"
+                        value={show(stats.users)}
                         icon="users"
                     />
 
                     <StatCard
-                        label="Registration Requests"
-                        value="—"
+                        label="Pending Registrations"
+                        value={show(stats.pending)}
                         icon="requests"
                     />
 
                     <StatCard
                         label="Properties"
-                        value="—"
+                        value={show(stats.properties)}
                         icon="property"
                     />
 
                     <StatCard
-                        label="System Modules"
-                        value="—"
-                        icon="analytics"
+                        label="Open Complaints"
+                        value={show(stats.openComplaints)}
+                        icon="complaints"
                     />
                 </section>
+
+                {loadError && (
+                    <p className="head-admin-load-error" role="alert">
+                        {loadError}
+                    </p>
+                )}
 
                 {/* MANAGEMENT */}
                 <section className="head-admin-content">
@@ -414,7 +472,7 @@ function HeadAdminDashboard() {
 
                         <div className="head-admin-module-grid">
                             <ManagementCard
-                                to="/properties"
+                                to="/property-management"
                                 icon="property"
                                 title="Properties"
                                 description="View the development's property records and listings."
@@ -439,13 +497,6 @@ function HeadAdminDashboard() {
                                 icon="users"
                                 title="Resident Directory"
                                 description="View resident information managed by VALORA."
-                            />
-
-                            <ManagementCard
-                                to="/resident-complaints"
-                                icon="complaints"
-                                title="Resident Complaints"
-                                description="Review and monitor complaints submitted by residents."
                             />
 
                             <ManagementCard

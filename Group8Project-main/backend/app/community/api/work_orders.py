@@ -25,7 +25,9 @@ ResidentOnly = Annotated[User, require_roles(UserRole.resident.value)]
 @router.get("", response_model=PaginatedWorkOrdersResponse)
 async def list_work_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
-    _admin: AdminOnly,
+    current_user: Annotated[
+        User, require_roles(UserRole.hoa_admin.value, UserRole.resident.value)
+    ],
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     complaint_id: Annotated[int | None, Query(ge=1)] = None,
@@ -38,6 +40,7 @@ async def list_work_orders(
         complaint_id=complaint_id,
         provider_id=provider_id,
         status=status.value if status else None,
+        user=current_user,
     )
 
 

@@ -5,8 +5,9 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(settings.DATABASE_URL, 
-                             connect_args={"ssl":True,
+# A local PostgreSQL install normally has no TLS; set DATABASE_SSL=true for hosted databases.
+engine = create_async_engine(settings.DATABASE_URL,
+                             connect_args={"ssl": settings.DATABASE_SSL,
                             "timeout":30,}, echo=False,
                             pool_pre_ping=True,
                             pool_recycle=300,

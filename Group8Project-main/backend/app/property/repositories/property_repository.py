@@ -3,6 +3,7 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.property.models.property import Property
+from app.property.models.property_photo import PropertyPhoto
 
 class PropertyRepository:
     def __init__(self, db: AsyncSession) -> None:
@@ -81,3 +82,35 @@ class PropertyRepository:
         await self._db.commit()
         await self._db.refresh(property_)
         return property_
+
+
+    # ---- photos --------------------------------------------------------
+
+    async def list_photos(self, unit_ids: list[int]) -> list[PropertyPhoto]:
+        if not unit_ids:
+            return []
+        result = await self._db.execute(
+            select(PropertyPhoto)
+            .where(PropertyPhoto.unit_id.in_(unit_ids))
+            .order_by(PropertyPhoto.photo_id)
+        )
+        return list(result.scalars().all())
+
+    async def get_photo(self, unit_id: int, photo_id: int) -> PropertyPhoto | None:
+        result = await self._db.execute(
+            select(PropertyPhoto).where(
+                PropertyPhoto.unit_id == unit_id, PropertyPhoto.photo_id == photo_id
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def add_photo(self, unit_id: int, file_name: str) -> PropertyPhoto:
+        photo = PropertyPhoto(unit_id=unit_id, file_name=file_name)
+        self._db.add(photo)
+        await self._db.commit()
+        await self._db.refresh(photo)
+        return photo
+
+    async def delete_photo(self, photo: PropertyPhoto) -> None:
+        await self._db.delete(photo)
+        await self._db.commit()

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
 import "./PropertyManagement.css";
 
 /*
@@ -28,7 +29,17 @@ function getPropertyType(property) {
 }
 
 function getPropertyImage(property) {
-    return property.image_url || null;
+    return photoSrc(property.image_url);
+}
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/** Returns a message when the file can't be uploaded, otherwise "". */
+function photoProblem(file) {
+    if (!PHOTO_TYPES.includes(file.type)) return `${file.name}: use a JPEG, PNG or WebP image.`;
+    if (file.size > MAX_PHOTO_BYTES) return `${file.name}: photos can be at most 5 MB.`;
+    return "";
 }
 
 function getStatusClass(status) {
@@ -62,6 +73,11 @@ function PropertyManagement() {
         bathrooms: 1
     });
        
+    // PHOTO STATE
+    const [photoBusy, setPhotoBusy] = useState(false);
+    const [photoError, setPhotoError] = useState("");
+    const [newPhotos, setNewPhotos] = useState([]);
+
     // ADD MODAL STATE
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [addForm, setAddForm] = useState({
@@ -125,6 +141,7 @@ function PropertyManagement() {
             bedrooms: property.bedrooms || 1,
             bathrooms: property.bathrooms || 1
         });
+        setPhotoError("");
         setIsEditModalOpen(true);
     };
 
@@ -165,6 +182,66 @@ function PropertyManagement() {
         }
     };
 
+    /*
+    =========================================================
+    PHOTOS
+    =========================================================
+    */
+    const handleUploadPhotos = async (event) => {
+        const files = Array.from(event.target.files || []);
+        event.target.value = "";
+        if (!files.length || !editingProperty) return;
+
+        const id = editingProperty.id || editingProperty.unit_id;
+        setPhotoBusy(true);
+        setPhotoError("");
+
+        const problems = [];
+        for (const file of files) {
+            const problem = photoProblem(file);
+            if (problem) {
+                problems.push(problem);
+                continue;
+            }
+
+            try {
+                const updated = await uploadPropertyPhoto(id, file);
+                setEditingProperty(previous => ({ ...previous, image_url: updated.imageUrl, photos: updated.photos }));
+            } catch (uploadError) {
+                problems.push(`${file.name}: ${uploadError.message}`);
+            }
+        }
+
+        setPhotoError(problems.join(" "));
+        setPhotoBusy(false);
+        await loadProperties();
+    };
+
+    const handleDeletePhoto = async (photoId) => {
+        const id = editingProperty.id || editingProperty.unit_id;
+        setPhotoBusy(true);
+        setPhotoError("");
+
+        try {
+            const updated = await deletePropertyPhoto(id, photoId);
+            setEditingProperty(previous => ({ ...previous, image_url: updated.imageUrl, photos: updated.photos }));
+            await loadProperties();
+        } catch (deleteError) {
+            setPhotoError(deleteError.message);
+        } finally {
+            setPhotoBusy(false);
+        }
+    };
+
+    const handlePickNewPhotos = (event) => {
+        const files = Array.from(event.target.files || []);
+        event.target.value = "";
+
+        const problems = files.map(photoProblem).filter(Boolean);
+        setPhotoError(problems.join(" "));
+        setNewPhotos(previous => [...previous, ...files.filter(file => !photoProblem(file))].slice(0, 8));
+    };
+
     const handleAddProperty = async (e) => {
         e.preventDefault();
         try {
@@ -191,9 +268,26 @@ function PropertyManagement() {
                 throw new Error(errData.detail || "Failed to add property");
             }
 
+            const created = await response.json();
+            const createdId = created.id || created.unit_id;
+            const failedPhotos = [];
+
+            for (const file of newPhotos) {
+                try {
+                    await uploadPropertyPhoto(createdId, file);
+                } catch (uploadError) {
+                    failedPhotos.push(`${file.name}: ${uploadError.message}`);
+                }
+            }
+
             setIsAddModalOpen(false);
             setAddForm({ unit_no: "", complex_name: "", street_address: "", suburb: "", size_m2: "", bedrooms: 1, bathrooms: 1 });
+            setNewPhotos([]);
+            setPhotoError("");
             await loadProperties();
+            if (failedPhotos.length) {
+                alert(`The property was added, but some photos could not be uploaded:\n${failedPhotos.join("\n")}\nYou can add them with Edit.`);
+            }
             setToastMessage("Property added successfully!");
             setTimeout(() => setToastMessage(""), 3000);
         } catch (err) {
@@ -285,7 +379,7 @@ function PropertyManagement() {
                         <button type="button" className="property-refresh-button" onClick={loadProperties} disabled={loading}>
                             <span aria-hidden="true">↻</span> {loading ? "Loading..." : "Refresh"}
                         </button>
-                        <button type="button" className="property-add-button" onClick={() => setIsAddModalOpen(true)}>
+                        <button type="button" className="property-add-button" onClick={() => { setNewPhotos([]); setPhotoError(""); setIsAddModalOpen(true); }}>
                             + Add Property
                         </button>
                     </div>
@@ -452,6 +546,47 @@ function PropertyManagement() {
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label>Photos ({(editingProperty?.photos || []).length}/8)</label>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "8px" }}>
+                                        {(editingProperty?.photos || []).map((photo, index) => (
+                                            <div key={photo.id} style={{ position: "relative", width: "96px", height: "72px" }}>
+                                                <img
+                                                    src={photoSrc(photo.url)}
+                                                    alt={`Property photo ${index + 1}`}
+                                                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "6px", border: "1px solid #ddd" }}
+                                                />
+                                                {index === 0 && (
+                                                    <span style={{ position: "absolute", left: "4px", bottom: "4px", background: "#563f6b", color: "#fff", fontSize: "10px", padding: "1px 5px", borderRadius: "4px" }}>
+                                                        Cover
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Remove photo ${index + 1}`}
+                                                    disabled={photoBusy}
+                                                    onClick={() => handleDeletePhoto(photo.id)}
+                                                    style={{ position: "absolute", top: "-6px", right: "-6px", width: "20px", height: "20px", borderRadius: "50%", border: "none", background: "#8a3b3b", color: "#fff", cursor: "pointer", lineHeight: "20px", padding: 0 }}
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        multiple
+                                        disabled={photoBusy || (editingProperty?.photos || []).length >= 8}
+                                        onChange={handleUploadPhotos}
+                                        style={{ marginTop: "10px" }}
+                                    />
+                                    <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
+                                        {photoBusy ? "Uploading..." : "JPEG, PNG or WebP, up to 5 MB each. The first photo is the cover image."}
+                                    </p>
+                                    {photoError && <p role="alert" style={{ fontSize: "12px", color: "#8a3b3b", margin: "6px 0 0" }}>{photoError}</p>}
+                                </div>
+
                                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                                     <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ padding: "10px 15px", borderRadius: "6px", border: "1px solid #ddd", background: "white", cursor: "pointer" }}>
                                         Cancel
@@ -483,6 +618,24 @@ function PropertyManagement() {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                                     <div><label>Bedrooms</label><input type="number" value={addForm.bedrooms} onChange={e => setAddForm({...addForm, bedrooms: e.target.value})} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }} /></div>
                                     <div><label>Bathrooms</label><input type="number" value={addForm.bathrooms} onChange={e => setAddForm({...addForm, bathrooms: e.target.value})} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }} /></div>
+                                </div>
+                                <div>
+                                    <label>Photos (optional)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        multiple
+                                        onChange={handlePickNewPhotos}
+                                        style={{ display: "block", marginTop: "8px" }}
+                                    />
+                                    {newPhotos.length > 0 && (
+                                        <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
+                                            {newPhotos.map(file => file.name).join(", ")}
+                                            {" "}
+                                            <button type="button" onClick={() => setNewPhotos([])} style={{ border: "none", background: "none", color: "#563f6b", cursor: "pointer", padding: 0 }}>Clear</button>
+                                        </p>
+                                    )}
+                                    {photoError && <p role="alert" style={{ fontSize: "12px", color: "#8a3b3b", margin: "6px 0 0" }}>{photoError}</p>}
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                                     <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: "10px 15px", borderRadius: "6px", border: "1px solid #ddd", background: "white", cursor: "pointer" }}>Cancel</button>

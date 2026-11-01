@@ -13,6 +13,8 @@ import { useSession } from "./services/session";
 import Home from "./pages/Home";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 import RegistrationPending from "./pages/Auth/RegistrationPending";
 
 /* PROPERTY */
@@ -41,6 +43,7 @@ import ResidentDirectory from "./pages/Resident/ResidentDirectory";
 
 /* MAINTENANCE */
 import Maintenance from "./pages/Maintenance/Maintenance";
+import CreateAgentAccount from "./pages/EstateAgent/CreateAgentAccount";
 
 /* COMMUNITY */
 import Providers from "./pages/Community/Providers";
@@ -148,7 +151,7 @@ function AgentDashboardWrapper() {
 
 function ResidentDashboardWrapper() {
     // The dashboard already uses useSession internally, so we just render it
-    return <Dashboard />;
+    return <ResidentDashboard />;
 }
 
 
@@ -165,7 +168,12 @@ function App() {
                 {/* AUTHENTICATION */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/registration-pending" element={<RegistrationPending />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                    path="/registration-pending"
+                    element={<RegistrationPending />}
+                />
 
                 {/* PUBLIC PROPERTY BROWSING */}
                 <Route path="/properties" element={<Properties />} />
@@ -423,6 +431,16 @@ function App() {
                     element={
                         <HOAAdminRoute>
                             <RegistrationRequests />
+                        </HOAAdminRoute>
+                    }
+                />
+
+                {/* CREATE ESTATE AGENT ACCOUNT */}
+                <Route
+                    path="/create-agent"
+                    element={
+                        <HOAAdminRoute>
+                            <CreateAgentAccount />
                         </HOAAdminRoute>
                     }
                 />

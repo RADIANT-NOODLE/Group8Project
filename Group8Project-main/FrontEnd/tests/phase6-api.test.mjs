@@ -97,6 +97,29 @@ test('real registration sends agreed backend payload and stores session', async 
   assert.equal(window.localStorage.getItem('valora_user').includes('password8'), false);
 });
 
+test('registration sends the phone number only when one is entered', async () => {
+  let sent = null;
+  fetchHandler = async (url, options) => {
+    sent = JSON.parse(options.body);
+    return jsonResponse({
+      access_token: 'real-register-token',
+      token_type: 'bearer',
+      user: publicUser(),
+    }, 201);
+  };
+
+  await authService.register({
+    first_name: 'Jane',
+    last_name: 'Resident',
+    email: 'jane@example.com',
+    password: 'password8',
+    role: 'resident',
+    phone: ' +27 82 123 4567 ',
+  });
+
+  assert.equal(sent.phoneno, '+27 82 123 4567');
+});
+
 test('real login sends normalized credentials and stores returned user', async () => {
   fetchHandler = async (url, options) => {
     assert.equal(url, 'http://api.valora.test/api/v1/auth/login');
