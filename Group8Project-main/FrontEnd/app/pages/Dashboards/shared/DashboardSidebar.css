@@ -7,9 +7,12 @@
     --valora-sidebar-width: 220px;
     --valora-sidebar-tablet-width: 200px;
     --valora-sidebar-mobile-width: 68px;
+    --valora-sidebar-collapsed-width: 68px;
     --valora-purple: #563f6b;
     --valora-purple-dark: #463256;
     --valora-dashboard-background: #f5f3f7;
+    --valora-purple-light: #e4d9ed;
+    --valora-purple-border: #e4e0e7;
 }
 
 /* =========================================================
@@ -30,8 +33,9 @@
     display: flex;
     flex-direction: column;
 
-    background: var(--valora-purple);
-    color: #ffffff;
+    background: #ffffff;
+    color: var(--valora-purple);
+    border-right: 1px solid var(--valora-purple-border);
 
     overflow-x: hidden;
     overflow-y: auto;
@@ -39,8 +43,9 @@
     box-shadow: 2px 0 12px rgba(30, 20, 40, 0.08);
 
     box-sizing: border-box;
+    transition: width 0.2s ease;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.3) transparent;
+    scrollbar-color: rgba(86,63,107,0.25) transparent;
 }
 
 .dashboard-sidebar *,
@@ -59,10 +64,12 @@
 
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 
-    padding: 17px 20px;
+    padding: 17px 14px 17px 20px;
 
-    border-bottom: 1px solid rgba(255,255,255,0.10);
+    border-bottom: 1px solid var(--valora-purple-border);
 }
 
 .dashboard-logo {
@@ -71,6 +78,50 @@
     max-width: 100%;
     height: auto;
     object-fit: contain;
+}
+
+/* =========================================================
+   COLLAPSE TOGGLE
+========================================================= */
+
+.dashboard-collapse-button {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 1px solid var(--valora-purple-border);
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: var(--valora-purple);
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.dashboard-collapse-button:hover {
+    background: var(--valora-purple-light);
+    border-color: var(--valora-purple-light);
+}
+
+.dashboard-collapse-button:focus-visible {
+    outline: 2px solid var(--valora-purple);
+    outline-offset: 2px;
+}
+
+.dashboard-collapse-button svg {
+    display: block;
+    width: 16px;
+    height: 16px;
 }
 
 /* =========================================================
@@ -85,7 +136,7 @@
     padding: 18px;
 
     flex-shrink: 0;
-    border-bottom: 1px solid rgba(255,255,255,0.10);
+    border-bottom: 1px solid var(--valora-purple-border);
 }
 
 .dashboard-profile-avatar {
@@ -98,7 +149,7 @@
     justify-content: center;
 
     border-radius: 50%;
-    background: #ffffff;
+    background: var(--valora-purple-light);
     color: var(--valora-purple);
 
     font-size: 11px;
@@ -122,7 +173,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    color: #ffffff;
+    color: #29242d;
     font-size: 11px;
     font-weight: 700;
 }
@@ -135,7 +186,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    color: rgba(255,255,255,0.7);
+    color: #77727b;
     font-size: 10px;
 }
 
@@ -156,7 +207,7 @@
 
     margin: 0 9px 9px;
 
-    color: rgba(255,255,255,0.55);
+    color: #938a99;
 
     font-size: 10px;
     font-weight: 800;
@@ -185,7 +236,7 @@
 
     border-radius: 7px;
 
-    color: rgba(255,255,255,0.78);
+    color: #504558;
     background: transparent;
 
     font-family: inherit;
@@ -201,19 +252,19 @@
 }
 
 .dashboard-sidebar-link:hover {
-    background: rgba(255,255,255,0.10);
-    color: #ffffff;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
 }
 
 .dashboard-sidebar-link.active {
-    background: #ffffff;
+    background: var(--valora-purple-light);
     color: var(--valora-purple);
     font-weight: 700;
 }
 
 .dashboard-sidebar-link:focus-visible,
 .dashboard-logout-button:focus-visible {
-    outline: 2px solid #ffffff;
+    outline: 2px solid var(--valora-purple);
     outline-offset: 2px;
 }
 
@@ -256,7 +307,7 @@
 
     padding: 12px 11px 16px;
 
-    border-top: 1px solid rgba(255,255,255,0.10);
+    border-top: 1px solid var(--valora-purple-border);
 }
 
 .dashboard-logout-button {
@@ -273,7 +324,7 @@
     border-radius: 7px;
 
     background: transparent;
-    color: rgba(255,255,255,0.78);
+    color: #504558;
 
     font-family: inherit;
     font-size: 11px;
@@ -288,8 +339,8 @@
 }
 
 .dashboard-logout-button:hover {
-    background: rgba(255,255,255,0.10);
-    color: #ffffff;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
 }
 
 .dashboard-logout-icon {
@@ -314,6 +365,67 @@
     min-height: 100vh;
     margin-left: var(--valora-sidebar-width);
     box-sizing: border-box;
+}
+
+/* =========================================================
+   COLLAPSED SIDEBAR
+
+   Every dashboard page renders <DashboardSidebar /> directly
+   before its <main>, so the sibling selector below moves the
+   content over without touching each page's stylesheet.
+   Below 600px the sidebar is already an icon rail, so the
+   toggle is hidden there (see MOBILE).
+========================================================= */
+
+.dashboard-sidebar ~ main {
+    transition:
+        margin-left 0.2s ease,
+        width 0.2s ease;
+}
+
+@media (min-width: 601px) {
+    .dashboard-sidebar.is-collapsed {
+        width: var(--valora-sidebar-collapsed-width);
+    }
+
+    .dashboard-sidebar.is-collapsed ~ main {
+        margin-left: var(--valora-sidebar-collapsed-width);
+        width: calc(100% - var(--valora-sidebar-collapsed-width));
+    }
+
+    .dashboard-sidebar.is-collapsed .dashboard-sidebar-brand {
+        justify-content: center;
+        padding: 17px 7px;
+    }
+
+    .dashboard-sidebar.is-collapsed .dashboard-logo,
+    .dashboard-sidebar.is-collapsed .dashboard-profile-details,
+    .dashboard-sidebar.is-collapsed .dashboard-nav-section-title,
+    .dashboard-sidebar.is-collapsed .dashboard-account-section-title,
+    .dashboard-sidebar.is-collapsed .dashboard-nav-label {
+        display: none;
+    }
+
+    .dashboard-sidebar.is-collapsed .dashboard-sidebar-profile {
+        justify-content: center;
+        padding: 12px 6px;
+    }
+
+    .dashboard-sidebar.is-collapsed .dashboard-sidebar-navigation {
+        padding: 12px 6px;
+    }
+
+    .dashboard-sidebar.is-collapsed .dashboard-sidebar-link,
+    .dashboard-sidebar.is-collapsed .dashboard-logout-button {
+        min-height: 42px;
+        justify-content: center;
+        gap: 0;
+        padding: 9px 4px;
+    }
+
+    .dashboard-sidebar.is-collapsed .dashboard-sidebar-bottom {
+        padding: 10px 6px 14px;
+    }
 }
 
 /* =========================================================
@@ -368,6 +480,10 @@
         min-height: 68px;
         justify-content: center;
         padding: 10px 7px;
+    }
+
+    .dashboard-collapse-button {
+        display: none;
     }
 
     .dashboard-logo {
@@ -447,8 +563,11 @@
 ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+    .dashboard-sidebar,
+    .dashboard-sidebar ~ main,
     .dashboard-sidebar-link,
-    .dashboard-logout-button {
+    .dashboard-logout-button,
+    .dashboard-collapse-button {
         transition: none;
     }
 }

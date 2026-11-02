@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import {
     getPropertyRequests,
     approvePropertyRequest,
@@ -507,6 +508,8 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             <DashboardSidebar />
 
             <main className="property-requests-main">
+                <PropertyTabs />
+
                 <header className="property-requests-topbar">
                     <div>
                         <p className="property-requests-eyebrow">

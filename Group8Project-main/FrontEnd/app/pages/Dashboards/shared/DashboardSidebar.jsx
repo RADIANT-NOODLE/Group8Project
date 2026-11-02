@@ -1,5 +1,6 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { PROPERTY_TAB_PATHS } from "./PropertyTabs";
 import "./DashboardSidebar.css";
 
 /* =========================================================
@@ -224,6 +225,18 @@ function Icon({ type }) {
             </>
         ),
 
+        collapse: (
+            <>
+                <path d="M15 6l-6 6 6 6" />
+            </>
+        ),
+
+        expand: (
+            <>
+                <path d="M9 6l6 6-6 6" />
+            </>
+        ),
+
         logout: (
             <>
                 <path d="M10 17l5-5-5-5M15 12H3M14 4h5v16h-5" />
@@ -284,9 +297,7 @@ const navigation = {
         { label: "Dashboard", path: "/hoa-admin", icon: "dashboard" },
         { label: "Registration Requests", path: "/registration-requests", icon: "registration" },
         { label: "Create Agent Account", path: "/create-agent", icon: "registration" },
-        { label: "Properties", path: "/property-management", icon: "property" },
-        { label: "Property Requests", path: "/property-requests", icon: "property" },
-        { label: "Property Approvals", path: "/property-approvals", icon: "property" },
+        { label: "Properties", path: "/property-management", icon: "property", activePaths: PROPERTY_TAB_PATHS },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
         { label: "Resident Complaints", path: "/resident-complaints", icon: "complaint" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
@@ -307,9 +318,7 @@ const navigation = {
         { label: "Registration Requests", path: "/registration-requests", icon: "registration" },
         { label: "Create Agent Account", path: "/create-agent", icon: "registration" },
         { label: "User Management", path: "/user-management", icon: "users" },
-        { label: "Property Requests", path: "/property-requests", icon: "property" },
-        { label: "Property Approvals", path: "/property-approvals", icon: "property" },
-        { label: "Properties", path: "/property-management", icon: "property" },
+        { label: "Properties", path: "/property-management", icon: "property", activePaths: PROPERTY_TAB_PATHS },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
@@ -321,12 +330,40 @@ const navigation = {
 };
 
 /* =========================================================
+   COLLAPSED STATE
+   Remembered across pages, since each page mounts its own sidebar.
+========================================================= */
+
+const COLLAPSED_STORAGE_KEY = "valoraSidebarCollapsed";
+
+function getStoredCollapsed() {
+    try {
+        return localStorage.getItem(COLLAPSED_STORAGE_KEY) === "true";
+    } catch {
+        return false;
+    }
+}
+
+/* =========================================================
    SIDEBAR COMPONENT
 ========================================================= */
 
 function DashboardSidebar({ suppliedUser = null }) {
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const currentUser = suppliedUser || getCurrentUser();
+    const [collapsed, setCollapsed] = useState(getStoredCollapsed);
+
+    function toggleCollapsed() {
+        const next = !collapsed;
+        setCollapsed(next);
+
+        try {
+            localStorage.setItem(COLLAPSED_STORAGE_KEY, String(next));
+        } catch {
+            // Storage unavailable; the toggle still works for this page.
+        }
+    }
 
     if (!currentUser) return null;
 
@@ -359,13 +396,28 @@ function DashboardSidebar({ suppliedUser = null }) {
     }
 
     return (
-        <aside className="dashboard-sidebar">
+        <aside
+            className={`dashboard-sidebar ${
+                collapsed ? "is-collapsed" : ""
+            }`}
+        >
             <div className="dashboard-sidebar-brand">
                 <img
                     src="/ValoraLogo.jpeg"
                     alt="VALORA"
                     className="dashboard-logo"
                 />
+
+                <button
+                    type="button"
+                    className="dashboard-collapse-button"
+                    onClick={toggleCollapsed}
+                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    aria-expanded={!collapsed}
+                    title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    <Icon type={collapsed ? "expand" : "collapse"} />
+                </button>
             </div>
 
             <div className="dashboard-sidebar-profile">
@@ -391,13 +443,16 @@ function DashboardSidebar({ suppliedUser = null }) {
                     <NavLink
                         key={link.path}
                         to={link.path}
+                        title={collapsed ? link.label : undefined}
                         end={
                             link.path === "/dashboard" ||
                             link.path === "/head-admin"
                         }
                         className={({ isActive }) =>
                             `dashboard-sidebar-link ${
-                                isActive ? "active" : ""
+                                isActive || link.activePaths?.includes(pathname)
+                                    ? "active"
+                                    : ""
                             }`
                         }
                     >
@@ -417,6 +472,7 @@ function DashboardSidebar({ suppliedUser = null }) {
 
                 <NavLink
                     to="/profile"
+                    title={collapsed ? "My Profile" : undefined}
                     className={({ isActive }) =>
                         `dashboard-sidebar-link ${
                             isActive ? "active" : ""
@@ -438,6 +494,7 @@ function DashboardSidebar({ suppliedUser = null }) {
                     type="button"
                     className="dashboard-logout-button"
                     onClick={handleLogout}
+                    title={collapsed ? "Logout" : undefined}
                 >
                     <span className="dashboard-logout-icon">
                         <Icon type="logout" />

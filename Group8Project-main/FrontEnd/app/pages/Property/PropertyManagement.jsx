@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
 import "./PropertyManagement.css";
 
@@ -342,6 +343,7 @@ function PropertyManagement() {
             <DashboardSidebar />
 
             <main className="property-management-main">
+                <PropertyTabs />
                 
                 {/* SUCCESS TOAST NOTIFICATION */}
                 {toastMessage && (

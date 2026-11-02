@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import {
     getProperties,
     updateProperty,
@@ -400,6 +401,8 @@ function PropertyApprovals() {
             <DashboardSidebar suppliedUser={user} />
 
             <main className="property-approvals-main">
+                <PropertyTabs />
+
                 <header className="property-approvals-header">
                     <div>
                         <p className="property-approvals-eyebrow">

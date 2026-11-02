@@ -49,14 +49,6 @@ function InvestorDashboard({ user}) {
 
           </div>
 
-          <div className="investor-dashboard-header-user">
-
-            <div className="investor-dashboard-header-avatar">
-              {user?.initials || "IN"}
-            </div>
-
-          </div>
-
         </div>
 
 

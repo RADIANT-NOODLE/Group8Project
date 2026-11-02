@@ -5,7 +5,6 @@ import DashboardSidebar from "../shared/DashboardSidebar";
 import { listAnnouncements } from "../../../services/announcementApi";
 import { apiRequest } from "../../../services/apiClient";
 import { listComplaints } from "../../../services/complaintApi";
-import { listWorkOrders } from "../../../services/workOrderApi";
 import "./ResidentDashboard.css";
 
 async function readPublishedAnnouncements() {
@@ -40,7 +39,6 @@ function ResidentDashboard({ user: suppliedUser }) {
 
     const [myProperty, setMyProperty] = useState(null);
     const [complaintsCount, setComplaintsCount] = useState(0);
-    const [maintenanceCount, setMaintenanceCount] = useState(0);
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -48,10 +46,9 @@ function ResidentDashboard({ user: suppliedUser }) {
         const results = await Promise.allSettled([
             apiRequest("/api/v1/resident-directory"),
             listComplaints({ pageSize: 100 }),
-            listWorkOrders({ pageSize: 100 }),
             readPublishedAnnouncements(),
         ]);
-        const [directory, complaints, workOrders, published] = results;
+        const [directory, complaints, published] = results;
 
         if (directory.status === "fulfilled") {
             const payload = directory.value;
@@ -71,7 +68,6 @@ function ResidentDashboard({ user: suppliedUser }) {
         }
 
         if (complaints.status === "fulfilled") setComplaintsCount(complaints.value.items.length);
-        if (workOrders.status === "fulfilled") setMaintenanceCount(workOrders.value.items.length);
         if (published.status === "fulfilled") setAnnouncements(published.value);
 
         results.forEach((result) => {
@@ -110,11 +106,6 @@ function ResidentDashboard({ user: suppliedUser }) {
                         <h1>Welcome back, {firstName}</h1>
                         <p>Manage your property and community activity.</p>
                     </div>
-                    <div className="resident-dashboard-header-user">
-                        <div className="resident-dashboard-header-avatar">
-                            {initials}
-                        </div>
-                    </div>
                 </div>
 
                 {/* STATS */}
@@ -151,19 +142,6 @@ function ResidentDashboard({ user: suppliedUser }) {
                         </div>
                     </div>
 
-                    <div className="resident-dashboard-stat-card">
-                        <div className="resident-dashboard-stat-top">
-                            <div className="resident-dashboard-stat-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.2 2.2-2.8-.8-.8-2.8 2.8-2.2Z" />
-                                </svg>
-                            </div>
-                            <span className="resident-dashboard-stat-label">Maintenance</span>
-                        </div>
-                        <div className="resident-dashboard-stat-number">
-                            {loading ? "..." : maintenanceCount}
-                        </div>
-                    </div>
 
                     <div className="resident-dashboard-stat-card">
                         <div className="resident-dashboard-stat-top">

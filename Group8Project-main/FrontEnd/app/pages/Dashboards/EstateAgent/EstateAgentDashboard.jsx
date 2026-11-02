@@ -63,9 +63,6 @@ function EstateAgentDashboard({ user }) {
             <h1>Welcome back, {currentUser?.firstName || "Agent"}</h1>
             <p>Manage your property listings and client inquiries.</p>
           </div>
-          <div className="estate-agent-avatar">
-            {currentUser?.initials || "EA"}
-          </div>
         </header>
 
         {/* STATS */}

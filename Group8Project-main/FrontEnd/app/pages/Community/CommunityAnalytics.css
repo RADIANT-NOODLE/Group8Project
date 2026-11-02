@@ -295,6 +295,103 @@
 }
 
 /* =========================================================
+   OCCUPANCY CHART (Property Overview)
+========================================================= */
+
+.community-analytics-occupancy {
+  padding: 16px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  background: #fafafa;
+}
+
+.community-analytics-occupancy-headline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.community-analytics-occupancy-headline strong {
+  color: #202124;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.community-analytics-occupancy-headline span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.community-analytics-occupancy-chart {
+  display: grid;
+  gap: 10px;
+}
+
+.community-analytics-occupancy-row {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 12px;
+}
+
+.community-analytics-occupancy-label {
+  color: #4b5563;
+  font-size: 12px;
+}
+
+.community-analytics-occupancy-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ece8f0;
+}
+
+.community-analytics-occupancy-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.community-analytics-occupancy-fill-occupied {
+  background: #563f6b;
+}
+
+.community-analytics-occupancy-fill-vacant {
+  background: #a48bba;
+}
+
+.community-analytics-occupancy-fill-unknown {
+  background: #c9c3cf;
+}
+
+.community-analytics-occupancy-value {
+  color: #202124;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .community-analytics-occupancy {
+    padding: 12px;
+  }
+
+  .community-analytics-occupancy-row {
+    grid-template-columns: 76px minmax(0, 1fr) 28px;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-analytics-occupancy-fill {
+    transition: none;
+  }
+}
+
+/* =========================================================
    PERFORMANCE TABLE
 ========================================================= */
 

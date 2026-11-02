@@ -244,10 +244,6 @@ function HOAAdminDashboard({ user }) {
               and your community.
             </p>
           </div>
-
-          <div className="hoa-admin-dashboard-avatar">
-            {user?.initials || "HA"}
-          </div>
         </div>
 
         {/* =================================================

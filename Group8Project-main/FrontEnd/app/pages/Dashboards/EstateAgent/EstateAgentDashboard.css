@@ -53,18 +53,6 @@
     line-height: 1.6;
 }
 
-.estate-agent-avatar {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: #563f6b;
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 750;
-}
 
 /* =========================================================
    STATS GRID

@@ -423,6 +423,62 @@ function StatCard({ icon, label, value, description }) {
    EMPTY STATE
 ========================================================= */
 
+function OccupancyChart({ total, occupied, vacant, rate }) {
+    const notRecorded = Math.max(total - occupied - vacant, 0);
+
+    const rows = [
+        { key: "occupied", label: "Occupied", count: occupied },
+        { key: "vacant", label: "Vacant", count: vacant },
+    ];
+
+    if (notRecorded > 0) {
+        rows.push({ key: "unknown", label: "Not recorded", count: notRecorded });
+    }
+
+    return (
+        <div className="community-analytics-occupancy">
+            <div className="community-analytics-occupancy-headline">
+                <strong>{formatPercentage(rate)}</strong>
+                <span>
+                    occupancy across {total} {total === 1 ? "unit" : "units"}
+                </span>
+            </div>
+
+            <div className="community-analytics-occupancy-chart">
+                {rows.map((row) => {
+                    const share = total > 0 ? (row.count / total) * 100 : 0;
+
+                    return (
+                        <div
+                            key={row.key}
+                            className="community-analytics-occupancy-row"
+                        >
+                            <span className="community-analytics-occupancy-label">
+                                {row.label}
+                            </span>
+
+                            <div
+                                className="community-analytics-occupancy-track"
+                                role="img"
+                                aria-label={`${row.label}: ${row.count} of ${total} units`}
+                            >
+                                <div
+                                    className={`community-analytics-occupancy-fill community-analytics-occupancy-fill-${row.key}`}
+                                    style={{ width: `${share}%` }}
+                                />
+                            </div>
+
+                            <span className="community-analytics-occupancy-value">
+                                {row.count}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 function EmptyState({ message }) {
     return (
         <div className="community-analytics-empty">
@@ -792,29 +848,12 @@ function CommunityAnalytics() {
                         {data.properties.length === 0 ? (
                             <EmptyState message="No property records are available yet." />
                         ) : (
-                            <div className="community-analytics-property-summary">
-                                <div>
-                                    <span>Total Units</span>
-                                    <strong>{data.properties.length}</strong>
-                                </div>
-
-                                <div>
-                                    <span>Occupied</span>
-                                    <strong>{analytics.occupiedProperties.length}</strong>
-                                </div>
-
-                                <div>
-                                    <span>Vacant</span>
-                                    <strong>{analytics.vacantProperties.length}</strong>
-                                </div>
-
-                                <div>
-                                    <span>Occupancy</span>
-                                    <strong>
-                                        {formatPercentage(analytics.occupancyRate)}
-                                    </strong>
-                                </div>
-                            </div>
+                            <OccupancyChart
+                                total={data.properties.length}
+                                occupied={analytics.occupiedProperties.length}
+                                vacant={analytics.vacantProperties.length}
+                                rate={analytics.occupancyRate}
+                            />
                         )}
                     </div>
                 </section>
