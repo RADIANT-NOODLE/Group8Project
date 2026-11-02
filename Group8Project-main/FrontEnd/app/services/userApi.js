@@ -41,7 +41,6 @@ export function rejectUser(userId) {
 
 const ROLE_LABELS = {
   resident: 'Resident',
-  investor: 'Investor',
   estate_agent: 'Estate Agent',
   hoa_admin: 'HOA Admin',
   head_admin: 'Head Admin',

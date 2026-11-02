@@ -10,7 +10,10 @@ import {
     assignEstateAgent,
 } from "../../data/propertyRequests";
 import { listUsers } from "../../services/userApi";
-import "./PropertyRequests.css";
+import "./PropertyRequests.css";
+import { showConfirm } from "../../components/AppDialog";
+import { roleLabel } from "../../services/roleMap";
+import { getStoredUser } from "../../services/session";
 
 /* =========================================================
    CURRENT USER
@@ -20,15 +23,15 @@ function normalizeRole(value) {
     const role = String(value || "").trim().toLowerCase();
 
     if (
-        ["head admin", "head administrator", "headadministrator"].includes(role)
+        ["head admin", "head administrator", "headadministrator", "head_admin"].includes(role)
     ) {
-        return "Head Admin";
+        return "head_admin";
     }
 
     if (
-        ["hoa", "hoa admin", "hoa administrator", "administrator"].includes(role)
+        ["hoa", "hoa admin", "hoa administrator", "administrator", "hoa_admin"].includes(role)
     ) {
-        return "HOA Admin";
+        return "hoa_admin";
     }
 
     return value || "";
@@ -36,9 +39,7 @@ function normalizeRole(value) {
 
 function getCurrentUser() {
     try {
-        const user = JSON.parse(
-            localStorage.getItem("valoraUser") || "null"
-        );
+        const user = getStoredUser();
 
         if (!user || typeof user !== "object") {
             return null;
@@ -252,7 +253,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         return <Navigate to="/dashboard" replace />;
     }
 
-    const isHeadAdmin = currentUser.role === "Head Admin";
+    const isHeadAdmin = currentUser.role === "head_admin";
 
     /* =====================================================
        REQUEST COUNTS
@@ -303,7 +304,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         if (!selectedRequest) return;
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 "Are you sure you want to approve this property request?"
             )
         ) {
@@ -338,7 +339,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 "Are you sure you want to reject this property request?"
             )
         ) {
@@ -385,7 +386,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             "Estate Agent";
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 `Assign ${agentName} to this property request?`
             )
         ) {
@@ -521,7 +522,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                         <h1>Property Requests</h1>
 
                         <p>
-                            Review resident and investor requests to sell or
+                            Review resident requests to sell or
                             rent their units.
                         </p>
                     </div>
@@ -533,7 +534,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
 
                         <div>
                             <strong>{currentUser.fullName}</strong>
-                            <span>{currentUser.role}</span>
+                            <span>{roleLabel(currentUser.role)}</span>
                         </div>
                     </div>
                 </header>
@@ -623,7 +624,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                 <h2>Property Requests</h2>
                                 <p>
                                     All sell and rent requests submitted by
-                                    residents and investors.
+                                    residents.
                                 </p>
                             </div>
 
@@ -792,7 +793,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                     <div>
                                         <h3>Requester Information</h3>
                                         <p>
-                                            Details of the resident or investor
+                                            Details of the resident
                                             who submitted the request.
                                         </p>
                                     </div>

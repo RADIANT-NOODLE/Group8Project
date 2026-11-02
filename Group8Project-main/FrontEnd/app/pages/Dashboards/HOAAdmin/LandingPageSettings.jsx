@@ -10,6 +10,7 @@ import {
 } from "../../../data/landingPageStorage";
 
 import "./LandingPageSettings.css";
+import { showConfirm } from "../../../components/AppDialog";
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
@@ -233,8 +234,8 @@ function LandingPageSettings() {
         }
     };
 
-    const handleResetContent = () => {
-        const confirmed = window.confirm(
+    const handleResetContent = async () => {
+        const confirmed = await showConfirm(
             "Reset all landing-page text to the default VALORA content? Your hero image will be kept."
         );
 

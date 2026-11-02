@@ -54,9 +54,9 @@ function ResetPassword() {
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-sidebar">
-                    <div className="auth-logo">
-                        <img src="/assets/valora-logo.svg" alt="VALORA" />
-                    </div>
+                    <Link to="/" className="auth-logo">
+                        <img src="/assets/valora-logo.jpg" alt="VALORA - go to home page" />
+                    </Link>
 
                     <div className="auth-sidebar-content">
                         <p className="auth-eyebrow">PROPERTY &amp; COMMUNITY</p>

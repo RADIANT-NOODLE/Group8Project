@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import "./Dashboard.css";
+import { ROLES, toRole } from "../services/roleMap";
+import { getStoredUser } from "../services/session";
 
 
 /*
@@ -14,7 +16,7 @@ GET CURRENT USER
 function getCurrentUser() {
 
   const storedUser =
-    localStorage.getItem("valoraUser");
+    getStoredUser();
 
   if (!storedUser) {
     return null;
@@ -23,7 +25,7 @@ function getCurrentUser() {
   try {
 
     const user =
-      JSON.parse(storedUser);
+      storedUser;
 
     /*
     -------------------------------------------------------
@@ -31,32 +33,8 @@ function getCurrentUser() {
     -------------------------------------------------------
     */
 
-    let role = user.role;
+    const role = toRole(user.role) || user.role;
 
-    if (
-      role === "HOA" ||
-      role === "HOA Admin"
-    ) {
-      role = "HOA Admin";
-    }
-
-    if (
-      role === "Administrator"
-    ) {
-      role = "HOA Admin";
-    }
-
-    if (
-      role === "Property Owner"
-    ) {
-      role = "Resident";
-    }
-
-    if (
-      role === "Buyer"
-    ) {
-      role = "Investor";
-    }
 
     const firstName =
       user.firstName ||
@@ -749,364 +727,6 @@ function ResidentDashboard({
 
 /*
 =========================================================
-INVESTOR DASHBOARD
-=========================================================
-*/
-
-function InvestorDashboard({
-  user,
-}) {
-
-  return (
-    <>
-
-      <div className="main-dashboard-header">
-
-        <div>
-
-          <span className="main-dashboard-header-eyebrow">
-            INVESTOR PORTAL
-          </span>
-
-          <h1>
-            Welcome back, {user.firstName || "Investor"}
-          </h1>
-
-          <p>
-            Review properties, valuations and investment
-            opportunities.
-          </p>
-
-        </div>
-
-        <div className="main-dashboard-header-user">
-
-          <div className="main-dashboard-header-avatar">
-            {user.initials}
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-stats-grid">
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="property"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Properties
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            {user.myProperty ? "1" : "0"}
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="roi"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              ROI Analysis
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="request"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Sell/Rent
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-stat-card">
-
-          <div className="main-dashboard-stat-top">
-
-            <div className="main-dashboard-stat-icon">
-              <Icon
-                name="announcement"
-                size={20}
-              />
-            </div>
-
-            <span className="main-dashboard-stat-label">
-              Announcements
-            </span>
-
-          </div>
-
-          <div className="main-dashboard-stat-number">
-            0
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div className="main-dashboard-content-grid">
-
-        <div className="main-dashboard-card">
-
-          <div className="main-dashboard-card-header">
-
-            <div>
-
-              <h2>
-                My Properties
-              </h2>
-
-              <p>
-                Properties linked to your investment profile.
-              </p>
-
-            </div>
-
-            <Link
-              to="/property"
-              className="main-dashboard-view-all"
-            >
-              View Properties
-            </Link>
-
-          </div>
-
-
-          {user.myProperty ? (
-
-            <div className="main-dashboard-property-summary">
-
-              <div className="main-dashboard-property-summary-icon">
-
-                <Icon
-                  name="property"
-                  size={24}
-                />
-
-              </div>
-
-              <div className="main-dashboard-property-summary-content">
-
-                <strong>
-                  {user.myProperty}
-                </strong>
-
-                <span>
-                  Investment property
-                </span>
-
-              </div>
-
-            </div>
-
-          ) : (
-
-            <div className="main-dashboard-empty-state">
-
-              <div className="main-dashboard-empty-icon">
-
-                <Icon
-                  name="property"
-                  size={28}
-                />
-
-              </div>
-
-              <h3>
-                No property linked yet
-              </h3>
-
-              <p>
-                Properties associated with your account
-                will appear here.
-              </p>
-
-            </div>
-
-          )}
-
-        </div>
-
-
-        <div className="main-dashboard-card main-dashboard-request-card">
-
-          <div className="main-dashboard-request-content">
-
-            <div className="main-dashboard-request-icon">
-
-              <Icon
-                name="request"
-                size={26}
-              />
-
-            </div>
-
-            <div>
-
-              <h2>
-                Sell or rent a property
-              </h2>
-
-              <p>
-                Submit a request to the HOA for review.
-              </p>
-
-              <Link
-                to="/request-to-sell"
-                className="main-dashboard-primary-button"
-              >
-                Sell/Rent Property
-              </Link>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div className="main-dashboard-card main-dashboard-quick-actions-card">
-
-          <div className="main-dashboard-card-header">
-
-            <div>
-
-              <h2>
-                Investment Tools
-              </h2>
-
-              <p>
-                Review your investment information.
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div className="main-dashboard-quick-actions">
-
-            <Link
-              to="/roi"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="roi"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                ROI & Valuation
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/property"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="property"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Properties
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/announcements"
-              className="main-dashboard-quick-action"
-            >
-
-              <span className="main-dashboard-quick-action-icon">
-
-                <Icon
-                  name="announcement"
-                  size={20}
-                />
-
-              </span>
-
-              <span>
-                Announcements
-              </span>
-
-            </Link>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </>
-  );
-}
-
-
-/*
-=========================================================
 ESTATE AGENT DASHBOARD
 =========================================================
 */
@@ -1609,8 +1229,8 @@ function HOADashboard({
               </h2>
 
               <p>
-                Review requests from residents and
-                investors who want to sell or rent their
+                Review requests from residents who
+                want to sell or rent their
                 units.
               </p>
 
@@ -1963,42 +1583,9 @@ function Dashboard({
   -------------------------------------------------------
   */
 
-  let normalizedRole =
-    role || user.role;
+  const normalizedRole =
+    toRole(role || user.role);
 
-
-  if (
-    normalizedRole === "HOA" ||
-    normalizedRole === "HOA Admin"
-  ) {
-
-    normalizedRole = "HOA Admin";
-
-  }
-
-  if (
-    normalizedRole === "Administrator"
-  ) {
-
-    normalizedRole = "HOA Admin";
-
-  }
-
-  if (
-    normalizedRole === "Property Owner"
-  ) {
-
-    normalizedRole = "Resident";
-
-  }
-
-  if (
-    normalizedRole === "Buyer"
-  ) {
-
-    normalizedRole = "Investor";
-
-  }
 
 
   /*
@@ -2011,7 +1598,7 @@ function Dashboard({
 
 
   if (
-    normalizedRole === "Resident"
+    normalizedRole === ROLES.resident
   ) {
 
     dashboardContent = (
@@ -2023,19 +1610,7 @@ function Dashboard({
   }
 
   else if (
-    normalizedRole === "Investor"
-  ) {
-
-    dashboardContent = (
-      <InvestorDashboard
-        user={user}
-      />
-    );
-
-  }
-
-  else if (
-    normalizedRole === "Estate Agent"
+    normalizedRole === ROLES.estateAgent
   ) {
 
     dashboardContent = (
@@ -2047,7 +1622,8 @@ function Dashboard({
   }
 
   else if (
-    normalizedRole === "HOA Admin"
+    normalizedRole === ROLES.hoaAdmin ||
+    normalizedRole === "head_admin"
   ) {
 
     dashboardContent = (

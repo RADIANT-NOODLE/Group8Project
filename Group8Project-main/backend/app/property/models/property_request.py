@@ -6,7 +6,7 @@ from app.db.base import Base
 
 
 class PropertyRequest(Base):
-    """A resident/investor asking to sell or rent a unit.
+    """A resident asking to sell or rent a unit.
 
     Flow: pending_review -> (HOA) approved | rejected -> (HOA) assigned to an estate agent.
     """

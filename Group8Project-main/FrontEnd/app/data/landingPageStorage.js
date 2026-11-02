@@ -1,3 +1,5 @@
+import { readStoredItem, removeStoredItem, writeStoredItem } from "../services/browserStorage";
+
 
 export const LANDING_HERO_STORAGE_KEY = "valoraLandingHero";
 export const LANDING_CONTENT_UPDATED_EVENT = "valoraLandingSettingsUpdated";
@@ -135,7 +137,7 @@ function mergeContent(savedContent = {}) {
 
 export function getLandingHeroSettings() {
     try {
-        const saved = localStorage.getItem(LANDING_HERO_STORAGE_KEY);
+        const saved = readStoredItem(LANDING_HERO_STORAGE_KEY);
 
         if (!saved) {
             return getDefaultSettings();
@@ -171,10 +173,9 @@ export function saveLandingHeroSettings(settings) {
             settings.placement === "background" ? "background" : "side",
     };
 
-    localStorage.setItem(
-        LANDING_HERO_STORAGE_KEY,
-        JSON.stringify(updated)
-    );
+    if (!writeStoredItem(LANDING_HERO_STORAGE_KEY, JSON.stringify(updated))) {
+        throw new Error("Browser storage is full or unavailable.");
+    }
 
     window.dispatchEvent(new Event(LANDING_CONTENT_UPDATED_EVENT));
 
@@ -191,7 +192,7 @@ export function saveLandingPageContent(content) {
 }
 
 export function clearLandingHeroSettings() {
-    localStorage.removeItem(LANDING_HERO_STORAGE_KEY);
+    removeStoredItem(LANDING_HERO_STORAGE_KEY);
     window.dispatchEvent(new Event(LANDING_CONTENT_UPDATED_EVENT));
 }
 

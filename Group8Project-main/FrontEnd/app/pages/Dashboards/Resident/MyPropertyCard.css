@@ -1,70 +1,8 @@
 /*
 =========================================================
-VALORA MY PROPERTY
+VALORA MY PROPERTY CARD (resident dashboard)
 =========================================================
 */
-
-/* =======================================================
-   PAGE
-======================================================= */
-
-.my-property-page {
-    min-height: 100vh;
-    width: 100%;
-    background: #f5f3f7;
-    color: #1f1f1f;
-}
-
-
-/* =======================================================
-   MAIN CONTENT
-======================================================= */
-
-.my-property-main {
-    width: calc(100% - 220px);
-    min-height: 100vh;
-    margin-left: 220px;
-    padding: 42px 30px 55px;
-    box-sizing: border-box;
-    overflow-x: hidden;
-}
-
-
-/* =======================================================
-   PAGE HEADER
-======================================================= */
-
-.my-property-header {
-    width: 100%;
-    max-width: 1180px;
-    margin: 0 auto 28px;
-}
-
-.my-property-eyebrow {
-    display: block;
-    margin-bottom: 8px;
-    color: #563f6b;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-}
-
-.my-property-header h1 {
-    margin: 0;
-    color: #1f1f1f;
-    font-size: 30px;
-    line-height: 1.15;
-    font-weight: 750;
-}
-
-.my-property-header p {
-    margin: 9px 0 0;
-    color: #77727b;
-    font-size: 12px;
-    line-height: 1.6;
-}
-
 
 /* =======================================================
    PROPERTY CARD
@@ -73,7 +11,7 @@ VALORA MY PROPERTY
 .my-property-card {
     width: 100%;
     max-width: 1180px;
-    margin: 0 auto 25px;
+    margin: 0 0 18px;
     display: grid;
     grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
     background: #ffffff;
@@ -89,7 +27,7 @@ VALORA MY PROPERTY
 ======================================================= */
 
 .my-property-image {
-    min-height: 430px;
+    min-height: 340px;
     background: #eeebf0;
     position: relative;
     overflow: hidden;
@@ -98,7 +36,7 @@ VALORA MY PROPERTY
 .my-property-image img {
     width: 100%;
     height: 100%;
-    min-height: 430px;
+    min-height: 340px;
     display: block;
     object-fit: cover;
 }
@@ -106,7 +44,7 @@ VALORA MY PROPERTY
 .my-property-image-placeholder {
     width: 100%;
     height: 100%;
-    min-height: 430px;
+    min-height: 340px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -465,8 +403,8 @@ VALORA MY PROPERTY
 .my-property-empty-card {
     width: 100%;
     max-width: 1180px;
-    min-height: 350px;
-    margin: 0 auto;
+    min-height: 220px;
+    margin: 0 0 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -527,32 +465,6 @@ VALORA MY PROPERTY
 
 
 /* =======================================================
-   LOADING
-======================================================= */
-
-.my-property-loading {
-    width: 100%;
-    max-width: 1180px;
-    margin: 0 auto;
-}
-
-.my-property-loading-line {
-    width: 230px;
-    height: 30px;
-    margin-bottom: 28px;
-    border-radius: 6px;
-    background: #e5e1e8;
-}
-
-.my-property-loading-box {
-    width: 100%;
-    height: 430px;
-    border-radius: 12px;
-    background: #e5e1e8;
-}
-
-
-/* =======================================================
    RESPONSIVE
 ======================================================= */
 
@@ -591,12 +503,6 @@ VALORA MY PROPERTY
 
 @media (max-width: 900px) {
 
-    .my-property-main {
-        width: calc(100% - 200px);
-        margin-left: 200px;
-        padding: 36px 25px 45px;
-    }
-
     .my-property-card {
         grid-template-columns: 280px minmax(0, 1fr);
     }
@@ -604,23 +510,13 @@ VALORA MY PROPERTY
     .my-property-image,
     .my-property-image img,
     .my-property-image-placeholder {
-        min-height: 390px;
+        min-height: 320px;
     }
 
 }
 
 
 @media (max-width: 700px) {
-
-    .my-property-main {
-        width: calc(100% - 170px);
-        margin-left: 170px;
-        padding: 34px 20px 45px;
-    }
-
-    .my-property-header h1 {
-        font-size: 26px;
-    }
 
     .my-property-card {
         display: block;
@@ -651,24 +547,6 @@ VALORA MY PROPERTY
 
 
 @media (max-width: 480px) {
-
-    .my-property-main {
-        width: calc(100% - 68px);
-        margin-left: 68px;
-        padding: 28px 14px 35px;
-    }
-
-    .my-property-header {
-        margin-bottom: 20px;
-    }
-
-    .my-property-header h1 {
-        font-size: 23px;
-    }
-
-    .my-property-header p {
-        font-size: 10px;
-    }
 
     .my-property-card-top {
         display: block;
@@ -717,4 +595,11 @@ VALORA MY PROPERTY
         width: 100%;
     }
 
+}
+
+
+.my-property-error {
+    margin: 0 0 16px;
+    color: #a33a3a;
+    font-size: 10px;
 }

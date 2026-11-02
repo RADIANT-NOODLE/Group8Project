@@ -307,14 +307,14 @@ function Properties() {
 
             <nav className="navbar">
 
-                <div className="logo">
+                <Link to="/" className="logo">
 
                     <img
-                        src="/ValoraLogo.jpeg"
-                        alt="VALORA Logo"
+                        src="/assets/valora-logo.jpg"
+                        alt="VALORA - go to home page"
                     />
 
-                </div>
+                </Link>
 
 
                 <div className="nav-links">

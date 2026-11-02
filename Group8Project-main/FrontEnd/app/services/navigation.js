@@ -6,25 +6,15 @@
  * (`canAccessRoute`); a test asserts that, so the menu can never offer a screen
  * the guard would refuse.
  */
-import { DASHBOARD_PATH, ESTATE_AGENT_PATH, HOA_ADMIN_PATH, INVESTOR_PATH, ROLES } from './roleMap.js';
+import { DASHBOARD_PATH, ESTATE_AGENT_PATH, HOA_ADMIN_PATH, ROLES } from './roleMap.js';
 
 export const NAVIGATION_BY_ROLE = Object.freeze({
   [ROLES.resident]: Object.freeze([
     Object.freeze({ label: 'Dashboard', path: DASHBOARD_PATH, icon: 'dashboard' }),
-    Object.freeze({ label: 'My Property', path: '/property', icon: 'property' }),
     Object.freeze({ label: 'AI Valuation', path: '/valuation', icon: 'valuation' }),
     Object.freeze({ label: 'Request to Sell/Rent', path: '/request-to-sell', icon: 'request' }),
     Object.freeze({ label: 'My Complaints', path: '/complaints', icon: 'complaint' }),
     Object.freeze({ label: 'Maintenance', path: '/maintenance', icon: 'maintenance' }),
-    Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
-    Object.freeze({ label: 'Community Announcements', path: '/announcements', icon: 'announcement' }),
-  ]),
-
-  [ROLES.investor]: Object.freeze([
-    Object.freeze({ label: 'Dashboard', path: INVESTOR_PATH, icon: 'dashboard' }),
-    Object.freeze({ label: 'My Property', path: '/property', icon: 'property' }),
-    Object.freeze({ label: 'AI Valuation', path: '/valuation', icon: 'valuation' }),
-    Object.freeze({ label: 'ROI Analysis', path: '/roi', icon: 'valuation' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
     Object.freeze({ label: 'Community Announcements', path: '/announcements', icon: 'announcement' }),
   ]),

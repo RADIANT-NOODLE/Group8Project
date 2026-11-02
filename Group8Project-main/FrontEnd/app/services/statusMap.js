@@ -34,6 +34,14 @@ export const LISTING_STATUSES = freezeOptions([
   { value: 'withdrawn', label: 'Withdrawn', tone: 'closed' },
 ]);
 
+/** Status values by name, so pages compare against `COMPLAINT_STATUS.resolved`, never a typed string. */
+function valuesByName(options) {
+  return Object.freeze(Object.fromEntries(options.map((option) => [option.value, option.value])));
+}
+
+export const COMPLAINT_STATUS = valuesByName(COMPLAINT_STATUSES);
+export const WORK_ORDER_STATUS = valuesByName(WORK_ORDER_STATUSES);
+
 /**
  * Categories the complaint form offers. The API stores any 2–50 character
  * string (`complaints.category`), so this list is the frontend's own choice and

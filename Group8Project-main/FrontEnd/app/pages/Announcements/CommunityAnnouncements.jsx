@@ -9,6 +9,7 @@ import {
     updateAnnouncement,
 } from "../../services/announcementApi";
 import "./CommunityAnnouncements.css";
+import { showConfirm } from "../../components/AppDialog";
 
 /* =========================================================
    ICONS
@@ -82,7 +83,7 @@ function Icon({ type, size = 20 }) {
    API
    Announcements are stored by the backend so every resident
    sees what the HOA publishes (they used to live in this
-   browser's localStorage only).
+   browser storage only).
 ========================================================= */
 
 /** The shape this screen renders, from an announcement the API returned. */
@@ -323,7 +324,7 @@ function CommunityAnnouncements() {
     ===================================================== */
 
     async function deleteAnnouncement(announcement) {
-        const confirmed = window.confirm(
+        const confirmed = await showConfirm(
             `Delete "${announcement.title}"? This cannot be undone.`
         );
 

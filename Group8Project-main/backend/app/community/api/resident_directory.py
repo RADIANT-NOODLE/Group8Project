@@ -83,8 +83,8 @@ async def create_directory_record(
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found.")
         
-    if target_user.role not in ["resident", "investor"]:
-        raise HTTPException(status_code=400, detail="Only residents and investors can be assigned to a property.")
+    if target_user.role != "resident":
+        raise HTTPException(status_code=400, detail="Only residents can be assigned to a property.")
         
     prop_check = await db.execute(select(Property).where(Property.unit_id == payload.property_id))
     if not prop_check.scalars().first():

@@ -6,7 +6,9 @@ import {
     getProperties,
     updateProperty,
 } from "../../data/propertyStorage";
-import "./PropertyApprovals.css";
+import "./PropertyApprovals.css";
+import { showConfirm, showAlert } from "../../components/AppDialog";
+import { getStoredUser } from "../../services/session";
 
 /* =========================================================
    PROPERTY APPROVALS ICONS
@@ -112,9 +114,7 @@ function PropertyApprovals() {
 
     const user = (() => {
         try {
-            const parsed = JSON.parse(
-                localStorage.getItem("valoraUser") || "{}"
-            );
+            const parsed = (getStoredUser() || {});
 
             const name =
                 parsed.name ||
@@ -216,11 +216,11 @@ function PropertyApprovals() {
     };
 
     /* Approve and publish a listing */
-    const handleApprove = (property) => {
+    const handleApprove = async (property) => {
         const listing = property.listing || {};
 
         if (!listing.assignedAgentId && !listing.assignedAgentName) {
-            window.alert(
+            showAlert(
                 "This listing cannot be published because no Estate Agent has been assigned to the property."
             );
             return;
@@ -231,14 +231,14 @@ function PropertyApprovals() {
             listing.hoaApprovalStatus === "Pending Review";
 
         if (!isPending) {
-            window.alert(
+            showAlert(
                 "This property is no longer awaiting HOA approval."
             );
             return;
         }
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 `Approve the listing and submitted photographs for ${property.unitNumber}?`
             )
         ) {
@@ -312,7 +312,7 @@ function PropertyApprovals() {
         const reason = reviewMessage.trim();
 
         if (!reason) {
-            window.alert(
+            showAlert(
                 "Please enter a reason or instruction for the Estate Agent."
             );
             return;
@@ -338,18 +338,18 @@ function PropertyApprovals() {
     };
 
     /* Reject a submission */
-    const handleReject = (property) => {
+    const handleReject = async (property) => {
         const reason = reviewMessage.trim();
 
         if (!reason) {
-            window.alert(
+            showAlert(
                 "Please enter a reason before rejecting the submission."
             );
             return;
         }
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 `Reject the listing submission for ${property.unitNumber}?`
             )
         ) {

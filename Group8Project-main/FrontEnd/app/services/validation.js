@@ -80,12 +80,28 @@ export function validateRegistrationPassword(value) {
 /** Same rules apply to a new password chosen when changing or resetting one. */
 export const validateNewPassword = validateRegistrationPassword;
 
-/** Optional phone number; same rule as `validate_phone` on the backend. */
+/**
+ * South African phone number: +27 or a leading 0, then nine digits that do not
+ * start with 0. Spaces, dashes and brackets are allowed. Same rule as
+ * `validate_phone` on the backend, which stores the number as +27XXXXXXXXX.
+ */
+const SA_PHONE_PATTERN = /^(?:\+27|0)[1-9][0-9]{8}$/;
+
+export const PHONE_FORMAT_MESSAGE =
+  'Enter a South African phone number, for example 082 123 4567 or +27 82 123 4567.';
+
+/** Optional phone number (profile edits): empty is allowed, anything else must match. */
 export function validatePhone(value) {
   const phone = String(value ?? '').trim();
   if (!phone) return '';
-  if (!/^[+(]?[0-9][0-9 ()-]{5,18}[0-9]$/.test(phone)) {
-    return 'Enter a valid phone number, for example +27 82 123 4567.';
+  if (!SA_PHONE_PATTERN.test(phone.replace(/[\s()-]/g, ''))) {
+    return PHONE_FORMAT_MESSAGE;
   }
   return '';
+}
+
+/** Registration: a phone number must be given, in the same format. */
+export function validateRequiredPhone(value) {
+  if (!String(value ?? '').trim()) return 'Please enter your phone number.';
+  return validatePhone(value);
 }

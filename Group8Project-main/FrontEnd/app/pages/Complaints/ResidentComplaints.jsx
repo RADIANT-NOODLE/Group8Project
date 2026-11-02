@@ -11,13 +11,15 @@ import {
     workOrderStatusLabel,
 } from "../../services/statusMap";
 import "./ResidentComplaints.css";
+import { roleLabel } from "../../services/roleMap";
+import { getStoredUser } from "../../services/session";
 
 const RESOLVED_STATUSES = ["resolved", "closed"];
 
 // Helper to read the logged-in user from local storage
 function readUser() {
     try {
-        return JSON.parse(localStorage.getItem("valoraUser") || "null");
+        return getStoredUser();
     } catch {
         return null;
     }
@@ -26,15 +28,15 @@ function readUser() {
 function normaliseRole(value = "") {
     const role = String(value).trim().toLowerCase().replace(/_/g, " ");
 
-    if (role.includes("head admin")) return "Head Admin";
+    if (role.includes("head admin")) return "head_admin";
     if (
         role.includes("hoa") ||
         role.includes("homeowners association") ||
         role === "administrator"
     ) {
-        return "HOA Admin";
+        return "hoa_admin";
     }
-    return value || "User";
+    return value || "";
 }
 
 function getUserRole(user) {
@@ -147,7 +149,7 @@ export default function ResidentComplaints() {
 
     const role = getUserRole(user);
     const userName = getUserName(user);
-    const isAdmin = role === "HOA Admin" || role === "Head Admin";
+    const isAdmin = role === "hoa_admin" || role === "head_admin";
 
     // 1. Fetch complaints, their work orders and the providers that can be assigned
     const fetchComplaints = async () => {
@@ -366,7 +368,7 @@ export default function ResidentComplaints() {
                         </span>
                         <div>
                             <strong>{userName}</strong>
-                            <span>{role}</span>
+                            <span>{roleLabel(role)}</span>
                         </div>
                     </div>
                 </header>

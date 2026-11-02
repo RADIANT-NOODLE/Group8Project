@@ -10,12 +10,12 @@ function RegistrationPending() {
                 {/* LEFT SIDE */}
 
                 <div className="auth-sidebar">
-                    <div className="auth-logo">
+                    <Link to="/" className="auth-logo">
                         <img
-                            src="/ValoraLogo.jpeg"
-                            alt="VALORA"
+                            src="/assets/valora-logo.jpg"
+                            alt="VALORA - go to home page"
                         />
-                    </div>
+                    </Link>
 
                     <div className="auth-sidebar-content">
                         <p className="auth-eyebrow">

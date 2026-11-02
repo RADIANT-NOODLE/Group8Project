@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import { useSession } from "../../services/session";
+import { useSession, getSessionToken } from "../../services/session";
 import "./Providers.css";
+import { showConfirm, showAlert } from "../../components/AppDialog";
 
 const SERVICE_CATEGORIES = [
     { value: "plumbing", label: "Plumbing", icon: "tools" },
@@ -75,7 +76,7 @@ function Providers() {
     const fetchProviders = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch("http://127.0.0.1:8000/api/v1/providers", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -152,7 +153,7 @@ function Providers() {
         }
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
             const url = editingId 
                 ? `http://127.0.0.1:8000/api/v1/providers/${editingId}`
@@ -206,12 +207,12 @@ function Providers() {
     // 4. Delete Provider
     async function deleteProvider(provider) {
         if (!canManage) return;
-        if (!window.confirm(`Remove "${provider.full_name}"?`)) return;
+        if (!await showConfirm(`Remove "${provider.full_name}"?`)) return;
 
         const id = provider.provider_id || provider.id;
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${id}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
@@ -242,7 +243,7 @@ function Providers() {
     const fetchReviews = async (providerId) => {
         setReviewsLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -272,7 +273,7 @@ function Providers() {
         setReviewError("");
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const providerId = selectedProvider.provider_id || selectedProvider.id;
             
             const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews`, {
@@ -309,7 +310,7 @@ function Providers() {
         if (!reviewToDelete) return;
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const providerId = selectedProvider.provider_id || selectedProvider.id;
 
             const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews/${reviewToDelete}`, {
@@ -325,7 +326,7 @@ function Providers() {
             await fetchProviders();
             
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
     };
 
@@ -591,8 +592,8 @@ function Providers() {
                                     </div>
                                 )}
 
-                                {/* REVIEW FORM (Only visible to Residents/Investors/Agents) */}
-                                {["resident", "investor", "estate_agent"].includes(role) && (
+                                {/* REVIEW FORM (Only visible to Residents/Agents) */}
+                                {["resident", "estate_agent"].includes(role) && (
                                     <form onSubmit={submitReview} style={{ marginTop: "20px", background: "#f5f3f7", padding: "15px", borderRadius: "8px" }}>
                                         <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#29242d" }}>Leave a Review</h4>
                                         

@@ -8,6 +8,7 @@ import {
 
 /* SESSION */
 import { useSession } from "./services/session";
+import { canAccessRoute } from "./services/roleMap";
 
 /* PUBLIC PAGES */
 import Home from "./pages/Home";
@@ -19,7 +20,6 @@ import RegistrationPending from "./pages/Auth/RegistrationPending";
 
 /* PROPERTY */
 import Property from "./pages/Property/Property";
-import MyProperty from "./pages/Property/MyProperty";
 import Properties from "./pages/Property/Properties";
 import PropertyRequests from "./pages/Property/PropertyRequests";
 import PropertyApprovals from "./pages/Property/PropertyApprovals";
@@ -30,7 +30,6 @@ import ResidentDashboard from "./pages/Dashboards/Resident/ResidentDashboard";
 import HeadAdminDashboard from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
 import HOAAdminDashboard from "./pages/Dashboards/HOAAdmin/HOAAdminDashboard";
 import EstateAgentDashboard from "./pages/Dashboards/EstateAgent/EstateAgentDashboard";
-import InvestorDashboard from "./pages/Dashboards/Investor/InvestorDashboard";
 
 /* HOA ADMIN */
 import LandingPageSettings from "./pages/Dashboards/HOAAdmin/LandingPageSettings";
@@ -59,9 +58,8 @@ import AgentListings from "./pages/EstateAgent/AgentListings";
 import AgentEditListings from "./pages/EstateAgent/AgentEditListings";
 import AgentInquiries from "./pages/EstateAgent/AgentInquiries";
 
-/* INVESTOR */
-import Valuation from "./pages/Investor/Valuation";
-import ROI from "./pages/Investor/ROI";
+/* AI VALUATION */
+import Valuation from "./pages/Valuation/Valuation";
 
 /* HEAD ADMIN */
 import RegistrationRequests from "./pages/HeadAdmin/RegistrationRequests";
@@ -71,6 +69,7 @@ import UserManagement from "./pages/HeadAdmin/UserManagement";
 import Profile from "./pages/Profile";
 
 /* GLOBAL CSS */
+import DialogHost from "./components/AppDialog";
 import "./App.css";
 
 
@@ -87,48 +86,20 @@ function ProtectedRoute({ children }) {
     return children;
 }
 
-function HOAAdminRoute({ children }) {
+/* Role-restricted screens. Who may open what lives in roleMap.js, so the
+   sidebar and the guard can never disagree. */
+function RoleRoute({ path, children }) {
     const { user, isAuthenticated } = useSession();
-    
+
     if (user === undefined) return <div style={{ padding: "50px" }}>Loading...</div>;
     if (!isAuthenticated) return <Navigate to="/login" replace />;
-    
-    const role = String(user.role || "").toLowerCase();
-    if (!["head_admin", "hoa_admin"].includes(role)) {
+
+    if (!canAccessRoute(user.role, path)) {
         return <Navigate to="/dashboard" replace />;
     }
-    
+
     return children;
 }
-
-function HeadAdminRoute({ children }) {
-    const { user, isAuthenticated } = useSession();
-    
-    if (user === undefined) return <div style={{ padding: "50px" }}>Loading...</div>;
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
-    
-    const role = String(user.role || "").toLowerCase();
-    if (role !== "head_admin") {
-        return <Navigate to="/dashboard" replace />;
-    }
-    
-    return children;
-}
-
-function InvestorRoute({ children }) {
-    const { user, isAuthenticated } = useSession();
-    
-    if (user === undefined) return <div style={{ padding: "50px" }}>Loading...</div>;
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
-    
-    const role = String(user.role || "").toLowerCase();
-    if (role !== "investor") {
-        return <Navigate to="/dashboard" replace />;
-    }
-    
-    return children;
-}
-
 
 /* =========================================================
    DASHBOARD WRAPPERS
@@ -137,11 +108,6 @@ function InvestorRoute({ children }) {
 function HOADashboardWrapper() {
     const { user } = useSession();
     return <HOAAdminDashboard user={user} />;
-}
-
-function InvestorDashboardWrapper() {
-    const { user } = useSession();
-    return <InvestorDashboard user={user} />;
 }
 
 function AgentDashboardWrapper() {
@@ -189,23 +155,13 @@ function App() {
                     }
                 />
 
-                {/* MY PROPERTY */}
-                <Route
-                    path="/property"
-                    element={
-                        <ProtectedRoute>
-                            <MyProperty />
-                        </ProtectedRoute>
-                    }
-                />
-
                 {/* PROPERTY MANAGEMENT (HOA Only) */}
                 <Route
                     path="/property-management"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/property-management">
                             <PropertyManagement />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -213,9 +169,9 @@ function App() {
                 <Route
                     path="/head-admin"
                     element={
-                        <HeadAdminRoute>
+                        <RoleRoute path="/head-admin">
                             <HeadAdminDashboard />
-                        </HeadAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -223,9 +179,9 @@ function App() {
                 <Route
                     path="/hoa-admin"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/hoa-admin">
                             <HOADashboardWrapper />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -239,23 +195,13 @@ function App() {
                     }
                 />
 
-                {/* INVESTOR DASHBOARD */}
-                <Route
-                    path="/investor-dashboard"
-                    element={
-                        <InvestorRoute>
-                            <InvestorDashboardWrapper />
-                        </InvestorRoute>
-                    }
-                />
-
                 {/* LANDING PAGE SETTINGS */}
                 <Route
                     path="/landing-page-settings"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/landing-page-settings">
                             <LandingPageSettings />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -282,9 +228,9 @@ function App() {
                 <Route
                     path="/resident-complaints"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/resident-complaints">
                             <ResidentComplaints />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -331,9 +277,9 @@ function App() {
                 <Route
                     path="/community-analytics"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/community-analytics">
                             <CommunityAnalytics />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -341,9 +287,9 @@ function App() {
                 <Route
                     path="/resident-directory"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/resident-directory">
                             <ResidentDirectory />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -351,9 +297,9 @@ function App() {
                 <Route
                     path="/property-requests"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/property-requests">
                             <PropertyRequests />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -361,9 +307,9 @@ function App() {
                 <Route
                     path="/property-approvals"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/property-approvals">
                             <PropertyApprovals />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -371,9 +317,9 @@ function App() {
                 <Route
                     path="/ai-training-data"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/ai-training-data">
                             <AITrainingData />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -383,16 +329,6 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Valuation />
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* INVESTOR ROI */}
-                <Route
-                    path="/roi"
-                    element={
-                        <ProtectedRoute>
-                            <ROI />
                         </ProtectedRoute>
                     }
                 />
@@ -429,9 +365,9 @@ function App() {
                 <Route
                     path="/registration-requests"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/registration-requests">
                             <RegistrationRequests />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -439,9 +375,9 @@ function App() {
                 <Route
                     path="/create-agent"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/create-agent">
                             <CreateAgentAccount />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -449,9 +385,9 @@ function App() {
                 <Route
                     path="/user-management"
                     element={
-                        <HeadAdminRoute>
+                        <RoleRoute path="/user-management">
                             <UserManagement />
-                        </HeadAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -471,6 +407,7 @@ function App() {
                     element={<Navigate to="/" replace />}
                 />
             </Routes>
+            <DialogHost />
         </BrowserRouter>
     );
 }

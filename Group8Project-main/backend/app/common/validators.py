@@ -77,16 +77,34 @@ def reject_control_characters(value: str | None) -> str | None:
     return value
 
 
-_PHONE_PATTERN = re.compile(r"^[+(]?[0-9][0-9 ()\-]{5,18}[0-9]$")
+# A South African number: +27 or a leading 0, then nine digits that do not start with 0.
+_PHONE_SEPARATORS = re.compile(r"[\s\-()]")
+_SA_PHONE_PATTERN = re.compile(r"^(?:\+27|0)([1-9][0-9]{8})$")
+
+PHONE_FORMAT_MESSAGE = (
+    "Enter a South African phone number, for example 082 123 4567 or +27 82 123 4567."
+)
 
 
 def validate_phone(value: str | None) -> str | None:
-    """Optional phone number: digits with an optional leading +, spaces, dashes, brackets."""
+    """Optional South African phone number, stored as +27XXXXXXXXX.
+
+    Spaces, dashes and brackets are allowed while typing and dropped here.
+    """
     if value is None:
         return None
     value = value.strip()
     if not value:
         return None
-    if not _PHONE_PATTERN.match(value):
-        raise ValueError("Enter a valid phone number, for example +27 82 123 4567.")
-    return value
+    match = _SA_PHONE_PATTERN.match(_PHONE_SEPARATORS.sub("", value))
+    if not match:
+        raise ValueError(PHONE_FORMAT_MESSAGE)
+    return f"+27{match.group(1)}"
+
+
+def validate_required_phone(value: str | None) -> str:
+    """Same as validate_phone, but an empty number is refused."""
+    phone = validate_phone(value)
+    if phone is None:
+        raise ValueError("A phone number is required.")
+    return phone

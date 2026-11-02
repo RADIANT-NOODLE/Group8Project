@@ -236,6 +236,18 @@
     margin-bottom: 18px;
 }
 
+.complaints-unit-notice {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border: 1px solid #f0dcb4;
+    border-radius: 8px;
+    background: #fdf6e7;
+    color: #7a5a17;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
 .complaints-form textarea {
     min-height: 130px;
     padding: 12px;

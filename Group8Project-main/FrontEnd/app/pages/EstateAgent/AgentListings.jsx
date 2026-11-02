@@ -7,6 +7,8 @@ import {
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { useNavigate } from "react-router-dom";
 import "./AgentListings.css";
+import { showAlert } from "../../components/AppDialog";
+import { getStoredUser } from "../../services/session";
 
 function AgentListings() {
     const navigate = useNavigate();
@@ -16,7 +18,7 @@ function AgentListings() {
 
     const [currentUser] = useState(() => {
         try {
-            return JSON.parse(localStorage.getItem("valoraUser") || "null");
+            return getStoredUser();
         } catch {
             return null;
         }
@@ -132,7 +134,7 @@ function AgentListings() {
     const handleView = ({ request, property }) => {
         const listing = property?.listing || {};
 
-        alert(
+        showAlert(
             `${property?.unitNumber || request.propertyAddress || request.propertyId || "Property"}\n\n` +
             `Owner: ${getOwnerName({ request, property })}\n` +
             `Property Type: ${property?.propertyType || request.propertyType || "Not specified"}\n` +
@@ -149,7 +151,7 @@ function AgentListings() {
 
     const handleEditListing = ({ request, property }) => {
         if (!property) {
-            alert("The property record linked to this request could not be found.");
+            showAlert("The property record linked to this request could not be found.");
             return;
         }
 
@@ -165,7 +167,7 @@ function AgentListings() {
     };
 
     const handleAddListing = () => {
-        alert(
+        showAlert(
             "New listings are created through the HOA property request and agent assignment process."
         );
     };

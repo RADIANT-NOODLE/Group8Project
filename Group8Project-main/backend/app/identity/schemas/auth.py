@@ -8,6 +8,7 @@ from app.common.validators import (
     reject_control_characters,
     validate_password_strength,
     validate_phone,
+    validate_required_phone,
 )
 
 
@@ -18,7 +19,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     role: UserRole = UserRole.resident
-    phoneno: str | None = Field(default=None, max_length=20)
+    phoneno: str = Field(..., max_length=20)
     unit_no: str | None = Field(default=None, max_length=10)
 
     @field_validator("password")
@@ -33,8 +34,8 @@ class RegisterRequest(BaseModel):
 
     @field_validator("phoneno")
     @classmethod
-    def _valid_phone(cls, value: str | None) -> str | None:
-        return validate_phone(value)
+    def _valid_phone(cls, value: str | None) -> str:
+        return validate_required_phone(value)
 
     @field_validator("role")
     @classmethod

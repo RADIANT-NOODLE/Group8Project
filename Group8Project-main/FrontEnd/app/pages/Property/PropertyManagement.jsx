@@ -3,13 +3,18 @@ import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
-import "./PropertyManagement.css";
+import "./PropertyManagement.css";
+import { showAlert } from "../../components/AppDialog";
+import { getSessionToken } from "../../services/session";
 
 /*
 =========================================================
 VALORA PROPERTY MANAGEMENT
 =========================================================
 */
+
+/* Local listing labels (not backend statuses) that still count as unpublished. */
+const UNPUBLISHED_LISTING_STATUSES = ["draft", "assigned"];
 
 function getLocation(property) {
     const address = property.street_address || "";
@@ -101,7 +106,7 @@ function PropertyManagement() {
         setError("");
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -149,7 +154,7 @@ function PropertyManagement() {
     const handleUpdateProperty = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const id = editingProperty.id || editingProperty.unit_id;
 
             const response = await fetch(`http://127.0.0.1:8000/api/v1/properties/${id}`, {
@@ -179,7 +184,7 @@ function PropertyManagement() {
             setToastMessage("Property updated successfully!");
             setTimeout(() => setToastMessage(""), 3000);
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
     };
 
@@ -246,7 +251,7 @@ function PropertyManagement() {
     const handleAddProperty = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
                 method: "POST",
                 headers: {
@@ -287,12 +292,12 @@ function PropertyManagement() {
             setPhotoError("");
             await loadProperties();
             if (failedPhotos.length) {
-                alert(`The property was added, but some photos could not be uploaded:\n${failedPhotos.join("\n")}\nYou can add them with Edit.`);
+                showAlert(`The property was added, but some photos could not be uploaded:\n${failedPhotos.join("\n")}\nYou can add them with Edit.`);
             }
             setToastMessage("Property added successfully!");
             setTimeout(() => setToastMessage(""), 3000);
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
     };
 
@@ -330,7 +335,7 @@ function PropertyManagement() {
     const publishedProperties = properties.filter(p => getListingStatus(p).toLowerCase() === "published").length;
     const pendingProperties = properties.filter(p => {
         const status = getListingStatus(p).toLowerCase();
-        return status.includes("pending") || status === "draft" || status === "assigned";
+        return status.includes("pending") || UNPUBLISHED_LISTING_STATUSES.includes(status);
     }).length;
 
     /*

@@ -75,11 +75,14 @@
 ========================================================= */
 
 .auth-logo {
+    display: block;
+    align-self: flex-start;
     position: relative;
     z-index: 2;
 }
 
 .auth-logo img {
+    border-radius: 10px;
     display: block;
     width: 150px;
     max-width: 100%;

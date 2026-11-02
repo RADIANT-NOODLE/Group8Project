@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import DashboardSidebar from "../shared/DashboardSidebar";
-import { useSession } from "../../../services/session";
+import { useSession, getSessionToken } from "../../../services/session";
 import "./EstateAgentDashboard.css";
 
 function EstateAgentDashboard({ user }) {
@@ -15,7 +15,7 @@ function EstateAgentDashboard({ user }) {
       if (!currentUser) return;
 
       try {
-        const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+        const token = getSessionToken();
         const headers = { "Authorization": `Bearer ${token}` };
 
         // Fetch the listings table

@@ -565,3 +565,92 @@
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
+
+
+/* =========================================================
+   CARD PREVIEW LISTS
+========================================================= */
+
+.hoa-admin-dashboard-preview-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.hoa-admin-dashboard-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid #eee8f2;
+  border-radius: 8px;
+  background: #faf9fb;
+}
+
+.hoa-admin-dashboard-preview-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hoa-admin-dashboard-preview-info strong {
+  color: #4b4052;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.hoa-admin-dashboard-preview-info span {
+  overflow: hidden;
+  color: #968d9d;
+  font-size: 8px;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hoa-admin-dashboard-preview-status {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #eee8f2;
+  color: #563f6b;
+}
+
+.hoa-admin-dashboard-preview-status-open {
+  background: #fdf3d8;
+  color: #8a6212;
+}
+
+.hoa-admin-dashboard-preview-status-active {
+  background: #e6eefb;
+  color: #2f548f;
+}
+
+.hoa-admin-dashboard-preview-status-done {
+  background: #e5f5ea;
+  color: #23683a;
+}
+
+.hoa-admin-dashboard-preview-status-closed {
+  background: #f1eef3;
+  color: #7a7080;
+}
+
+.hoa-admin-dashboard-preview-more,
+.hoa-admin-dashboard-preview-note {
+  margin: 9px 0 0;
+  color: #968d9d;
+  font-size: 8px;
+}
+
+.hoa-admin-dashboard-preview-error {
+  color: #a33a3a;
+}

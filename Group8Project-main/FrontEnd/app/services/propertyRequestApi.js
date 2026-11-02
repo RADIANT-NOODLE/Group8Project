@@ -1,7 +1,7 @@
 /**
  * Property sale / rent requests — `/api/v1/property-requests`.
  *
- * A resident or investor asks the HOA to sell or rent a unit. The HOA approves
+ * A resident asks the HOA to sell or rent a unit. The HOA approves
  * or rejects it, then assigns an approved estate agent. Estate agents only see
  * the requests assigned to them and everyone else only sees their own; the
  * backend decides, pages never filter by author.

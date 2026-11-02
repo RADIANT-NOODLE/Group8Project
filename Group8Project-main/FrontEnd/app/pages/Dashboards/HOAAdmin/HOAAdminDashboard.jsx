@@ -3,12 +3,97 @@ import { Link } from "react-router-dom";
 
 import DashboardSidebar from "../shared/DashboardSidebar";
 import "./HOAAdminDashboard.css";
+import { apiRequest } from "../../../services/apiClient";
+import { listComplaints } from "../../../services/complaintApi";
+import { listPropertyRequests } from "../../../services/propertyRequestApi";
+import { complaintStatusLabel, complaintStatusTone } from "../../../services/statusMap";
+import { getProperties } from "../../../data/propertyStorage";
+import { showConfirm, showAlert } from "../../../components/AppDialog";
+import { getSessionToken } from "../../../services/session";
 
 /*
 =========================================================
 VALORA HOA ADMIN DASHBOARD
 =========================================================
 */
+
+const PREVIEW_LIMIT = 4;
+
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString("en-ZA", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+/* A listing waits for the HOA when the agent has submitted it
+   and it has not been published or rejected yet — the same
+   rule the Property Approvals page uses. */
+function isAwaitingApproval(property) {
+  const listing = property.listing || {};
+  return (
+    listing.listingStatus === "Pending HOA Approval" ||
+    listing.hoaApprovalStatus === "Pending Review"
+  );
+}
+
+/* Card body for the preview boxes: a short list of the latest
+   records, a loading line, an error line, or the empty state. */
+function PreviewList({ preview, emptyIcon, emptyTitle, emptyText, renderItem }) {
+  if (preview.loading) {
+    return <p className="hoa-admin-dashboard-preview-note">Loading...</p>;
+  }
+
+  if (preview.error) {
+    return (
+      <p className="hoa-admin-dashboard-preview-note hoa-admin-dashboard-preview-error">
+        {preview.error}
+      </p>
+    );
+  }
+
+  if (preview.items.length === 0) {
+    return (
+      <div className="hoa-admin-dashboard-empty-state">
+        <div className="hoa-admin-dashboard-empty-icon">{emptyIcon}</div>
+        <h3>{emptyTitle}</h3>
+        <p>{emptyText}</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ul className="hoa-admin-dashboard-preview-list">
+        {preview.items.slice(0, PREVIEW_LIMIT).map(renderItem)}
+      </ul>
+      {preview.items.length > PREVIEW_LIMIT && (
+        <p className="hoa-admin-dashboard-preview-more">
+          +{preview.items.length - PREVIEW_LIMIT} more
+        </p>
+      )}
+    </>
+  );
+}
+
+function PreviewRow({ title, meta, status, tone = "neutral" }) {
+  return (
+    <li className="hoa-admin-dashboard-preview-row">
+      <div className="hoa-admin-dashboard-preview-info">
+        <strong>{title}</strong>
+        {meta && <span>{meta}</span>}
+      </div>
+      {status && (
+        <span className={`hoa-admin-dashboard-preview-status hoa-admin-dashboard-preview-status-${tone}`}>
+          {status}
+        </span>
+      )}
+    </li>
+  );
+}
+
+const EMPTY_PREVIEW = { loading: true, error: "", items: [] };
 
 function HOAAdminDashboard({ user }) {
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -19,6 +104,11 @@ function HOAAdminDashboard({ user }) {
   const [propertyRequestsCount, setPropertyRequestsCount] = useState(0);
   const [complaintsCount, setComplaintsCount] = useState(0);
   const [propertiesCount, setPropertiesCount] = useState(0);
+
+  const [requestsPreview, setRequestsPreview] = useState(EMPTY_PREVIEW);
+  const [residentsPreview, setResidentsPreview] = useState(EMPTY_PREVIEW);
+  const [complaintsPreview, setComplaintsPreview] = useState(EMPTY_PREVIEW);
+  const [approvalsPreview, setApprovalsPreview] = useState(EMPTY_PREVIEW);
 
       
   const [propertyForm, setPropertyForm] = useState({
@@ -40,7 +130,7 @@ function HOAAdminDashboard({ user }) {
     setIsLoading(true);
     setError("");
     
-    const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+    const token = getSessionToken();
     const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
 
     // 1. Fetch Users
@@ -71,34 +161,41 @@ function HOAAdminDashboard({ user }) {
       console.error("Properties fetch failed:", err);
     }
 
-    // 3. Fetch Property Requests
+    // 3. Property requests waiting for an HOA decision
     try {
-      const reqRes = await fetch("http://127.0.0.1:8000/api/v1/listings", { headers });
-      if (reqRes.ok) {
-        const data = await reqRes.json();
-        setPropertyRequestsCount(Array.isArray(data) ? data.length : (data.count || 0));
-      }
+      const page = await listPropertyRequests({ status: "pending_review" });
+      setPropertyRequestsCount(page.count);
+      setRequestsPreview({ loading: false, error: "", items: page.items });
     } catch (err) {
       console.error("Requests fetch failed:", err);
+      setRequestsPreview({ loading: false, error: "Could not load property requests.", items: [] });
     }
 
-    // 4. Fetch Complaints (This might be the wrong URL)
+    // 4. Complaints, newest first
     try {
-      // Try the stats endpoint first
-      const compRes = await fetch("http://127.0.0.1:8000/api/v1/complaints/stats", { headers });
-      if (compRes.ok) {
-        const data = await compRes.json();
-        console.log("COMPLAINTS STATS DATA:", data); 
-        setComplaintsCount(data.total || data.count || 0);
-      } else {
-        // Fallback to the main list endpoint if stats doesn't exist
-        const listRes = await fetch("http://127.0.0.1:8000/api/v1/complaints", { headers });
-        if (listRes.ok) {
-          const data = await listRes.json();
-          setComplaintsCount(Array.isArray(data) ? data.length : (data.count || 0));
-        }
-      }
-    } catch (err) { console.error("Complaints fetch failed:", err); }
+      const page = await listComplaints({ pageSize: 50 });
+      const items = [...page.items].sort((a, b) =>
+        String(b.createdAt).localeCompare(String(a.createdAt))
+      );
+      setComplaintsCount(page.count);
+      setComplaintsPreview({ loading: false, error: "", items });
+    } catch (err) {
+      console.error("Complaints fetch failed:", err);
+      setComplaintsPreview({ loading: false, error: "Could not load complaints.", items: [] });
+    }
+
+    // 5. Resident directory
+    try {
+      const data = await apiRequest("/api/v1/resident-directory");
+      const items = Array.isArray(data) ? data : (data?.items || []);
+      setResidentsPreview({ loading: false, error: "", items });
+    } catch (err) {
+      console.error("Resident directory fetch failed:", err);
+      setResidentsPreview({ loading: false, error: "Could not load the resident directory.", items: [] });
+    }
+
+    // 6. Listings waiting for HOA approval
+    setApprovalsPreview({ loading: false, error: "", items: getProperties().filter(isAwaitingApproval) });
 
     setIsLoading(false);
   };
@@ -109,10 +206,10 @@ function HOAAdminDashboard({ user }) {
 
 
   const handleApprove = async (userId) => {
-    if (!window.confirm("Are you sure you want to approve this user?")) return
+    if (!await showConfirm("Are you sure you want to approve this user?")) return
     
     try {
-      const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+      const token = getSessionToken();
 
       const response = await fetch(`http://127.0.0.1:8000/api/v1/users/${userId}/approve`, {
         method: "POST",
@@ -125,15 +222,15 @@ function HOAAdminDashboard({ user }) {
 
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
     } catch (err) {
-      alert(err.message);
+      showAlert(err.message);
     }
   };
 
   const handleReject = async (userId) => {
-    if (!window.confirm("Are you sure you want to reject and delete this user?")) return;
+    if (!await showConfirm("Are you sure you want to reject and delete this user?")) return;
 
     try {
-      const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+      const token = getSessionToken();
 
       const response = await fetch(`http://127.0.0.1:8000/api/v1/users/${userId}/reject`, {
         method: "POST",
@@ -146,14 +243,14 @@ function HOAAdminDashboard({ user }) {
 
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
     } catch (err) {
-      alert(err.message);
+      showAlert(err.message);
     }
   };
 
     const handleAddProperty = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
                 method: "POST",
                 headers: {
@@ -191,7 +288,7 @@ function HOAAdminDashboard({ user }) {
             await fetchDashboardData();
 
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
     };
 
@@ -321,7 +418,7 @@ function HOAAdminDashboard({ user }) {
             <div className="hoa-admin-dashboard-card-header">
               <div>
                 <h2>Pending Registrations</h2>
-                <p>Review and approve residents, investors, or agents requesting access.</p>
+                <p>Review and approve residents or agents requesting access.</p>
               </div>
               <button onClick={fetchDashboardData} className="hoa-admin-dashboard-btn-refresh">
                 Refresh List
@@ -373,25 +470,35 @@ function HOAAdminDashboard({ user }) {
             <div className="hoa-admin-dashboard-card-header">
               <div>
                 <h2>Property Requests</h2>
-                <p>Review resident and investor requests to sell or rent properties.</p>
+                <p>Review resident requests to sell or rent properties.</p>
               </div>
               <Link to="/property-requests" className="hoa-admin-dashboard-card-link">
                 View Requests
               </Link>
             </div>
 
-            <div className="hoa-admin-dashboard-empty-state">
-              <div className="hoa-admin-dashboard-empty-icon">
+            <PreviewList
+              preview={requestsPreview}
+              emptyIcon={
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="17" rx="2" />
                   <path d="M7 8h10" />
                   <path d="M7 12h10" />
                   <path d="M7 16h6" />
                 </svg>
-              </div>
-              <h3>No pending property requests</h3>
-              <p>New requests submitted by residents and investors will appear here.</p>
-            </div>
+              }
+              emptyTitle="No pending property requests"
+              emptyText="New requests submitted by residents will appear here."
+              renderItem={(request) => (
+                <PreviewRow
+                  key={request.id}
+                  title={`${request.unitNo ? `Unit ${request.unitNo}` : "Property"}${request.requestType ? ` · ${request.requestType}` : ""}`}
+                  meta={[request.requesterName, formatDate(request.createdAt)].filter(Boolean).join(" · ")}
+                  status="Pending review"
+                  tone="open"
+                />
+              )}
+            />
           </section>
 
           {/* =================================================
@@ -408,18 +515,28 @@ function HOAAdminDashboard({ user }) {
               </Link>
             </div>
 
-            <div className="hoa-admin-dashboard-empty-state">
-              <div className="hoa-admin-dashboard-empty-icon">
+            <PreviewList
+              preview={residentsPreview}
+              emptyIcon={
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
-              </div>
-              <h3>Resident directory</h3>
-              <p>Registered residents and their property information will appear here.</p>
-            </div>
+              }
+              emptyTitle="No residents assigned yet"
+              emptyText="Registered residents and their property information will appear here."
+              renderItem={(resident) => (
+                <PreviewRow
+                  key={resident.id}
+                  title={resident.name || resident.email || "Resident"}
+                  meta={[resident.unit_no ? `Unit ${resident.unit_no}` : "Unassigned", resident.role].filter(Boolean).join(" · ")}
+                  status={resident.occupancy || ""}
+                  tone={resident.occupancy === "Occupied" ? "done" : "neutral"}
+                />
+              )}
+            />
           </section>
 
           {/* =================================================
@@ -436,16 +553,31 @@ function HOAAdminDashboard({ user }) {
               </Link>
             </div>
 
-            <div className="hoa-admin-dashboard-empty-state">
-              <div className="hoa-admin-dashboard-empty-icon">
+            <PreviewList
+              preview={complaintsPreview}
+              emptyIcon={
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 11v2a2 2 0 0 0 2 2h2l3 5h2l-1.5-5H14l6 3V6l-6 3H6a2 2 0 0 0-2 2Z" />
                   <path d="M20 9v6" />
                 </svg>
-              </div>
-              <h3>No complaints to review</h3>
-              <p>Resident complaints will appear here for administration and resolution.</p>
-            </div>
+              }
+              emptyTitle="No complaints to review"
+              emptyText="Resident complaints will appear here for administration and resolution."
+              renderItem={(complaint) => (
+                <PreviewRow
+                  key={complaint.id}
+                  title={complaint.category}
+                  meta={[
+                    complaint.description.length > 60
+                      ? `${complaint.description.slice(0, 60)}…`
+                      : complaint.description,
+                    formatDate(complaint.createdAt),
+                  ].filter(Boolean).join(" · ")}
+                  status={complaintStatusLabel(complaint.status)}
+                  tone={complaintStatusTone(complaint.status)}
+                />
+              )}
+            />
           </section>
 
           {/* =================================================
@@ -462,16 +594,26 @@ function HOAAdminDashboard({ user }) {
               </Link>
             </div>
 
-            <div className="hoa-admin-dashboard-empty-state">
-              <div className="hoa-admin-dashboard-empty-icon">
+            <PreviewList
+              preview={approvalsPreview}
+              emptyIcon={
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Z" />
                   <path d="m9 12 2 2 4-4" />
                 </svg>
-              </div>
-              <h3>No listing approvals pending</h3>
-              <p>Estate agent listing submissions will appear here before publication.</p>
-            </div>
+              }
+              emptyTitle="No listing approvals pending"
+              emptyText="Estate agent listing submissions will appear here before publication."
+              renderItem={(property) => (
+                <PreviewRow
+                  key={property.id}
+                  title={property.unitNumber ? `Unit ${property.unitNumber}` : "Listing"}
+                  meta={[property.listing?.listingType, property.listing?.assignedAgentName].filter(Boolean).join(" · ")}
+                  status="Awaiting approval"
+                  tone="open"
+                />
+              )}
+            />
           </section>
 
           {/* =================================================

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./ResidentDirectory.css";
-import { useSession } from "../../services/session";
+import { useSession, getSessionToken } from "../../services/session";
+import { showConfirm } from "../../components/AppDialog";
 
 /*
 =========================================================
@@ -57,7 +58,7 @@ function ResidentDirectory() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const headers = { "Authorization": `Bearer ${token}` };
 
             const usersRes = await fetch("http://127.0.0.1:8000/api/v1/users/", { headers });
@@ -65,7 +66,7 @@ function ResidentDirectory() {
                 const usersData = await usersRes.json();
                 const userList = usersData.users || usersData || [];
                 setUsers(userList.filter(u => 
-                    ["resident", "investor"].includes(String(u.role).toLowerCase()) && u.hoa_approved === true
+                    String(u.role).toLowerCase() === "resident" && u.hoa_approved === true
                 ));
             }
 
@@ -179,7 +180,7 @@ function ResidentDirectory() {
         }
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
             const response = await fetch("http://127.0.0.1:8000/api/v1/resident-directory", {
                 method: "POST",
@@ -209,12 +210,12 @@ function ResidentDirectory() {
 
     // Delete / Unassign Record
     async function handleUnassign(resident) {
-        if (!window.confirm(`Unassign ${resident.name} from this property? The user account will not be deleted.`)) {
+        if (!await showConfirm(`Unassign ${resident.name} from this property? The user account will not be deleted.`)) {
             return;
         }
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
             const response = await fetch(`http://127.0.0.1:8000/api/v1/resident-directory/${resident.id}`, {
                 method: "DELETE",
@@ -252,7 +253,7 @@ function ResidentDirectory() {
                     <div>
                         <span className="resident-directory-eyebrow">COMMUNITY MANAGEMENT</span>
                         <h2>Resident Directory</h2>
-                        <p>Confirm property holders and manage approved resident and investor assignments.</p>
+                        <p>Confirm property holders and manage approved resident assignments.</p>
                     </div>
                     <div className="resident-directory-profile-small">
                         <div className="resident-directory-profile-circle">
@@ -299,7 +300,7 @@ function ResidentDirectory() {
                             <option value="All">All Statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option>
                         </select>
                         <select className="resident-directory-filter-select resident-directory-role-filter" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                            <option value="All">All Account Types</option><option value="resident">Residents</option><option value="investor">Investors</option>
+                            <option value="All">All Account Types</option><option value="resident">Residents</option>
                         </select>
                     </div>
 
@@ -368,7 +369,7 @@ function ResidentDirectory() {
                         <form className="resident-directory-modal-body" onSubmit={handleSave}>
                             {modalMode === "add" && (
                                 <div className="resident-directory-form-group">
-                                    <label>Approved Resident / Investor Account *</label>
+                                    <label>Approved Resident Account *</label>
                                     <select value={form.userId} onChange={(e) => handleUserChange(e.target.value)} required>
                                         <option value="">Select an approved account</option>
                                         {users.map((user) => (

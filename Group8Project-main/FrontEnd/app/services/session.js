@@ -101,6 +101,29 @@ export function getSessionUser(rawUser = getSessionSnapshot().user) {
   return cachedUser;
 }
 
+/** The signed-in user's access token, or null. Read fresh from storage. */
+export function getSessionToken() {
+  return readStorage().token;
+}
+
+/**
+ * The stored profile in the shape the older screens were written against
+ * (`firstName`, `fullName`, `status` beside the API fields), or null when
+ * nobody is signed in. Read fresh from storage, so it is safe outside React.
+ */
+export function getStoredUser() {
+  const { user } = readStorage();
+  if (!user) return null;
+
+  return {
+    ...user,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    fullName: user.full_name,
+    status: user.hoa_approved ? 'Approved' : 'Pending',
+  };
+}
+
 /**
  * Merge UI-only profile fields into the cached session user and notify every
  * subscriber. Returns the updated session user, or null when signed out.

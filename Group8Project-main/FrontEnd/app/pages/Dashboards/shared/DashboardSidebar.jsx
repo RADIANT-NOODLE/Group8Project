@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { PROPERTY_TAB_PATHS } from "./PropertyTabs";
 import "./DashboardSidebar.css";
+import { readStoredItem, writeStoredItem } from "../../../services/browserStorage";
+import { getStoredUser, logout } from "../../../services/session";
 
 /* =========================================================
    GET CURRENT USER
@@ -37,10 +39,6 @@ function normalizeRole(value) {
         return "Resident";
     }
 
-    if (["buyer", "investor"].includes(role)) {
-        return "Investor";
-    }
-
     if (role === "estate agent" || role === "estate_agent") {
         return "Estate Agent";
     }
@@ -50,11 +48,7 @@ function normalizeRole(value) {
 
 function getCurrentUser() {
     try {
-        const storedUser = localStorage.getItem("valoraUser");
-
-        if (!storedUser) return null;
-
-        const user = JSON.parse(storedUser);
+        const user = getStoredUser();
 
         if (!user || typeof user !== "object") return null;
 
@@ -270,18 +264,8 @@ function Icon({ type }) {
 const navigation = {
     Resident: [
         { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
-        { label: "My Property", path: "/property", icon: "property" },
         { label: "Request to Sell/Rent", path: "/request-to-sell", icon: "request" },
         { label: "My Complaints", path: "/complaints", icon: "complaint" },
-        { label: "Service Provider Directory", path: "/providers", icon: "providers" },
-        { label: "Community Announcements", path: "/announcements", icon: "announcement" },
-    ],
-
-    Investor: [
-        { label: "Dashboard", path: "/investor-dashboard", icon: "dashboard" },
-        { label: "My Property", path: "/property", icon: "property" },
-        { label: "AI Valuation", path: "/valuation", icon: "valuation" },
-        { label: "ROI Analysis", path: "/roi", icon: "roi" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
     ],
@@ -337,11 +321,7 @@ const navigation = {
 const COLLAPSED_STORAGE_KEY = "valoraSidebarCollapsed";
 
 function getStoredCollapsed() {
-    try {
-        return localStorage.getItem(COLLAPSED_STORAGE_KEY) === "true";
-    } catch {
-        return false;
-    }
+    return readStoredItem(COLLAPSED_STORAGE_KEY) === "true";
 }
 
 /* =========================================================
@@ -358,11 +338,8 @@ function DashboardSidebar({ suppliedUser = null }) {
         const next = !collapsed;
         setCollapsed(next);
 
-        try {
-            localStorage.setItem(COLLAPSED_STORAGE_KEY, String(next));
-        } catch {
-            // Storage unavailable; the toggle still works for this page.
-        }
+        // If storage is unavailable the toggle still works for this page.
+        writeStoredItem(COLLAPSED_STORAGE_KEY, String(next));
     }
 
     if (!currentUser) return null;
@@ -390,8 +367,7 @@ function DashboardSidebar({ suppliedUser = null }) {
             .toUpperCase();
 
     function handleLogout() {
-        localStorage.removeItem("valoraUser");
-        localStorage.removeItem("valoraLoggedIn");
+        logout();
         navigate("/login", { replace: true });
     }
 
@@ -402,11 +378,17 @@ function DashboardSidebar({ suppliedUser = null }) {
             }`}
         >
             <div className="dashboard-sidebar-brand">
-                <img
-                    src="/ValoraLogo.jpeg"
-                    alt="VALORA"
-                    className="dashboard-logo"
-                />
+                <Link
+                    to="/"
+                    className="dashboard-logo-link"
+                    title="Go to home page"
+                >
+                    <img
+                        src="/assets/valora-logo.jpg"
+                        alt="VALORA - go to home page"
+                        className="dashboard-logo"
+                    />
+                </Link>
 
                 <button
                     type="button"

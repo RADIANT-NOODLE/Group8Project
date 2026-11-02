@@ -271,9 +271,9 @@ function Home() {
     return (
         <div className="app">
             <nav className="navbar">
-                <div className="logo">
-                    <img src="/ValoraLogo.jpeg" alt="VALORA Logo" />
-                </div>
+                <Link to="/" className="logo">
+                    <img src="/assets/valora-logo.jpg" alt="VALORA - go to home page" />
+                </Link>
 
                 <div className="nav-links">
                     <a href="#home" className="active">HOME</a>

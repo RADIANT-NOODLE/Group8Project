@@ -48,7 +48,7 @@ async def get_my_inquiries(
     return [format_inquiry(i) for i in inquiries]
 
 
-# 2. CREATE an Inquiry (For Buyers/Investors)
+# 2. CREATE an Inquiry (For Buyers)
 @router.post("", status_code=201)
 async def create_inquiry(
     payload: InquiryCreate,

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import { useSession } from "../../services/session";
+import { useSession, getSessionToken } from "../../services/session";
 import "./AgentInquiries.css";
+import { showAlert } from "../../components/AppDialog";
 
 function AgentInquiries() {
     const { user } = useSession();
@@ -19,7 +20,7 @@ function AgentInquiries() {
             if (!user) return;
 
             try {
-                const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+                const token = getSessionToken();
                 const headers = { "Authorization": `Bearer ${token}` };
 
                 const response = await fetch("http://127.0.0.1:8000/api/v1/inquiries", { headers });
@@ -95,7 +96,7 @@ function AgentInquiries() {
     */
     const handleStatusChange = async (inquiryId, newStatus) => {
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const response = await fetch(`http://127.0.0.1:8000/api/v1/inquiries/${inquiryId}`, {
                 method: "PATCH",
                 headers: { 
@@ -117,7 +118,7 @@ function AgentInquiries() {
             );
         } catch (err) {
             console.error(err);
-            alert("Could not update the inquiry status. Please try again.");
+            showAlert("Could not update the inquiry status. Please try again.");
         }
     };
 
@@ -127,7 +128,7 @@ function AgentInquiries() {
     =========================================================
     */
     const handleView = (inquiry) => {
-        window.alert(
+        showAlert(
             `Inquiry Details\n\n` +
             `Buyer: ${inquiry.buyerName}\n` +
             `Email: ${inquiry.buyerEmail}\n` +

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import "./Property.css";
+import { getSessionToken, getStoredUser, updateSessionUser } from "../../services/session";
 
 /*
 =========================================================
@@ -30,7 +31,7 @@ export default function Property() {
 
             setLoading(true);
             try {
-                const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+                const token = getSessionToken();
                 const response = await fetch(`http://127.0.0.1:8000/api/v1/properties/${propertyId}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
@@ -77,16 +78,14 @@ export default function Property() {
     useEffect(() => {
         if (!property) return;
 
-        const loggedIn = localStorage.getItem("valoraLoggedIn") === "true";
-        const storedUser = localStorage.getItem("valoraUser");
+        const user = getStoredUser();
 
-        if (!loggedIn || !storedUser) {
+        if (!user?.hoa_approved) {
             setIsSaved(false);
             return;
         }
 
         try {
-            const user = JSON.parse(storedUser);
             const savedProperties = Array.isArray(user.savedProperties) ? user.savedProperties : [];
             setIsSaved(savedProperties.some(id => String(id) === String(property.id)));
         } catch (error) {
@@ -95,10 +94,9 @@ export default function Property() {
     }, [property]);
 
     const handleSaveProperty = () => {
-        const loggedIn = localStorage.getItem("valoraLoggedIn") === "true";
-        const storedUser = localStorage.getItem("valoraUser");
+        const user = getStoredUser();
 
-        if (!loggedIn || !storedUser) {
+        if (!user?.hoa_approved) {
             window.location.href = "/login";
             return;
         }
@@ -106,7 +104,6 @@ export default function Property() {
         if (!property) return;
 
         try {
-            const user = JSON.parse(storedUser);
             const savedProperties = Array.isArray(user.savedProperties) ? user.savedProperties : [];
 
             let updatedSavedProperties;
@@ -116,8 +113,7 @@ export default function Property() {
                 updatedSavedProperties = [...savedProperties, property.id];
             }
 
-            const updatedUser = { ...user, savedProperties: updatedSavedProperties };
-            localStorage.setItem("valoraUser", JSON.stringify(updatedUser));
+            updateSessionUser({ savedProperties: updatedSavedProperties });
             setIsSaved(!isSaved);
         } catch (error) {
             console.error("Unable to save property:", error);
@@ -132,8 +128,68 @@ export default function Property() {
     */
     if (loading) {
         return (
-            <div className="property-page" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <h2>Loading Property...</h2>
+            <div className="property-page">
+                <header className="property-public-header">
+                    <Link to="/" className="property-logo-link">
+                        <img src="/assets/valora-logo.jpg" alt="VALORA Logo" />
+                    </Link>
+                    <div className="property-header-actions">
+                        <Link to="/login" className="property-header-login">Login</Link>
+                        <Link to="/register" className="property-header-register">Register</Link>
+                    </div>
+                </header>
+
+                {/* A placeholder in the shape of the page, so the layout does not jump when it loads. */}
+                <main className="property-main property-loading" role="status" aria-busy="true">
+                    <span className="property-visually-hidden">Loading property details…</span>
+
+                    <div className="property-skeleton property-skeleton-back" aria-hidden="true" />
+
+                    <section className="property-header-card" aria-hidden="true">
+                        <div className="property-header-content">
+                            <div className="property-skeleton-stack">
+                                <div className="property-skeleton property-skeleton-badge" />
+                                <div className="property-skeleton property-skeleton-line short" />
+                                <div className="property-skeleton property-skeleton-title" />
+                                <div className="property-skeleton property-skeleton-line medium" />
+                            </div>
+                            <div className="property-skeleton-stack property-skeleton-price">
+                                <div className="property-skeleton property-skeleton-line short" />
+                                <div className="property-skeleton property-skeleton-amount" />
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="property-section-card" aria-hidden="true">
+                        <div className="property-skeleton property-skeleton-heading" />
+                        <div className="property-skeleton property-skeleton-photo">
+                            <svg viewBox="0 0 24 24" width="42" height="42">
+                                <path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M5 9.5V21h14V9.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                                <path d="M9 21v-6h6v6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                            </svg>
+                        </div>
+                    </section>
+
+                    <section className="property-stats-grid" aria-hidden="true">
+                        {[0, 1, 2, 3].map((index) => (
+                            <div key={index} className="property-stat-card property-skeleton-stat">
+                                <div className="property-skeleton property-skeleton-icon" />
+                                <div className="property-skeleton property-skeleton-line short" />
+                                <div className="property-skeleton property-skeleton-value" />
+                            </div>
+                        ))}
+                    </section>
+
+                    <section className="property-section-card" aria-hidden="true">
+                        <div className="property-skeleton property-skeleton-heading" />
+                        <div className="property-information-grid">
+                            {[0, 1, 2, 3].map((index) => (
+                                <div key={index} className="property-skeleton property-skeleton-info" />
+                            ))}
+                        </div>
+                    </section>
+                </main>
             </div>
         );
     }
@@ -148,7 +204,7 @@ export default function Property() {
             <div className="property-page">
                 <header className="property-public-header">
                     <Link to="/" className="property-logo-link">
-                        <img src="/ValoraLogo.jpeg" alt="VALORA Logo" />
+                        <img src="/assets/valora-logo.jpg" alt="VALORA Logo" />
                     </Link>
                     <div className="property-header-actions">
                         <Link to="/login" className="property-header-login">Login</Link>
@@ -263,7 +319,7 @@ export default function Property() {
         <div className="property-page">
             <header className="property-public-header">
                 <Link to="/" className="property-logo-link">
-                    <img src="/ValoraLogo.jpeg" alt="VALORA Logo" />
+                    <img src="/assets/valora-logo.jpg" alt="VALORA Logo" />
                 </Link>
                 <div className="property-header-actions">
                     <Link to="/login" className="property-header-login">Login</Link>

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { approveUser, listUsers, rejectUser, revokeUser, roleLabel } from "../../services/userApi";
 import "./UserManagement.css";
+import { showConfirm } from "../../components/AppDialog";
+import { getStoredUser } from "../../services/session";
 
 /* =========================================================
    PROFESSIONAL ICONS
@@ -79,7 +81,7 @@ const statusOf = (user) => (user.hoa_approved ? "Approved" : "Pending");
 
 function getSignedInUserId() {
   try {
-    return JSON.parse(localStorage.getItem("valoraUser") || "null")?.id ?? null;
+    return getStoredUser()?.id ?? null;
   } catch {
     return null;
   }
@@ -129,13 +131,13 @@ function UserManagement() {
   const approve = (user) =>
     runAction(user, approveUser, `${user.full_name} has been approved.`);
 
-  const revoke = (user) => {
-    if (!window.confirm(`Revoke access for ${user.full_name}? They will return to Pending.`)) return;
+  const revoke = async (user) => {
+    if (!await showConfirm(`Revoke access for ${user.full_name}? They will return to Pending.`)) return;
     runAction(user, revokeUser, `Access revoked for ${user.full_name}.`);
   };
 
-  const remove = (user) => {
-    if (!window.confirm(`Remove ${user.full_name} from VALORA? This deletes the account and cannot be undone.`)) return;
+  const remove = async (user) => {
+    if (!await showConfirm(`Remove ${user.full_name} from VALORA? This deletes the account and cannot be undone.`)) return;
     runAction(user, rejectUser, `${user.full_name} has been removed.`);
   };
 
@@ -147,7 +149,6 @@ function UserManagement() {
 
   const roleCounts = {
     residents: users.filter((user) => user.role === "resident").length,
-    investors: users.filter((user) => user.role === "investor").length,
     agents: users.filter((user) => user.role === "estate_agent").length,
     hoaAdmins: users.filter((user) => user.role === "hoa_admin").length,
   };
@@ -332,12 +333,6 @@ function UserManagement() {
               <div className="user-management-role-icon"><Icon name="users" size={18} /></div>
               <span>Residents</span>
               <strong>{roleCounts.residents}</strong>
-            </div>
-
-            <div className="user-management-role-card">
-              <div className="user-management-role-icon"><Icon name="people" size={18} /></div>
-              <span>Investors</span>
-              <strong>{roleCounts.investors}</strong>
             </div>
 
             <div className="user-management-role-card">

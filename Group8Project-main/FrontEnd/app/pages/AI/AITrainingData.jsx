@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./AITrainingData.css";
+import { readStoredItem, writeStoredItem } from "../../services/browserStorage";
+import { showConfirm } from "../../components/AppDialog";
 
 const DATASETS_STORAGE_KEY = "valoraAITrainingDatasets";
 const DATASETS_UPDATED_EVENT = "valoraAITrainingDatasetsUpdated";
@@ -39,7 +41,7 @@ const DATA_SOURCES = [
 
 function readArrayFromStorage(key) {
     try {
-        const saved = localStorage.getItem(key);
+        const saved = readStoredItem(key);
 
         if (!saved) {
             return [];
@@ -69,7 +71,7 @@ function readArrayFromStorage(key) {
 
 function readDatasetConfigurations() {
     try {
-        const saved = localStorage.getItem(DATASETS_STORAGE_KEY);
+        const saved = readStoredItem(DATASETS_STORAGE_KEY);
 
         if (!saved) {
             return [];
@@ -312,10 +314,9 @@ export default function AITrainingData() {
 
     const saveConfigurations = (updatedDatasets) => {
         try {
-            localStorage.setItem(
-                DATASETS_STORAGE_KEY,
-                JSON.stringify(updatedDatasets)
-            );
+            if (!writeStoredItem(DATASETS_STORAGE_KEY, JSON.stringify(updatedDatasets))) {
+                throw new Error("Browser storage is full or unavailable.");
+            }
 
             setDatasets(updatedDatasets);
 
@@ -435,8 +436,8 @@ export default function AITrainingData() {
         }
     };
 
-    const handleRemove = (dataset) => {
-        const confirmed = window.confirm(
+    const handleRemove = async (dataset) => {
+        const confirmed = await showConfirm(
             `Remove the "${dataset.name}" dataset configuration? This will not delete the underlying VALORA records.`
         );
 

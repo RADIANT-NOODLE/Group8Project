@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import { createComplaint, listComplaints, updateComplaintStatus } from "../services/complaintApi";
-import { findUnitIdByUnitNo, listProperties } from "../services/propertyApi";
+import { apiRequest } from "../services/apiClient";
+import { listProperties } from "../services/propertyApi";
 import { listWorkOrders } from "../services/workOrderApi";
 import { COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
 import "./Complaints.css";
+import { getStoredUser } from "../services/session";
 
 const COMPLAINT_CATEGORIES = [
     "Security",
@@ -19,7 +21,7 @@ const COMPLAINT_CATEGORIES = [
 // Helper to read the logged-in user from local storage
 function readUser() {
     try {
-        return JSON.parse(localStorage.getItem("valoraUser") || "null");
+        return getStoredUser();
     } catch {
         return null;
     }
@@ -83,9 +85,11 @@ export default function Complaints() {
     const [description, setDescription] = useState("");
     const [isAnonymous, setIsAnonymous] = useState(false);
 
-    // a complaint belongs to a unit (an integer id in the database)
+    // a complaint belongs to a unit (an integer id in the database): a resident's
+    // own unit is filled in for them; an administrator picks one from the list
     const [properties, setProperties] = useState([]);
     const [unitId, setUnitId] = useState("");
+    const [unitLoaded, setUnitLoaded] = useState(false);
 
     const [complaintImage, setComplaintImage] = useState("");
     const [imageName, setImageName] = useState("");
@@ -134,17 +138,23 @@ export default function Complaints() {
         setUser(currentUser);
         fetchComplaints();
 
-        // find the resident's unit, and the unit list as a fallback choice
+        // a resident's unit comes from the resident directory (the HOA links it);
+        // administrators get the unit list to choose from
         (async () => {
             try {
-                const [{ items }, ownUnit] = await Promise.all([
-                    listProperties({ pageSize: 100 }),
-                    findUnitIdByUnitNo(currentUser?.unit_no ?? currentUser?.unitNo),
-                ]);
-                setProperties(items);
-                if (ownUnit) setUnitId(String(ownUnit));
+                const currentRole = getUserRole(currentUser);
+                if (currentRole === "hoa_admin" || currentRole === "head_admin") {
+                    const { items } = await listProperties({ pageSize: 100 });
+                    setProperties(items);
+                } else {
+                    const records = await apiRequest("/api/v1/resident-directory");
+                    const ownRecord = (Array.isArray(records) ? records : records?.items || [])[0];
+                    if (ownRecord?.property_id) setUnitId(String(ownRecord.property_id));
+                }
             } catch (err) {
                 console.error("Unable to load units:", err);
+            } finally {
+                setUnitLoaded(true);
             }
         })();
     }, []);
@@ -210,7 +220,13 @@ export default function Complaints() {
         setNotice("");
 
         if (!canSubmit) return setError("Your account role cannot submit complaints.");
-        if (!unitId) return setError("Select the unit this complaint is about.");
+        if (!unitId) {
+            return setError(
+                isAdmin
+                    ? "Select the unit this complaint is about."
+                    : "Your account is not linked to a unit yet. Ask the HOA to assign your unit first."
+            );
+        }
         if (description.trim().length < 5) return setError("Please describe the complaint (at least 5 characters).");
 
         setIsSubmitting(true);
@@ -334,22 +350,31 @@ export default function Complaints() {
                                     </div>
 
                                     <form className="complaints-form" onSubmit={submitComplaint}>
-                                        <label htmlFor="complaint-unit">Unit</label>
-                                        <select
-                                            id="complaint-unit"
-                                            value={unitId}
-                                            onChange={(event) => setUnitId(event.target.value)}
-                                            required
-                                        >
-                                            <option value="">Select the unit this is about</option>
-                                            {properties.map((property) => (
-                                                <option key={property.id} value={property.id}>
-                                                    {[property.unitNo && `Unit ${property.unitNo}`, property.complexName]
-                                                        .filter(Boolean)
-                                                        .join(" — ") || `Unit #${property.id}`}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        {isAdmin ? (
+                                            <>
+                                            <label htmlFor="complaint-unit">Unit</label>
+                                            <select
+                                                id="complaint-unit"
+                                                value={unitId}
+                                                onChange={(event) => setUnitId(event.target.value)}
+                                                required
+                                            >
+                                                <option value="">Select the unit this is about</option>
+                                                {properties.map((property) => (
+                                                    <option key={property.id} value={property.id}>
+                                                        {[property.unitNo && `Unit ${property.unitNo}`, property.complexName]
+                                                            .filter(Boolean)
+                                                            .join(" — ") || `Unit #${property.id}`}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            </>
+                                        ) : unitLoaded && !unitId ? (
+                                            <p className="complaints-unit-notice" role="status">
+                                                Your account is not linked to a unit yet, so complaints cannot be submitted.
+                                                Ask the HOA to assign your unit.
+                                            </p>
+                                        ) : null}
 
                                         <label htmlFor="complaint-category">Complaint Category</label>
                                         <select
@@ -412,7 +437,7 @@ export default function Complaints() {
                                             <span>Hide my name from other people (the HOA will not see who sent it)</span>
                                         </label>
 
-                                        <button type="submit" className="complaints-submit-btn" disabled={isSubmitting}>
+                                        <button type="submit" className="complaints-submit-btn" disabled={isSubmitting || (!isAdmin && !unitId)}>
                                             {isSubmitting ? "Submitting..." : "Submit Complaint"}
                                         </button>
                                     </form>

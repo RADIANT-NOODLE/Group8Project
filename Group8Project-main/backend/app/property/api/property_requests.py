@@ -22,7 +22,7 @@ AdminOnly = Annotated[
     User, require_roles(UserRole.hoa_admin.value, UserRole.head_admin.value)
 ]
 OwnerOnly = Annotated[
-    User, require_roles(UserRole.resident.value, UserRole.investor.value)
+    User, require_roles(UserRole.resident.value)
 ]
 
 
@@ -60,7 +60,7 @@ async def create_property_request(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: OwnerOnly,
 ) -> PropertyRequestResponse:
-    """A resident or investor asks the HOA to sell or rent a unit."""
+    """A resident asks the HOA to sell or rent a unit."""
     return await PropertyRequestService(db).create_request(payload, current_user)
 
 

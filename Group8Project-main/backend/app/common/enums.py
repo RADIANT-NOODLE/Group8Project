@@ -5,7 +5,6 @@ class UserRole(str, Enum):
     """VALORA user roles for RBAC."""
     casual_visitor = "casual_visitor"
     resident = "resident"
-    investor = "investor"
     estate_agent = "estate_agent"
     hoa_admin = "hoa_admin"
     service_provider = "service_provider"

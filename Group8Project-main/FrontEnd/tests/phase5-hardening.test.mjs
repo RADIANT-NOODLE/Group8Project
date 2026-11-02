@@ -68,7 +68,6 @@ const STORAGE_DEBT = [
   'data/propertyRequests.js',
   'data/propertyStorage.js',
   'pages/EstateAgent/AgentListings.jsx',
-  'pages/Maintenance/Maintenance.jsx',
 ];
 
 test('browser storage stays inside services/, except the named debt', async () => {
@@ -245,7 +244,7 @@ test('signing in and out moves the session the guard depends on', async () => {
 test('each auth field renders exactly one labelled input', async () => {
   const forms = {
     'pages/Auth/Login.jsx': ['email', 'password'],
-    'pages/Auth/Register.jsx': ['firstName', 'lastName', 'email', 'password'],
+    'pages/Auth/Register.jsx': ['firstName', 'lastName', 'email', 'phone', 'password'],
   };
 
   for (const [page, fieldIds] of Object.entries(forms)) {
@@ -369,13 +368,13 @@ test('no page raises a browser alert, prompt or confirm dialog', async () => {
     [],
     [
       'browser dialogs block the page, cannot be styled and cannot be tested.',
-      'Use components/InlineMessage for results and components/ConfirmPrompt',
-      `for destructive actions. Offenders: ${offenders.join(', ')}`,
+      'Use components/InlineMessage or showAlert for results, and showConfirm (components/AppDialog)',
+      `or components/ConfirmPrompt for destructive actions. Offenders: ${offenders.join(', ')}`,
     ].join(' '),
   );
 });
 
-test('every route that can destroy something asks for confirmation inline', async () => {
+test('every route that can destroy something asks for confirmation in the page', async () => {
   const confirmable = [
     'pages/EstateAgent/AgentEditListings.jsx',
     'pages/Property/PropertyApprovals.jsx',
@@ -386,8 +385,8 @@ test('every route that can destroy something asks for confirmation inline', asyn
     const source = await readSource(page);
 
     assert.ok(
-      /<ConfirmPrompt/.test(source),
-      `${page} removes or rejects records, so it must confirm with <ConfirmPrompt>`,
+      /<ConfirmPrompt|showConfirm\(/.test(source),
+      `${page} removes or rejects records, so it must confirm with showConfirm or <ConfirmPrompt>`,
     );
   }
 });

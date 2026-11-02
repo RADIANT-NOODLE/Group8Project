@@ -72,6 +72,12 @@
     border-bottom: 1px solid var(--valora-purple-border);
 }
 
+.dashboard-logo-link {
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
 .dashboard-logo {
     display: block;
     width: 135px;
@@ -398,6 +404,7 @@
         padding: 17px 7px;
     }
 
+    .dashboard-sidebar.is-collapsed .dashboard-logo-link,
     .dashboard-sidebar.is-collapsed .dashboard-logo,
     .dashboard-sidebar.is-collapsed .dashboard-profile-details,
     .dashboard-sidebar.is-collapsed .dashboard-nav-section-title,

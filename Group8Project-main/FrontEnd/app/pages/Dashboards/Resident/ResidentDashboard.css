@@ -90,7 +90,7 @@
 .resident-dashboard-stats-grid {
   display: grid;
 
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 16px;
 
@@ -284,78 +284,6 @@
   .resident-dashboard-card:has(.resident-dashboard-view-all:hover) {
     transform: none;
   }
-}
-
-
-/* =========================================================
-   PROPERTY SUMMARY
-========================================================= */
-
-.resident-dashboard-property-summary {
-  display: flex;
-  align-items: center;
-
-  gap: 14px;
-
-  padding: 15px;
-
-  border: 1px solid #eeeaf1;
-  border-radius: 8px;
-
-  background: #faf9fb;
-}
-
-.resident-dashboard-property-summary-icon {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 8px;
-
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-.resident-dashboard-property-summary-content {
-  min-width: 0;
-
-  flex: 1;
-}
-
-.resident-dashboard-property-summary-content strong {
-  display: block;
-
-  margin-bottom: 4px;
-
-  color: #3a3040;
-
-  font-size: 11px;
-}
-
-.resident-dashboard-property-summary-content span {
-  display: block;
-
-  color: #928998;
-
-  font-size: 9px;
-  line-height: 1.5;
-}
-
-.resident-dashboard-property-status {
-  padding: 5px 9px;
-
-  border-radius: 20px;
-
-  background: #eee8f2;
-  color: #563f6b;
-
-  font-size: 8px;
-  font-weight: 800;
 }
 
 
@@ -576,6 +504,174 @@
 
 
 /* =========================================================
+   COMMUNITY ANNOUNCEMENTS
+========================================================= */
+
+/* Sits under the request and quick-action cards, across the full width. */
+.resident-dashboard-announcements-card {
+  grid-column: 1 / -1;
+}
+
+.resident-dashboard-announcements-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.resident-dashboard-announcement-item {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 13px;
+
+  padding: 14px 15px;
+
+  border: 1px solid #eeeaf1;
+  border-left: 3px solid #563f6b;
+  border-radius: 8px;
+
+  background: #faf9fb;
+
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.resident-dashboard-announcement-item:hover {
+  border-color: #ddd2e5;
+  border-left-color: #563f6b;
+
+  background: #f6f2f9;
+}
+
+.resident-dashboard-announcement-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 8px;
+
+  background: #eee8f2;
+  color: #563f6b;
+}
+
+.resident-dashboard-announcement-copy {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.resident-dashboard-announcement-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 6px;
+}
+
+.resident-dashboard-announcement-category {
+  padding: 3px 8px;
+
+  border-radius: 20px;
+
+  background: #eee8f2;
+  color: #563f6b;
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.resident-dashboard-announcement-meta time {
+  color: #a39aa9;
+
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.resident-dashboard-announcement-copy h3 {
+  margin: 0 0 4px;
+
+  color: #3a3040;
+
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+/* Long messages are cut to two lines; the full text is on the announcements page. */
+.resident-dashboard-announcement-copy p {
+  margin: 0;
+
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+
+  color: #8f8696;
+
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.resident-dashboard-announcements-empty {
+  min-height: 145px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  padding: 20px;
+
+  text-align: center;
+
+  border: 1px dashed #ddd5e2;
+  border-radius: 8px;
+
+  background: #faf9fb;
+}
+
+.resident-dashboard-announcements-empty .resident-dashboard-announcement-icon {
+  margin-bottom: 6px;
+
+  border-radius: 50%;
+}
+
+.resident-dashboard-announcements-empty h3 {
+  margin: 0;
+
+  color: #4b4052;
+
+  font-size: 10px;
+}
+
+.resident-dashboard-announcements-empty p {
+  margin: 0;
+
+  color: #968d9d;
+
+  font-size: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resident-dashboard-announcement-item {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
    RESPONSIVE
 ========================================================= */
 
@@ -650,10 +746,6 @@
 
   .resident-dashboard-quick-actions {
     grid-template-columns: 1fr;
-  }
-
-  .resident-dashboard-property-summary {
-    align-items: flex-start;
   }
 
   .resident-dashboard-request-content {

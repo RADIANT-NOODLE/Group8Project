@@ -5,6 +5,7 @@ import DashboardSidebar from "../shared/DashboardSidebar";
 import { getComplaintStats } from "../../../services/complaintApi";
 import { listProperties } from "../../../services/propertyApi";
 import { listUsers } from "../../../services/userApi";
+import { getStoredUser, logout } from "../../../services/session";
 import "./HeadAdminDashboard.css";
 
 /*
@@ -14,14 +15,8 @@ GET CURRENT USER
 */
 
 function getCurrentUser() {
-    const storedUser = localStorage.getItem("valoraUser");
-
-    if (!storedUser) {
-        return null;
-    }
-
     try {
-        const user = JSON.parse(storedUser);
+        const user = getStoredUser();
 
         if (!user || typeof user !== "object") {
             return null;
@@ -45,8 +40,6 @@ function getCurrentUser() {
             role = "HOA Admin";
         } else if (["property owner", "resident"].includes(rawRole)) {
             role = "Resident";
-        } else if (["buyer", "investor"].includes(rawRole)) {
-            role = "Investor";
         } else if (rawRole === "estate agent") {
             role = "Estate Agent";
         }
@@ -311,9 +304,7 @@ function HeadAdminDashboard() {
     */
 
     function handleLogout() {
-        localStorage.removeItem("valoraUser");
-        localStorage.removeItem("valoraLoggedIn");
-        localStorage.removeItem("valoraUserEmail");
+        logout();
 
         navigate("/login", { replace: true });
     }
@@ -455,90 +446,6 @@ function HeadAdminDashboard() {
                                 icon="users"
                                 title="User Management"
                                 description="View and manage VALORA user accounts."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="head-admin-panel">
-                        <div className="head-admin-panel-header">
-                            <div>
-                                <span className="head-admin-panel-eyebrow">
-                                    SYSTEM MANAGEMENT
-                                </span>
-
-                                <h2>Platform Modules</h2>
-                            </div>
-                        </div>
-
-                        <div className="head-admin-module-grid">
-                            <ManagementCard
-                                to="/property-management"
-                                icon="property"
-                                title="Properties"
-                                description="View the development's property records and listings."
-                            />
-
-                            <ManagementCard
-                                to="/property-requests"
-                                icon="requests"
-                                title="Property Requests"
-                                description="Review resident requests to sell or rent properties."
-                            />
-
-                            <ManagementCard
-                                to="/property-approvals"
-                                icon="property"
-                                title="Property Approvals"
-                                description="Review property submissions requiring approval."
-                            />
-
-                            <ManagementCard
-                                to="/resident-directory"
-                                icon="users"
-                                title="Resident Directory"
-                                description="View resident information managed by VALORA."
-                            />
-
-                            <ManagementCard
-                                to="/maintenance"
-                                icon="maintenance"
-                                title="Maintenance"
-                                description="Monitor maintenance activity and requests."
-                            />
-
-                            <ManagementCard
-                                to="/providers"
-                                icon="providers"
-                                title="Service Provider Directory"
-                                description="View community service providers."
-                            />
-
-                            <ManagementCard
-                                to="/community-announcements"
-                                icon="announcements"
-                                title="Community Announcements"
-                                description="Manage community announcements."
-                            />
-
-                            <ManagementCard
-                                to="/community-analytics"
-                                icon="analytics"
-                                title="Community Analytics"
-                                description="Review available community and platform insights."
-                            />
-
-                            <ManagementCard
-                                to="/ai-training-data"
-                                icon="ai"
-                                title="AI Training Data"
-                                description="Access the platform's AI training data module."
-                            />
-
-                            <ManagementCard
-                                to="/landing-page-settings"
-                                icon="property"
-                                title="Landing Page Settings"
-                                description="Manage configurable VALORA landing-page content."
                             />
                         </div>
                     </div>

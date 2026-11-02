@@ -47,23 +47,50 @@ def test_privileged_roles_cannot_self_register():
 
     from app.identity.schemas.auth import RegisterRequest
 
-    base = dict(full_name="Test User", email="t@example.com", password="Str0ng!Pass")
+    base = dict(
+        full_name="Test User", email="t@example.com", password="Str0ng!Pass", phoneno="082 123 4567"
+    )
     assert RegisterRequest(**base, role="resident").role.value == "resident"
     for role in ("estate_agent", "hoa_admin", "head_admin"):
         with pytest.raises(ValidationError):
             RegisterRequest(**base, role=role)
 
 
-@pytest.mark.parametrize("phone", ["+27 82 123 4567", "0821234567", "(011) 555-1234", None, ""])
-def test_valid_phone_numbers(phone):
+@pytest.mark.parametrize(
+    ("phone", "stored"),
+    [
+        ("+27 82 123 4567", "+27821234567"),
+        ("0821234567", "+27821234567"),
+        ("(011) 555-1234", "+27115551234"),
+        (None, None),
+        ("", None),
+    ],
+)
+def test_valid_phone_numbers(phone, stored):
     from app.common.validators import validate_phone
 
-    assert validate_phone(phone) in (None, phone.strip() if phone else None)
+    assert validate_phone(phone) == stored
 
 
-@pytest.mark.parametrize("phone", ["abc", "12", "082<script>", "++27821234567"])
+@pytest.mark.parametrize(
+    "phone",
+    ["abc", "12", "082<script>", "++27821234567", "+1 202 555 0143", "08212345678", "0021234567"],
+)
 def test_invalid_phone_numbers(phone):
     from app.common.validators import validate_phone
 
     with pytest.raises(ValueError):
         validate_phone(phone)
+
+
+def test_registration_requires_a_south_african_phone():
+    pytest.importorskip("email_validator")
+    from pydantic import ValidationError
+
+    from app.identity.schemas.auth import RegisterRequest
+
+    base = dict(full_name="Test User", email="t@example.com", password="Str0ng!Pass")
+    for phone in (None, "", "+1 202 555 0143"):
+        with pytest.raises(ValidationError):
+            RegisterRequest(**base, phoneno=phone)
+    assert RegisterRequest(**base, phoneno="082 123 4567").phoneno == "+27821234567"

@@ -5,6 +5,7 @@ import DashboardSidebar from "../shared/DashboardSidebar";
 import { listAnnouncements } from "../../../services/announcementApi";
 import { apiRequest } from "../../../services/apiClient";
 import { listComplaints } from "../../../services/complaintApi";
+import MyPropertyCard from "./MyPropertyCard";
 import "./ResidentDashboard.css";
 
 async function readPublishedAnnouncements() {
@@ -56,15 +57,7 @@ function ResidentDashboard({ user: suppliedUser }) {
                 ? payload
                 : payload?.items || payload?.records || (payload?.unit_no ? [payload] : []);
 
-            setMyProperty(
-                records.length > 0
-                    ? {
-                          unit_no: records[0].unit_no,
-                          complex_name: records[0].complex_name,
-                          address: records[0].street_address,
-                      }
-                    : null
-            );
+            setMyProperty(records[0] ?? null);
         }
 
         if (complaints.status === "fulfilled") setComplaintsCount(complaints.value.items.length);
@@ -114,22 +107,6 @@ function ResidentDashboard({ user: suppliedUser }) {
                         <div className="resident-dashboard-stat-top">
                             <div className="resident-dashboard-stat-icon">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M3 10.5 12 3l9 7.5" />
-                                    <path d="M5.5 9.5V21h13V9.5" />
-                                    <path d="M9 21v-6h6v6" />
-                                </svg>
-                            </div>
-                            <span className="resident-dashboard-stat-label">My Property</span>
-                        </div>
-                        <div className="resident-dashboard-stat-number">
-                            {loading ? "..." : (myProperty ? "1" : "0")}
-                        </div>
-                    </div>
-
-                    <div className="resident-dashboard-stat-card">
-                        <div className="resident-dashboard-stat-top">
-                            <div className="resident-dashboard-stat-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                     <path d="M12 3 21 6v6c0 5-3.5 8-9 9-5.5-1-9-4-9-9V6l9-3Z" />
                                     <path d="M12 8v5" />
                                     <path d="M12 16h.01" />
@@ -159,50 +136,11 @@ function ResidentDashboard({ user: suppliedUser }) {
                     </div>
                 </div>
 
+                {/* MY PROPERTY */}
+                <MyPropertyCard record={myProperty} loading={loading} />
+
                 {/* MAIN CONTENT */}
                 <div className="resident-dashboard-content-grid">
-                    {/* MY PROPERTY CARD */}
-                    <div className="resident-dashboard-card">
-                        <div className="resident-dashboard-card-header">
-                            <div>
-                                <h2>My Property</h2>
-                                <p>Property information linked to your account.</p>
-                            </div>
-                            <Link to="/property" className="resident-dashboard-view-all">View Property</Link>
-                        </div>
-
-                        {loading ? (
-                            <p style={{ padding: "20px", color: "#8a848f" }}>Loading property details...</p>
-                        ) : myProperty ? (
-                            <div className="resident-dashboard-property-summary">
-                                <div className="resident-dashboard-property-summary-icon">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                        <path d="M3 10.5 12 3l9 7.5" />
-                                        <path d="M5.5 9.5V21h13V9.5" />
-                                        <path d="M9 21v-6h6v6" />
-                                    </svg>
-                                </div>
-                                <div className="resident-dashboard-property-summary-content">
-                                    <strong>Unit {myProperty.unit_no}</strong>
-                                    <span>{myProperty.complex_name} · {myProperty.address}</span>
-                                </div>
-                                <span className="resident-dashboard-property-status">Registered</span>
-                            </div>
-                        ) : (
-                            <div className="resident-dashboard-empty-state">
-                                <div className="resident-dashboard-empty-icon">
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                        <path d="M3 10.5 12 3l9 7.5" />
-                                        <path d="M5.5 9.5V21h13V9.5" />
-                                        <path d="M9 21v-6h6v6" />
-                                    </svg>
-                                </div>
-                                <h3>No property linked yet</h3>
-                                <p>Your property will appear here once the HOA has verified and assigned it to your account.</p>
-                            </div>
-                        )}
-                    </div>
-
                     {/* PROPERTY REQUEST CARD */}
                     <div className="resident-dashboard-card resident-dashboard-request-card">
                         <div className="resident-dashboard-request-content">
@@ -273,7 +211,7 @@ function ResidentDashboard({ user: suppliedUser }) {
 
                         {announcements.length > 0 ? (
                             <div className="resident-dashboard-announcements-list">
-                                {announcements.slice(0, 4).map((announcement, index) => (
+                                {announcements.slice(0, 3).map((announcement, index) => (
                                     <article className="resident-dashboard-announcement-item" key={announcement.id || index}>
                                         <div className="resident-dashboard-announcement-icon">
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -283,7 +221,14 @@ function ResidentDashboard({ user: suppliedUser }) {
                                         </div>
                                         <div className="resident-dashboard-announcement-copy">
                                             <div className="resident-dashboard-announcement-meta">
-                                                {announcement.category && <span>{announcement.category}</span>}
+                                                {announcement.category && (
+                                                    <span className="resident-dashboard-announcement-category">
+                                                        {announcement.category}
+                                                    </span>
+                                                )}
+                                                <time dateTime={announcement.date || undefined}>
+                                                    {formatAnnouncementDate(announcement.date)}
+                                                </time>
                                             </div>
                                             <h3>{announcement.title || "Community Announcement"}</h3>
                                             <p>{announcement.content || announcement.description || "Open the announcements page to view this update."}</p>

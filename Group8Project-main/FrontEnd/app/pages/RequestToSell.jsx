@@ -27,7 +27,7 @@ function RequestToSell() {
     // Safely get role (lowercase from API) and user info
     const userRole = String(user?.role || "").toLowerCase();
     // check for lowercase matches
-    const isAllowed = ["resident", "investor"].includes(userRole);
+    const isAllowed = userRole === "resident";
 
 
     /* =====================================================
@@ -84,7 +84,7 @@ function RequestToSell() {
     /* =====================================================
        ACCESS CONTROL (FIXED FOR API ROLES)
     ===================================================== */
-    // Check for lowercase "resident" and "investor"
+    // Only residents may request a sale or rental
     if (!isAllowed) {
         return (
             <div className="request-page">
@@ -100,7 +100,7 @@ function RequestToSell() {
                                 </svg>
                             </div>
                             <h1>Access Restricted</h1>
-                            <p>Only residents and investors can submit property sale or rental requests.</p>
+                            <p>Only residents can submit property sale or rental requests.</p>
                             <button type="button" onClick={() => navigate("/dashboard")}>
                                 Return to Dashboard
                             </button>

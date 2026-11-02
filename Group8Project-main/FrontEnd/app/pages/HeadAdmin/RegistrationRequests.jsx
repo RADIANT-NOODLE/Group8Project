@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { roleLabel } from "../../services/userApi";
 import "./RegistrationRequests.css";
+import { getSessionToken, getStoredUser } from "../../services/session";
 
 /* =========================================================
    ROLE HELPERS
@@ -12,11 +13,11 @@ function normalizeRole(value) {
     const role = String(value || "").trim().toLowerCase();
 
     if (["head admin", "head administrator", "headadministrator", "head_admin"].includes(role)) {
-        return "Head Admin";
+        return "head_admin";
     }
 
     if (["hoa", "hoa admin", "hoa administrator", "administrator", "hoa_admin"].includes(role)) {
-        return "HOA Admin";
+        return "hoa_admin";
     }
 
     return value || "";
@@ -28,9 +29,9 @@ function normalizeRole(value) {
 
 function getCurrentUser() {
     try {
-        const storedUser = localStorage.getItem("valoraUser");
+        const storedUser = getStoredUser();
         if (!storedUser) return null;
-        const user = JSON.parse(storedUser);
+        const user = storedUser;
         if (!user || typeof user !== "object") return null;
 
         const firstName = user.firstName || user.firstname || user.first_name || "";
@@ -63,7 +64,7 @@ function isApproved(user) {
 ========================================================= */
 
 async function fetchAllUsersFromApi() {
-    const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+    const token = getSessionToken();
     const response = await fetch("http://127.0.0.1:8000/api/v1/users/", { 
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json"}
     });
@@ -133,7 +134,7 @@ function RegistrationRequests() {
         setModalConfig(prev => ({ ...prev, isOpen: false }));
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
             const response = await fetch(`http://127.0.0.1:8000/api/v1/users/${actionUserId}/${actionType}`, {
                 method: "POST",
@@ -183,11 +184,11 @@ function RegistrationRequests() {
         return <Navigate to="/registration-pending" replace />;
     }
 
-    if (!["Head Admin", "HOA Admin"].includes(currentUser.role)) {
+    if (!["head_admin", "hoa_admin"].includes(currentUser.role)) {
         return <Navigate to="/dashboard" replace />;
     }
 
-    const isHeadAdmin = currentUser.role === "Head Admin";
+    const isHeadAdmin = currentUser.role === "head_admin";
 
     /* =====================================================
        PAGE CONTENT
@@ -219,7 +220,7 @@ function RegistrationRequests() {
 
                         <div>
                             <strong>{currentUser.fullName}</strong>
-                            <span>{currentUser.role}</span>
+                            <span>{roleLabel(currentUser.role)}</span>
                         </div>
                     </div>
                 </header>

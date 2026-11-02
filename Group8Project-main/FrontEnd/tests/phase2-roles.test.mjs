@@ -11,7 +11,6 @@ test('every backend role has a label, a landing route and a definition', () => {
   assert.deepEqual(ALL_ROLES, [
     'casual_visitor',
     'resident',
-    'investor',
     'estate_agent',
     'hoa_admin',
     'service_provider',
@@ -35,11 +34,10 @@ test('legacy display strings normalise into the one vocabulary', () => {
     'Head Admin': 'hoa_admin',
     'Head Administrator': 'hoa_admin',
     'Property Owner': 'resident',
-    Buyer: 'investor',
     agent: 'estate_agent',
     'Estate Agent': 'estate_agent',
     Visitor: 'casual_visitor',
-    '  investor  ': 'investor',
+    '  resident  ': 'resident',
   };
 
   for (const [input, expected] of Object.entries(legacy)) {
@@ -50,6 +48,9 @@ test('legacy display strings normalise into the one vocabulary', () => {
   assert.equal(roles.toRole(''), '');
   assert.equal(roles.toRole(null), '');
   assert.equal(roles.isKnownRole('superuser'), false);
+  /* investors were removed from VALORA */
+  assert.equal(roles.isKnownRole('investor'), false);
+  assert.equal(roles.toRole('Buyer'), '');
   assert.equal(roles.isKnownRole('resident'), true);
 });
 
@@ -66,7 +67,7 @@ test('route access follows the matrix', () => {
   assert.equal(roles.canAccessRoute('resident', '/agent-listings'), false);
   assert.equal(roles.canAccessRoute('resident', '/user-management'), false);
   assert.equal(roles.canAccessRoute('resident', '/property-approvals'), false);
-  assert.equal(roles.canAccessRoute('investor', '/roi'), true);
+  assert.equal(roles.canAccessRoute('resident', '/valuation'), true);
   assert.equal(roles.canAccessRoute('resident', '/roi'), false);
   assert.equal(roles.canAccessRoute('estate_agent', '/agent-edit-listings'), true);
   assert.equal(roles.canAccessRoute('service_provider', '/head-admin'), false);
@@ -78,10 +79,10 @@ test('route access follows the matrix', () => {
     }
   }
 
-  /* maintenance belongs to the administrators; AI valuation to investors */
-  assert.equal(roles.canAccessRoute('resident', '/maintenance'), false);
+  /* maintenance is run by the administrators; residents log and rate their own requests */
+  assert.equal(roles.canAccessRoute('resident', '/maintenance'), true);
   assert.equal(roles.canAccessRoute('hoa_admin', '/maintenance'), true);
-  assert.equal(roles.canAccessRoute('investor', '/maintenance'), false);
+  assert.equal(roles.canAccessRoute('estate_agent', '/maintenance'), false);
 
   /* public pages */
   assert.equal(roles.canAccessRoute('', '/properties'), true);
@@ -130,7 +131,9 @@ test('pages reach the session only through the session module', async () => {
   for (const pageFile of pageFiles) {
     const source = await readFile(new URL(pageFile, pagesDirectory), 'utf8');
     for (const key of LEGACY_SESSION_KEYS) {
-      if (source.includes(key)) offenders.push(`${pageFile} uses ${key}`);
+      /* whole key only: "valoraUsers" is a different storage key */
+      const pattern = new RegExp(`${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_])`);
+      if (pattern.test(source)) offenders.push(`${pageFile} uses ${key}`);
     }
   }
 

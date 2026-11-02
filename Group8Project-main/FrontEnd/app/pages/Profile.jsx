@@ -11,6 +11,8 @@ import { getPasswordErrorMessage } from "../services/authErrorMessages.js";
 import { checkPasswordRules, validateNewPassword } from "../services/validation.js";
 import PasswordRequirements from "./Auth/PasswordRequirements.jsx";
 import "./Profile.css";
+import { showAlert } from "../components/AppDialog";
+import { getSessionToken } from "../services/session";
 
 function Profile() {
 
@@ -47,7 +49,7 @@ function Profile() {
 
   // Sessions started before phone numbers were returned have none cached: read it once.
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = getSessionToken();
     if (!token) return;
 
     fetchMe(token)
@@ -178,7 +180,7 @@ function Profile() {
 
    const saveProfile = async () => {
     if (editName.trim().length < 2) {
-      alert("Please enter your full name.");
+      showAlert("Please enter your full name.");
       return;
     }
 
@@ -198,11 +200,11 @@ function Profile() {
       });
 
       setEditing(false);
-      alert("Profile updated successfully.");
+      showAlert("Profile updated successfully.");
 
     } catch (error) {
       console.error("Profile update error:", error);
-      alert(error.message);
+      showAlert(error.message);
     } finally {
       setIsSaving(false);
     }

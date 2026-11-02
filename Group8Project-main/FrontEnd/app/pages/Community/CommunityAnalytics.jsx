@@ -7,7 +7,11 @@ import React, {
 import { Link } from "react-router-dom";
 import { getProperties } from "../../data/propertyStorage";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import "./CommunityAnalytics.css";
+import "./CommunityAnalytics.css";
+import { roleLabel } from "../../services/roleMap";
+import { listStoredKeys, readStoredItem } from "../../services/browserStorage";
+import { COMPLAINT_STATUS, toComplaintStatus } from "../../services/statusMap";
+import { getStoredUser } from "../../services/session";
 
 const STORAGE_KEYS = {
     users: "valoraUsers",
@@ -34,7 +38,7 @@ const UPDATE_EVENTS = [
 
 function readStoredArray(key) {
     try {
-        const value = JSON.parse(localStorage.getItem(key) || "[]");
+        const value = JSON.parse(readStoredItem(key) || "[]");
 
         return Array.isArray(value) ? value : [];
     } catch {
@@ -44,9 +48,7 @@ function readStoredArray(key) {
 
 function readStoredUser() {
     try {
-        const user = JSON.parse(
-            localStorage.getItem("valoraUser") || "null"
-        );
+        const user = getStoredUser();
 
         return user && typeof user === "object" ? user : null;
     } catch {
@@ -62,7 +64,7 @@ function normalizeRole(value = "") {
         role === "head administrator" ||
         role === "headadministrator"
     ) {
-        return "Head Admin";
+        return "head_admin";
     }
 
     if (
@@ -72,19 +74,15 @@ function normalizeRole(value = "") {
         role === "administrator" ||
         role === "admin"
     ) {
-        return "HOA Admin";
+        return "hoa_admin";
     }
 
     if (role === "resident" || role === "property owner") {
-        return "Resident";
-    }
-
-    if (role === "investor" || role === "buyer") {
-        return "Investor";
+        return "resident";
     }
 
     if (role === "estate agent" || role === "agent") {
-        return "Estate Agent";
+        return "estate_agent";
     }
 
     return value || "User";
@@ -264,8 +262,7 @@ function loadProviders() {
     const seen = new Set();
 
     try {
-        for (let index = 0; index < localStorage.length; index += 1) {
-            const key = localStorage.key(index);
+        for (const key of listStoredKeys()) {
 
             if (
                 !key ||
@@ -278,7 +275,7 @@ function loadProviders() {
             let parsed;
 
             try {
-                parsed = JSON.parse(localStorage.getItem(key) || "null");
+                parsed = JSON.parse(readStoredItem(key) || "null");
             } catch {
                 continue;
             }
@@ -561,19 +558,13 @@ function CommunityAnalytics() {
         const residents = approvedUsers.filter(
             (user) => normalizeRole(
                 user.role || user.userRole || user.userType || user.accountType
-            ) === "Resident"
-        );
-
-        const investors = approvedUsers.filter(
-            (user) => normalizeRole(
-                user.role || user.userRole || user.userType || user.accountType
-            ) === "Investor"
+            ) === "resident"
         );
 
         const agents = approvedUsers.filter(
             (user) => normalizeRole(
                 user.role || user.userRole || user.userType || user.accountType
-            ) === "Estate Agent"
+            ) === "estate_agent"
         );
 
         const pendingRegistrations = data.users.filter(
@@ -638,7 +629,6 @@ function CommunityAnalytics() {
         return {
             approvedUsers,
             residents,
-            investors,
             agents,
             pendingRegistrations,
             occupiedProperties,
@@ -743,7 +733,7 @@ function CommunityAnalytics() {
                             </span>
 
                             <span className="community-analytics-profile-role">
-                                {currentRole}
+                                {roleLabel(currentRole)}
                             </span>
                         </div>
                     </div>
@@ -810,11 +800,6 @@ function CommunityAnalytics() {
                                 <div>
                                     <span>Approved Residents</span>
                                     <strong>{analytics.residents.length}</strong>
-                                </div>
-
-                                <div>
-                                    <span>Investors</span>
-                                    <strong>{analytics.investors.length}</strong>
                                 </div>
 
                                 <div>
@@ -967,19 +952,19 @@ function CommunityAnalytics() {
                                     <strong>
                                         {data.complaints.filter(
                                             (item) =>
-                                                String(item.status || "").toLowerCase() ===
-                                                "resolved"
+                                                toComplaintStatus(item.status) ===
+                                                COMPLAINT_STATUS.resolved
                                         ).length}
                                     </strong>
                                 </div>
 
                                 <div>
-                                    <span>Cancelled</span>
+                                    <span>Closed</span>
                                     <strong>
                                         {data.complaints.filter(
                                             (item) =>
-                                                String(item.status || "").toLowerCase() ===
-                                                "cancelled"
+                                                toComplaintStatus(item.status) ===
+                                                COMPLAINT_STATUS.closed
                                         ).length}
                                     </strong>
                                 </div>
@@ -1032,8 +1017,8 @@ function CommunityAnalytics() {
                                     <strong>
                                         {data.maintenance.filter(
                                             (item) =>
-                                                String(item.status || "").toLowerCase() ===
-                                                "resolved"
+                                                toComplaintStatus(item.status) ===
+                                                COMPLAINT_STATUS.resolved
                                         ).length}
                                     </strong>
                                 </div>

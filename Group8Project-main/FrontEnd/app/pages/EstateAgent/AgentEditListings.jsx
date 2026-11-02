@@ -13,6 +13,8 @@ import {
 } from "../../data/propertyRequests";
 
 import "./AgentEditListings.css";
+import { showConfirm } from "../../components/AppDialog";
+import { getStoredUser } from "../../services/session";
 
 /*
 =========================================================
@@ -123,13 +125,13 @@ function AgentEditListings() {
 
     const getCurrentAgent = () => {
         try {
-            const storedUser = localStorage.getItem("valoraUser");
+            const storedUser = getStoredUser();
 
             if (!storedUser) {
                 return null;
             }
 
-            return JSON.parse(storedUser);
+            return storedUser;
         } catch (error) {
             console.error(
                 "Unable to read current VALORA user:",
@@ -683,7 +685,7 @@ function AgentEditListings() {
     =========================================================
     */
 
-    const handleRemoveListing = (property) => {
+    const handleRemoveListing = async (property) => {
         const request = getRequestForProperty(property.id);
 
         if (!request) {
@@ -693,7 +695,7 @@ function AgentEditListings() {
             return;
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await showConfirm(
             `Remove the listing information for ${
                 property.unitNumber || property.id
             }? The unit itself will not be deleted.`

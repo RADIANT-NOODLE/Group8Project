@@ -6,7 +6,7 @@ import { dashboardPathForRole, ROLES } from "../../services/roleMap.js";
 import { register } from "../../services/session.js";
 import {
     checkPasswordRules,
-    validatePhone,
+    validateRequiredPhone,
     validateRegistrationPassword,
 } from "../../services/validation.js";
 import PasswordRequirements from "./PasswordRequirements.jsx";
@@ -32,13 +32,14 @@ function Register() {
             !firstName.trim() ||
             !lastName.trim() ||
             !email.trim() ||
+            !phone.trim() ||
             !password
         ) {
             setError("Please complete all registration fields.");
             return;
         }
 
-        const phoneProblem = validatePhone(phone);
+        const phoneProblem = validateRequiredPhone(phone);
         if (phoneProblem) {
             setError(phoneProblem);
             return;
@@ -79,12 +80,12 @@ function Register() {
             <div className="auth-card">
                 {/* LEFT SIDE */}
                 <div className="auth-sidebar">
-                    <div className="auth-logo">
+                    <Link to="/" className="auth-logo">
                         <img
-                            src="/assets/valora-logo.svg"
-                            alt="VALORA"
+                            src="/assets/valora-logo.jpg"
+                            alt="VALORA - go to home page"
                         />
-                    </div>
+                    </Link>
 
                     <div className="auth-sidebar-content">
                         <p className="auth-eyebrow">
@@ -176,9 +177,11 @@ function Register() {
                                     onChange={(event) =>
                                         setPhone(event.target.value)
                                     }
-                                    placeholder="e.g. +27 82 123 4567"
+                                    placeholder="e.g. 082 123 4567"
                                     autoComplete="tel"
+                                    inputMode="tel"
                                     maxLength={20}
+                                    required
                                 />
                             </div>
 

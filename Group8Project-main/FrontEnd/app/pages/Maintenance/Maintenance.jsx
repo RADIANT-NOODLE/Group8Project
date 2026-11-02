@@ -13,11 +13,14 @@ import {
     updateWorkOrder,
 } from "../../services/workOrderApi";
 import {
+    COMPLAINT_STATUS,
     COMPLAINT_STATUSES,
+    WORK_ORDER_STATUS,
     complaintStatusLabel,
     workOrderStatusLabel,
 } from "../../services/statusMap";
 import "./Maintenance.css";
+import { getStoredUser } from "../../services/session";
 
 /**
  * HOA Maintenance page.
@@ -51,7 +54,7 @@ const ACTIVE_EXCLUDED = ["resolved", "closed"];
 
 function readUser() {
     try {
-        return JSON.parse(localStorage.getItem("valoraUser") || "null");
+        return getStoredUser();
     } catch {
         return null;
     }
@@ -264,7 +267,7 @@ function Maintenance() {
 
     const totalRequests = requests.length;
     const activeRequests = requests.filter((r) => !ACTIVE_EXCLUDED.includes(r.status)).length;
-    const inProgressRequests = requests.filter((r) => r.status === "in_progress").length;
+    const inProgressRequests = requests.filter((r) => r.status === COMPLAINT_STATUS.in_progress).length;
     const resolvedRequests = requests.filter((r) => ACTIVE_EXCLUDED.includes(r.status)).length;
 
     function handleFormChange(event) {
@@ -324,10 +327,10 @@ function Maintenance() {
             // Keep the linked work order in step with the request.
             const workOrder = request.workOrder;
             if (workOrder && isHOAAdmin) {
-                if (newStatus === "resolved" && workOrder.status !== "completed") {
-                    await updateWorkOrder(workOrder.id, { status: "completed" });
-                } else if (newStatus === "in_progress" && workOrder.status === "assigned") {
-                    await updateWorkOrder(workOrder.id, { status: "in_progress" });
+                if (newStatus === COMPLAINT_STATUS.resolved && workOrder.status !== WORK_ORDER_STATUS.completed) {
+                    await updateWorkOrder(workOrder.id, { status: WORK_ORDER_STATUS.completed });
+                } else if (newStatus === COMPLAINT_STATUS.in_progress && workOrder.status === WORK_ORDER_STATUS.assigned) {
+                    await updateWorkOrder(workOrder.id, { status: WORK_ORDER_STATUS.in_progress });
                 }
             }
 
