@@ -54,3 +54,28 @@ class ReviewService:
         if provider is None:
             raise NotFoundException(f"Service provider with id {provider_id} was not found.")
         return provider
+
+    async def delete_review(self, provider_id: int, review_id: int) -> None:
+        # 1. Find the review
+        review = await self._repo.get_by_id(review_id)
+        
+        if not review:
+            raise NotFoundException("Review not found")
+            
+        if review.provider_id != provider_id:
+            raise NotFoundException("Review does not belong to this provider")
+            
+        # 2. Delete the review from the database
+        await self._db.delete(review)
+        
+        # 3. Recalculate the provider's average rating and total reviews
+        provider = await self._get_provider_or_404(provider_id)
+        avg, count = await self._repo.rating_summary(provider_id)
+        
+        provider.total_reviews = count
+        provider.avg_rating = (
+            avg.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) if avg is not None else None
+        )
+        
+        # 4. Save changes
+        await self._db.commit()

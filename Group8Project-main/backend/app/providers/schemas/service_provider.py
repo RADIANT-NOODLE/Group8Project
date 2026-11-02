@@ -10,6 +10,7 @@ class ServiceProviderCreate(BaseModel):
     email: EmailStr
     verified: bool = False
     emergency_available: bool = False
+    description: str | None = Field(default=None, max_length=1000)
 
 
 class ServiceProviderUpdate(BaseModel):
@@ -19,6 +20,7 @@ class ServiceProviderUpdate(BaseModel):
     email: EmailStr | None = None
     verified: bool | None = None
     emergency_available: bool | None = None
+    description: str | None = Field(default=None, max_length=1000)
 
 
 class ServiceProviderResponse(BaseModel):
@@ -27,6 +29,7 @@ class ServiceProviderResponse(BaseModel):
     trade: str
     phone: str
     email: str
+    description: str | None = None
     avg_rating: Decimal | None
     total_reviews: int | None
     verified: bool

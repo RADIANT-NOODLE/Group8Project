@@ -60,3 +60,11 @@ class UserRepository:
         """Delete a user from the database."""
         await self._db.delete(user)
         await self._db.commit()
+
+    async def list_all(self) -> list[User]:
+        """Return all users in the database, newest first."""
+        result = await self._db.execute(
+            select(User)
+            .order_by(User.created_at.desc())
+        )
+        return list(result.scalars().all())

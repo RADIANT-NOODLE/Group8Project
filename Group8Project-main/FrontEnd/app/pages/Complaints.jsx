@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import "./Complaints.css";
-
-const STORAGE_KEY = "valoraComplaints";
-const UPDATED_EVENT = "valoraComplaintsUpdated";
 
 const COMPLAINT_CATEGORIES = [
     "Security",
@@ -25,6 +22,7 @@ const STATUSES = [
     "Cancelled",
 ];
 
+// Helper to read the logged-in user from local storage
 function readUser() {
     try {
         return JSON.parse(localStorage.getItem("valoraUser") || "null");
@@ -35,30 +33,20 @@ function readUser() {
 
 function normaliseRole(value = "") {
     const role = String(value).trim().toLowerCase();
-
     if (role.includes("head admin")) return "Head Admin";
-    if (role.includes("hoa") || role.includes("homeowners association")) {
-        return "HOA Admin";
-    }
+    if (role.includes("hoa") || role.includes("homeowners association")) return "HOA Admin";
     if (role.includes("estate agent")) return "Estate Agent";
     if (role.includes("investor") || role === "buyer") return "Investor";
-    if (
-        role.includes("resident") ||
-        role === "property owner"
-    ) return "Resident";
-
+    if (role.includes("resident") || role === "property owner") return "Resident";
     return value || "User";
 }
 
 function getUserRole(user) {
-    return normaliseRole(
-        user?.role || user?.userType || user?.accountType || ""
-    );
+    return normaliseRole(user?.role || user?.userType || user?.accountType || "");
 }
 
 function getUserName(user) {
     if (!user) return "";
-
     return (
         user.fullName ||
         user.name ||
@@ -68,45 +56,10 @@ function getUserName(user) {
     ).trim();
 }
 
-function getUserIdentity(user) {
-    if (!user) return "";
-
-    const stableId =
-        user.id ??
-        user.userId ??
-        user._id ??
-        user.email ??
-        user.username;
-
-    return stableId == null ? "" : String(stableId).trim().toLowerCase();
-}
-
-function loadComplaints() {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-
-        if (!stored) return [];
-
-        const parsed = JSON.parse(stored);
-
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveComplaints(complaints) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(complaints));
-    window.dispatchEvent(new Event(UPDATED_EVENT));
-}
-
 function formatDate(value) {
     if (!value) return "—";
-
     const date = new Date(value);
-
     if (Number.isNaN(date.getTime())) return value;
-
     return date.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",
@@ -130,19 +83,21 @@ function statusClass(status) {
         Resolved: "complaints-status-resolved",
         Cancelled: "complaints-status-cancelled",
     };
-
     return classes[status] || classes.Submitted;
 }
 
 export default function Complaints() {
     const [user, setUser] = useState(readUser);
-    const [complaints, setComplaints] = useState(loadComplaints);
+    const [complaints, setComplaints] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [category, setCategory] = useState("Security");
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState("Low");
+    
     const [complaintImage, setComplaintImage] = useState("");
     const [imageName, setImageName] = useState("");
+    
     const [search, setSearch] = useState("");
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [notice, setNotice] = useState("");
@@ -150,104 +105,95 @@ export default function Complaints() {
 
     const role = getUserRole(user);
     const userName = getUserName(user);
-    const userIdentity = getUserIdentity(user);
-
     const isAdmin = role === "HOA Admin" || role === "Head Admin";
     const canSubmit = ["Resident", "Investor", "Estate Agent"].includes(role);
 
-    const refreshComplaints = useCallback(() => {
-        setComplaints(loadComplaints());
-    }, []);
+    // 1. Fetch data from API
+    const fetchComplaints = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const response = await fetch("http://127.0.0.1:8000/api/v1/complaints", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Handle both direct arrays and wrapped objects
+                const list = Array.isArray(data) ? data : (data.complaints || data.items || []);
+                setComplaints(list);
+            } else {
+                setError("Failed to load complaints from the server.");
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Could not connect to the backend server.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const refresh = () => {
-            setUser(readUser());
-            refreshComplaints();
-        };
+        setUser(readUser());
+        fetchComplaints();
+    }, []);
 
-        window.addEventListener(UPDATED_EVENT, refresh);
-        window.addEventListener("storage", refresh);
-        window.addEventListener("focus", refresh);
-
-        return () => {
-            window.removeEventListener(UPDATED_EVENT, refresh);
-            window.removeEventListener("storage", refresh);
-            window.removeEventListener("focus", refresh);
-        };
-    }, [refreshComplaints]);
-
+    // 2. Filter based on role
     const visibleComplaints = useMemo(() => {
         if (isAdmin) return complaints;
-
-        if (!userIdentity) return [];
-
+        
+        // For residents, match by user id from the backend (user_id)
+        // If your backend returns user_id, we filter on that. Otherwise fallback to email match.
         return complaints.filter((complaint) => {
-            const ownerIdentity = String(
-                complaint.submitterId || ""
-            ).trim().toLowerCase();
-
-            return ownerIdentity !== "" && ownerIdentity === userIdentity;
+            return complaint.email === user?.email || 
+                   complaint.user_id === user?.id ||
+                   complaint.userId === user?.id;
         });
-    }, [complaints, isAdmin, userIdentity]);
+    }, [complaints, isAdmin, user]);
 
     const filteredComplaints = useMemo(() => {
         const term = search.trim().toLowerCase();
-
         if (!term) return visibleComplaints;
-
         return visibleComplaints.filter((complaint) =>
             [
+                complaint.complaint_id,
                 complaint.id,
                 complaint.category,
                 complaint.description,
                 complaint.priority,
                 complaint.status,
+                complaint.full_name,
                 complaint.submitterName,
-                complaint.submitterRole,
             ]
                 .filter(Boolean)
                 .some((value) => String(value).toLowerCase().includes(term))
         );
     }, [visibleComplaints, search]);
 
+    // 3. Counts
     const counts = useMemo(() => {
         return {
             total: visibleComplaints.length,
-            submitted: visibleComplaints.filter(
-                (item) => item.status === "Submitted"
-            ).length,
-            acknowledged: visibleComplaints.filter(
-                (item) => item.status === "Acknowledged"
-            ).length,
-            inProgress: visibleComplaints.filter(
-                (item) => item.status === "In Progress"
-            ).length,
-            resolved: visibleComplaints.filter(
-                (item) => item.status === "Resolved"
-            ).length,
-            cancelled: visibleComplaints.filter(
-                (item) => item.status === "Cancelled"
-            ).length,
+            submitted: visibleComplaints.filter((item) => item.status === "Submitted").length,
+            acknowledged: visibleComplaints.filter((item) => item.status === "Acknowledged").length,
+            inProgress: visibleComplaints.filter((item) => item.status === "In Progress").length,
+            resolved: visibleComplaints.filter((item) => item.status === "Resolved").length,
+            cancelled: visibleComplaints.filter((item) => item.status === "Cancelled").length,
         };
     }, [visibleComplaints]);
 
+    // 4. Handle Image 
     async function handleImageUpload(event) {
         const file = event.target.files?.[0];
-
         if (!file) return;
-
         if (!file.type.startsWith("image/")) {
             setError("Please choose a valid image file.");
-            event.target.value = "";
             return;
         }
-
         if (file.size > 2 * 1024 * 1024) {
             setError("Please choose an image smaller than 2 MB.");
-            event.target.value = "";
             return;
         }
-
         try {
             const dataUrl = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -255,113 +201,104 @@ export default function Complaints() {
                 reader.onerror = () => reject(new Error("Image could not be read."));
                 reader.readAsDataURL(file);
             });
-
             setComplaintImage(String(dataUrl));
             setImageName(file.name);
-            setError("");
         } catch {
-            setError("The image could not be loaded. Please try again.");
+            setError("The image could not be loaded.");
         }
-
-        event.target.value = "";
     }
 
-    function submitComplaint(event) {
+    // 5. Submit Complaint to API
+    async function submitComplaint(event) {
         event.preventDefault();
         setError("");
         setNotice("");
 
-        if (!canSubmit) {
-            setError("Your account role cannot submit complaints.");
-            return;
-        }
-
-        if (!userIdentity || !userName) {
-            setError("Your account details could not be identified. Please sign in again.");
-            return;
-        }
-
-        if (!description.trim()) {
-            setError("Please describe the complaint before submitting.");
-            return;
-        }
-
-        const existing = loadComplaints();
-
-        const newComplaint = {
-            id: `CMP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
-            category,
-            description: description.trim(),
-            priority,
-            createdAt: new Date().toISOString(),
-            date: new Date().toISOString(),
-            status: "Submitted",
-            image: complaintImage || null,
-            imageName: imageName || "",
-            submitterId: userIdentity,
-            submitterName: userName,
-            submitterRole: role,
-            statusUpdatedAt: new Date().toISOString(),
-            statusUpdatedBy: "",
-            adminNote: "",
-        };
+        if (!canSubmit) return setError("Your account role cannot submit complaints.");
+        if (!description.trim()) return setError("Please describe the complaint before submitting.");
 
         try {
-            saveComplaints([...existing, newComplaint]);
-            setComplaints(loadComplaints());
+            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            
+            const response = await fetch("http://127.0.0.1:8000/api/v1/complaints", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    category: category,
+                    description: description.trim(),
+                    priority: priority,
+                    user_id: user?.id || user?.user_id,
+                    unit_id: user?.unit_no || null,
+                    photo_url: complaintImage || null 
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                console.log("FULL BACKEND ERROR:", errData);
+                
+                // If the error detail is an array (FastAPI validation error), map it to a string
+                let errorMsg = "Failed to submit complaint";
+                if (Array.isArray(errData.detail)) {
+                    errorMsg = errData.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join(", ");
+                } else if (typeof errData.detail === 'string') {
+                    errorMsg = errData.detail;
+                }
+                throw new Error(errorMsg);
+            }
+
+            // Reset form
             setDescription("");
             setCategory("Security");
             setPriority("Low");
             setComplaintImage("");
             setImageName("");
-            setNotice(`Complaint ${newComplaint.id} submitted successfully.`);
-        } catch {
-            setError(
-                "The complaint could not be saved. The browser may be out of storage space."
-            );
+            setNotice("Complaint submitted successfully to the database!");
+            
+            // Refresh the list
+            await fetchComplaints();
+
+        } catch (err) {
+            if (typeof err === "object" && err !== null) {
+                setError(JSON.stringify(err));
+            } else {
+                setError(String(err.message));
+            }
         }
     }
 
-    function updateStatus(complaintId, nextStatus) {
+    // 6. Update Status (Admin Only)
+    async function updateStatus(complaintId, nextStatus) {
         if (!isAdmin || !STATUSES.includes(nextStatus)) return;
 
-        const existing = loadComplaints();
-        const target = existing.find((item) => item.id === complaintId);
-
-        if (!target) {
-            setError("This complaint could not be found. Please refresh the page.");
-            return;
-        }
-
-        const updated = existing.map((item) =>
-            item.id === complaintId
-                ? {
-                    ...item,
-                    status: nextStatus,
-                    statusUpdatedAt: new Date().toISOString(),
-                    statusUpdatedBy: userName || role,
-                }
-                : item
-        );
-
         try {
-            saveComplaints(updated);
-            setComplaints(loadComplaints());
-            setSelectedComplaint((current) =>
-                current?.id === complaintId
-                    ? updated.find((item) => item.id === complaintId)
-                    : current
-            );
-            setNotice(`Complaint ${complaintId} updated to "${nextStatus}".`);
+            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            
+            const response = await fetch(`http://127.0.0.1:8000/api/v1/complaints/${complaintId}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ status: nextStatus })
+            });
+
+            if (!response.ok) throw new Error("Failed to update status.");
+
+            await fetchComplaints();
+            setNotice(`Complaint updated to "${nextStatus}".`);
             setError("");
-        } catch {
-            setError("The complaint status could not be saved.");
+
+        } catch (err) {
+            setError(err.message);
         }
     }
 
     return (
         <div className="complaints-layout">
-            {/* Use the existing shared sidebar. Do not duplicate its markup or styles. */}
             <DashboardSidebar />
 
             <main className="complaints-main">
@@ -369,9 +306,7 @@ export default function Complaints() {
                     <span className="complaints-eyebrow">
                         {isAdmin ? "COMMUNITY MANAGEMENT" : "RESIDENT SERVICES"}
                     </span>
-
                     <h2>{isAdmin ? "Community Complaints" : "My Complaints"}</h2>
-
                     <p>
                         {isAdmin
                             ? "Review community complaints, acknowledge issues and update their progress."
@@ -382,33 +317,15 @@ export default function Complaints() {
                 {notice && (
                     <div className="complaints-notice" role="status">
                         {notice}
-                        <button type="button" onClick={() => setNotice("")} aria-label="Dismiss message">
-                            ×
-                        </button>
+                        <button type="button" onClick={() => setNotice("")} aria-label="Dismiss message">×</button>
                     </div>
                 )}
 
                 {error && (
                     <div className="complaints-error" role="alert">
                         {error}
-                        <button type="button" onClick={() => setError("")} aria-label="Dismiss error">
-                            ×
-                        </button>
+                        <button type="button" onClick={() => setError("")} aria-label="Dismiss error">×</button>
                     </div>
-                )}
-
-                {!user && (
-                    <section className="complaints-panel complaints-access-message">
-                        <h3>Sign in required</h3>
-                        <p>Please sign in to view or submit complaints.</p>
-                    </section>
-                )}
-
-                {user && !isAdmin && !canSubmit && (
-                    <section className="complaints-panel complaints-access-message">
-                        <h3>Complaints unavailable</h3>
-                        <p>Your account role does not have access to this section.</p>
-                    </section>
                 )}
 
                 {user && (isAdmin || canSubmit) && (
@@ -416,27 +333,23 @@ export default function Complaints() {
                         <section className="complaints-stats" aria-label="Complaint statistics">
                             <div className="complaints-stat-card">
                                 <span>{isAdmin ? "All Complaints" : "My Complaints"}</span>
-                                <strong>{counts.total}</strong>
+                                <strong>{loading ? "..." : counts.total}</strong>
                             </div>
                             <div className="complaints-stat-card">
                                 <span>Submitted</span>
-                                <strong>{counts.submitted}</strong>
+                                <strong>{loading ? "..." : counts.submitted}</strong>
                             </div>
                             <div className="complaints-stat-card">
                                 <span>Acknowledged</span>
-                                <strong>{counts.acknowledged}</strong>
+                                <strong>{loading ? "..." : counts.acknowledged}</strong>
                             </div>
                             <div className="complaints-stat-card">
                                 <span>In Progress</span>
-                                <strong>{counts.inProgress}</strong>
+                                <strong>{loading ? "..." : counts.inProgress}</strong>
                             </div>
                             <div className="complaints-stat-card">
                                 <span>Resolved</span>
-                                <strong>{counts.resolved}</strong>
-                            </div>
-                            <div className="complaints-stat-card">
-                                <span>Cancelled</span>
-                                <strong>{counts.cancelled}</strong>
+                                <strong>{loading ? "..." : counts.resolved}</strong>
                             </div>
                         </section>
 
@@ -475,9 +388,6 @@ export default function Complaints() {
 
                                         <div className="complaints-field">
                                             <label htmlFor="complaint-image">Attach a Photo (Optional)</label>
-                                            <p className="complaints-help-text">
-                                                JPG, PNG or another image format; maximum 2 MB.
-                                            </p>
                                             <label className="complaints-image-upload-button" htmlFor="complaint-image">
                                                 <CameraIcon />
                                                 <span>{imageName || "Choose Image"}</span>
@@ -486,7 +396,6 @@ export default function Complaints() {
                                                 id="complaint-image"
                                                 type="file"
                                                 accept="image/*"
-                                                capture="environment"
                                                 onChange={handleImageUpload}
                                                 className="complaints-file-input"
                                             />
@@ -498,10 +407,7 @@ export default function Complaints() {
                                                 <button
                                                     type="button"
                                                     className="complaints-text-button"
-                                                    onClick={() => {
-                                                        setComplaintImage("");
-                                                        setImageName("");
-                                                    }}
+                                                    onClick={() => { setComplaintImage(""); setImageName(""); }}
                                                 >
                                                     Remove photo
                                                 </button>
@@ -519,8 +425,8 @@ export default function Complaints() {
                                             ))}
                                         </select>
 
-                                        <button type="submit" className="complaints-submit-btn">
-                                            Submit Complaint
+                                        <button type="submit" className="complaints-submit-btn" disabled={loading}>
+                                            {loading ? "Submitting..." : "Submit Complaint"}
                                         </button>
                                     </form>
                                 </section>
@@ -530,11 +436,6 @@ export default function Complaints() {
                                 <div className="complaints-panel-heading">
                                     <div>
                                         <h3>{isAdmin ? "Complaint Register" : "My Complaint History"}</h3>
-                                        <p>
-                                            {isAdmin
-                                                ? "Only authorised administrators can see the full complaint register."
-                                                : "Only your own complaints appear in this list."}
-                                        </p>
                                     </div>
                                 </div>
 
@@ -564,65 +465,62 @@ export default function Complaints() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredComplaints.map((complaint) => (
-                                                <tr key={complaint.id}>
-                                                    <td>{complaint.id}</td>
-                                                    {isAdmin && (
-                                                        <td>
-                                                            <strong>{complaint.submitterName || "Unknown user"}</strong>
-                                                            <small>{complaint.submitterRole || "User"}</small>
-                                                        </td>
-                                                    )}
-                                                    <td>{complaint.category}</td>
-                                                    <td>
-                                                        <span className={
-                                                            ["High", "Urgent"].includes(complaint.priority)
-                                                                ? "complaints-priority-high"
-                                                                : "complaints-priority-normal"
-                                                        }>
-                                                            {complaint.priority}
-                                                        </span>
-                                                    </td>
-                                                    <td>{formatDate(complaint.createdAt || complaint.date)}</td>
-                                                    <td>
-                                                        <span className={statusClass(complaint.status)}>
-                                                            {complaint.status}
-                                                        </span>
-                                                        {isAdmin ? (
-                                                            <select
-                                                                className="complaints-status-select"
-                                                                aria-label={`Update status for ${complaint.id}`}
-                                                                value={complaint.status}
-                                                                onChange={(event) => updateStatus(complaint.id, event.target.value)}
-                                                            >
-                                                                {STATUSES.map((item) => (
-                                                                    <option key={item} value={item}>{item}</option>
-                                                                ))}
-                                                            </select>
-                                                        ) : null}
-                                                    </td>
-                                                    <td>
-                                                        <button
-                                                            type="button"
-                                                            className="complaints-view-button"
-                                                            onClick={() => setSelectedComplaint(complaint)}
-                                                        >
-                                                            View
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-
-                                            {filteredComplaints.length === 0 && (
+                                            {loading ? (
+                                                <tr><td colSpan={isAdmin ? 7 : 6} className="complaints-empty">Loading...</td></tr>
+                                            ) : filteredComplaints.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={isAdmin ? 7 : 6} className="complaints-empty">
-                                                        {search
-                                                            ? "No complaints match your search."
-                                                            : isAdmin
-                                                            ? "No complaints have been submitted yet."
-                                                            : "You have not submitted any complaints yet."}
+                                                        No complaints found.
                                                     </td>
                                                 </tr>
+                                            ) : (
+                                                filteredComplaints.map((complaint) => (
+                                                    <tr key={complaint.complaint_id || complaint.id}>
+                                                        <td>{complaint.complaint_id || complaint.id}</td>
+                                                        {isAdmin && (
+                                                            <td>
+                                                                <strong>{complaint.full_name || complaint.submitterName || "Unknown user"}</strong>
+                                                                <small>{complaint.role || complaint.submitterRole || "Resident"}</small>
+                                                            </td>
+                                                        )}
+                                                        <td>{complaint.category}</td>
+                                                        <td>
+                                                            <span className={
+                                                                ["High", "Urgent"].includes(complaint.priority)
+                                                                    ? "complaints-priority-high"
+                                                                    : "complaints-priority-normal"
+                                                            }>
+                                                                {complaint.priority}
+                                                            </span>
+                                                        </td>
+                                                        <td>{formatDate(complaint.created_at || complaint.createdAt)}</td>
+                                                        <td>
+                                                            <span className={statusClass(complaint.status)}>
+                                                                {complaint.status}
+                                                            </span>
+                                                            {isAdmin && (
+                                                                <select
+                                                                    className="complaints-status-select"
+                                                                    value={complaint.status}
+                                                                    onChange={(event) => updateStatus(complaint.complaint_id || complaint.id, event.target.value)}
+                                                                >
+                                                                    {STATUSES.map((item) => (
+                                                                        <option key={item} value={item}>{item}</option>
+                                                                    ))}
+                                                                </select>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <button
+                                                                type="button"
+                                                                className="complaints-view-button"
+                                                                onClick={() => setSelectedComplaint(complaint)}
+                                                            >
+                                                                View
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
                                             )}
                                         </tbody>
                                     </table>
@@ -633,70 +531,28 @@ export default function Complaints() {
                 )}
             </main>
 
+            {/* MODAL */}
             {selectedComplaint && (
-                <div
-                    className="complaints-modal-backdrop"
-                    role="presentation"
-                    onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) setSelectedComplaint(null);
-                    }}
-                >
-                    <section
-                        className="complaints-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="complaints-modal-title"
-                    >
+                <div className="complaints-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelectedComplaint(null); }}>
+                    <section className="complaints-modal" role="dialog" aria-modal="true">
                         <div className="complaints-modal-header">
                             <div>
                                 <span className="complaints-eyebrow">COMPLAINT DETAILS</span>
-                                <h3 id="complaints-modal-title">{selectedComplaint.id}</h3>
+                                <h3>{selectedComplaint.complaint_id || selectedComplaint.id}</h3>
                             </div>
-                            <button
-                                type="button"
-                                className="complaints-modal-close"
-                                onClick={() => setSelectedComplaint(null)}
-                                aria-label="Close details"
-                            >
-                                ×
-                            </button>
+                            <button type="button" className="complaints-modal-close" onClick={() => setSelectedComplaint(null)}>×</button>
                         </div>
 
                         <dl className="complaints-detail-list">
                             <div><dt>Category</dt><dd>{selectedComplaint.category}</dd></div>
                             <div><dt>Priority</dt><dd>{selectedComplaint.priority}</dd></div>
-                            <div><dt>Date submitted</dt><dd>{formatDate(selectedComplaint.createdAt || selectedComplaint.date)}</dd></div>
+                            <div><dt>Date submitted</dt><dd>{formatDate(selectedComplaint.created_at || selectedComplaint.createdAt)}</dd></div>
                             <div><dt>Status</dt><dd><span className={statusClass(selectedComplaint.status)}>{selectedComplaint.status}</span></dd></div>
-                            {isAdmin && (
-                                <div>
-                                    <dt>Submitted by</dt>
-                                    <dd>{selectedComplaint.submitterName} ({selectedComplaint.submitterRole})</dd>
-                                </div>
-                            )}
                             <div className="complaints-detail-description">
                                 <dt>Description</dt>
                                 <dd>{selectedComplaint.description}</dd>
                             </div>
-                            {selectedComplaint.statusUpdatedBy && (
-                                <div>
-                                    <dt>Last updated by</dt>
-                                    <dd>{selectedComplaint.statusUpdatedBy}</dd>
-                                </div>
-                            )}
-                            {selectedComplaint.statusUpdatedAt && (
-                                <div>
-                                    <dt>Last updated</dt>
-                                    <dd>{formatDate(selectedComplaint.statusUpdatedAt)}</dd>
-                                </div>
-                            )}
                         </dl>
-
-                        {selectedComplaint.image && (
-                            <div className="complaints-modal-image">
-                                <h4>Attached Photo</h4>
-                                <img src={selectedComplaint.image} alt="Complaint evidence" />
-                            </div>
-                        )}
 
                         {isAdmin && (
                             <div className="complaints-modal-actions">
@@ -704,7 +560,10 @@ export default function Complaints() {
                                 <select
                                     id="modal-complaint-status"
                                     value={selectedComplaint.status}
-                                    onChange={(event) => updateStatus(selectedComplaint.id, event.target.value)}
+                                    onChange={(event) => {
+                                        updateStatus(selectedComplaint.complaint_id || selectedComplaint.id, event.target.value);
+                                        setSelectedComplaint({...selectedComplaint, status: event.target.value});
+                                    }}
                                 >
                                     {STATUSES.map((item) => (
                                         <option key={item} value={item}>{item}</option>

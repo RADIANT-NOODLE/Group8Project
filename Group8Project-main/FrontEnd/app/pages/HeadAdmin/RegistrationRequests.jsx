@@ -10,15 +10,11 @@ import "./RegistrationRequests.css";
 function normalizeRole(value) {
     const role = String(value || "").trim().toLowerCase();
 
-    if (
-        ["head admin", "head administrator", "headadministrator"].includes(role)
-    ) {
+    if (["head admin", "head administrator", "headadministrator"].includes(role)) {
         return "Head Admin";
     }
 
-    if (
-        ["hoa", "hoa admin", "hoa administrator", "administrator"].includes(role)
-    ) {
+    if (["hoa", "hoa admin", "hoa administrator", "administrator", "hoa_admin"].includes(role)) {
         return "HOA Admin";
     }
 
@@ -32,24 +28,13 @@ function normalizeRole(value) {
 function getCurrentUser() {
     try {
         const storedUser = localStorage.getItem("valoraUser");
-
         if (!storedUser) return null;
-
         const user = JSON.parse(storedUser);
-
         if (!user || typeof user !== "object") return null;
 
-        const firstName =
-            user.firstName || user.firstname || user.first_name || "";
-
-        const lastName =
-            user.lastName || user.lastname || user.last_name || "";
-
-        const fullName =
-            user.fullName ||
-            user.name ||
-            `${firstName} ${lastName}`.trim() ||
-            "VALORA Administrator";
+        const firstName = user.firstName || user.firstname || user.first_name || "";
+        const lastName = user.lastName || user.lastname || user.last_name || "";
+        const fullName = user.fullName || user.name || `${firstName} ${lastName}`.trim() || "VALORA Administrator";
 
         return {
             ...user,
@@ -57,15 +42,7 @@ function getCurrentUser() {
             firstName,
             lastName,
             fullName,
-            initials:
-                user.initials ||
-                fullName
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((part) => part.charAt(0))
-                    .join("")
-                    .toUpperCase(),
+            initials: user.initials || fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0)).join("").toUpperCase(),
         };
     } catch (error) {
         console.error("Unable to load current VALORA user:", error);
@@ -74,25 +51,23 @@ function getCurrentUser() {
 }
 
 function isApproved(user) {
+    if (!user) return false;
+    if (user.hoa_approved === true) return true;
     const status = String(user?.status || "").trim().toLowerCase();
     return status === "approved" || status === "active";
 }
 
 /* =========================================================
-   STORED REGISTRATION DATA
+   API FETCHING
 ========================================================= */
 
-function getStoredUsers() {
-    try {
-        const storedUsers = JSON.parse(
-            localStorage.getItem("valoraUsers") || "[]"
-        );
-
-        return Array.isArray(storedUsers) ? storedUsers : [];
-    } catch (error) {
-        console.error("Unable to load VALORA users:", error);
-        return [];
-    }
+async function fetchAllUsersFromApi() {
+    const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+    const response = await fetch("http://127.0.0.1:8000/api/v1/users/", { 
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json"}
+    });
+    if (!response.ok) throw new Error("Failed to fetch users");
+    return await response.json();
 }
 
 /* =========================================================
@@ -102,148 +77,93 @@ function getStoredUsers() {
 function RegistrationRequests() {
     const currentUser = getCurrentUser();
 
-    const [users, setUsers] = useState(getStoredUsers);
+    const [loading, setLoading] = useState(true);
+    const [allUsers, setAllUsers] = useState([]);
 
-    /* =====================================================
-       KEEP REGISTRATION DATA IN SYNC
-    ===================================================== */
+    // MODAL STATE
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        type: 'confirm', // 'confirm' or 'alert'
+        title: '',
+        message: '',
+        actionUserId: null,
+        actionType: null // 'approve' or 'reject'
+    });
 
     useEffect(() => {
-        const refreshUsers = () => {
-            setUsers(getStoredUsers());
-        };
-
-        const handleStorage = (event) => {
-            if (!event.key || event.key === "valoraUsers") {
-                refreshUsers();
-            }
-        };
-
-        window.addEventListener("storage", handleStorage);
-        window.addEventListener("valoraUsersUpdated", refreshUsers);
-
-        return () => {
-            window.removeEventListener("storage", handleStorage);
-            window.removeEventListener("valoraUsersUpdated", refreshUsers);
-        };
+        fetchAllUsersFromApi()
+            .then(data => {
+                if (data && data.users) {
+                    setAllUsers(data.users);
+                } else if (Array.isArray(data)) {
+                    setAllUsers(data);
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
     }, []);
 
+    const pendingUsers = allUsers.filter(u => u.hoa_approved !== true);
+    const approvedUsers = allUsers.filter(u => u.hoa_approved === true);
+
     /* =====================================================
-       UPDATE USERS
+       MODAL HANDLERS
     ===================================================== */
 
-    function updateUsers(updatedUsers) {
+    function openConfirmModal(userId, actionType) {
+        const isApprove = actionType === 'approve';
+        setModalConfig({
+            isOpen: true,
+            type: 'confirm',
+            title: isApprove ? 'Approve Registration' : 'Reject Registration',
+            message: isApprove 
+                ? 'Are you sure you want to approve this user? They will be granted access to the system.'
+                : 'Are you sure you want to reject this user? This action cannot be undone.',
+            actionUserId: userId,
+            actionType: actionType
+        });
+    }
+
+    async function confirmAction() {
+        const { actionUserId, actionType } = modalConfig;
+        const isApprove = actionType === 'approve';
+        
+        // Close modal immediately
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+
         try {
-            localStorage.setItem(
-                "valoraUsers",
-                JSON.stringify(updatedUsers)
-            );
+            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            
+            const response = await fetch(`http://127.0.0.1:8000/api/v1/users/${actionUserId}/${actionType}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error(`Failed to ${actionType} user`);
+            
+            // Remove user from the list in the UI
+            setAllUsers(allUsers.filter(u => u.id !== actionUserId));
 
-            setUsers(updatedUsers);
+            // Show success alert
+            setModalConfig({
+                isOpen: true,
+                type: 'alert',
+                title: 'Success',
+                message: `Registration successfully ${isApprove ? 'approved' : 'rejected'}.`,
+                actionUserId: null,
+                actionType: null
+            });
 
-            // Notify other VALORA pages in the same browser tab.
-            window.dispatchEvent(new Event("valoraUsersUpdated"));
         } catch (error) {
-            console.error("Unable to save VALORA users:", error);
-            window.alert("Unable to save the changes. Please try again.");
+            setModalConfig({
+                isOpen: true,
+                type: 'alert',
+                title: 'Error',
+                message: error.message,
+                actionUserId: null,
+                actionType: null
+            });
         }
-    }
-
-    /* =====================================================
-       DERIVED DATA
-    ===================================================== */
-
-    const pendingUsers = users.filter(
-        (user) =>
-            String(user.status || "").trim().toLowerCase() === "pending"
-    );
-
-    const approvedUsers = users.filter((user) =>
-        ["approved", "active"].includes(
-            String(user.status || "").trim().toLowerCase()
-        )
-    );
-
-    const rejectedUsers = users.filter(
-        (user) =>
-            String(user.status || "").trim().toLowerCase() === "rejected"
-    );
-
-    /* =====================================================
-       APPROVE USER
-    ===================================================== */
-
-    function approveUser(userId) {
-        const selectedUser = users.find((user) => user.id === userId);
-
-        if (!selectedUser) {
-            window.alert("This registration request could not be found.");
-            return;
-        }
-
-        if (
-            !window.confirm(
-                `Approve the registration for ${
-                    selectedUser.firstName ||
-                    selectedUser.name ||
-                    "this user"
-                }?`
-            )
-        ) {
-            return;
-        }
-
-        const updatedUsers = users.map((user) =>
-            user.id === userId
-                ? {
-                      ...user,
-                      status: "Approved",
-                      approvedAt: new Date().toISOString(),
-                      approvedBy: currentUser.email || currentUser.role,
-                      rejectionReason: "",
-                  }
-                : user
-        );
-
-        updateUsers(updatedUsers);
-        window.alert("Registration approved successfully.");
-    }
-
-    /* =====================================================
-       REJECT USER
-    ===================================================== */
-
-    function rejectUser(userId) {
-        const selectedUser = users.find((user) => user.id === userId);
-
-        if (!selectedUser) {
-            window.alert("This registration request could not be found.");
-            return;
-        }
-
-        const reason = window.prompt(
-            "Please enter a reason for rejecting this registration:"
-        );
-
-        if (reason === null) return;
-
-        const rejectionReason =
-            reason.trim() || "Registration request was not approved.";
-
-        const updatedUsers = users.map((user) =>
-            user.id === userId
-                ? {
-                      ...user,
-                      status: "Rejected",
-                      rejectionReason,
-                      rejectedAt: new Date().toISOString(),
-                      rejectedBy: currentUser.email || currentUser.role,
-                  }
-                : user
-        );
-
-        updateUsers(updatedUsers);
-        window.alert("Registration rejected.");
     }
 
     /* =====================================================
@@ -273,21 +193,17 @@ function RegistrationRequests() {
             {/* SHARED VALORA SIDEBAR */}
             <DashboardSidebar suppliedUser={currentUser} />
 
-            {/* MAIN CONTENT */}
-            <main className="registration-requests-main">
+            <main className="registration-requests-main dashboard-main-content">
                 <header className="registration-requests-topbar">
                     <div>
                         <p className="registration-requests-eyebrow">
-                            {isHeadAdmin
-                                ? "HEAD ADMINISTRATION"
-                                : "HOA ADMINISTRATION"}
+                            {isHeadAdmin ? "HEAD ADMINISTRATION" : "HOA ADMINISTRATION"}
                         </p>
 
                         <h1>Registration Requests</h1>
 
                         <p className="registration-requests-subtitle">
-                            Review and manage requests from users waiting
-                            for VALORA account approval.
+                            Review and manage requests from users waiting for VALORA account approval.
                         </p>
                     </div>
 
@@ -307,26 +223,20 @@ function RegistrationRequests() {
                 <section className="registration-requests-stats">
                     <div className="registration-requests-stat-card">
                         <span>Pending Requests</span>
-                        <strong>{pendingUsers.length}</strong>
+                        <strong>{loading ? "..." : pendingUsers.length}</strong>
                         <small>Awaiting review</small>
                     </div>
 
                     <div className="registration-requests-stat-card">
                         <span>Approved Accounts</span>
-                        <strong>{approvedUsers.length}</strong>
-                        <small>Approved or active users</small>
+                        <strong>{loading ? "..." : approvedUsers.length}</strong>
+                        <small>Total approved users</small>
                     </div>
 
                     <div className="registration-requests-stat-card">
-                        <span>Rejected Requests</span>
-                        <strong>{rejectedUsers.length}</strong>
-                        <small>Not approved</small>
-                    </div>
-
-                    <div className="registration-requests-stat-card">
-                        <span>Total Registered</span>
-                        <strong>{users.length}</strong>
-                        <small>All registration records</small>
+                        <span>Total Pending</span>
+                        <strong>{loading ? "..." : pendingUsers.length}</strong>
+                        <small>Waiting for approval</small>
                     </div>
                 </section>
 
@@ -335,34 +245,23 @@ function RegistrationRequests() {
                     <div className="registration-requests-panel-heading">
                         <div>
                             <h2>Pending Registration Requests</h2>
-                            <p>
-                                Review the user's details and selected
-                                VALORA role before approving access.
-                            </p>
+                            <p>Review the user's details and selected VALORA role before approving access.</p>
                         </div>
                     </div>
 
-                    {pendingUsers.length === 0 ? (
+                    {loading ? (
+                        <div className="registration-requests-empty">
+                            <h3>Loading pending requests...</h3>
+                        </div>
+                    ) : pendingUsers.length === 0 ? (
                         <div className="registration-requests-empty">
                             <div className="registration-requests-empty-icon">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    aria-hidden="true"
-                                >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                     <path d="M5 12.5L9.2 16.5L19 6.5" />
                                 </svg>
                             </div>
-
                             <h3>No pending registrations</h3>
-                            <p>
-                                There are currently no registration
-                                requests waiting for approval.
-                            </p>
+                            <p>There are currently no registration requests waiting for approval.</p>
                         </div>
                     ) : (
                         <div className="registration-requests-table-container">
@@ -379,36 +278,16 @@ function RegistrationRequests() {
 
                                 <tbody>
                                     {pendingUsers.map((user, index) => (
-                                        <tr
-                                            key={
-                                                user.id ||
-                                                user.email ||
-                                                index
-                                            }
-                                        >
+                                        <tr key={user.id || user.email || index}>
                                             <td>
-                                                <strong>
-                                                    {user.firstName ||
-                                                        user.firstname ||
-                                                        ""}{" "}
-                                                    {user.lastName ||
-                                                        user.lastname ||
-                                                        ""}
-                                                    {!user.firstName &&
-                                                        !user.firstname &&
-                                                        !user.lastName &&
-                                                        !user.lastname &&
-                                                        (user.name ||
-                                                            "Unnamed applicant")}
-                                                </strong>
+                                                <strong>{user.full_name || user.email || "Unnamed applicant"}</strong>
                                             </td>
 
                                             <td>{user.email || "—"}</td>
 
                                             <td>
                                                 <span className="registration-requests-role">
-                                                    {normalizeRole(user.role) ||
-                                                        "Not specified"}
+                                                    {normalizeRole(user.role) || "Not specified"}
                                                 </span>
                                             </td>
 
@@ -423,19 +302,9 @@ function RegistrationRequests() {
                                                     <button
                                                         type="button"
                                                         className="registration-requests-primary-btn"
-                                                        onClick={() =>
-                                                            approveUser(user.id)
-                                                        }
+                                                        onClick={() => openConfirmModal(user.id, 'approve')}
                                                     >
-                                                        <svg
-                                                            width="15"
-                                                            height="15"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            aria-hidden="true"
-                                                        >
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                                             <path d="M5 12.5L9.2 16.5L19 6.5" />
                                                         </svg>
                                                         Approve
@@ -444,19 +313,9 @@ function RegistrationRequests() {
                                                     <button
                                                         type="button"
                                                         className="registration-requests-secondary-btn"
-                                                        onClick={() =>
-                                                            rejectUser(user.id)
-                                                        }
+                                                        onClick={() => openConfirmModal(user.id, 'reject')}
                                                     >
-                                                        <svg
-                                                            width="15"
-                                                            height="15"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            aria-hidden="true"
-                                                        >
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                                             <path d="M6 6L18 18" />
                                                             <path d="M18 6L6 18" />
                                                         </svg>
@@ -484,61 +343,78 @@ function RegistrationRequests() {
 
                         <div className="registration-requests-steps">
                             <div className="registration-requests-step">
-                                <div className="registration-requests-step-number">
-                                    1
-                                </div>
+                                <div className="registration-requests-step-number">1</div>
                                 <div>
                                     <strong>Registration</strong>
-                                    <span>
-                                        User submits their details and
-                                        selects their requested role.
-                                    </span>
+                                    <span>User submits their details and selects their requested role.</span>
                                 </div>
                             </div>
 
                             <div className="registration-requests-step">
-                                <div className="registration-requests-step-number">
-                                    2
-                                </div>
+                                <div className="registration-requests-step-number">2</div>
                                 <div>
                                     <strong>Review</strong>
-                                    <span>
-                                        {isHeadAdmin
-                                            ? "The Head Admin reviews the registration request."
-                                            : "The HOA Admin reviews the registration request."}
-                                    </span>
+                                    <span>{isHeadAdmin ? "The Head Admin reviews the registration request." : "The HOA Admin reviews the registration request."}</span>
                                 </div>
                             </div>
 
                             <div className="registration-requests-step">
-                                <div className="registration-requests-step-number">
-                                    3
-                                </div>
+                                <div className="registration-requests-step-number">3</div>
                                 <div>
                                     <strong>Decision</strong>
-                                    <span>
-                                        The administrator approves or
-                                        rejects the request.
-                                    </span>
+                                    <span>The administrator approves or rejects the request.</span>
                                 </div>
                             </div>
 
                             <div className="registration-requests-step">
-                                <div className="registration-requests-step-number">
-                                    4
-                                </div>
+                                <div className="registration-requests-step-number">4</div>
                                 <div>
                                     <strong>Access</strong>
-                                    <span>
-                                        Approved users can sign in and
-                                        access their assigned dashboard.
-                                    </span>
+                                    <span>Approved users can sign in and access their assigned dashboard.</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
             </main>
+
+            {/* =====================================================
+                CUSTOM MODAL 
+            ===================================================== */}
+            {modalConfig.isOpen && (
+                <div className="valora-modal-overlay">
+                    <div className="valora-modal">
+                        <h3>{modalConfig.title}</h3>
+                        <p>{modalConfig.message}</p>
+                        
+                        <div className="valora-modal-actions">
+                            {modalConfig.type === 'confirm' ? (
+                                <>
+                                    <button 
+                                        className="valora-modal-btn valora-modal-btn-cancel"
+                                        onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        className="valora-modal-btn valora-modal-btn-confirm"
+                                        onClick={confirmAction}
+                                    >
+                                        Confirm
+                                    </button>
+                                </>
+                            ) : (
+                                <button 
+                                    className="valora-modal-btn valora-modal-btn-confirm"
+                                    onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+                                >
+                                    Okay
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

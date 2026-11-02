@@ -41,3 +41,9 @@ class ReviewRepository:
         )
         avg, count = result.one()
         return (Decimal(str(avg)) if avg is not None else None, int(count))
+
+    async def get_by_id(self, review_id: int):
+        result = await self._db.execute(
+            select(Review).filter(Review.review_id == review_id)
+        )
+        return result.scalars().first()

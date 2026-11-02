@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./DashboardSidebar.css";
@@ -15,6 +14,7 @@ function normalizeRole(value) {
             "head admin",
             "head administrator",
             "headadministrator",
+            "head_admin",
         ].includes(role)
     ) {
         return "Head Admin";
@@ -26,6 +26,7 @@ function normalizeRole(value) {
             "hoa admin",
             "hoa administrator",
             "administrator",
+            "hoa_admin",
         ].includes(role)
     ) {
         return "HOA Admin";
@@ -39,7 +40,7 @@ function normalizeRole(value) {
         return "Investor";
     }
 
-    if (role === "estate agent") {
+    if (role === "estate agent" || role === "estate_agent") {
         return "Estate Agent";
     }
 
@@ -266,7 +267,7 @@ const navigation = {
     ],
 
     Investor: [
-        { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
+        { label: "Dashboard", path: "/investor-dashboard", icon: "dashboard" },
         { label: "My Property", path: "/property", icon: "property" },
         { label: "AI Valuation", path: "/valuation", icon: "valuation" },
         { label: "ROI Analysis", path: "/roi", icon: "roi" },
@@ -275,7 +276,7 @@ const navigation = {
     ],
 
     "Estate Agent": [
-        { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
+        { label: "Dashboard", path: "/agent-dashboard", icon: "dashboard" },
         { label: "My Listings", path: "/agent-listings", icon: "property" },
         { label: "Edit Listings", path: "/agent-edit-listings", icon: "request" },
         { label: "Inquiries", path: "/agent-inquiries", icon: "complaint" },
@@ -285,8 +286,9 @@ const navigation = {
     ],
 
     "HOA Admin": [
-        { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
+        { label: "Dashboard", path: "/hoa-admin", icon: "dashboard" },
         { label: "Registration Requests", path: "/registration-requests", icon: "registration" },
+        { label: "Properties", path: "/property-management", icon: "property" },
         { label: "Property Requests", path: "/property-requests", icon: "property" },
         { label: "Property Approvals", path: "/property-approvals", icon: "property" },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
@@ -335,6 +337,9 @@ function DashboardSidebar({ suppliedUser = null }) {
     const role = normalizeRole(currentUser.role) || "Resident";
     const links = navigation[role] || navigation.Resident;
 
+    // debug code to see what sidebar is reading
+    console.log("SIDEBAR ROLE DEBUG:", role, "Current User:", currentUser);
+    
     const fullName =
         currentUser.fullName ||
         `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() ||

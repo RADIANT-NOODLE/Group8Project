@@ -16,18 +16,33 @@ function Home() {
         getLandingHeroSettings()
     );
 
-    useEffect(() => {
-        const refreshProperties = () => {
-            setProperties(getProperties());
+        useEffect(() => {
+        const fetchProperties = async () => {
+            try {
+                // Assuming this is a public endpoint (no token needed for viewing properties)
+                const response = await fetch("http://127.0.0.1:8000/api/v1/properties");
+                if (response.ok) {
+                    const data = await response.json();
+                    const list = data.properties || data.items || data || [];
+                    // Map the backend schema to match what the UI expects
+                    const formattedProperties = list.map(p => ({
+                        id: p.id || p.unit_id,
+                        title: p.complex_name || "Property",
+                        location: p.street_address,
+                        propertyType: p.bedrooms ? "Residential" : "Unit",
+                        bedrooms: p.bedrooms,
+                        bathrooms: p.bathrooms,
+                        unitNumber: p.unit_no,
+                        listing: null // Or check if a listing exists
+                    }));
+                    setProperties(formattedProperties);
+                }
+            } catch (err) {
+                console.error("Failed to fetch properties for home page:", err);
+            }
         };
 
-        refreshProperties();
-
-        window.addEventListener("storage", refreshProperties);
-
-        return () => {
-            window.removeEventListener("storage", refreshProperties);
-        };
+        fetchProperties();
     }, []);
 
     useEffect(() => {

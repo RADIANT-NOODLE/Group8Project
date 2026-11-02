@@ -10,14 +10,13 @@ from app.common.enums import UserRole
 from app.db.session import get_db
 from app.identity.api.dependencies import require_roles
 from app.identity.models.user import User
-from app.property.schemas.property import (
-    PaginatedPropertiesResponse,
-    PropertyCreate,
-    PropertyResponse,
-)
+from app.property.schemas.property import PaginatedPropertiesResponse, PropertyCreate, PropertyResponse, PropertyUpdate
 from app.property.services.property_service import PropertyService
 
 router = APIRouter(prefix="/properties", tags=["property"])
+
+# <--- DEFINE AdminOnly HERE SO THE PATCH ENDPOINT CAN USE IT
+AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]
 
 
 @router.get("", response_model=PaginatedPropertiesResponse)
@@ -63,7 +62,18 @@ async def get_living_score(
 async def create_property(
     payload: PropertyCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _admin: Annotated[User, require_roles(UserRole.hoa_admin.value)],
+    _admin: AdminOnly,  
 ) -> PropertyResponse:
     """Register a new unit/property (HOA admins only)."""
     return await PropertyService(db).create_property(payload)
+
+
+@router.patch("/{property_id}", response_model=PropertyResponse)
+async def update_property(
+    property_id: int,
+    payload: PropertyUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,  # <--- Now this works
+) -> PropertyResponse:
+    """Update a property's details (HOA admins only)."""
+    return await PropertyService(db).update_property(property_id, payload)

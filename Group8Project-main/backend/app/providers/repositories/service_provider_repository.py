@@ -46,6 +46,7 @@ class ServiceProviderRepository:
         email: str,
         verified: bool,
         emergency_available: bool,
+        description: str | None = None
     ) -> ServiceProvider:
         provider = ServiceProvider(
             full_name=full_name,
@@ -55,6 +56,7 @@ class ServiceProviderRepository:
             verified=verified,
             emergency_available=emergency_available,
             total_reviews=0,
+            description=description,
         )
         self._db.add(provider)
         await self._db.commit()

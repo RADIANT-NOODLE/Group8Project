@@ -4,8 +4,10 @@ from fastapi import APIRouter
 from app.community.api.announcements import router as announcements_router
 from app.community.api.complaints import router as complaints_router
 from app.community.api.work_orders import router as work_orders_router
+from app.community.api.resident_directory import router as resident_directory_router
 
 router = APIRouter()
 router.include_router(complaints_router)
 router.include_router(work_orders_router)
 router.include_router(announcements_router)
+router.include_router(resident_directory_router)

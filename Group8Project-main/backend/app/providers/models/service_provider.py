@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, Numeric, String, TIMESTAMP
+from sqlalchemy import Boolean, Column, Integer, Numeric, String, TIMESTAMP, Text
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -12,6 +12,7 @@ class ServiceProvider(Base):
     trade = Column(String(50), nullable=False)
     phone = Column(String(20), nullable=False)
     email = Column(String(225), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
     avg_rating = Column(Numeric(3, 2), nullable=True)
     total_reviews = Column(Integer, nullable=True)
     verified = Column(Boolean, default=False)

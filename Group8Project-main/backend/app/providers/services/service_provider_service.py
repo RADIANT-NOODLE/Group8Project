@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException 
 
 from app.common.validators import normalise_email
 from app.core.exceptions import ConflictException, NotFoundException
@@ -13,6 +14,7 @@ from app.providers.schemas.service_provider import (
 
 class ServiceProviderService:
     def __init__(self, db: AsyncSession) -> None:
+        self._db = db 
         self._repo = ServiceProviderRepository(db)
 
     async def list_providers(
@@ -47,6 +49,7 @@ class ServiceProviderService:
             email=email,
             verified=payload.verified,
             emergency_available=payload.emergency_available,
+            description=payload.description, 
         )
         return ServiceProviderResponse.model_validate(provider)
 
@@ -58,7 +61,6 @@ class ServiceProviderService:
             raise NotFoundException(f"Service provider with id {provider_id} was not found.")
 
         changes = payload.model_dump(exclude_unset=True)
-        # every provider column is NOT NULL (or boolean), so ignore explicit nulls
         changes = {key: value for key, value in changes.items() if value is not None}
 
         if "email" in changes:
@@ -72,3 +74,12 @@ class ServiceProviderService:
             setattr(provider, field, value)
         provider = await self._repo.save(provider)
         return ServiceProviderResponse.model_validate(provider)
+
+    
+    async def delete_provider(self, provider_id: int) -> None:
+        provider = await self._repo.get_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Provider not found")
+        
+        await self._db.delete(provider)
+        await self._db.commit()

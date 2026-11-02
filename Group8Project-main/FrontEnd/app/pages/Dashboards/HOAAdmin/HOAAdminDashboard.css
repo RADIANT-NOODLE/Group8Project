@@ -393,3 +393,150 @@
   }
 
 }
+
+.hoa-admin-dashboard-list-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.hoa-admin-dashboard-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.hoa-admin-dashboard-btn-approve {
+    background-color: #563f6b; 
+    color: white;
+}
+
+.hoa-admin-dashboard-btn-approve:hover {
+    background-color: #463256;
+}
+
+.hoa-admin-dashboard-btn-reject {
+    background-color: #f5f3f7;
+    color: #563f6b;
+    border: 1px solid #e8e3eb;
+}
+
+.hoa-admin-dashboard-btn-reject:hover {
+    background-color: #e8e3eb;
+}
+
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
+
+.hoa-admin-dashboard-btn-refresh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background-color: #ffffff;
+    color: #563f6b;
+    border: 1px solid #563f6b;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hoa-admin-dashboard-btn-refresh:hover {
+    background-color: #563f6b;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(86, 63, 107, 0.15);
+}
+
+.hoa-admin-dashboard-btn-refresh:active {
+    transform: translateY(0);
+}
+
+/* =========================================================
+   CUSTOM MODAL (Replaces window.confirm/alert)
+========================================================= */
+
+.valora-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(30, 20, 40, 0.5); /* Dark transparent backdrop */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.valora-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.2s ease-out;
+}
+
+.valora-modal h3 {
+  margin: 0 0 10px;
+  color: #29242d;
+  font-size: 18px;
+}
+
+.valora-modal p {
+  margin: 0 0 24px;
+  color: #77717d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.valora-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.valora-modal-btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.valora-modal-btn-cancel {
+  background: #f5f3f7;
+  color: #563f6b;
+}
+
+.valora-modal-btn-cancel:hover {
+  background: #e8e3eb;
+}
+
+.valora-modal-btn-confirm {
+  background: #563f6b;
+  color: #ffffff;
+}
+
+.valora-modal-btn-confirm:hover {
+  background: #463256;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}

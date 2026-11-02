@@ -83,3 +83,23 @@ async def create_provider_review(
 ) -> ReviewResponse:
     """Residents rate a provider 1-5. One review per resident per provider."""
     return await ReviewService(db).create_review(provider_id, payload, current_user)
+
+@router.delete("/{provider_id}", status_code=204)
+async def delete_provider(
+    provider_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+) -> None:
+    """Delete a service provider. Only HOA Admins can do this."""
+    await ServiceProviderService(db).delete_provider(provider_id)
+
+@router.delete("/{provider_id}/reviews/{review_id}", status_code=204)
+async def delete_provider_review(
+    provider_id: int,
+    review_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+) -> None:
+    """Delete a specific review. Only HOA Admins can do this."""
+    await ReviewService(db).delete_review(provider_id, review_id)
+    

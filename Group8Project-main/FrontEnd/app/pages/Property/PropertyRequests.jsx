@@ -249,7 +249,10 @@ function PropertyRequests() {
         return <Navigate to="/registration-pending" replace />;
     }
 
-    if (!["HOA Admin", "Head Admin"].includes(currentUser.role)) {
+   // Convert role to lowercase to match backend ("hoa_admin")
+const roleCheck = String(currentUser.role || "").toLowerCase();
+
+    if (!["head admin", "hoa admin", "head_admin", "hoa_admin"].includes(roleCheck)) {
         return <Navigate to="/dashboard" replace />;
     }
 

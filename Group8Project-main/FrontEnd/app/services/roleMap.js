@@ -17,6 +17,10 @@ export const ROLES = Object.freeze({
 
 /** The route that renders a signed-in user's dashboard. */
 export const DASHBOARD_PATH = '/dashboard';
+export const HOA_ADMIN_PATH = '/hoa-admin'; 
+export const HEAD_ADMIN_PATH = '/head-admin';
+export const ESTATE_AGENT_PATH = '/agent-dashboard';
+export const INVESTOR_PATH = '/investor-dashboard';
 
 /** The public landing route for roles with no signed-in area. */
 export const PUBLIC_HOME_PATH = '/';
@@ -35,25 +39,25 @@ export const ROLE_DEFINITIONS = Object.freeze([
     value: ROLES.investor,
     label: 'Investor',
     description: 'Track property and growth insights across the estate.',
-    dashboardPath: DASHBOARD_PATH,
+    dashboardPath: INVESTOR_PATH,
   }),
   Object.freeze({
     value: ROLES.estateAgent,
     label: 'Estate Agent',
     description: 'Manage listings and enquiries for the estate.',
-    dashboardPath: DASHBOARD_PATH,
+    dashboardPath: ESTATE_AGENT_PATH,
   }),
   Object.freeze({
     value: ROLES.hoaAdmin,
     label: 'HOA Administrator',
     description: 'Run the estate: approvals, residents and community health.',
-    dashboardPath: DASHBOARD_PATH,
+    dashboardPath: HOA_ADMIN_PATH,
   }),
   Object.freeze({
-    value: ROLES.serviceProvider,
-    label: 'Service Provider',
-    description: 'See the work orders assigned to your business.',
-    dashboardPath: DASHBOARD_PATH,
+    value: ROLES.headAdmin || 'head_admin',
+    label: 'Head Administrator',
+    description: 'System administration.',
+    dashboardPath: HEAD_ADMIN_PATH,
   }),
   Object.freeze({
     value: ROLES.casualVisitor,
@@ -162,6 +166,7 @@ const SHARED_PATHS = Object.freeze([
   '/providers',
   '/announcements',
   '/community-announcements',
+  
 ]);
 
 /** Screens that belong to one role's workspace. Keyed by role value, so the

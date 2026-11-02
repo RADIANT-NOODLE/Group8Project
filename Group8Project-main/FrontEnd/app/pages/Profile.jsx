@@ -1,23 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
+import { useSession } from "../services/session"
 import "./Profile.css";
 
 function Profile() {
 
+  const navigate = useNavigate();
+  const { user, logout, updateSessionUser } = useSession();
+
   const [editing, setEditing] = useState(false);
 
-  const [name, setName] = useState("Tabassum");
-  const [email, setEmail] = useState("tabassum@example.com");
-  const [phone, setPhone] = useState("083 000 0000");
+  // user info states
+  const [name, setName] = useState(user?.fullName || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
 
-  const [editName, setEditName] = useState("Tabassum");
-  const [editEmail, setEditEmail] = useState("tabassum@example.com");
-  const [editPhone, setEditPhone] = useState("083 000 0000");
+  // edit form states
+  const [editName, setEditName] = useState(name);
+  const [editEmail, setEditEmail] = useState(email);
+  const [editPhone, setEditPhone] = useState(phone);
 
+  // saving state
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Sync state if the user object loads asynchronously
+  useEffect(() => {
+    if (user) {
+      setName(user.fullName || "");
+      setEmail(user.email || "");
+      setEditName(user.fullName || "");
+      setEditEmail(user.email || "");
+    }
+  }, [user]);
+
+  // notification states
   const [notifications, setNotifications] = useState(true);
   const [propertyUpdates, setPropertyUpdates] = useState(true);
   const [complaintNotifications, setComplaintNotifications] = useState(true);
 
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   /*
   =========================================================
@@ -123,30 +149,56 @@ function Profile() {
   =========================================================
   */
 
-  const saveProfile = () => {
-
-    if (
-      editName.trim() === "" ||
-      editEmail.trim() === "" ||
-      editPhone.trim() === ""
-    ) {
-
-      alert(
-        "Please complete all profile fields."
-      );
-
+   const saveProfile = async () => {
+    if (editName.trim() === "" || editEmail.trim() === "") {
+      alert("Please complete all profile fields.");
       return;
     }
 
-    setName(editName);
-    setEmail(editEmail);
-    setPhone(editPhone);
+    setIsSaving(true);
 
-    setEditing(false);
+    try {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+      
+      const response = await fetch("http://127.0.0.1:8000/api/users/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          full_name: editName,
+          email: editEmail,
+          phone: editPhone // Sent to backend, even if backend ignores it for now
+        })
+      });
 
-    alert(
-      "Profile updated successfully."
-    );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to update profile");
+      }
+
+      // Update the local React state
+      setName(data.full_name);
+      setEmail(data.email);
+      setPhone(editPhone);
+      
+      // Update the session storage so the sidebar and other pages see the new name immediately
+      updateSessionUser({ 
+        full_name: data.full_name, 
+        email: data.email 
+      });
+
+      setEditing(false);
+      alert("Profile updated successfully.");
+
+    } catch (error) {
+      console.error("Profile update error:", error);
+      alert(error.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
 
@@ -156,11 +208,53 @@ function Profile() {
   =========================================================
   */
 
-  const changePassword = () => {
+    const changePassword = () => {
+    setIsPasswordModalOpen(true);
+    setCurrentPassword("");
+    setNewPassword("");
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
 
-    alert(
-      "Password change functionality will be connected to the authentication system."
-    );
+  const submitPasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+      
+      const response = await fetch("http://127.0.0.1:8000/api/users/me/password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to change password");
+      }
+
+      setPasswordSuccess("Password updated successfully!");
+      setTimeout(() => {
+        setIsPasswordModalOpen(false);
+      }, 2000); // Close modal after 2 seconds
+
+    } catch (error) {
+      setPasswordError(error.message);
+    }
   };
 
 
@@ -220,21 +314,21 @@ function Profile() {
         <section className="resident-profile-header-card">
 
           <div className="resident-profile-avatar">
-            {name.charAt(0).toUpperCase()}
+            {user?.initials || name.charAt(0).toUpperCase()}
           </div>
 
           <div className="resident-profile-header-info">
 
             <span>
-              VALORA MEMBER
+              {user?.roleLabel ? user.roleLabel.toUpperCase() : "VALORA MEMBER"}
             </span>
 
             <h1>
-              {name}
+              {name || "Loading..."}
             </h1>
 
             <p>
-              Property Owner
+              {user?.roleLabel || "Member"}
             </p>
 
           </div>
@@ -338,7 +432,7 @@ function Profile() {
                 </span>
 
                 <strong>
-                  Property Owner
+                  {user?.roleLabel || "Member"}
                 </strong>
 
               </div>
@@ -655,8 +749,8 @@ function Profile() {
             <button
               type="button"
               onClick={() => {
-                localStorage.removeItem("valoraUser");
-                window.location.href = "/";
+                logout(); // Clears the token from authService/session
+                navigate("/login", { replace: true }); // Redirects to login page
               }}
             >
 
@@ -674,6 +768,63 @@ function Profile() {
 
         </section>
 
+       {/* =================================================
+            PASSWORD CHANGE MODAL  
+            ================================================= */}
+        {isPasswordModalOpen && (
+          <div className="password-modal-overlay">
+            <div className="password-modal">
+              <h3>Change Password</h3>
+              
+              {passwordError && (
+                <div style={{ color: '#d32f2f', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  {passwordError}
+                </div>
+              )}
+              
+              {passwordSuccess && (
+                <div style={{ color: '#388e3c', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <form onSubmit={submitPasswordChange}>
+                <div className="resident-profile-form-field">
+                  <label>Current Password</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="resident-profile-form-field">
+                  <label>New Password (min 8 characters)</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="resident-profile-edit-buttons">
+                  <button type="submit" className="resident-profile-save-button">
+                    Update Password
+                  </button>
+                  <button 
+                    type="button" 
+                    className="resident-profile-cancel-button"
+                    onClick={() => setIsPasswordModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </main>
 

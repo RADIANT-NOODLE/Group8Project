@@ -95,6 +95,17 @@ async def list_pending_users(
     users = await repo.list_pending()
     return [UserSummary.model_validate(u) for u in users]
 
+@users_router.get("/", response_model=list[UserSummary])
+async def get_all_users(
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[UserSummary]:
+    """List all users in the system (HOA admin only)."""
+    _require_admin(current_user)
+    repo = UserRepository(db)
+    # You will need to add a `list_all` method to your UserRepository
+    users = await repo.list_all()
+    return [UserSummary.model_validate(u) for u in users]
 
 @users_router.post("/{user_id}/approve", response_model=UserSummary)
 async def approve_user(

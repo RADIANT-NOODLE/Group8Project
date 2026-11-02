@@ -1,414 +1,120 @@
-/* =========================================================
-   VALORA ESTATE AGENT DASHBOARD
-========================================================= */
+import React from "react";
+import DashboardSidebar from "../shared/DashboardSidebar";
+import "./EstateAgentDashboard.css";
 
-.estate-agent-dashboard-layout {
-  min-height: 100vh;
-  display: flex;
-  background: #f5f3f7;
-  color: #1f2933;
+function EstateAgentDashboard({ user }) {
+  return (
+    <div className="estate-agent-dashboard-layout">
+      {/* SHARED SIDEBAR */}
+      <DashboardSidebar suppliedUser={user} />
+
+      {/* MAIN CONTENT */}
+      <main className="estate-agent-dashboard-main">
+        
+        {/* HEADER */}
+        <header className="estate-agent-header">
+          <div>
+            <p className="estate-agent-eyebrow">ESTATE AGENT PORTAL</p>
+            <h1>Welcome back, {user?.firstName || "Agent"}</h1>
+            <p>Manage your property listings and client inquiries.</p>
+          </div>
+          
+          <div className="estate-agent-avatar">
+            {user?.initials || "EA"}
+          </div>
+        </header>
+
+        {/* STATS */}
+        <div className="estate-agent-stats">
+          <div className="estate-agent-stat-card">
+            <div className="estate-agent-stat-top">
+              <span className="estate-agent-stat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-5h6v5" /><path d="M9 10h6" />
+                </svg>
+              </span>
+              Active Listings
+            </div>
+            <strong>0</strong>
+          </div>
+
+          <div className="estate-agent-stat-card">
+            <div className="estate-agent-stat-top">
+              <span className="estate-agent-stat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </span>
+              New Inquiries
+            </div>
+            <strong>0</strong>
+          </div>
+
+          <div className="estate-agent-stat-card">
+            <div className="estate-agent-stat-top">
+              <span className="estate-agent-stat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4L16.5 3.5z" />
+                </svg>
+              </span>
+              Edits Pending
+            </div>
+            <strong>0</strong>
+          </div>
+
+          <div className="estate-agent-stat-card">
+            <div className="estate-agent-stat-top">
+              <span className="estate-agent-stat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19V5" /><path d="M4 19h16" /><path d="M7 15l4-4 3 2 5-6" />
+                </svg>
+              </span>
+              Total Views
+            </div>
+            <strong>0</strong>
+          </div>
+        </div>
+
+        {/* MAIN GRID */}
+        <div className="estate-agent-content-grid">
+          
+          {/* LEFT COLUMN - LISTINGS */}
+          <section className="estate-agent-card">
+            <h2>My Active Listings</h2>
+            <p>Properties you currently have on the market.</p>
+            
+            <div className="estate-agent-empty">
+              <div className="estate-agent-empty-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-5h6v5" /><path d="M9 10h6" />
+                </svg>
+              </div>
+              <h3>No active listings</h3>
+              <p>When you list a property for the estate, it will appear here.</p>
+            </div>
+          </section>
+
+          {/* RIGHT COLUMN - INQUIRIES */}
+          <section className="estate-agent-card">
+            <h2>Recent Inquiries</h2>
+            <p>Messages from potential buyers or renters.</p>
+
+            <div className="estate-agent-empty">
+              <div className="estate-agent-empty-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <h3>No new inquiries</h3>
+              <p>You haven't received any messages yet.</p>
+            </div>
+          </section>
+
+        </div>
+
+      </main>
+    </div>
+  );
 }
 
-
-/* =========================================================
-   MAIN
-========================================================= */
-
-.estate-agent-dashboard-main {
-  width: calc(100% - 220px);
-  min-height: 100vh;
-  margin-left: 220px;
-  padding: 30px 34px 45px;
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.estate-agent-dashboard-header {
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 25px;
-  margin-bottom: 25px;
-}
-
-.estate-agent-dashboard-eyebrow {
-  display: block;
-  margin-bottom: 6px;
-  color: #8f8498;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-}
-
-.estate-agent-dashboard-header h1 {
-  margin: 0 0 7px;
-  color: #2c2532;
-  font-size: 25px;
-  font-weight: 750;
-  letter-spacing: -0.4px;
-}
-
-.estate-agent-dashboard-header p {
-  margin: 0;
-  color: #8d8492;
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-.estate-agent-dashboard-avatar {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #563f6b;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-
-/* =========================================================
-   STATS
-========================================================= */
-
-.estate-agent-dashboard-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.estate-agent-dashboard-stat-card {
-  min-width: 0;
-  min-height: 125px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e0e9;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
-}
-
-.estate-agent-dashboard-stat-top {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 14px;
-}
-
-.estate-agent-dashboard-stat-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 7px;
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-.estate-agent-dashboard-stat-top span {
-  color: #857b8c;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-}
-
-.estate-agent-dashboard-stat-card > strong {
-  display: block;
-  color: #2d2633;
-  font-size: 25px;
-  font-weight: 750;
-  line-height: 1;
-}
-
-
-/* =========================================================
-   CONTENT
-========================================================= */
-
-.estate-agent-dashboard-content {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-
-/* =========================================================
-   CARDS
-========================================================= */
-
-.estate-agent-dashboard-card {
-  min-width: 0;
-  min-height: 240px;
-  padding: 22px;
-  background: #ffffff;
-  border: 1px solid #e5e0e9;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
-}
-
-
-/* =========================================================
-   CARD HEADER
-========================================================= */
-
-.estate-agent-dashboard-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.estate-agent-dashboard-card-header h2 {
-  margin: 0 0 5px;
-  color: #302837;
-  font-size: 14px;
-  font-weight: 750;
-}
-
-.estate-agent-dashboard-card-header p {
-  margin: 0;
-  color: #938a99;
-  font-size: 9px;
-  line-height: 1.5;
-}
-
-.estate-agent-dashboard-card-link {
-  flex-shrink: 0;
-  color: #563f6b;
-  font-size: 9px;
-  font-weight: 750;
-  text-decoration: none;
-}
-
-.estate-agent-dashboard-card-link:hover {
-  color: #463256;
-  text-decoration: underline;
-}
-
-
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-
-.estate-agent-dashboard-empty-state {
-  min-height: 145px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  text-align: center;
-  border: 1px dashed #ddd5e2;
-  border-radius: 8px;
-  background: #faf9fb;
-}
-
-.estate-agent-dashboard-empty-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 9px;
-  border-radius: 50%;
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-.estate-agent-dashboard-empty-state h3 {
-  margin: 0 0 5px;
-  color: #4b4052;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-.estate-agent-dashboard-empty-state p {
-  max-width: 410px;
-  margin: 0;
-  color: #968d9d;
-  font-size: 8px;
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   AGENT ACTIONS
-========================================================= */
-
-.estate-agent-dashboard-actions-card {
-  min-height: auto;
-}
-
-.estate-agent-dashboard-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.estate-agent-dashboard-action {
-  min-width: 0;
-  min-height: 55px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid #e9e4ed;
-  border-radius: 8px;
-  background: #faf9fb;
-  color: #504558;
-  font-size: 9px;
-  font-weight: 650;
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.estate-agent-dashboard-action:hover {
-  background: #f4f0f6;
-  border-color: #dcd2e2;
-  transform: translateY(-1px);
-}
-
-.estate-agent-dashboard-action-icon {
-  width: 29px;
-  height: 29px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 6px;
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-
-/* =========================================================
-   ANNOUNCEMENTS
-========================================================= */
-
-.estate-agent-dashboard-announcement-empty {
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px;
-  border: 1px solid #eeeaf1;
-  border-radius: 8px;
-  background: #faf9fb;
-}
-
-.estate-agent-dashboard-announcement-icon {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-.estate-agent-dashboard-announcement-empty span {
-  color: #766c7e;
-  font-size: 9px;
-  font-weight: 650;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 1100px) {
-
-  .estate-agent-dashboard-main {
-    width: calc(100% - 200px);
-    margin-left: 200px;
-  }
-
-  .estate-agent-dashboard-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-}
-
-
-@media (max-width: 800px) {
-
-  .estate-agent-dashboard-main {
-    width: calc(100% - 170px);
-    margin-left: 170px;
-    padding: 25px 22px 40px;
-  }
-
-  .estate-agent-dashboard-header {
-    align-items: flex-start;
-  }
-
-  .estate-agent-dashboard-avatar {
-    display: none;
-  }
-
-  .estate-agent-dashboard-content {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-
-@media (max-width: 600px) {
-
-  .estate-agent-dashboard-layout {
-    display: block;
-  }
-
-  .estate-agent-dashboard-main {
-    width: 100%;
-    margin-left: 0;
-    padding: 22px 14px 35px;
-  }
-
-  .estate-agent-dashboard-header h1 {
-    font-size: 21px;
-  }
-
-  .estate-agent-dashboard-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .estate-agent-dashboard-actions {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-
-@media (max-width: 430px) {
-
-  .estate-agent-dashboard-main {
-    padding: 18px 11px 30px;
-  }
-
-  .estate-agent-dashboard-card {
-    padding: 17px;
-  }
-
-  .estate-agent-dashboard-stat-card {
-    padding: 16px;
-  }
-
-}
+export default EstateAgentDashboard;
