@@ -1,36 +1,33 @@
-# Frontend Development Update
+# Frontend & System Development Update
 
-## What I did
+## What We Took From radiant_noodle (`valora_new`)
 
-I cleaned up the frontend. The project had two or three copies of the same screens, so I deleted the
-old ones and kept one set of pages, one login and one set of styles. There is now one frontend to work
-on instead of three.
+We consolidated and merged the working codebase and backend updates from `radiant_noodle` (`valora_new`) into `main`:
 
-## Where it stands
+- **Resident Directory & Unit Linking:** Complete backend models, schemas, and endpoints (`/api/v1/resident-directory`) linking approved users to properties, with live CRUD in `ResidentDirectory.jsx`.
+- **Property Management & Live Editing:** Added `PATCH /api/v1/properties/{property_id}` and `PropertyUpdate` schema on backend; enabled modal editing and adding of units in `PropertyManagement.jsx` and quick property adding on `HOAAdminDashboard.jsx`.
+- **My Property for Residents:** `MyProperty.jsx` now dynamically queries the user's assigned property from the database instead of showing hardcoded dummy data.
+- **User Profile & Password:** Added `PUT /api/users/me` and `PUT /api/users/me/password` on backend with an interactive password update modal in `Profile.jsx`.
+- **Service Provider Moderation:** Added deletion of service providers and provider reviews with automatic average rating recalculation.
+- **Database Connection Pooling:** Configured SQLAlchemy pool recycling, pre-pinging, and timeouts in `session.py` to prevent PostgreSQL disconnects.
+- **Repository Hygiene:** Untracked 4,500+ virtual environment and cache files; added clean `.gitignore`.
 
-- The frontend is connected to the backend. Login, registration, roles, complaints and the dashboards
-  run on the real backend, with real accounts and real data.
-- Every user goes to their own dashboard and cannot open another role's pages.
-- I removed the old pop-up alerts and confirm boxes and put the messages inside the page instead. Each
-  page also says plainly when it is loading, empty or has a problem.
-- Tests and the build pass.
+## Where It Stands
 
-## Still missing on the backend
+- Frontend builds cleanly (`npm run build`).
+- Backend Python modules compile cleanly without syntax errors (`python -m compileall backend/app`).
+- Authentication, roles, dashboards, complaints, resident directory, property management, and profile run on the real backend with real accounts.
 
-These screens are built, but the backend does not have the endpoints they need yet. Until it does, they
-keep their data in the browser, so that data is not shared between users:
+## Still Missing / Remaining Work to Get Fully Working
 
-- User admin: the list of users, and approving or rejecting new sign-ups.
-- Property sale and rent requests, and the HOA steps that approve a listing.
-- Photo uploads for listings and complaints.
-- Resident directory, and a way to know which unit belongs to the signed-in user.
-- Buyer and agent enquiries.
-- A login for service providers.
-- Analytics other than the Living Score.
+The following screens or capabilities still require backend endpoints or full wiring so that data is shared across users rather than stored in browser memory:
 
-## Still to do on the frontend
+1. **User Administration:** Complete end-to-end integration and testing of `RegistrationRequests.jsx` and `UserManagement.jsx` with the live `/users/pending` and `/users/{id}/approve` endpoints.
+2. **Property Sale and Rent Requests:** Database tables and API endpoints for residents submitting sale/rent requests (`RequestToSell.jsx`) and HOA approval workflow (`PropertyRequests.jsx`).
+3. **Photo & Document Uploads:** Static/cloud file upload handling for property listing photos and complaint evidence attachments.
+4. **Buyer and Agent Enquiries:** Backend inquiry submission and inbox routing for prospective buyers and assigned estate agents (`AgentInquiries.jsx`).
+5. **Service Provider Portal:** Dedicated login workflow and work order dispatch view for service providers (`ProviderWork.jsx`).
+6. **Extended Operational Analytics:** Connecting `CommunityAnalytics.jsx` to live database aggregates (complaint resolution times, occupancy rate, maintenance spend) beyond the Living Score engine.
+7. **Frontend Mobile Polish:** Responsive layout refinements on smaller screens and final asset consistency.
 
-- Some pages still show placeholder numbers and example records.
-- A few screens need a design pass, especially on smaller screens.
-- Assets: a proper logo image and page icons.
-
+*(For detailed architecture and endpoint tracking, see `PROGRESS.md` in the project root).*
