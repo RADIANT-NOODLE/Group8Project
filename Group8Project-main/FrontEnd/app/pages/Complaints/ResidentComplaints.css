@@ -794,3 +794,9 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+
+/* date filter under the search box */
+.resident-complaints-date-filter {
+    margin-top: 12px;
+}

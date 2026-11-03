@@ -197,6 +197,12 @@ function ResidentDirectory() {
             return setFormError("Please select an account and a property.");
         }
 
+        const confirmed = await showConfirm(
+            modalMode === "edit" ? "Save changes to this directory record?" : "Add this resident to the directory?",
+            { title: modalMode === "edit" ? "Save changes?" : "Add resident?", confirmLabel: modalMode === "edit" ? "Save" : "Add resident" }
+        );
+        if (!confirmed) return;
+
         try {
             const token = getSessionToken();
             

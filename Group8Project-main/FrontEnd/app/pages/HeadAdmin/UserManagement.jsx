@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { approveUser, listUsers, rejectUser, revokeUser, roleLabel } from "../../services/userApi";
 import "./UserManagement.css";
@@ -6,68 +6,56 @@ import { showConfirm } from "../../components/AppDialog";
 import { getStoredUser } from "../../services/session";
 
 /* =========================================================
-   PROFESSIONAL ICONS
+   ICONS
 ========================================================= */
 
-function Icon({ name, size = 18 }) {
-  const icons = {
-    users: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-    check: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="m5 12 4 4L19 6" />
-      </svg>
-    ),
-    pending: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </svg>
-    ),
-    rejected: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="12" r="9" />
-        <path d="m9 9 6 6M15 9l-6 6" />
-      </svg>
-    ),
-    refresh: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M20 11a8 8 0 0 0-14.9-3" />
-        <path d="M4 4v4h4" />
-        <path d="M4 13a8 8 0 0 0 14.9 3" />
-        <path d="M20 20v-4h-4" />
-      </svg>
-    ),
-    people: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="9" cy="8" r="3.5" />
-        <circle cx="17" cy="9" r="3" />
-        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-        <path d="M14 16a5.5 5.5 0 0 1 7.5 4" />
-      </svg>
-    ),
-    property: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M3 10.5 12 3l9 7.5" />
-        <path d="M5 9.5V21h14V9.5" />
-        <path d="M9 21v-6h6v6" />
-      </svg>
-    ),
-    profile: (
-      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21a8 8 0 0 1 16 0" />
-      </svg>
-    ),
-  };
+const ICON_PATHS = {
+  users: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  check: <path d="m5 12 4 4L19 6" />,
+  refresh: (
+    <>
+      <path d="M20 11a8 8 0 0 0-14.9-3" />
+      <path d="M4 4v4h4" />
+      <path d="M4 13a8 8 0 0 0 14.9 3" />
+      <path d="M20 20v-4h-4" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M9 7V4h6v3" />
+    </>
+  ),
+  revoke: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M6 6l12 12" />
+    </>
+  ),
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+};
 
-  return icons[name] || null;
+function Icon({ name, size = 18 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {ICON_PATHS[name]}
+    </svg>
+  );
 }
 
 /* =========================================================
@@ -76,8 +64,26 @@ function Icon({ name, size = 18 }) {
    An account is either Approved (hoa_approved) or Pending.
 ========================================================= */
 
+const ROLE_ORDER = [
+  { role: "resident", label: "Residents" },
+  { role: "estate_agent", label: "Estate agents" },
+  { role: "hoa_admin", label: "HOA admins" },
+  { role: "head_admin", label: "Head admins" },
+];
+
 const isHeadAdmin = (user) => user.role === "head_admin";
 const statusOf = (user) => (user.hoa_approved ? "Approved" : "Pending");
+
+function initials(name = "") {
+  return (
+    String(name)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "?"
+  );
+}
 
 function getSignedInUserId() {
   try {
@@ -90,13 +96,17 @@ function getSignedInUserId() {
 function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [filter, setFilter] = useState("All");
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [search, setSearch] = useState("");
   const myId = getSignedInUserId();
 
   const refreshUsers = useCallback(async () => {
+    setRefreshing(true);
     try {
       setUsers(await listUsers());
       setError("");
@@ -105,6 +115,7 @@ function UserManagement() {
       setError(loadError?.message || "Unable to load the user accounts.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -128,8 +139,10 @@ function UserManagement() {
     }
   }
 
-  const approve = (user) =>
+  const approve = async (user) => {
+    if (!await showConfirm(`Approve ${user.full_name}? They will be able to sign in to VALORA.`, { title: "Approve account?", confirmLabel: "Approve" })) return;
     runAction(user, approveUser, `${user.full_name} has been approved.`);
+  };
 
   const revoke = async (user) => {
     if (!await showConfirm(`Revoke access for ${user.full_name}? They will return to Pending.`)) return;
@@ -141,170 +154,240 @@ function UserManagement() {
     runAction(user, rejectUser, `${user.full_name} has been removed.`);
   };
 
-  const filteredUsers =
-    filter === "All" ? users : users.filter((user) => statusOf(user) === filter);
-
   const pendingCount = users.filter((user) => !user.hoa_approved).length;
-  const approvedCount = users.filter((user) => user.hoa_approved).length;
+  const approvedCount = users.length - pendingCount;
+  const approvedShare = users.length > 0 ? Math.round((approvedCount / users.length) * 100) : 0;
 
-  const roleCounts = {
-    residents: users.filter((user) => user.role === "resident").length,
-    agents: users.filter((user) => user.role === "estate_agent").length,
-    hoaAdmins: users.filter((user) => user.role === "hoa_admin").length,
-  };
+  const roleCounts = ROLE_ORDER.map((entry) => ({
+    ...entry,
+    count: users.filter((user) => user.role === entry.role).length,
+  }));
+
+  const filteredUsers = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return users.filter((user) => {
+      if (filter !== "All" && statusOf(user) !== filter) return false;
+      if (roleFilter !== "All" && user.role !== roleFilter) return false;
+      if (!term) return true;
+      return [user.full_name, user.email].some((value) => String(value || "").toLowerCase().includes(term));
+    });
+  }, [users, filter, roleFilter, search]);
+
+  const statusTabs = [
+    { value: "All", label: "All users", count: users.length },
+    { value: "Approved", label: "Approved", count: approvedCount },
+    { value: "Pending", label: "Pending", count: pendingCount },
+  ];
 
   return (
     <div className="user-management-page">
       <DashboardSidebar />
 
       <main className="user-management-main">
-        <div className="user-management-header">
+        {/* HEADER */}
+        <header className="user-management-header">
           <div>
-            <p className="user-management-eyebrow">HEAD ADMINISTRATION</p>
+            <p className="user-management-eyebrow">Head administration</p>
             <h1>User Management</h1>
             <p className="user-management-subtitle">
-              View and manage all VALORA user accounts and their access status.
+              View and manage every VALORA account and its access.
             </p>
           </div>
-        </div>
+
+          <button type="button" className="um-button um-button-secondary" onClick={refreshUsers} disabled={refreshing}>
+            <Icon name="refresh" size={16} />
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </button>
+        </header>
 
         {error && (
-          <div className="user-management-empty" role="alert">
-            <h3>Something went wrong</h3>
-            <p>{error}</p>
+          <div className="um-banner is-error" role="alert">
+            <span>{error}</span>
+            <button type="button" onClick={() => setError("")} aria-label="Dismiss message"><Icon name="close" size={15} /></button>
           </div>
         )}
 
         {notice && (
-          <div className="user-management-empty" role="status">
-            <p>{notice}</p>
+          <div className="um-banner is-success" role="status">
+            <span><Icon name="check" size={16} /> {notice}</span>
+            <button type="button" onClick={() => setNotice("")} aria-label="Dismiss message"><Icon name="close" size={15} /></button>
           </div>
         )}
 
-        <div className="user-management-stats">
-          <div className="user-management-stat-card">
-            <div className="user-management-stat-icon"><Icon name="users" size={19} /></div>
-            <div>
-              <span>Total Users</span>
-              <strong>{users.length}</strong>
-              <small>Registered accounts</small>
+        {/* SUMMARY */}
+        <section className="um-summary" aria-labelledby="um-summary-title">
+          <div className="um-summary-approvals">
+            <p className="um-eyebrow">Accounts</p>
+            <h2 id="um-summary-title">
+              {loading ? "Loading accounts…" : `${approvedCount} of ${users.length} accounts approved`}
+            </h2>
+            <p className="um-summary-sub">
+              {loading
+                ? ""
+                : pendingCount === 0
+                  ? "No accounts are waiting for approval."
+                  : `${pendingCount} ${pendingCount === 1 ? "account is" : "accounts are"} waiting for approval.`}
+            </p>
+
+            <div className="um-summary-bar" role="img" aria-label={`Approved: ${approvedCount}, pending: ${pendingCount}`}>
+              {!loading && approvedCount > 0 && (
+                <span className="is-approved" style={{ flexGrow: approvedCount }} title={`Approved: ${approvedCount}`} />
+              )}
+              {!loading && pendingCount > 0 && (
+                <span className="is-pending" style={{ flexGrow: pendingCount }} title={`Pending: ${pendingCount}`} />
+              )}
             </div>
+            <ul className="um-summary-legend">
+              <li><span className="is-approved" aria-hidden="true" />Approved <strong>{approvedCount}</strong></li>
+              <li><span className="is-pending" aria-hidden="true" />Pending <strong>{pendingCount}</strong></li>
+              <li>{approvedShare}% approved</li>
+            </ul>
           </div>
 
-          <div className="user-management-stat-card">
-            <div className="user-management-stat-icon"><Icon name="check" size={19} /></div>
-            <div>
-              <span>Approved</span>
-              <strong>{approvedCount}</strong>
-              <small>Active accounts</small>
-            </div>
-          </div>
-
-          <div className="user-management-stat-card">
-            <div className="user-management-stat-icon"><Icon name="pending" size={19} /></div>
-            <div>
-              <span>Pending</span>
-              <strong>{pendingCount}</strong>
-              <small>Awaiting approval</small>
-            </div>
-          </div>
-        </div>
-
-        <section className="user-management-panel">
-          <div className="user-management-panel-heading">
-            <div>
-              <h2>All Registered Users</h2>
-              <p>Manage account status and review user roles across the VALORA system.</p>
-            </div>
-
-            <button type="button" className="user-management-refresh" onClick={refreshUsers}>
-              <Icon name="refresh" size={15} />
-              <span>Refresh</span>
-            </button>
-          </div>
-
-          <div className="user-management-filters">
-            {["All", "Approved", "Pending"].map((status) => (
-              <button
-                type="button"
-                key={status}
-                className={filter === status ? "active" : ""}
-                onClick={() => setFilter(status)}
-              >
-                {status === "All" ? "All Users" : status}
-              </button>
+          <ul className="um-summary-roles" aria-label="Accounts by role">
+            {roleCounts.map((entry) => (
+              <li key={entry.role}>
+                <button
+                  type="button"
+                  className={roleFilter === entry.role ? "is-active" : undefined}
+                  onClick={() => setRoleFilter(roleFilter === entry.role ? "All" : entry.role)}
+                  aria-pressed={roleFilter === entry.role}
+                  title={roleFilter === entry.role ? "Show all roles" : `Show only ${entry.label.toLowerCase()}`}
+                >
+                  <span>{entry.label}</span>
+                  <strong>{loading ? "…" : entry.count}</strong>
+                </button>
+              </li>
             ))}
+          </ul>
+        </section>
+
+        {/* USERS */}
+        <section className="um-panel" aria-labelledby="um-users-title">
+          <div className="um-panel-head">
+            <div>
+              <h2 id="um-users-title">All registered users</h2>
+              <p>Search, filter and manage account access.</p>
+            </div>
+          </div>
+
+          <div className="um-toolbar">
+            <label className="um-search">
+              <Icon name="search" size={17} />
+              <span className="um-visually-hidden">Search users</span>
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name or email…"
+              />
+            </label>
+
+            <label className="um-select">
+              <span className="um-visually-hidden">Filter by role</span>
+              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+                <option value="All">All roles</option>
+                {ROLE_ORDER.map((entry) => (
+                  <option key={entry.role} value={entry.role}>{entry.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <div className="um-tabs" role="group" aria-label="Filter by status">
+              {statusTabs.map((tab) => (
+                <button
+                  type="button"
+                  key={tab.value}
+                  className={filter === tab.value ? "is-active" : undefined}
+                  aria-pressed={filter === tab.value}
+                  onClick={() => setFilter(tab.value)}
+                >
+                  {tab.label}
+                  <span>{tab.count}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {loading ? (
-            <div className="user-management-empty"><p>Loading users...</p></div>
+            <ul className="um-skeleton-list" aria-hidden="true">
+              {[0, 1, 2, 3].map((index) => (
+                <li key={index}>
+                  <span className="um-skeleton um-skeleton-avatar" />
+                  <span className="um-skeleton um-skeleton-line" />
+                  <span className="um-skeleton um-skeleton-pill" />
+                  <span className="um-skeleton um-skeleton-pill" />
+                </li>
+              ))}
+            </ul>
           ) : filteredUsers.length === 0 ? (
-            <div className="user-management-empty">
-              <div className="user-management-empty-icon"><Icon name="users" size={22} /></div>
+            <div className="um-empty">
+              <span className="um-empty-icon"><Icon name="users" size={22} /></span>
               <h3>No users found</h3>
-              <p>There are no accounts matching the selected filter.</p>
+              <p>No accounts match your search or filters.</p>
             </div>
           ) : (
-            <div className="user-management-table-wrapper">
-              <table className="user-management-table">
+            <div className="um-table-wrapper">
+              <table className="um-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Email</th>
+                    <th>User</th>
                     <th>Role</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th className="is-right">Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {filteredUsers.map((user) => {
                     const protectedAccount = isHeadAdmin(user) || user.id === myId;
+                    const busy = busyId === user.id;
 
                     return (
                       <tr key={user.id}>
-                        <td><strong>{user.full_name}</strong></td>
-                        <td>{user.email}</td>
-                        <td><span className="user-management-role">{roleLabel(user.role)}</span></td>
                         <td>
-                          <span className={`user-management-status ${user.hoa_approved ? "approved" : "pending"}`}>
+                          <div className="um-user">
+                            <span className="um-avatar" aria-hidden="true">{initials(user.full_name)}</span>
+                            <div>
+                              <strong>{user.full_name}</strong>
+                              <span>{user.email}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`um-role role-${user.role}`}>{roleLabel(user.role)}</span>
+                        </td>
+                        <td>
+                          <span className={`um-status ${user.hoa_approved ? "is-approved" : "is-pending"}`}>
                             {statusOf(user)}
                           </span>
                         </td>
                         <td>
-                          <div className="user-management-actions">
+                          <div className="um-actions">
                             {protectedAccount ? (
-                              <span className="user-management-system-account">
-                                {isHeadAdmin(user) ? "System Account" : "You"}
-                              </span>
+                              <span className="um-badge">{isHeadAdmin(user) ? "System account" : "You"}</span>
                             ) : (
                               <>
                                 {!user.hoa_approved ? (
-                                  <button
-                                    type="button"
-                                    className="user-management-primary-btn"
-                                    disabled={busyId === user.id}
-                                    onClick={() => approve(user)}
-                                  >
+                                  <button type="button" className="um-button um-button-primary um-button-small" disabled={busy} onClick={() => approve(user)}>
+                                    <Icon name="check" size={15} />
                                     Approve
                                   </button>
                                 ) : (
-                                  <button
-                                    type="button"
-                                    className="user-management-secondary-btn"
-                                    disabled={busyId === user.id}
-                                    onClick={() => revoke(user)}
-                                  >
-                                    Revoke Access
+                                  <button type="button" className="um-button um-button-secondary um-button-small" disabled={busy} onClick={() => revoke(user)}>
+                                    <Icon name="revoke" size={15} />
+                                    Revoke access
                                   </button>
                                 )}
 
                                 <button
                                   type="button"
-                                  className="user-management-secondary-btn"
-                                  disabled={busyId === user.id}
+                                  className="um-button um-button-danger um-button-small"
+                                  disabled={busy}
                                   onClick={() => remove(user)}
+                                  aria-label={`Remove ${user.full_name}`}
                                 >
+                                  <Icon name="trash" size={15} />
                                   Remove
                                 </button>
                               </>
@@ -318,35 +401,12 @@ function UserManagement() {
               </table>
             </div>
           )}
-        </section>
 
-        <section className="user-management-panel">
-          <div className="user-management-panel-heading">
-            <div>
-              <h2>User Roles</h2>
-              <p>Number of registered accounts by role.</p>
-            </div>
-          </div>
-
-          <div className="user-management-role-grid">
-            <div className="user-management-role-card">
-              <div className="user-management-role-icon"><Icon name="users" size={18} /></div>
-              <span>Residents</span>
-              <strong>{roleCounts.residents}</strong>
-            </div>
-
-            <div className="user-management-role-card">
-              <div className="user-management-role-icon"><Icon name="property" size={18} /></div>
-              <span>Estate Agents</span>
-              <strong>{roleCounts.agents}</strong>
-            </div>
-
-            <div className="user-management-role-card">
-              <div className="user-management-role-icon"><Icon name="profile" size={18} /></div>
-              <span>HOA Admins</span>
-              <strong>{roleCounts.hoaAdmins}</strong>
-            </div>
-          </div>
+          {!loading && filteredUsers.length > 0 && (
+            <p className="um-count">
+              Showing {filteredUsers.length} of {users.length} {users.length === 1 ? "account" : "accounts"}
+            </p>
+          )}
         </section>
       </main>
     </div>

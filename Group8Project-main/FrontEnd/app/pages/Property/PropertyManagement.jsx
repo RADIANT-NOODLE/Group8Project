@@ -5,8 +5,9 @@ import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
 import "./PropertyManagement.css";
 
-import { showAlert } from "../../components/AppDialog";
+import { showAlert, showConfirm } from "../../components/AppDialog";
 import { getSessionToken } from "../../services/session";
+import StageSummary from "../../components/StageSummary";
 
 /*
 =========================================================
@@ -154,6 +155,8 @@ function PropertyManagement() {
 
     const handleUpdateProperty = async (e) => {
         e.preventDefault();
+        const unitLabel = editingProperty?.unit_no ? `Unit ${editingProperty.unit_no}` : "this property";
+        if (!(await showConfirm(`Save changes to ${unitLabel}?`, { title: "Save changes?", confirmLabel: "Save" }))) return;
         try {
             const token = getSessionToken();
             const id = editingProperty.id || editingProperty.unit_id;
@@ -251,6 +254,7 @@ function PropertyManagement() {
 
     const handleAddProperty = async (e) => {
         e.preventDefault();
+        if (!(await showConfirm("Add this property to the estate?", { title: "Add property?", confirmLabel: "Add property" }))) return;
         try {
             const token = getSessionToken();
             const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
@@ -393,21 +397,17 @@ function PropertyManagement() {
                     </div>
                 </header>
             
-                {/* STATS */}
-                <section className="property-management-stats" aria-label="Property statistics">
-                    <div className="property-stat-card">
-                        <div className="property-stat-icon"><span aria-hidden="true">⌂</span></div>
-                        <div><p>Total Properties</p><h2>{totalProperties}</h2><span>All available records</span></div>
-                    </div>
-                    <div className="property-stat-card">
-                        <div className="property-stat-icon published-icon"><span aria-hidden="true">✓</span></div>
-                        <div><p>Published Listings</p><h2>{publishedProperties}</h2><span>Approved and published</span></div>
-                    </div>
-                    <div className="property-stat-card">
-                        <div className="property-stat-icon pending-icon"><span aria-hidden="true">◷</span></div>
-                        <div><p>Awaiting Action</p><h2>{pendingProperties}</h2><span>Pending, assigned or draft</span></div>
-                    </div>
-                </section>
+                {/* SUMMARY */}
+                <StageSummary
+                    eyebrow="Listing status"
+                    title={`${publishedProperties} of ${totalProperties} ${totalProperties === 1 ? "property" : "properties"} published`}
+                    subtitle="Where every property in the estate stands."
+                    stages={[
+                        { key: "published", label: "Published", hint: "Approved and live", count: publishedProperties, tone: "done" },
+                        { key: "action", label: "Awaiting action", hint: "Pending, assigned or draft", count: pendingProperties, tone: "waiting" },
+                        { key: "unlisted", label: "Not listed", hint: "Not on the market", count: Math.max(totalProperties - publishedProperties - pendingProperties, 0), tone: "neutral" },
+                    ]}
+                />
 
                 {/* SEARCH AND FILTERS */}
                 <section className="property-management-toolbar">

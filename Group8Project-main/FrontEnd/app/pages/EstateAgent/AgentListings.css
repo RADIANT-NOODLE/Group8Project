@@ -581,3 +581,296 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+
+/* =========================================================
+   LISTING DETAILS PANEL
+========================================================= */
+
+.agent-listing-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(40, 28, 52, 0.55);
+    animation: agent-listing-fade 0.15s ease-out;
+}
+
+.agent-listing-modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    border-top: 5px solid #563f6b;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(40, 28, 52, 0.35);
+    animation: agent-listing-pop 0.18s ease-out;
+}
+
+.agent-listing-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px 16px;
+}
+
+.agent-listing-modal-eyebrow {
+    margin: 0 0 6px;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.agent-listing-modal-header h2 {
+    margin: 0;
+    color: #29242d;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.agent-listing-modal-address {
+    margin: 4px 0 0;
+    color: #77717d;
+    font-size: 13px;
+}
+
+.agent-listing-modal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.agent-listing-modal-tag {
+    padding: 4px 11px;
+    border-radius: 20px;
+    background: #f1edf4;
+    color: #6f6577;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.agent-listing-modal-tag.is-live {
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.agent-listing-modal-tag.is-soft {
+    background: #e4d9ed;
+    color: #563f6b;
+}
+
+.agent-listing-modal-close {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e8e3eb;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #563f6b;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.agent-listing-modal-close:hover {
+    background: #f6f2f9;
+}
+
+.agent-listing-modal-photo {
+    display: block;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.agent-listing-modal-body {
+    overflow-y: auto;
+    padding: 18px 24px 6px;
+}
+
+.agent-listing-modal-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e4d9ed 0%, #ece4f3 100%);
+}
+
+.agent-listing-modal-price span {
+    color: #6f5b82;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.agent-listing-modal-price strong {
+    color: #563f6b;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.agent-listing-modal-body h3 {
+    margin: 0 0 8px;
+    color: #8f8698;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.agent-listing-modal-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 18px;
+}
+
+.agent-listing-modal-facts div {
+    padding: 10px 12px;
+    border: 1px solid #eeeaf1;
+    border-radius: 10px;
+    background: #faf9fb;
+}
+
+.agent-listing-modal-facts dt {
+    color: #8f8698;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.agent-listing-modal-facts dd {
+    margin: 3px 0 0;
+    color: #29242d;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.agent-listing-modal-owner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #eeeaf1;
+    border-radius: 12px;
+}
+
+.agent-listing-modal-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #e4d9ed;
+    color: #563f6b;
+    font-weight: 800;
+}
+
+.agent-listing-modal-owner strong {
+    display: block;
+    color: #29242d;
+    font-size: 13.5px;
+}
+
+.agent-listing-modal-owner span {
+    color: #8f8698;
+    font-size: 12px;
+}
+
+.agent-listing-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px 20px;
+    border-top: 1px solid #f0ecf2;
+}
+
+.agent-listing-modal-button {
+    min-width: 110px;
+    padding: 10px 16px;
+    border: 1px solid #e4d9ed;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #563f6b;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.agent-listing-modal-button:hover {
+    background: #f6f2f9;
+}
+
+.agent-listing-modal-button.is-primary {
+    border-color: #563f6b;
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.agent-listing-modal-button.is-primary:hover {
+    background: #463256;
+}
+
+.agent-listing-modal-button:focus-visible,
+.agent-listing-modal-close:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+@keyframes agent-listing-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes agent-listing-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 480px) {
+    .agent-listing-modal-facts {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .agent-listing-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .agent-listing-modal-button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agent-listing-modal-overlay,
+    .agent-listing-modal {
+        animation: none;
+    }
+}
+
+.agent-listing-modal-button.is-complete {
+    border-color: #0ca30c;
+    background: #e5f5ea;
+    color: #23683a;
+}
+
+.agent-listing-modal-button.is-complete:hover {
+    background: #d4efdc;
+}

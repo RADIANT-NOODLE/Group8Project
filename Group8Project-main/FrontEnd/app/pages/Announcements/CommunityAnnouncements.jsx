@@ -290,6 +290,19 @@ function CommunityAnnouncements() {
             isPublished: form.status === "Published",
         };
 
+        const confirmed = await showConfirm(
+            editingId
+                ? "Save changes to this announcement?"
+                : fields.isPublished
+                    ? "Publish this announcement? Residents will see it straight away."
+                    : "Save this announcement as a draft?",
+            {
+                title: editingId ? "Save changes?" : fields.isPublished ? "Publish announcement?" : "Save draft?",
+                confirmLabel: editingId ? "Save" : fields.isPublished ? "Publish" : "Save draft",
+            }
+        );
+        if (!confirmed) return;
+
         const saved = await save(
             () =>
                 editingId
@@ -317,6 +330,14 @@ function CommunityAnnouncements() {
 
     async function togglePublished(announcement) {
         const publish = announcement.status !== "Published";
+
+        const confirmed = await showConfirm(
+            publish
+                ? `Publish "${announcement.title}"? Residents will see it straight away.`
+                : `Move "${announcement.title}" back to drafts? Residents will no longer see it.`,
+            { title: publish ? "Publish announcement?" : "Move to drafts?", confirmLabel: publish ? "Publish" : "Move to drafts" }
+        );
+        if (!confirmed) return;
 
         await save(
             () => updateAnnouncement(announcement.id, { isPublished: publish }),

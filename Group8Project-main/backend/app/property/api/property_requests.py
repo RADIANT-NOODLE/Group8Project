@@ -11,6 +11,7 @@ from app.property.schemas.property_request import (
     PaginatedPropertyRequestsResponse,
     PropertyRequestAssign,
     PropertyRequestCreate,
+    PropertyRequestProgress,
     PropertyRequestReject,
     PropertyRequestResponse,
 )
@@ -23,6 +24,10 @@ AdminOnly = Annotated[
 ]
 OwnerOnly = Annotated[
     User, require_roles(UserRole.resident.value)
+]
+AgentOrAdmin = Annotated[
+    User,
+    require_roles(UserRole.estate_agent.value, UserRole.hoa_admin.value, UserRole.head_admin.value),
 ]
 
 
@@ -92,3 +97,14 @@ async def assign_estate_agent(
 ) -> PropertyRequestResponse:
     """Assign an approved estate agent to an approved request."""
     return await PropertyRequestService(db).assign_agent(request_id, payload, admin)
+
+
+@router.post("/{request_id}/progress", response_model=PropertyRequestResponse)
+async def update_request_progress(
+    request_id: int,
+    payload: PropertyRequestProgress,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: AgentOrAdmin,
+) -> PropertyRequestResponse:
+    """The assigned estate agent marks a request listed, sold or rented."""
+    return await PropertyRequestService(db).update_progress(request_id, payload, user)

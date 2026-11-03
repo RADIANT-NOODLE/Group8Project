@@ -11,6 +11,7 @@ import {
     workOrderStatusLabel,
 } from "../../services/statusMap";
 import ComplaintStatusRing from "../../components/ComplaintStatusRing";
+import DateRangeFilter, { ALL_DATES, inDateRange, isDateFilterActive } from "../../components/DateRangeFilter";
 import "./ResidentComplaints.css";
 import { roleLabel } from "../../services/roleMap";
 import { getStoredUser } from "../../services/session";
@@ -141,6 +142,7 @@ export default function ResidentComplaints() {
     const [notice, setNotice] = useState("");
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const [dateRange, setDateRange] = useState(ALL_DATES);
 
     // work order dialog
     const [orderTarget, setOrderTarget] = useState(null);
@@ -200,9 +202,9 @@ export default function ResidentComplaints() {
     // 3. Filter and Search
     const filteredComplaints = useMemo(() => {
         const term = search.trim().toLowerCase();
-        const sorted = [...complaints].sort(
-            (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-        );
+        const sorted = [...complaints]
+            .filter((complaint) => inDateRange(complaint.createdAt, dateRange))
+            .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
         if (!term) return sorted;
 
@@ -218,7 +220,7 @@ export default function ResidentComplaints() {
                 .filter((value) => value !== null && value !== undefined && value !== "")
                 .some((value) => String(value).toLowerCase().includes(term))
         );
-    }, [complaints, search]);
+    }, [complaints, search, dateRange]);
 
     // 4. Stats Calculation
     const stats = useMemo(() => ({
@@ -440,6 +442,9 @@ export default function ResidentComplaints() {
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search ID, submitter, category or status..."
                         />
+                        <div className="resident-complaints-date-filter">
+                            <DateRangeFilter id="resident-complaints-date" value={dateRange} onChange={setDateRange} />
+                        </div>
                     </div>
 
                     <div className="resident-complaints-table-container">
@@ -465,7 +470,7 @@ export default function ResidentComplaints() {
                                 ) : filteredComplaints.length === 0 ? (
                                     <tr>
                                         <td colSpan={8} className="resident-complaints-empty">
-                                            {search ? "No complaints match your search." : "No complaints have been submitted yet."}
+                                            {search || isDateFilterActive(dateRange) ? "No complaints match your search or date filter." : "No complaints have been submitted yet."}
                                         </td>
                                     </tr>
                                 ) : (

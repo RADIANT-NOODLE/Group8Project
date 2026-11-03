@@ -106,84 +106,6 @@
    STATISTICS
 ========================================================= */
 
-.property-management-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-    margin-bottom: 27px;
-}
-
-.property-stat-card {
-    display: flex;
-    align-items: center;
-    gap: 17px;
-    min-width: 0;
-    min-height: 124px;
-    padding: 23px;
-    box-sizing: border-box;
-    border: 1px solid #EAE5EF;
-    border-radius: 13px;
-    background: #FFFFFF;
-    box-shadow: 0 3px 12px rgba(48, 37, 59, 0.035);
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.property-stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 7px 18px rgba(48, 37, 59, 0.07);
-}
-
-.property-stat-icon {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 49px;
-    height: 49px;
-    border-radius: 12px;
-    background: #F0EAF5;
-    color: #563F6B;
-    font-size: 27px;
-    font-weight: 600;
-}
-
-.property-stat-icon.published-icon {
-    background: #E7F5ED;
-    color: #278153;
-}
-
-.property-stat-icon.pending-icon {
-    background: #FFF2DD;
-    color: #A76B13;
-}
-
-.property-stat-card > div:last-child {
-    min-width: 0;
-}
-
-.property-stat-card p {
-    margin: 0 0 7px;
-    color: #77717F;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.property-stat-card h2 {
-    margin: 0 0 6px;
-    color: #30253B;
-    font-size: 27px;
-    font-weight: 750;
-    line-height: 1;
-}
-
-.property-stat-card span {
-    color: #97909D;
-    font-size: 11px;
-    line-height: 1.5;
-}
-
 
 /* =========================================================
    SEARCH AND FILTER TOOLBAR
@@ -743,15 +665,6 @@
         padding-left: 27px;
     }
 
-    .property-management-stats {
-        gap: 14px;
-    }
-
-    .property-stat-card {
-        gap: 12px;
-        padding: 18px;
-    }
-
     .property-management-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 18px;
@@ -791,15 +704,6 @@
         min-width: 130px;
     }
 
-    .property-stat-card {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .property-stat-icon {
-        width: 43px;
-        height: 43px;
-    }
 }
 
 
@@ -831,23 +735,6 @@
 
     .property-refresh-button {
         align-self: flex-start;
-    }
-
-    .property-management-stats {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        margin-bottom: 21px;
-    }
-
-    .property-stat-card {
-        align-items: center;
-        flex-direction: row;
-        min-height: 100px;
-        padding: 17px;
-    }
-
-    .property-stat-card h2 {
-        font-size: 23px;
     }
 
     .property-management-toolbar {

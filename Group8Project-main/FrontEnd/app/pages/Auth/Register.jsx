@@ -246,7 +246,7 @@ function Register() {
                             {/* ACCOUNT TYPE */}
                             <div className="auth-account-note">
                                 You are registering as a <strong>Resident</strong>. HOA
-                                administrator, estate agent and service provider accounts
+                                administrator and estate agent accounts
                                 are issued by a VALORA administrator.
                             </div>
 

@@ -9,6 +9,7 @@ import {
 import "./PropertyApprovals.css";
 import { showConfirm, showAlert } from "../../components/AppDialog";
 import { getStoredUser } from "../../services/session";
+import StageSummary from "../../components/StageSummary";
 
 /* =========================================================
    PROPERTY APPROVALS ICONS
@@ -75,6 +76,8 @@ const Icon = ({ type }) => {
 function PropertyApprovals() {
     const [properties, setProperties] = useState([]);
     const [selectedProperty, setSelectedProperty] = useState(null);
+    // which list the table shows: submissions waiting for review, or approved (published) listings
+    const [view, setView] = useState("pending");
     const [reviewMessage, setReviewMessage] = useState("");
     const [message, setMessage] = useState("");
 
@@ -380,10 +383,15 @@ function PropertyApprovals() {
     const getImageSource = (image) =>
         typeof image === "string" ? image : image?.data || "";
 
-    const publishedCount = properties.filter(
+    const approvedProperties = properties.filter(
         (property) =>
             property.listing?.listingStatus === "Published"
-    ).length;
+    );
+    const publishedCount = approvedProperties.length;
+
+    const shownProperties = view === "approved" ? approvedProperties : pendingProperties;
+    const selectedIsPublished =
+        selectedProperty?.listing?.listingStatus === "Published";
 
     const changesCount = properties.filter(
         (property) =>
@@ -408,10 +416,10 @@ function PropertyApprovals() {
                         <p className="property-approvals-eyebrow">
                             HOA ADMINISTRATION
                         </p>
-                        <h2>Property Approvals</h2>
+                        <h2>Approved Properties</h2>
                         <p className="property-approvals-description">
-                            Review Estate Agent listing submissions before
-                            they become public.
+                            Review Estate Agent listing submissions and see
+                            the listings that are approved and live.
                         </p>
                     </div>
 
@@ -449,76 +457,56 @@ function PropertyApprovals() {
                     </div>
                 )}
 
-                <div className="property-approvals-stats">
-                    <div className="property-approvals-stat-card">
-                        <div className="property-approvals-stat-top">
-                            <span className="property-approvals-stat-icon pending">
-                                <Icon type="pending" />
-                            </span>
-                            <span className="property-approvals-stat-label">
-                                Pending Review
-                            </span>
-                        </div>
-                        <strong className="property-approvals-stat-number">
-                            {pendingProperties.length}
-                        </strong>
-                        <p>Property submissions awaiting review</p>
-                    </div>
-
-                    <div className="property-approvals-stat-card">
-                        <div className="property-approvals-stat-top">
-                            <span className="property-approvals-stat-icon published">
-                                <Icon type="published" />
-                            </span>
-                            <span className="property-approvals-stat-label">
-                                Published
-                            </span>
-                        </div>
-                        <strong className="property-approvals-stat-number">
-                            {publishedCount}
-                        </strong>
-                        <p>Approved public listings</p>
-                    </div>
-
-                    <div className="property-approvals-stat-card">
-                        <div className="property-approvals-stat-top">
-                            <span className="property-approvals-stat-icon changes">
-                                <Icon type="changes" />
-                            </span>
-                            <span className="property-approvals-stat-label">
-                                Changes Requested
-                            </span>
-                        </div>
-                        <strong className="property-approvals-stat-number">
-                            {changesCount}
-                        </strong>
-                        <p>Listings returned to agents</p>
-                    </div>
-
-                    <div className="property-approvals-stat-card">
-                        <div className="property-approvals-stat-top">
-                            <span className="property-approvals-stat-icon rejected">
-                                <Icon type="rejected" />
-                            </span>
-                            <span className="property-approvals-stat-label">
-                                Rejected
-                            </span>
-                        </div>
-                        <strong className="property-approvals-stat-number">
-                            {rejectedCount}
-                        </strong>
-                        <p>Rejected submissions</p>
-                    </div>
-                </div>
+                <StageSummary
+                    eyebrow="Listing approvals"
+                    title={
+                        pendingProperties.length === 0
+                            ? "No submissions waiting for review"
+                            : `${pendingProperties.length} ${pendingProperties.length === 1 ? "submission is" : "submissions are"} waiting for review`
+                    }
+                    subtitle="Estate agent listings, from submission to published."
+                    stages={[
+                        { key: "pending", label: "Pending review", hint: "Awaiting your decision", count: pendingProperties.length, tone: "waiting" },
+                        { key: "published", label: "Published", hint: "Approved public listings", count: publishedCount, tone: "done" },
+                        { key: "changes", label: "Changes requested", hint: "Returned to agents", count: changesCount, tone: "changes" },
+                        { key: "rejected", label: "Rejected", hint: "Not approved", count: rejectedCount, tone: "rejected" },
+                    ]}
+                />
 
                 <section className="property-approvals-card">
                     <div className="property-approvals-card-header">
                         <div>
-                            <h3>Pending Property Submissions</h3>
+                            <h3>
+                                {view === "approved"
+                                    ? "Approved Listings"
+                                    : "Pending Property Submissions"}
+                            </h3>
                             <p>
-                                Review listing details and photographs
-                                submitted by Estate Agents.
+                                {view === "approved"
+                                    ? "Listings the HOA has approved and published for the public."
+                                    : "Review listing details and photographs submitted by Estate Agents."}
                             </p>
+                        </div>
+
+                        <div className="property-approvals-view-toggle" role="group" aria-label="Show listings">
+                            <button
+                                type="button"
+                                className={view === "pending" ? "is-active" : undefined}
+                                aria-pressed={view === "pending"}
+                                onClick={() => setView("pending")}
+                            >
+                                Pending review
+                                <span>{pendingProperties.length}</span>
+                            </button>
+                            <button
+                                type="button"
+                                className={view === "approved" ? "is-active" : undefined}
+                                aria-pressed={view === "approved"}
+                                onClick={() => setView("approved")}
+                            >
+                                Approved
+                                <span>{publishedCount}</span>
+                            </button>
                         </div>
                     </div>
 
@@ -536,7 +524,7 @@ function PropertyApprovals() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {pendingProperties.length === 0 ? (
+                                {shownProperties.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={7}
@@ -546,16 +534,19 @@ function PropertyApprovals() {
                                                 <Icon type="published" />
                                             </div>
                                             <strong>
-                                                No pending submissions
+                                                {view === "approved"
+                                                    ? "No approved listings yet"
+                                                    : "No pending submissions"}
                                             </strong>
                                             <span>
-                                                No property submissions are
-                                                currently awaiting HOA approval.
+                                                {view === "approved"
+                                                    ? "Listings you approve and publish will appear here."
+                                                    : "No property submissions are currently awaiting HOA approval."}
                                             </span>
                                         </td>
                                     </tr>
                                 ) : (
-                                    pendingProperties.map((property) => (
+                                    shownProperties.map((property) => (
                                         <tr key={property.id}>
                                             <td>
                                                 <strong>
@@ -594,7 +585,7 @@ function PropertyApprovals() {
                                                     }
                                                 >
                                                     <Icon type="approval" />
-                                                    Review
+                                                    {view === "approved" ? "View" : "Review"}
                                                 </button>
                                             </td>
                                         </tr>
@@ -802,55 +793,63 @@ function PropertyApprovals() {
                             )}
                         </div>
 
-                        <div className="property-approvals-sub-card">
-                            <div className="property-approvals-sub-header">
-                                <div>
-                                    <h3>HOA Review</h3>
-                                    <p>
-                                        Add instructions if changes are required
-                                        or if the submission should be rejected.
-                                    </p>
+                        {selectedIsPublished ? (
+                            <p className="property-approvals-published-note">
+                                This listing has been approved and is live for the public.
+                            </p>
+                        ) : (
+                            <>
+                            <div className="property-approvals-sub-card">
+                                <div className="property-approvals-sub-header">
+                                    <div>
+                                        <h3>HOA Review</h3>
+                                        <p>
+                                            Add instructions if changes are required
+                                            or if the submission should be rejected.
+                                        </p>
+                                    </div>
                                 </div>
+                                <textarea
+                                    className="property-approvals-textarea"
+                                    value={reviewMessage}
+                                    onChange={(event) =>
+                                        setReviewMessage(event.target.value)
+                                    }
+                                    rows={5}
+                                    placeholder="Enter review notes, requested changes, or rejection reason..."
+                                />
                             </div>
-                            <textarea
-                                className="property-approvals-textarea"
-                                value={reviewMessage}
-                                onChange={(event) =>
-                                    setReviewMessage(event.target.value)
-                                }
-                                rows={5}
-                                placeholder="Enter review notes, requested changes, or rejection reason..."
-                            />
-                        </div>
 
-                        <div className="property-approvals-actions">
-                            <button
-                                type="button"
-                                className="property-approvals-primary-btn"
-                                onClick={() => handleApprove(selectedProperty)}
-                            >
-                                <Icon type="check" />
-                                Approve &amp; Publish
-                            </button>
-                            <button
-                                type="button"
-                                className="property-approvals-secondary-btn"
-                                onClick={() =>
-                                    handleRequestChanges(selectedProperty)
-                                }
-                            >
-                                <Icon type="changes" />
-                                Request Changes
-                            </button>
-                            <button
-                                type="button"
-                                className="property-approvals-danger-btn"
-                                onClick={() => handleReject(selectedProperty)}
-                            >
-                                <Icon type="rejected" />
-                                Reject Submission
-                            </button>
-                        </div>
+                            <div className="property-approvals-actions">
+                                <button
+                                    type="button"
+                                    className="property-approvals-primary-btn"
+                                    onClick={() => handleApprove(selectedProperty)}
+                                >
+                                    <Icon type="check" />
+                                    Approve &amp; Publish
+                                </button>
+                                <button
+                                    type="button"
+                                    className="property-approvals-secondary-btn"
+                                    onClick={() =>
+                                        handleRequestChanges(selectedProperty)
+                                    }
+                                >
+                                    <Icon type="changes" />
+                                    Request Changes
+                                </button>
+                                <button
+                                    type="button"
+                                    className="property-approvals-danger-btn"
+                                    onClick={() => handleReject(selectedProperty)}
+                                >
+                                    <Icon type="rejected" />
+                                    Reject Submission
+                                </button>
+                            </div>
+                            </>
+                        )}
                     </section>
                 )}
             </main>

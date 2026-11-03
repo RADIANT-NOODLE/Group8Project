@@ -11,7 +11,7 @@ import { getPasswordErrorMessage } from "../services/authErrorMessages.js";
 import { checkPasswordRules, validateNewPassword } from "../services/validation.js";
 import PasswordRequirements from "./Auth/PasswordRequirements.jsx";
 import "./Profile.css";
-import { showAlert } from "../components/AppDialog";
+import { showAlert, showConfirm } from "../components/AppDialog";
 import { getSessionToken } from "../services/session";
 
 function Profile() {
@@ -184,6 +184,8 @@ function Profile() {
       return;
     }
 
+    if (!(await showConfirm("Save changes to your profile?", { title: "Save profile?", confirmLabel: "Save" }))) return;
+
     setIsSaving(true);
 
     try {
@@ -246,6 +248,8 @@ function Profile() {
       setPasswordError("Your new password must be different from your current password.");
       return;
     }
+
+    if (!(await showConfirm("Change your password? You'll use the new password the next time you sign in.", { title: "Change password?", confirmLabel: "Change password" }))) return;
 
     setIsChangingPassword(true);
 

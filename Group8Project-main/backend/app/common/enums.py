@@ -46,3 +46,6 @@ class PropertyRequestStatus(str, Enum):
     approved = "approved"               # HOA approved, no agent yet
     rejected = "rejected"
     assigned = "assigned"               # an estate agent is handling it
+    listed = "listed"                   # the agent has published the listing
+    sold = "sold"                       # a sale request that completed
+    rented = "rented"                   # a rental request that completed

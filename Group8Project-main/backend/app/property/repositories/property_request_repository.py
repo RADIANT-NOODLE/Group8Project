@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.property.models.property_request import PropertyRequest
 
-_ACTIVE_STATUSES = ("pending_review", "approved", "assigned")
+_ACTIVE_STATUSES = ("pending_review", "approved", "assigned", "listed")
 
 
 class PropertyRequestRepository:

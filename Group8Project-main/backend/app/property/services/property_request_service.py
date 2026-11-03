@@ -14,6 +14,7 @@ from app.property.schemas.property_request import (
     PaginatedPropertyRequestsResponse,
     PropertyRequestAssign,
     PropertyRequestCreate,
+    PropertyRequestProgress,
     PropertyRequestReject,
     PropertyRequestResponse,
 )
@@ -147,6 +148,34 @@ class PropertyRequestService:
         request.rejection_reason = payload.reason.strip()
         request.decided_by = admin.user_id
         request.decided_at = utcnow()
+        return to_response(await self._repo.save(request))
+
+    async def update_progress(
+        self, request_id: int, payload: PropertyRequestProgress, user: User
+    ) -> PropertyRequestResponse:
+        """The assigned estate agent (or an administrator) records how the listing is going."""
+        request = await self._get_or_404(request_id)
+        if not (self._is_admin(user) or request.assigned_agent_id == user.user_id):
+            raise ForbiddenException("Only the estate agent assigned to this request can update it.")
+
+        current = request.status
+        target = payload.status
+        S = PropertyRequestStatus
+
+        allowed_from = {
+            S.listed.value: (S.assigned.value, S.listed.value),
+            S.assigned.value: (S.listed.value,),  # listing withdrawn
+            S.sold.value: (S.listed.value,),
+            S.rented.value: (S.listed.value,),
+        }
+        if current not in allowed_from[target]:
+            raise ConflictException(f"A request that is '{current}' cannot be marked '{target}'.")
+        if target == S.sold.value and request.request_type != "sell":
+            raise ConflictException("Only a sale request can be marked as sold.")
+        if target == S.rented.value and request.request_type != "rent":
+            raise ConflictException("Only a rental request can be marked as rented.")
+
+        request.status = target
         return to_response(await self._repo.save(request))
 
     async def assign_agent(

@@ -17,7 +17,7 @@ export const PROPERTY_TAB_PATHS = [
 const tabs = [
     { label: "Properties", path: "/property-management" },
     { label: "Requests", path: "/property-requests" },
-    { label: "Approvals", path: "/property-approvals" },
+    { label: "Approved Properties", path: "/property-approvals" },
 ];
 
 function PropertyTabs() {

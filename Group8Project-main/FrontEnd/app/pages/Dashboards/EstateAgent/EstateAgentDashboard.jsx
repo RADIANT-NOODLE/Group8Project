@@ -4,6 +4,7 @@ import DashboardSidebar from "../shared/DashboardSidebar";
 import { useSession } from "../../../services/session";
 import { apiRequest } from "../../../services/apiClient";
 import { getProperties } from "../../../data/propertyStorage";
+import { ensureLocalPropertyForRequest, getPropertyRequests } from "../../../data/propertyRequests";
 import "./EstateAgentDashboard.css";
 
 /* Listing edits this agent sent to the HOA that are still waiting for a decision.
@@ -19,11 +20,43 @@ function countPendingEdits(agentId) {
   }).length;
 }
 
+/* The agent's units, the same way the My Listings / Edit Listings pages build them:
+   property requests assigned to the agent, matched to their listing record. */
+async function loadAssignedProperties(agentId) {
+  const requests = (await getPropertyRequests()) || [];
+  requests.forEach((request) => ensureLocalPropertyForRequest(request));
+
+  const mine = requests.filter((request) => String(request.assignedAgentId) === String(agentId));
+  const properties = getProperties();
+  const seen = new Set();
+
+  return mine
+    .map((request) => properties.find((property) => String(property.id) === String(request.propertyId)))
+    .filter((property) => property && !seen.has(property.id) && seen.add(property.id));
+}
+
+function listingPrice(listing = {}) {
+  const format = (value) =>
+    new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(value);
+  if (listing.listingType === "For Rent" && listing.rentalPrice) return `${format(Number(listing.rentalPrice))} / month`;
+  if (listing.askingPrice) return format(Number(listing.askingPrice));
+  return "Price not set";
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString("en-ZA", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function EstateAgentDashboard({ user }) {
   const { user: sessionUser } = useSession();
   const currentUser = user || sessionUser;
 
   const [listings, setListings] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [newInquiries, setNewInquiries] = useState(0);
   const [pendingEdits, setPendingEdits] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -33,23 +66,24 @@ function EstateAgentDashboard({ user }) {
 
     const loadDashboard = async () => {
       const [listingResult, inquiryResult] = await Promise.allSettled([
-        apiRequest("/api/v1/listings"),
+        loadAssignedProperties(currentUser.id),
         apiRequest("/api/v1/inquiries"),
       ]);
 
       if (listingResult.status === "fulfilled") {
-        const data = listingResult.value;
-        const allListings = data?.listings || data?.items || (Array.isArray(data) ? data : []);
-        // listings assigned to this agent
-        setListings(allListings.filter((l) => String(l.agent_id) === String(currentUser.id)));
+        // "active" = published on the market, as on the Edit Listings page
+        setListings(listingResult.value.filter((property) => property.listing?.listingStatus === "Published"));
       } else {
         console.error("Failed to load listings:", listingResult.reason);
       }
 
       if (inquiryResult.status === "fulfilled") {
         const data = inquiryResult.value;
-        const inquiries = data?.items || (Array.isArray(data) ? data : []);
-        setNewInquiries(inquiries.filter((inquiry) => inquiry.status === "New").length);
+        const all = data?.items || (Array.isArray(data) ? data : []);
+        setInquiries(
+          [...all].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+        );
+        setNewInquiries(all.filter((inquiry) => inquiry.status === "New").length);
       } else {
         console.error("Failed to load inquiries:", inquiryResult.reason);
       }
@@ -61,16 +95,7 @@ function EstateAgentDashboard({ user }) {
     loadDashboard();
   }, [currentUser]);
 
-  const totalViews = listings.reduce((sum, listing) => sum + (Number(listing.views) || 0), 0);
-
-  const formatPrice = (price) => {
-    if (!price) return "—";
-    return new Intl.NumberFormat("en-ZA", {
-      style: "currency",
-      currency: "ZAR",
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+  const totalViews = listings.reduce((sum, property) => sum + (Number(property.listing?.views) || 0), 0);
 
   return (
     <div className="estate-agent-dashboard-layout">
@@ -163,30 +188,39 @@ function EstateAgentDashboard({ user }) {
           
           {/* LEFT COLUMN - LISTINGS */}
           <section className="estate-agent-card">
-            <h2>My Active Listings</h2>
-            <p>Properties you currently have on the market.</p>
+            <div className="estate-agent-card-header">
+              <div>
+                <h2>My Active Listings</h2>
+                <p>Properties you currently have on the market.</p>
+              </div>
+              <Link to="/agent-listings" className="estate-agent-card-link">View all</Link>
+            </div>
             
             {loading ? (
               <div className="estate-agent-empty">
                 <p>Loading your listings...</p>
               </div>
             ) : listings.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
-                {/* DYNAMIC LIST RENDERING */}
-                {listings.map(listing => (
-                  <div key={listing.id || listing.listing_id} style={{ padding: "16px", background: "#faf9fb", borderRadius: "8px", border: "1px solid #e8e3eb" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <strong style={{ color: "#29242d" }}>Unit {listing.unit_no || listing.unit_id}</strong>
-                      <span style={{ fontSize: "12px", color: "#563f6b", fontWeight: "600" }}>
-                        {formatPrice(listing.price)}
+              <ul className="estate-agent-rows">
+                {listings.slice(0, 4).map((property) => (
+                  <li key={property.id} className="estate-agent-row">
+                    <span className="estate-agent-row-icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V21h13V9.5" /><path d="M9 21v-6h6v6" />
+                      </svg>
+                    </span>
+                    <div className="estate-agent-row-copy">
+                      <strong>{property.unitNumber || `Unit ${property.id}`}</strong>
+                      <span>
+                        {[property.listing?.listingType, property.development || property.location]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </span>
                     </div>
-                    <p style={{ margin: 0, fontSize: "13px", color: "#77717d" }}>
-                      Status: {listing.status || "Active"}
-                    </p>
-                  </div>
+                    <span className="estate-agent-row-value">{listingPrice(property.listing)}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
               <div className="estate-agent-empty">
                 <div className="estate-agent-empty-icon">
@@ -202,18 +236,50 @@ function EstateAgentDashboard({ user }) {
 
           {/* RIGHT COLUMN - INQUIRIES */}
           <section className="estate-agent-card">
-            <h2>Recent Inquiries</h2>
-            <p>Messages from potential buyers or renters.</p>
-
-            <div className="estate-agent-empty">
-              <div className="estate-agent-empty-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+            <div className="estate-agent-card-header">
+              <div>
+                <h2>Recent Inquiries</h2>
+                <p>Messages from potential buyers or renters.</p>
               </div>
-              <h3>No new inquiries</h3>
-              <p>You haven't received any messages yet.</p>
+              <Link to="/agent-inquiries" className="estate-agent-card-link">View all</Link>
             </div>
+
+            {loading ? (
+              <div className="estate-agent-empty">
+                <p>Loading inquiries...</p>
+              </div>
+            ) : inquiries.length > 0 ? (
+              <ul className="estate-agent-rows">
+                {inquiries.slice(0, 4).map((inquiry) => (
+                  <li key={inquiry.inquiry_id} className="estate-agent-row">
+                    <span className="estate-agent-row-avatar" aria-hidden="true">
+                      {String(inquiry.buyer_name || "?").trim().charAt(0).toUpperCase()}
+                    </span>
+                    <div className="estate-agent-row-copy">
+                      <strong>{inquiry.buyer_name || "Buyer"}</strong>
+                      <span>
+                        {[inquiry.property_unit && `Unit ${inquiry.property_unit}`, formatDate(inquiry.created_at)]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </div>
+                    <span className={`estate-agent-row-pill${inquiry.status === "New" ? " is-new" : ""}`}>
+                      {inquiry.status || "New"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="estate-agent-empty">
+                <div className="estate-agent-empty-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                <h3>No inquiries yet</h3>
+                <p>Messages from buyers about your listings will appear here.</p>
+              </div>
+            )}
           </section>
 
         </div>

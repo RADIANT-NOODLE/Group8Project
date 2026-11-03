@@ -6,6 +6,7 @@ import { listProperties } from "../services/propertyApi";
 import { listWorkOrders } from "../services/workOrderApi";
 import { COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
 import ComplaintStatusRing from "../components/ComplaintStatusRing";
+import DateRangeFilter, { ALL_DATES, inDateRange, isDateFilterActive } from "../components/DateRangeFilter";
 import "./Complaints.css";
 import { getStoredUser } from "../services/session";
 
@@ -96,6 +97,7 @@ export default function Complaints() {
     const [imageName, setImageName] = useState("");
 
     const [search, setSearch] = useState("");
+    const [dateRange, setDateRange] = useState(ALL_DATES);
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [notice, setNotice] = useState("");
     const [error, setError] = useState("");
@@ -163,8 +165,9 @@ export default function Complaints() {
     // 2. Filter by search
     const filteredComplaints = useMemo(() => {
         const term = search.trim().toLowerCase();
-        if (!term) return complaints;
-        return complaints.filter((complaint) =>
+        const inRange = complaints.filter((complaint) => inDateRange(complaint.createdAt, dateRange));
+        if (!term) return inRange;
+        return inRange.filter((complaint) =>
             [
                 complaint.id,
                 complaint.category,
@@ -174,7 +177,7 @@ export default function Complaints() {
                 .filter(Boolean)
                 .some((value) => String(value).toLowerCase().includes(term))
         );
-    }, [complaints, search]);
+    }, [complaints, search, dateRange]);
 
     // 4. Handle Image
     async function handleImageUpload(event) {
@@ -430,6 +433,10 @@ export default function Complaints() {
                                         placeholder="Search by ID, category or status..."
                                     />
 
+                                    <div className="complaints-date-filter">
+                                        <DateRangeFilter id="complaints-date" value={dateRange} onChange={setDateRange} />
+                                    </div>
+
                                     <div className="complaints-table-container">
                                         <table className="complaints-data-table">
                                             <thead>
@@ -448,7 +455,9 @@ export default function Complaints() {
                                                 ) : filteredComplaints.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={isAdmin ? 6 : 5} className="complaints-empty">
-                                                            No complaints found.
+                                                            {search || isDateFilterActive(dateRange)
+                                                                ? "No complaints match your search or date filter."
+                                                                : "No complaints found."}
                                                         </td>
                                                     </tr>
                                                 ) : (

@@ -35,6 +35,7 @@ function sameSession(current, next) {
     current.token === next.token &&
     current.user?.id === next.user?.id &&
     current.user?.email === next.user?.email &&
+    current.user?.phoneno === next.user?.phoneno &&
     current.user?.role === next.user?.role &&
     current.user?.full_name === next.user?.full_name
   );
@@ -93,6 +94,8 @@ export function getSessionUser(rawUser = getSessionSnapshot().user) {
     fullName: fullName || 'VALORA User',
     name: fullName || 'VALORA User',
     initials,
+    email: String(rawUser.email ?? '').trim(),
+    phoneno: rawUser.phoneno ?? null,
     role,
     roleLabel: roleLabel(role),
     isAdministrator: isAdministrator(role),

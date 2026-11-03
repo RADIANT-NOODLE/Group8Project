@@ -14,6 +14,7 @@ import "./PropertyRequests.css";
 import { showConfirm } from "../../components/AppDialog";
 import { roleLabel } from "../../services/roleMap";
 import { getStoredUser } from "../../services/session";
+import StageSummary from "../../components/StageSummary";
 
 /* =========================================================
    CURRENT USER
@@ -268,8 +269,15 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             request.status === "Approved - Awaiting Agent Assignment"
     );
 
+    // with an agent: assigned, or already listed on the market
     const assignedRequests = requests.filter(
-        (request) => request.status === "Assigned to Estate Agent"
+        (request) =>
+            request.status === "Assigned to Estate Agent" ||
+            request.status === "Listed on the Market"
+    );
+
+    const completedRequests = requests.filter(
+        (request) => request.status === "Sold" || request.status === "Rented"
     );
 
     const rejectedRequests = requests.filter(
@@ -460,7 +468,11 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             case "Approved - Awaiting Agent Assignment":
                 return "status-approved";
             case "Assigned to Estate Agent":
+            case "Listed on the Market":
                 return "status-assigned";
+            case "Sold":
+            case "Rented":
+                return "status-approved";
             case "Rejected":
                 return "status-rejected";
             default:
@@ -564,57 +576,23 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                         </div>
                     )}
 
-                    {/* STATISTICS */}
-
-                    <div className="property-requests-stats">
-                        {[
-                            {
-                                label: "Pending Review",
-                                count: pendingRequests.length,
-                                description: "Requests awaiting review",
-                                icon: "pending",
-                                type: "pending",
-                            },
-                            {
-                                label: "Awaiting Agent",
-                                count: approvedRequests.length,
-                                description: "Approved requests awaiting assignment",
-                                icon: "approval",
-                                type: "approved",
-                            },
-                            {
-                                label: "Assigned",
-                                count: assignedRequests.length,
-                                description: "Requests assigned to agents",
-                                icon: "assigned",
-                                type: "assigned",
-                            },
-                            {
-                                label: "Rejected",
-                                count: rejectedRequests.length,
-                                description: "Requests not approved",
-                                icon: "rejected",
-                                type: "rejected",
-                            },
-                        ].map((stat) => (
-                            <div
-                                className="property-requests-stat-card"
-                                key={stat.label}
-                            >
-                                <div className="property-requests-stat-top">
-                                    <span
-                                        className={`property-requests-stat-icon ${stat.type}`}
-                                    >
-                                        <Icon type={stat.icon} />
-                                    </span>
-                                    <span>{stat.label}</span>
-                                </div>
-
-                                <strong>{stat.count}</strong>
-                                <p>{stat.description}</p>
-                            </div>
-                        ))}
-                    </div>
+                    {/* SUMMARY */}
+                    <StageSummary
+                        eyebrow="Request pipeline"
+                        title={
+                            pendingRequests.length === 0
+                                ? "No requests waiting for your review"
+                                : `${pendingRequests.length} ${pendingRequests.length === 1 ? "request is" : "requests are"} waiting for your review`
+                        }
+                        subtitle="Sale and rental requests, from review to an assigned agent."
+                        stages={[
+                            { key: "pending", label: "Pending review", hint: "Waiting for a decision", count: pendingRequests.length, tone: "waiting" },
+                            { key: "approved", label: "Awaiting agent", hint: "Approved, no agent yet", count: approvedRequests.length, tone: "neutral" },
+                            { key: "assigned", label: "With an agent", hint: "Assigned or listed", count: assignedRequests.length, tone: "progress" },
+                            { key: "completed", label: "Sold / rented", hint: "Request completed", count: completedRequests.length, tone: "done" },
+                            { key: "rejected", label: "Rejected", hint: "Not approved", count: rejectedRequests.length, tone: "rejected" },
+                        ]}
+                    />
 
                     {/* REQUEST TABLE */}
 
@@ -1125,8 +1103,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
 
                             {/* ASSIGNED REQUEST */}
 
-                            {selectedRequest.status ===
-                                "Assigned to Estate Agent" && (
+                            {["Assigned to Estate Agent", "Listed on the Market", "Sold", "Rented"].includes(selectedRequest.status) && (
                                 <section className="property-requests-review-section">
                                     <div className="property-requests-section-heading">
                                         <div className="property-requests-section-icon">

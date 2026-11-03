@@ -789,3 +789,9 @@
     margin-top: 3px;
     width: auto;
 }
+
+
+/* date filter under the search box */
+.complaints-date-filter {
+    margin: 4px 0 18px;
+}

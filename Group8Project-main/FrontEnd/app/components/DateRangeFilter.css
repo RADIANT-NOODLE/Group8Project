@@ -1,0 +1,69 @@
+.date-range-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 12px;
+}
+
+.date-range-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+}
+
+.date-range-field label {
+    color: #4b4052;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.date-range-field select,
+.date-range-field input {
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid #dcd6e2;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #29242d;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.date-range-field select:focus,
+.date-range-field input:focus {
+    border-color: #563f6b;
+    outline: 2px solid rgba(86, 63, 107, 0.2);
+}
+
+.date-range-clear {
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid #e4d9ed;
+    border-radius: 9px;
+    background: #e4d9ed;
+    color: #563f6b;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.date-range-clear:hover {
+    background: #d9cbe5;
+}
+
+.date-range-clear:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .date-range-field {
+        flex: 1 1 100%;
+    }
+
+    .date-range-clear {
+        width: 100%;
+    }
+}

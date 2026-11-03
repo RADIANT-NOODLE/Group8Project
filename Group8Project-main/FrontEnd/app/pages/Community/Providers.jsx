@@ -152,6 +152,13 @@ function Providers() {
             return;
         }
 
+        const providerName = form.full_name.trim();
+        const confirmed = await showConfirm(
+            editingId ? `Save changes to ${providerName}?` : `Add ${providerName} to the service provider directory?`,
+            { title: editingId ? "Save changes?" : "Add provider?", confirmLabel: editingId ? "Save" : "Add provider" }
+        );
+        if (!confirmed) return;
+
         try {
             const token = getSessionToken();
             

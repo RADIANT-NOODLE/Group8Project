@@ -3,9 +3,39 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "../services/session"; // <-- IMPORT SESSION
 import { apiRequest } from "../services/apiClient";
 import { getProperty } from "../services/propertyApi";
-import { createPropertyRequest, parsePrice } from "../services/propertyRequestApi";
+import { createPropertyRequest, listPropertyRequests, parsePrice } from "../services/propertyRequestApi";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import "./RequestToSell.css";
+
+/* =========================================================
+   REQUEST PROGRESS
+   The stages a sale/rent request moves through, in order.
+========================================================= */
+
+const OPEN_STATUSES = ["pending_review", "approved", "assigned", "listed"];
+const COMPLETE_STATUSES = ["sold", "rented"];
+
+// how far each backend status has got (index into the steps below)
+const STATUS_STEP = { pending_review: 0, approved: 1, assigned: 2, listed: 3, sold: 4, rented: 4, rejected: 1 };
+
+function requestSteps(request) {
+    const isRent = String(request.requestType).toLowerCase() === "rent";
+    return [
+        { label: "Submitted", hint: "Sent to the HOA" },
+        { label: "Approved by the HOA", hint: "Cleared to go to market" },
+        { label: "Estate agent assigned", hint: request.assignedAgentName || "An agent will handle the listing" },
+        { label: "Listed", hint: isRent ? "Advertised for rent" : "Advertised for sale" },
+        { label: isRent ? "Rented" : "Sold", hint: isRent ? "A tenant has been found" : "The sale has gone through" },
+    ];
+}
+
+function formatRequestDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? ""
+        : date.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+}
 
 /* =========================================================
    ICON
@@ -35,6 +65,25 @@ function RequestToSell() {
        PROPERTY DATA (Fetch from API)
     ===================================================== */
     const [selectedProperty, setSelectedProperty] = useState(null);
+    // the resident's own sale/rent requests, newest first
+    const [myRequests, setMyRequests] = useState([]);
+    const [requestsLoading, setRequestsLoading] = useState(true);
+    const [startNewRequest, setStartNewRequest] = useState(false);
+
+    async function loadMyRequests() {
+        try {
+            const { items } = await listPropertyRequests();
+            setMyRequests([...items].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))));
+        } catch (err) {
+            console.error("Failed to load your requests:", err);
+        } finally {
+            setRequestsLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        loadMyRequests();
+    }, []);
     const [propertiesLoading, setPropertiesLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
 
@@ -157,6 +206,8 @@ function RequestToSell() {
             });
 
             setSubmitted(true);
+            setStartNewRequest(false);
+            await loadMyRequests();
         } catch (err) {
             // 409: an open request for this unit already exists; 422: a field was invalid
             setError(
@@ -169,34 +220,85 @@ function RequestToSell() {
     };
 
     /* =====================================================
-       SUCCESS
+       REQUEST STATUS
+       An open (or finished) request is shown as a tracker;
+       the form only appears when there is nothing open.
     ===================================================== */
-    if (submitted) {
+    const latest = myRequests[0] || null;
+    const latestStatus = latest?.rawStatus || "";
+    const hasOpenRequest = OPEN_STATUSES.includes(latestStatus);
+    const showTracker = Boolean(latest) && (hasOpenRequest || COMPLETE_STATUSES.includes(latestStatus) || latestStatus === "rejected");
+    const showForm = !requestsLoading && (!latest || (!hasOpenRequest && startNewRequest) || latestStatus === "rejected");
+
+    const tracker = showTracker && (() => {
+        const steps = requestSteps(latest);
+        const reached = STATUS_STEP[latestStatus] ?? 0;
+        const rejected = latestStatus === "rejected";
+        const complete = COMPLETE_STATUSES.includes(latestStatus);
+
         return (
-            <div className="request-page">
-                <DashboardSidebar />
-                <main className="request-main">
-                    <div className="request-card request-success">
-                        <div className="success-icon"><CheckIcon /></div>
-                        <h1>Request Submitted</h1>
-                        <p>Your property request has been submitted to the HOA Administrator for review.</p>
-                        <p>The HOA will review the property and financial information before deciding whether the request can proceed.</p>
-                        <div className="success-status">
-                            <span>Status</span>
-                            <strong>Pending HOA Review</strong>
-                        </div>
-                        {selectedProperty && (
-                            <div className="success-property">
-                                <span>Property</span>
-                                <strong>{propertyLabel(selectedProperty)}</strong>
-                            </div>
-                        )}
-                        <button type="button" onClick={() => navigate("/dashboard")}>Return to Dashboard</button>
+            <section className="request-card request-tracker" aria-labelledby="request-tracker-title">
+                {submitted && (
+                    <p className="request-tracker-notice" role="status">
+                        <CheckIcon /> Your request has been sent to the HOA.
+                    </p>
+                )}
+
+                <div className="request-tracker-head">
+                    <div>
+                        <span className="request-eyebrow">YOUR REQUEST</span>
+                        <h2 id="request-tracker-title">
+                            {latest.requestType ? `${latest.requestType} request` : "Property request"}
+                            {latest.unitNo ? ` · Unit ${latest.unitNo}` : ""}
+                        </h2>
+                        <p>
+                            Submitted {formatRequestDate(latest.createdAt)}
+                            {latest.askingPrice ? ` · R ${Number(latest.askingPrice).toLocaleString("en-ZA")}` : ""}
+                            {String(latest.requestType).toLowerCase() === "rent" && latest.askingPrice ? " / month" : ""}
+                        </p>
                     </div>
-                </main>
-            </div>
+                    <span className={`request-tracker-status status-${latestStatus}`}>{latest.status}</span>
+                </div>
+
+                <ol className="request-tracker-steps">
+                    {steps.map((step, index) => {
+                        const isRejectedStep = rejected && index === 1;
+                        const state = isRejectedStep
+                            ? "is-rejected"
+                            : index < reached || (complete && index === reached)
+                                ? "is-done"
+                                : index === reached && !rejected
+                                    ? "is-current"
+                                    : "";
+
+                        return (
+                            <li key={step.label} className={state}>
+                                <span className="request-tracker-dot" aria-hidden="true">
+                                    {isRejectedStep ? "✕" : state === "is-done" ? "✓" : index + 1}
+                                </span>
+                                <div>
+                                    <strong>{isRejectedStep ? "Not approved by the HOA" : step.label}</strong>
+                                    <small>{isRejectedStep ? latest.rejectionReason || "The HOA did not approve this request." : step.hint}</small>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ol>
+
+                {complete && !startNewRequest && (
+                    <div className="request-tracker-footer">
+                        <p>This request is complete. You can submit a new one if you need to.</p>
+                        <button type="button" onClick={() => setStartNewRequest(true)}>Start a new request</button>
+                    </div>
+                )}
+                {rejected && (
+                    <div className="request-tracker-footer">
+                        <p>You can correct the details below and submit a new request.</p>
+                    </div>
+                )}
+            </section>
         );
-    }
+    })();
 
     /* =====================================================
        FORM UI 
@@ -210,10 +312,19 @@ function RequestToSell() {
                         <div>
                             <span className="request-eyebrow">PROPERTY SERVICES</span>
                             <h1>Request to Sell or Rent</h1>
-                            <p>Submit an existing VALORA property for HOA review before an estate agent can be assigned.</p>
+                            <p>Track your sale or rental request, or submit a new one for HOA review.</p>
                         </div>
                     </div>
 
+                    {requestsLoading && (
+                        <section className="request-card request-tracker" aria-busy="true">
+                            <p className="request-tracker-loading">Loading your requests…</p>
+                        </section>
+                    )}
+
+                    {tracker}
+
+                    {showForm && (
                     <form className="request-card" onSubmit={handleSubmit}>
                         {/* REQUEST TYPE */}
                         <section className="form-section">
@@ -311,6 +422,7 @@ function RequestToSell() {
                             <button type="submit" className="primary-button" disabled={isSubmitting || propertiesLoading}>{isSubmitting ? "Submitting…" : "Submit for HOA Review"}</button>
                         </div>
                     </form>
+                    )}
                 </div>
             </main>
         </div>

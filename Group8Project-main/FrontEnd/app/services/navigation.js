@@ -32,7 +32,7 @@ export const NAVIGATION_BY_ROLE = Object.freeze({
   [ROLES.hoaAdmin]: Object.freeze([
     Object.freeze({ label: 'Dashboard', path: HOA_ADMIN_PATH, icon: 'dashboard' }),
     Object.freeze({ label: 'Property Requests', path: '/property-requests', icon: 'property' }),
-    Object.freeze({ label: 'Property Approvals', path: '/property-approvals', icon: 'property' }),
+    Object.freeze({ label: 'Approved Properties', path: '/property-approvals', icon: 'property' }),
     Object.freeze({ label: 'Resident Complaints', path: '/resident-complaints', icon: 'complaint' }),
     Object.freeze({ label: 'Maintenance', path: '/maintenance', icon: 'maintenance' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),

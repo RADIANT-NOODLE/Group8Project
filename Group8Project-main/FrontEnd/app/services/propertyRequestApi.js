@@ -16,6 +16,9 @@ export const REQUEST_STATUS_LABELS = Object.freeze({
   pending_review: 'Pending HOA Review',
   approved: 'Approved - Awaiting Agent Assignment',
   assigned: 'Assigned to Estate Agent',
+  listed: 'Listed on the Market',
+  sold: 'Sold',
+  rented: 'Rented',
   rejected: 'Rejected',
 });
 
@@ -137,6 +140,16 @@ export async function assignEstateAgent(requestId, agentId) {
     await apiRequest(`${BASE_PATH}/${encodeURIComponent(requestId)}/assign-agent`, {
       method: 'POST',
       body: { agent_id: Number(agentId) },
+    }),
+  );
+}
+
+/** The assigned estate agent records progress: `listed`, `sold`, `rented` (or `assigned` to withdraw). */
+export async function updateRequestProgress(requestId, status) {
+  return toPropertyRequest(
+    await apiRequest(`${BASE_PATH}/${encodeURIComponent(requestId)}/progress`, {
+      method: 'POST',
+      body: { status },
     }),
   );
 }

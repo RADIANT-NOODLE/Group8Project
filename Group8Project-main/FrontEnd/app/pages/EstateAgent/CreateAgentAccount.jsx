@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { showConfirm } from "../../components/AppDialog";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PasswordRequirements from "../Auth/PasswordRequirements.jsx";
 import { createEstateAgent, listUsers } from "../../services/userApi";
@@ -55,6 +56,8 @@ function CreateAgentAccount() {
             setError(problem);
             return;
         }
+
+        if (!(await showConfirm(`Create an estate agent account for ${form.email.trim()}?`, { title: "Create agent account?", confirmLabel: "Create account" }))) return;
 
         setSubmitting(true);
 

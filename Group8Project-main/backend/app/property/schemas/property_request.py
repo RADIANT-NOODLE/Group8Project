@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,6 +38,13 @@ class PropertyRequestReject(BaseModel):
 
 class PropertyRequestAssign(BaseModel):
     agent_id: int = Field(..., ge=1)
+
+
+class PropertyRequestProgress(BaseModel):
+    """The assigned estate agent moves a request on: listed, then sold or rented
+    (or back to assigned when a listing is withdrawn)."""
+
+    status: Literal["assigned", "listed", "sold", "rented"]
 
 
 class PropertyRequestResponse(BaseModel):

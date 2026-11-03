@@ -188,94 +188,6 @@
    STATISTICS
 ========================================================= */
 
-.property-approvals-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-    margin-bottom: 22px;
-}
-
-.property-approvals-stat-card {
-    min-width: 0;
-    min-height: 145px;
-    padding: 19px;
-    background: #ffffff;
-    border: 1px solid #e9e6ed;
-    border-radius: 10px;
-    box-shadow: 0 3px 12px rgba(45, 30, 55, 0.035);
-}
-
-.property-approvals-stat-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.property-approvals-stat-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.property-approvals-stat-icon.pending {
-    background: #eee8f2;
-    color: #563f6b;
-}
-
-.property-approvals-stat-icon.published {
-    background: #e9f1ec;
-    color: #3d7250;
-}
-
-.property-approvals-stat-icon.changes {
-    background: #f0ebf4;
-    color: #70557f;
-}
-
-.property-approvals-stat-icon.rejected {
-    background: #f3e9ec;
-    color: #87515d;
-}
-
-.property-approvals-stat-icon svg {
-    width: 17px;
-    height: 17px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.property-approvals-stat-label {
-    color: #756c7c;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.45px;
-    line-height: 1.5;
-}
-
-.property-approvals-stat-number {
-    display: block;
-    margin-top: 16px;
-    color: #302735;
-    font-size: 28px;
-    line-height: 1;
-    font-weight: 800;
-}
-
-.property-approvals-stat-card p {
-    margin: 8px 0 0;
-    color: #827a88;
-    font-size: 10px;
-    line-height: 1.5;
-}
-
 /* =========================================================
    MAIN CARDS
 ========================================================= */
@@ -766,10 +678,6 @@
 ========================================================= */
 
 @media (max-width: 1100px) {
-    .property-approvals-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .property-approvals-main {
         padding: 26px 24px 38px;
     }
@@ -805,15 +713,6 @@
         display: none;
     }
 
-    .property-approvals-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-    }
-
-    .property-approvals-stat-card {
-        padding: 15px;
-    }
-
     .property-approvals-card-header {
         padding: 18px;
     }
@@ -844,20 +743,6 @@
 
     .property-approvals-description {
         font-size: 11px;
-    }
-
-    .property-approvals-stats {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .property-approvals-stat-card {
-        min-height: auto;
-        padding: 15px;
-    }
-
-    .property-approvals-stat-number {
-        font-size: 25px;
     }
 
     .property-approvals-card-header {
@@ -906,5 +791,77 @@
 
     .property-approvals-message {
         padding-left: 12px;
+    }
+}
+
+
+/* =========================================================
+   PENDING / APPROVED TOGGLE
+========================================================= */
+
+.property-approvals-view-toggle {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid #e8e3eb;
+    border-radius: 11px;
+    background: #f6f3f8;
+}
+
+.property-approvals-view-toggle button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #6f6577;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.property-approvals-view-toggle button:hover {
+    color: #563f6b;
+}
+
+.property-approvals-view-toggle button.is-active {
+    background: #ffffff;
+    color: #563f6b;
+    box-shadow: 0 1px 4px rgba(40, 30, 50, 0.1);
+}
+
+.property-approvals-view-toggle button:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+.property-approvals-view-toggle span {
+    min-width: 22px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: #e4d9ed;
+    color: #563f6b;
+    font-size: 11px;
+    text-align: center;
+}
+
+.property-approvals-published-note {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 11px;
+    background: #e5f5ea;
+    color: #23683a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .property-approvals-view-toggle button {
+        transition: none;
     }
 }
