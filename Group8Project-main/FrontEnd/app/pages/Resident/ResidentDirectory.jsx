@@ -4,6 +4,7 @@ import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./ResidentDirectory.css";
 import { useSession, getSessionToken } from "../../services/session";
 import { showConfirm } from "../../components/AppDialog";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 /*
 =========================================================
@@ -61,7 +62,13 @@ function ResidentDirectory() {
             const token = getSessionToken();
             const headers = { "Authorization": `Bearer ${token}` };
 
-            const usersRes = await fetch("http://127.0.0.1:8000/api/v1/users/", { headers });
+            // the three lists are independent, so fetch them together
+            const [usersRes, propRes, dirRes] = await Promise.all([
+                fetch(`${getApiBaseUrl()}/api/v1/users/`, { headers }),
+                fetch(`${getApiBaseUrl()}/api/v1/properties`, { headers }),
+                fetch(`${getApiBaseUrl()}/api/v1/resident-directory`, { headers }),
+            ]);
+
             if (usersRes.ok) {
                 const usersData = await usersRes.json();
                 const userList = usersData.users || usersData || [];
@@ -70,13 +77,11 @@ function ResidentDirectory() {
                 ));
             }
 
-            const propRes = await fetch("http://127.0.0.1:8000/api/v1/properties", { headers });
             if (propRes.ok) {
                 const propData = await propRes.json();
                 setProperties(propData.properties || propData.items || propData || []);
             }
 
-            const dirRes = await fetch("http://127.0.0.1:8000/api/v1/resident-directory", { headers });
             if (dirRes.ok) {
                 const dirData = await dirRes.json();
                 setResidents(dirData.items || dirData || []);
@@ -206,7 +211,7 @@ function ResidentDirectory() {
         try {
             const token = getSessionToken();
             
-            const response = await fetch("http://127.0.0.1:8000/api/v1/resident-directory", {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/resident-directory`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -241,7 +246,7 @@ function ResidentDirectory() {
         try {
             const token = getSessionToken();
             
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/resident-directory/${resident.id}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/resident-directory/${resident.id}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });

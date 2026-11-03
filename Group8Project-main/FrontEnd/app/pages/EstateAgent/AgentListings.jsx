@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getProperties, updateProperty } from "../../data/propertyStorage";
 import { updateRequestProgress } from "../../services/propertyRequestApi";
+import { listMyListings, updateListing } from "../../services/listingApi";
+import { syncPublishedListingPhotos } from "../../services/listingPhotoSync";
 import {
     ensureLocalPropertyForRequest,
     getPropertyRequests,
@@ -52,6 +54,15 @@ function AgentListings() {
         }
 
         load();
+
+        // photos of already-published listings that never reached the public site
+        if (currentUser?.id) {
+            syncPublishedListingPhotos(currentUser.id)
+                .then((uploaded) => {
+                    if (uploaded > 0 && !cancelled) setProperties(getProperties() || []);
+                })
+                .catch((error) => console.error("Could not sync listing photos:", error));
+        }
 
         return () => {
             cancelled = true;
@@ -152,6 +163,16 @@ function AgentListings() {
 
         try {
             const updated = await updateRequestProgress(request.id, target);
+
+            // take the public listing off the market as well
+            try {
+                const unitId = Number(request.propertyId);
+                const { items } = await listMyListings(currentUser?.id, { unitId, pageSize: 10 });
+                const live = items.find((item) => item.unitId === unitId && item.status === "active");
+                if (live) await updateListing(live.id, { status: target });
+            } catch (listingError) {
+                console.error("Could not update the public listing:", listingError);
+            }
             setPropertyRequests((current) =>
                 current.map((item) => (item.id === request.id ? { ...item, ...updated } : item))
             );

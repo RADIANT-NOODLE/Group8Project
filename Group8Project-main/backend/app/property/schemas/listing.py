@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -9,12 +10,14 @@ from app.common.enums import ListingStatus
 class ListingCreate(BaseModel):
     unit_id: int = Field(..., ge=1)
     price: Decimal = Field(..., gt=0, max_digits=12, decimal_places=2)
+    listing_type: Literal["sale", "rent"] | None = None
     description: str | None = Field(default=None, max_length=5000)
     photo_url: str | None = None
 
 
 class ListingUpdate(BaseModel):
     price: Decimal | None = Field(default=None, gt=0, max_digits=12, decimal_places=2)
+    listing_type: Literal["sale", "rent"] | None = None
     description: str | None = Field(default=None, max_length=5000)
     photo_url: str | None = None
     status: ListingStatus | None = None
@@ -25,6 +28,7 @@ class ListingResponse(BaseModel):
     unit_id: int
     agent_id: int
     price: Decimal
+    listing_type: str | None = None
     description: str | None
     photo_url: str | None
     status: str | None

@@ -4,10 +4,12 @@ import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
 import "./PropertyManagement.css";
+import "../../components/ValoraModal.css";
 
 import { showAlert, showConfirm } from "../../components/AppDialog";
 import { getSessionToken } from "../../services/session";
 import StageSummary from "../../components/StageSummary";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 /*
 =========================================================
@@ -68,6 +70,9 @@ function PropertyManagement() {
     // --- TOAST STATE ---
     const [toastMessage, setToastMessage] = useState("");
 
+    // photos whose file is missing (uploaded on another computer) show the placeholder instead
+    const [brokenImages, setBrokenImages] = useState([]);
+
     // EDIT MODAL STATE
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProperty, setEditingProperty] = useState(null);
@@ -109,7 +114,7 @@ function PropertyManagement() {
 
         try {
             const token = getSessionToken();
-            const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -161,7 +166,7 @@ function PropertyManagement() {
             const token = getSessionToken();
             const id = editingProperty.id || editingProperty.unit_id;
 
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/properties/${id}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties/${id}`, {
                 method: "PATCH",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -257,7 +262,7 @@ function PropertyManagement() {
         if (!(await showConfirm("Add this property to the estate?", { title: "Add property?", confirmLabel: "Add property" }))) return;
         try {
             const token = getSessionToken();
-            const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -458,7 +463,13 @@ function PropertyManagement() {
                                 return (
                                     <article className="managed-property-card" key={propertyId || `property-${index}`}>
                                         <div className="managed-property-image">
-                                            {image ? <img src={image} alt={complexName} /> : <div className="managed-property-image-placeholder"><span aria-hidden="true">⌂</span><p>No image available</p></div>}
+                                            {image && !brokenImages.includes(image) ? (
+                                                <img
+                                                    src={image}
+                                                    alt={complexName}
+                                                    onError={() => setBrokenImages(previous => (previous.includes(image) ? previous : [...previous, image]))}
+                                                />
+                                            ) : <div className="managed-property-image-placeholder"><span aria-hidden="true">⌂</span><p>No image available</p></div>}
                                             <span className={`property-status-badge status-${getStatusClass(status)}`}>{status}</span>
                                         </div>
 
@@ -562,11 +573,24 @@ function PropertyManagement() {
                                     <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "8px" }}>
                                         {(editingProperty?.photos || []).map((photo, index) => (
                                             <div key={photo.id} style={{ position: "relative", width: "96px", height: "72px" }}>
-                                                <img
-                                                    src={photoSrc(photo.url)}
-                                                    alt={`Property photo ${index + 1}`}
-                                                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "6px", border: "1px solid #ddd" }}
-                                                />
+                                                {photo.available === false || brokenImages.includes(photoSrc(photo.url)) ? (
+                                                    <div
+                                                        title="This photo's image is missing. Remove it and upload it again."
+                                                        style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", textAlign: "center", borderRadius: "6px", border: "1px dashed #cfc3da", background: "#f5f3f7", color: "#8f8698", fontSize: "10px", lineHeight: 1.3 }}
+                                                    >
+                                                        Image<br />missing
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={photoSrc(photo.url)}
+                                                        alt={`Property photo ${index + 1}`}
+                                                        onError={() => {
+                                                            const src = photoSrc(photo.url);
+                                                            setBrokenImages(previous => (previous.includes(src) ? previous : [...previous, src]));
+                                                        }}
+                                                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "6px", border: "1px solid #ddd" }}
+                                                    />
+                                                )}
                                                 {index === 0 && (
                                                     <span style={{ position: "absolute", left: "4px", bottom: "4px", background: "#563f6b", color: "#fff", fontSize: "10px", padding: "1px 5px", borderRadius: "4px" }}>
                                                         Cover

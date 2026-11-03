@@ -9,8 +9,12 @@ settings = get_settings()
 engine = create_async_engine(settings.DATABASE_URL,
                              connect_args={"ssl": settings.DATABASE_SSL,
                             "timeout":30,}, echo=False,
-                            pool_pre_ping=True,
-                            pool_recycle=300,
+                            # The hosted database is a long way off (~250 ms per round trip),
+                            # so no "is it alive?" ping before every request. Instead a
+                            # connection is replaced once it is 4 minutes old, before Neon's
+                            # 5-minute idle shutdown can leave it dead in the pool.
+                            pool_pre_ping=False,
+                            pool_recycle=240,
                             pool_size=5,
                             max_overflow=10,
                             )

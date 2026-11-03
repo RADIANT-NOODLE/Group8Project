@@ -3,6 +3,7 @@ import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { useSession, getSessionToken } from "../../services/session";
 import "./Providers.css";
 import { showConfirm, showAlert } from "../../components/AppDialog";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 const SERVICE_CATEGORIES = [
     { value: "plumbing", label: "Plumbing", icon: "tools" },
@@ -77,7 +78,7 @@ function Providers() {
         setLoading(true);
         try {
             const token = getSessionToken();
-            const response = await fetch("http://127.0.0.1:8000/api/v1/providers", {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -163,8 +164,8 @@ function Providers() {
             const token = getSessionToken();
             
             const url = editingId 
-                ? `http://127.0.0.1:8000/api/v1/providers/${editingId}`
-                : "http://127.0.0.1:8000/api/v1/providers";
+                ? `${getApiBaseUrl()}/api/v1/providers/${editingId}`
+                : `${getApiBaseUrl()}/api/v1/providers`;
                 
             const method = editingId ? "PATCH" : "POST";
 
@@ -220,7 +221,7 @@ function Providers() {
 
         try {
             const token = getSessionToken();
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${id}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${id}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -251,7 +252,7 @@ function Providers() {
         setReviewsLoading(true);
         try {
             const token = getSessionToken();
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${providerId}/reviews`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -283,7 +284,7 @@ function Providers() {
             const token = getSessionToken();
             const providerId = selectedProvider.provider_id || selectedProvider.id;
             
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${providerId}/reviews`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -320,7 +321,7 @@ function Providers() {
             const token = getSessionToken();
             const providerId = selectedProvider.provider_id || selectedProvider.id;
 
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews/${reviewToDelete}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${providerId}/reviews/${reviewToDelete}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });

@@ -31,6 +31,7 @@ export const WORK_ORDER_STATUSES = freezeOptions([
 export const LISTING_STATUSES = freezeOptions([
   { value: 'active', label: 'Published', tone: 'done' },
   { value: 'sold', label: 'Sold', tone: 'closed' },
+  { value: 'rented', label: 'Rented', tone: 'closed' },
   { value: 'withdrawn', label: 'Withdrawn', tone: 'closed' },
 ]);
 

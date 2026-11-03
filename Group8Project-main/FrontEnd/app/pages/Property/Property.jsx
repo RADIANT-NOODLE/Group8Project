@@ -4,9 +4,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiRequest } from "../../services/apiClient";
 import { listListings } from "../../services/listingApi";
 import { getProperty, photoSrc } from "../../services/propertyApi";
-import { dashboardPathForRole } from "../../services/roleMap";
 import { getStoredUser, updateSessionUser, useSession } from "../../services/session";
 import { LISTING_STATUSES, listingStatusLabel, toStatus } from "../../services/statusMap";
+import { PublicFooter, PublicHeader } from "../../components/PublicSite";
 import "./Property.css";
 
 /*
@@ -107,28 +107,6 @@ function describe(property) {
     }${where ? `, ${where}` : ""}.`;
 }
 
-function PublicHeader({ user }) {
-    return (
-        <header className="pd-header">
-            <Link to="/" className="pd-logo" aria-label="VALORA home">
-                <img src="/assets/valora-logo-white.png" alt="VALORA" />
-            </Link>
-            <nav className="pd-header-actions" aria-label="Account">
-                {user ? (
-                    <Link to={dashboardPathForRole(user.role)} className="pd-header-button is-solid">
-                        My dashboard
-                    </Link>
-                ) : (
-                    <>
-                        <Link to="/login" className="pd-header-button">Login</Link>
-                        <Link to="/register" className="pd-header-button is-solid">Register</Link>
-                    </>
-                )}
-            </nav>
-        </header>
-    );
-}
-
 export default function Property() {
     const { propertyId } = useParams();
     const navigate = useNavigate();
@@ -157,16 +135,17 @@ export default function Property() {
             setBrokenPhotos([]);
 
             try {
+                // the unit and its listing load together; no listing info is not an error for the page
+                const listingRequest = listListings({ unitId: propertyId, pageSize: 10 })
+                    .then(({ items }) => pickListing(items))
+                    .catch(() => null);
+
                 const unit = await getProperty(propertyId);
                 if (cancelled) return;
                 setProperty(unit);
 
-                try {
-                    const { items } = await listListings({ unitId: unit.id, pageSize: 10 });
-                    if (!cancelled) setListing(pickListing(items));
-                } catch {
-                    if (!cancelled) setListing(null); // no listing info is not an error for the page
-                }
+                const found = await listingRequest;
+                if (!cancelled) setListing(found);
             } catch (err) {
                 console.error("Error fetching property:", err);
                 if (!cancelled) {
@@ -238,7 +217,7 @@ export default function Property() {
     if (loading) {
         return (
             <div className="pd-page">
-                <PublicHeader user={user} />
+                <div className="lp pd-site-chrome"><PublicHeader current="property" /></div>
                 <main className="pd-main" aria-busy="true">
                     <span className="pd-visually-hidden" role="status">Loading property details…</span>
                     <div className="pd-skeleton pd-skeleton-back" />
@@ -266,7 +245,7 @@ export default function Property() {
     if (notFound || !property) {
         return (
             <div className="pd-page">
-                <PublicHeader user={user} />
+                <div className="lp pd-site-chrome"><PublicHeader current="property" /></div>
                 <main className="pd-main">
                     <section className="pd-not-found">
                         <span className="pd-not-found-icon"><Icon name="home" size={34} /></span>
@@ -283,7 +262,10 @@ export default function Property() {
     }
 
     /* ----- page ----- */
-    const allPhotos = property.photos.map((photo) => photoSrc(photo.url)).filter(Boolean);
+    const allPhotos = property.photos
+        .filter((photo) => photo.available !== false) // skip images that are missing
+        .map((photo) => photoSrc(photo.url))
+        .filter(Boolean);
     if (!allPhotos.length && property.imageUrl) allPhotos.push(photoSrc(property.imageUrl));
     const photos = allPhotos.filter((src) => !brokenPhotos.includes(src));
     const markBroken = (src) => setBrokenPhotos((previous) => (previous.includes(src) ? previous : [...previous, src]));
@@ -291,8 +273,14 @@ export default function Property() {
 
     const listingStatus = listing ? toStatus(LISTING_STATUSES, listing.status) : "";
     const isOnMarket = listingStatus === "active";
-    const price = listing ? formatPrice(listing.price) : null;
-    const statusText = !listing ? "Not listed" : isOnMarket ? "On the market" : listingStatusLabel(listing.status);
+    const isRental = listing?.listingType === "rent";
+    const basePrice = listing ? formatPrice(listing.price) : null;
+    const price = basePrice && isRental ? `${basePrice} / month` : basePrice;
+    const statusText = !listing
+        ? "Not listed"
+        : isOnMarket
+            ? isRental ? "For rent" : "For sale"
+            : listingStatusLabel(listing.status);
 
     const facts = [
         { icon: "bed", label: "Bedrooms", value: property.bedrooms },
@@ -314,7 +302,7 @@ export default function Property() {
 
     return (
         <div className="pd-page">
-            <PublicHeader user={user} />
+            <div className="lp pd-site-chrome"><PublicHeader current="property" /></div>
 
             <main className="pd-main">
                 <button type="button" className="pd-back" onClick={() => navigate(-1)}>
@@ -480,9 +468,7 @@ export default function Property() {
                 </div>
             </main>
 
-            <footer className="pd-footer">
-                <p>© {new Date().getFullYear()} VALORA — Property Intelligence</p>
-            </footer>
+            <div className="lp pd-site-chrome"><PublicFooter /></div>
         </div>
     );
 }

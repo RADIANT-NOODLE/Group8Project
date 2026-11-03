@@ -21,7 +21,12 @@ export function toProperty(record) {
     bathrooms: toNumber(record?.bathrooms),
     imageUrl: toStringOrNull(record?.image_url),
     photos: Array.isArray(record?.photos)
-      ? record.photos.map((photo) => ({ id: toNumber(photo?.id), url: toStringOrNull(photo?.url) }))
+      ? record.photos.map((photo) => ({
+          id: toNumber(photo?.id),
+          url: toStringOrNull(photo?.url),
+          // false: the image is missing (uploaded on another computer); it can only be removed
+          available: photo?.available !== false,
+        }))
       : [],
   };
 }

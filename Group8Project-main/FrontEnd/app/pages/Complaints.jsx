@@ -112,16 +112,14 @@ export default function Complaints() {
     const fetchComplaints = async () => {
         setLoading(true);
         try {
-            const page = await listComplaints({ pageSize: 100 });
+            // residents see the work done on their own complaints; both lists load together
+            const [page, orders] = await Promise.all([
+                listComplaints({ pageSize: 100 }),
+                // listing work orders is HOA-only; per-complaint view is best effort
+                listWorkOrders({ pageSize: 100 }).catch(() => null),
+            ]);
             setComplaints(page.items);
-
-            // residents see the work done on their own complaints
-            try {
-                const orders = await listWorkOrders({ pageSize: 100 });
-                setWorkOrders(orders.items);
-            } catch {
-                setWorkOrders([]); // listing work orders is HOA-only; per-complaint view is best effort
-            }
+            setWorkOrders(orders ? orders.items : []);
 
             setError("");
         } catch (err) {

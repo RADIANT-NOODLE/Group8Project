@@ -3,6 +3,7 @@ import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { useSession, getSessionToken } from "../../services/session";
 import "./AgentInquiries.css";
 import { showAlert } from "../../components/AppDialog";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 function AgentInquiries() {
     const { user } = useSession();
@@ -26,7 +27,7 @@ function AgentInquiries() {
                 const token = getSessionToken();
                 const headers = { "Authorization": `Bearer ${token}` };
 
-                const response = await fetch("http://127.0.0.1:8000/api/v1/inquiries", { headers });
+                const response = await fetch(`${getApiBaseUrl()}/api/v1/inquiries`, { headers });
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -100,7 +101,7 @@ function AgentInquiries() {
     const handleStatusChange = async (inquiryId, newStatus) => {
         try {
             const token = getSessionToken();
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/inquiries/${inquiryId}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/inquiries/${inquiryId}`, {
                 method: "PATCH",
                 headers: { 
                     "Authorization": `Bearer ${token}`,

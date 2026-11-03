@@ -21,6 +21,8 @@ export function toListing(record) {
     unitId: toNumber(record?.unit_id),
     agentId: toNumber(record?.agent_id),
     price: toDecimal(record?.price),
+    // "sale" or "rent" (older listings have none)
+    listingType: toStringOrNull(record?.listing_type),
     description: toStringOrNull(record?.description),
     photoUrl: toStringOrNull(record?.photo_url),
     status: toStringOrNull(record?.status),
@@ -59,7 +61,7 @@ export function listMyListings(agentId, filters = {}) {
   return listListings({ ...filters, agentId });
 }
 
-export async function createListing({ unitId, price, description, photoUrl }) {
+export async function createListing({ unitId, price, listingType, description, photoUrl }) {
   return toListing(
     await apiRequest(BASE_PATH, {
       method: 'POST',
@@ -68,16 +70,19 @@ export async function createListing({ unitId, price, description, photoUrl }) {
         price,
         description: description || null,
         photo_url: photoUrl || null,
+        // "sale" or "rent"; only sent when known
+        ...(listingType ? { listing_type: listingType } : {}),
       },
     }),
   );
 }
 
-/** `patch`: any of `price`, `description`, `photoUrl`, `status`. */
+/** `patch`: any of `price`, `listingType`, `description`, `photoUrl`, `status`. */
 export async function updateListing(listingId, patch = {}) {
   const body = {};
 
   if (patch.price !== undefined) body.price = patch.price;
+  if (patch.listingType !== undefined) body.listing_type = patch.listingType || null;
   if (patch.description !== undefined) body.description = patch.description || null;
   if (patch.photoUrl !== undefined) body.photo_url = patch.photoUrl || null;
   if (patch.status !== undefined) body.status = toStatus(LISTING_STATUSES, patch.status) || patch.status;

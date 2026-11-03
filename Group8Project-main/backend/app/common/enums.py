@@ -33,6 +33,7 @@ class WorkOrderStatus(str, Enum):
 class ListingStatus(str, Enum):
     active = "active"
     sold = "sold"
+    rented = "rented"
     withdrawn = "withdrawn"
 
 

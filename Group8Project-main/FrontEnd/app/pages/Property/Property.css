@@ -4,6 +4,13 @@
    light purple #e4d9ed.
 ========================================================= */
 
+/* The shared public header and footer (components/PublicSite) take their
+   styles from the "lp" scope; this wrapper adds that scope without adding
+   a box, so the header still sticks to the top of the page. */
+.lp.pd-site-chrome {
+    display: contents;
+}
+
 .pd-page {
     min-height: 100vh;
     display: flex;

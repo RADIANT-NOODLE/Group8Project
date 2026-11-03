@@ -2,12 +2,11 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
-from app.property import storage
+from app.property.api.photo_files import router as photo_files_router
 
 
 # 1. Initialize logging before doing anything else
@@ -29,7 +28,9 @@ app.add_middleware(
     allow_origins=[ "http://localhost:4173", 
         "http://127.0.0.1:4173",
         "http://localhost:5173", 
-        "http://127.0.0.1:5173"],  
+        "http://127.0.0.1:5173"],
+    # the frontend opened from another device on the same home network (e.g. a phone at http://10.0.0.9:4173)
+    allow_origin_regex=r"http://(10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}):(4173|5173)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,8 +54,7 @@ def root():
 def health_check():
     return {"status": "ok", "environment": settings.ENVIRONMENT}
 
-# uploaded property photos
-storage.ensure_dirs()
-app.mount("/uploads", StaticFiles(directory=storage.UPLOAD_ROOT), name="uploads")
+# property photos (/uploads/properties/<name>), served from the shared database
+app.include_router(photo_files_router)
 
 app.include_router(api_router)

@@ -203,24 +203,24 @@ function PropertyRequests() {
         setLoading(true);
 
         try {
-            const loadedRequests = await getPropertyRequests();
-            setRequests(Array.isArray(loadedRequests) ? loadedRequests : []);
-
             // Estate agents come from the user list (HOA admins only); only
             // approved estate agent accounts can be assigned a request.
-            try {
-                const users = await listUsers();
-                setAgents(
-                    users.filter(
-                        (user) =>
-                            String(user.role || "").toLowerCase() === "estate_agent" &&
-                            user.hoa_approved === true
-                    )
-                );
-            } catch (agentError) {
-                console.error("Unable to load estate agents:", agentError);
-                setAgents([]);
-            }
+            // Both lists load together.
+            const [loadedRequests, users] = await Promise.all([
+                getPropertyRequests(),
+                listUsers().catch((agentError) => {
+                    console.error("Unable to load estate agents:", agentError);
+                    return [];
+                }),
+            ]);
+            setRequests(Array.isArray(loadedRequests) ? loadedRequests : []);
+            setAgents(
+                users.filter(
+                    (user) =>
+                        String(user.role || "").toLowerCase() === "estate_agent" &&
+                        user.hoa_approved === true
+                )
+            );
 
             setError("");
         } catch (loadError) {

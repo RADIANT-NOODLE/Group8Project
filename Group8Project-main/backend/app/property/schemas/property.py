@@ -7,6 +7,9 @@ from pydantic import BaseModel, Field
 class PropertyPhotoResponse(BaseModel):
     id: int
     url: str
+    # False when the image is missing (uploaded on another computer before
+    # photos were stored in the database); such photos can only be removed.
+    available: bool = True
 
 
 class PropertyResponse(BaseModel):

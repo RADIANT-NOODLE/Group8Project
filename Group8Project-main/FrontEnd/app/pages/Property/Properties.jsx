@@ -1,614 +1,218 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProperties } from "../../data/propertyStorage";
+
+import {
+    ListedPropertyCard,
+    ListedPropertySkeletons,
+    PublicFooter,
+    PublicHeader,
+    SiteIcon,
+} from "../../components/PublicSite";
+import { isRental, loadListedProperties } from "../../services/publicListings";
 import "./Properties.css";
 
+/*
+=========================================================
+PROPERTIES
+
+Every unit currently listed for sale or rent. A unit only
+appears here once an estate agent has published it; each
+card says whether it is for sale or for rent.
+=========================================================
+*/
+
+const TYPE_TABS = [
+    { value: "all", label: "All" },
+    { value: "sale", label: "For sale" },
+    { value: "rent", label: "For rent" },
+];
+
+const SORTS = [
+    { value: "newest", label: "Newest first" },
+    { value: "price-asc", label: "Price: low to high" },
+    { value: "price-desc", label: "Price: high to low" },
+];
 
 function Properties() {
-
     const [properties, setProperties] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
 
-
-    /*
-    =========================================================
-    PROPERTY STORAGE
-    =========================================================
-    */
+    const [search, setSearch] = useState("");
+    const [type, setType] = useState("all");
+    const [minBedrooms, setMinBedrooms] = useState(0);
+    const [sort, setSort] = useState("newest");
 
     useEffect(() => {
+        let cancelled = false;
 
-        const storedProperties =
-            getProperties();
+        loadListedProperties()
+            .then((listed) => {
+                if (!cancelled) setProperties(listed);
+            })
+            .catch((err) => {
+                console.error("Failed to load listed properties:", err);
+                if (!cancelled) setLoadError("Listed properties could not be loaded. Please try again shortly.");
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
 
-        setProperties(storedProperties);
-
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-
-    /*
-    =========================================================
-    PROFESSIONAL PROPERTY ICON
-    =========================================================
-    */
-
-    const PropertyIcon = () => (
-
-        <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            className="properties-page-icon"
-        >
-
-            <path
-                d="M3 10.5L12 3l9 7.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-
-            <path
-                d="M5 9.5V21h14V9.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-            />
-
-            <path
-                d="M9 21v-6h6v6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-            />
-
-        </svg>
-
-    );
-
-
-    /*
-    =========================================================
-    PUBLIC LISTING CHECK
-    =========================================================
-    */
-
-    const isPublished = (property) => {
-
-        return (
-            property.listing?.listingStatus === "Published" &&
-            property.listing?.hoaApprovalStatus === "Approved"
-        );
-
+    const counts = {
+        all: properties.length,
+        sale: properties.filter((property) => !isRental(property)).length,
+        rent: properties.filter((property) => isRental(property)).length,
     };
 
-
-    /*
-    =========================================================
-    PROPERTY IMAGE
-    =========================================================
-    */
-
-    const renderPropertyImage = (property) => {
-
-        const published =
-            isPublished(property);
-
-
-        const approvedImages =
-            published &&
-            Array.isArray(property.images)
-                ? property.images.filter(Boolean)
-                : [];
-
-
-        if (approvedImages.length > 0) {
-
-            const firstImage =
-                approvedImages[0];
-
-
-            const imageSource =
-                typeof firstImage === "string"
-                    ? firstImage
-                    : firstImage?.data || "";
-
-
-            if (imageSource) {
-
-                return (
-
-                    <img
-                        src={imageSource}
-                        alt={
-                            property.title ||
-                            property.propertyType ||
-                            "VALORA Property"
-                        }
-                    />
-
-                );
-
-            }
-
-        }
-
-
-        return (
-
-            <div className="property-image-placeholder">
-
-                <PropertyIcon />
-
-                <strong>
-                    Photos Coming Soon
-                </strong>
-
-                <span>
-                    Property images will be added once they
-                    are available and approved.
-                </span>
-
-            </div>
-
-        );
-
-    };
-
-
-    /*
-    =========================================================
-    PROPERTY LISTING TYPE
-    =========================================================
-    */
-
-    const getListingType = (property) => {
-
-        if (!isPublished(property)) {
-
-            return "UNIT AVAILABLE";
-
-        }
-
-
-        const listingType =
-            property.listing?.listingType;
-
-
-        if (listingType) {
-
-            return listingType.toUpperCase();
-
-        }
-
-
-        return "UNIT AVAILABLE";
-
-    };
-
-
-    /*
-    =========================================================
-    PROPERTY PRICE
-    =========================================================
-    */
-
-    const getPropertyPrice = (property) => {
-
-        if (!isPublished(property)) {
-
-            return "Not currently listed";
-
-        }
-
-
-        const listing =
-            property.listing || {};
-
-
-        if (
-            listing.listingType === "For Sale"
-        ) {
-
-            if (listing.askingPrice) {
-
-                return `R${Number(
-                    listing.askingPrice
-                ).toLocaleString()}`;
-
-            }
-
-            return "Price TBC";
-
-        }
-
-
-        if (
-            listing.listingType === "For Rent"
-        ) {
-
-            if (listing.rentalPrice) {
-
-                return `R${Number(
-                    listing.rentalPrice
-                ).toLocaleString()} / month`;
-
-            }
-
-            return "Rental Price TBC";
-
-        }
-
-
-        return "Not currently listed";
-
-    };
-
-
-    /*
-    =========================================================
-    PROPERTY BEDROOM LABEL
-    =========================================================
-    */
-
-    const getBedroomLabel = (property) => {
-
-        if (
-            property.propertyType === "Bachelor Suite"
-        ) {
-
-            return "Bachelor Suite";
-
-        }
-
-
-        return `${property.bedrooms} ${
-            property.bedrooms === 1
-                ? "Bedroom"
-                : "Bedrooms"
-        }`;
-
-    };
-
-
-    /*
-    =========================================================
-    PROPERTY BATHROOM LABEL
-    =========================================================
-    */
-
-    const getBathroomLabel = (property) => {
-
-        return `${property.bathrooms} ${
-            property.bathrooms === 1
-                ? "Bathroom"
-                : "Bathrooms"
-        }`;
-
-    };
-
-
-    /*
-    =========================================================
-    PAGE
-    =========================================================
-    */
+    const shown = useMemo(() => {
+        const term = search.trim().toLowerCase();
+
+        const matches = properties.filter((property) => {
+            if (type === "rent" && !isRental(property)) return false;
+            if (type === "sale" && isRental(property)) return false;
+            if (minBedrooms && Number(property.bedrooms || 0) < minBedrooms) return false;
+            if (!term) return true;
+            return [property.title, property.location, `unit ${property.unitNumber}`]
+                .some((value) => String(value || "").toLowerCase().includes(term));
+        });
+
+        const price = (property) => Number(property.listing?.price) || 0;
+        if (sort === "price-asc") return [...matches].sort((a, b) => price(a) - price(b));
+        if (sort === "price-desc") return [...matches].sort((a, b) => price(b) - price(a));
+        return matches; // already newest first
+    }, [properties, search, type, minBedrooms, sort]);
+
+    const filtersActive = Boolean(search.trim()) || type !== "all" || minBedrooms > 0;
+
+    function clearFilters() {
+        setSearch("");
+        setType("all");
+        setMinBedrooms(0);
+    }
 
     return (
+        <div className="lp">
+            <PublicHeader current="properties" />
 
-        <div className="app properties-page">
-
-
-            {/* =================================================
-                SAME VALORA NAVBAR AS HOME PAGE
-            ================================================= */}
-
-            <nav className="navbar">
-
-                <Link to="/" className="logo">
-
-                    <img
-                        src="/assets/valora-logo.jpg"
-                        alt="VALORA - go to home page"
-                    />
-
-                </Link>
-
-
-                <div className="nav-links">
-
-                    <Link to="/">
-                        HOME
-                    </Link>
-
-
-                    <Link
-                        to="/properties"
-                        className="active"
-                    >
-                        PROPERTIES
-                    </Link>
-
-
-                    <Link to="/#valuation">
-                        VALUATION
-                    </Link>
-
-
-                    <Link to="/#community">
-                        COMMUNITY
-                    </Link>
-
-
-                    <Link to="/#about">
-                        ABOUT
-                    </Link>
-
-                </div>
-
-
-                <div className="nav-buttons">
-
-                    <Link
-                        to="/login"
-                        className="login-btn"
-                    >
-                        LOG IN
-                    </Link>
-
-
-                    <Link
-                        to="/register"
-                        className="register-btn"
-                    >
-                        REGISTER
-                    </Link>
-
-                </div>
-
-            </nav>
-
-
-            {/* =================================================
-                PROPERTIES PAGE HEADER
-            ================================================= */}
-
-            <section className="properties-page-header">
-
-                <div className="properties-page-header-content">
-
-                    <p className="section-label">
-                        THE VALORA DEVELOPMENT
-                    </p>
-
-
-                    <h1>
-                        Explore our eight units.
-                    </h1>
-
-
+            <main>
+                {/* PAGE BANNER */}
+                <section className="props-banner">
+                    <span className="lp-eyebrow">On the market</span>
+                    <h1>Properties for sale and rent</h1>
                     <p>
-                        Explore the units within the VALORA
-                        development. Property information and
-                        approved listing details will be updated
-                        as the development progresses.
+                        {loading
+                            ? "Loading listed properties…"
+                            : properties.length === 0
+                                ? "No units are listed right now. Check back soon."
+                                : `${properties.length} ${properties.length === 1 ? "unit is" : "units are"} listed across VALORA estates — ${counts.sale} for sale and ${counts.rent} for rent.`}
                     </p>
+                </section>
 
-                </div>
+                <section className="props-content" aria-label="Listed properties">
+                    {/* TOOLBAR */}
+                    <div className="props-toolbar">
+                        <label className="props-search">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="m20 20-3.5-3.5" />
+                            </svg>
+                            <span className="props-visually-hidden">Search properties</span>
+                            <input
+                                type="search"
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder="Search by development, address or unit…"
+                            />
+                        </label>
 
-            </section>
+                        <div className="props-tabs" role="group" aria-label="Sale or rent">
+                            {TYPE_TABS.map((tab) => (
+                                <button
+                                    key={tab.value}
+                                    type="button"
+                                    className={type === tab.value ? "is-active" : undefined}
+                                    aria-pressed={type === tab.value}
+                                    onClick={() => setType(tab.value)}
+                                >
+                                    {tab.label}
+                                    <span>{counts[tab.value]}</span>
+                                </button>
+                            ))}
+                        </div>
 
+                        <label className="props-select">
+                            <span>Bedrooms</span>
+                            <select value={minBedrooms} onChange={(event) => setMinBedrooms(Number(event.target.value))}>
+                                <option value={0}>Any</option>
+                                <option value={1}>1+</option>
+                                <option value={2}>2+</option>
+                                <option value={3}>3+</option>
+                            </select>
+                        </label>
 
-            {/* =================================================
-                PROPERTY LISTINGS
-            ================================================= */}
-
-            <section
-                className="property-listings"
-                id="properties"
-            >
-
-                <div className="listings-header">
-
-                    <div>
-
-                        <p className="section-label">
-                            PROPERTY COLLECTION
-                        </p>
-
-
-                        <h2>
-                            Available Properties
-                        </h2>
-
-
-                        <p>
-                            Browse the properties within the
-                            VALORA development and view the
-                            information available for each unit.
-                        </p>
-
+                        <label className="props-select">
+                            <span>Sort</span>
+                            <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                                {SORTS.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        </label>
                     </div>
 
-                </div>
-
-
-                <div className="property-cards">
-
-                    {properties.map((property) => {
-
-                        const priceDisplay =
-                            getPropertyPrice(property);
-
-
-                        const listingType =
-                            getListingType(property);
-
-
-                        return (
-
-                            <div
-                                className="property-card"
-                                key={property.id}
-                            >
-
-
-                                {/* PROPERTY IMAGE */}
-
-                                {renderPropertyImage(property)}
-
-
-                                <div className="property-card-content">
-
-
-                                    {/* LISTING TYPE */}
-
-                                    <p className="property-type">
-                                        {listingType}
-                                    </p>
-
-
-                                    {/* PROPERTY TITLE */}
-
-                                    <h3>
-                                        {property.title ||
-                                            property.propertyType}
-                                    </h3>
-
-
-                                    {/* LOCATION */}
-
-                                    <p className="property-location">
-                                        {property.location ||
-                                            property.development ||
-                                            "VALORA Estate"}
-                                    </p>
-
-
-                                    {/* PROPERTY DETAILS */}
-
-                                    <div className="property-details">
-
-                                        <span>
-                                            {property.propertyType}
-                                        </span>
-
-                                        <span>
-                                            {getBedroomLabel(property)}
-                                        </span>
-
-                                        <span>
-                                            {getBathroomLabel(property)}
-                                        </span>
-
-                                    </div>
-
-
-                                    {/* UNIT INFORMATION */}
-
-                                    <div className="property-unit">
-
-                                        <span>
-                                            {property.unitNumber}
-                                        </span>
-
-                                        <span>
-                                            {property.floor}
-                                        </span>
-
-                                    </div>
-
-
-                                    {/* PRICE + VIEW */}
-
-                                    <div className="property-bottom">
-
-                                        <strong>
-                                            {priceDisplay}
-                                        </strong>
-
-
-                                        <Link
-                                            to={`/property/${property.id}`}
-                                            className="property-view-button"
-                                        >
-                                            View Property
-                                        </Link>
-
-                                    </div>
-
-
-                                </div>
-
+                    {/* RESULTS */}
+                    {loading ? (
+                        <div className="lp-property-grid">
+                            <ListedPropertySkeletons count={6} />
+                        </div>
+                    ) : loadError ? (
+                        <div className="lp-empty">
+                            <span className="lp-empty-icon"><SiteIcon name="home" size={26} /></span>
+                            <h3>Something went wrong</h3>
+                            <p>{loadError}</p>
+                        </div>
+                    ) : properties.length === 0 ? (
+                        <div className="lp-empty">
+                            <span className="lp-empty-icon"><SiteIcon name="home" size={26} /></span>
+                            <h3>No properties are listed right now</h3>
+                            <p>New listings appear here as soon as an estate agent publishes them.</p>
+                            <Link to="/register" className="lp-button lp-button-solid props-empty-action">Register for updates</Link>
+                        </div>
+                    ) : shown.length === 0 ? (
+                        <div className="lp-empty">
+                            <span className="lp-empty-icon"><SiteIcon name="home" size={26} /></span>
+                            <h3>No properties match your filters</h3>
+                            <p>Try a different search, or clear the filters to see every listed unit.</p>
+                            <button type="button" className="lp-button lp-button-ghost props-empty-action" onClick={clearFilters}>
+                                Clear filters
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="props-count">
+                                Showing {shown.length} of {properties.length} listed {properties.length === 1 ? "property" : "properties"}
+                                {filtersActive && (
+                                    <button type="button" onClick={clearFilters}>Clear filters</button>
+                                )}
+                            </p>
+                            <div className="lp-property-grid">
+                                {shown.map((property) => (
+                                    <ListedPropertyCard key={property.id} property={property} />
+                                ))}
                             </div>
+                        </>
+                    )}
+                </section>
+            </main>
 
-                        );
-
-                    })}
-
-                </div>
-
-            </section>
-
-
-            {/* =================================================
-                BOTTOM INFORMATION
-            ================================================= */}
-
-            <section className="properties-page-information">
-
-                <div className="properties-page-information-content">
-
-                    <p className="section-label">
-                        VALORA PROPERTY INTELLIGENCE
-                    </p>
-
-
-                    <h2>
-                        More than a property listing.
-                    </h2>
-
-
-                    <p>
-                        VALORA combines property information
-                        with intelligent insights and community
-                        management tools to help residents,
-                        buyers and investors make informed
-                        property decisions.
-                    </p>
-
-
-                    <div className="properties-page-actions">
-
-                        <Link
-                            to="/login"
-                            className="primary-btn"
-                        >
-                            GET AI VALUATION
-                        </Link>
-
-
-                        <Link
-                            to="/"
-                            className="secondary-btn"
-                        >
-                            BACK TO HOME
-                        </Link>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
+            <PublicFooter />
         </div>
-
     );
-
 }
-
 
 export default Properties;

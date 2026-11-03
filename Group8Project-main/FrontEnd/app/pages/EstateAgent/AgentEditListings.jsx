@@ -12,6 +12,8 @@ import {
     getPropertyRequests,
 } from "../../data/propertyRequests";
 import { updateRequestProgress } from "../../services/propertyRequestApi";
+import { createListing, listMyListings, updateListing } from "../../services/listingApi";
+import { syncListingPhotos, syncPublishedListingPhotos } from "../../services/listingPhotoSync";
 
 import "./AgentEditListings.css";
 import { showConfirm } from "../../components/AppDialog";
@@ -237,6 +239,16 @@ function AgentEditListings() {
 
     useEffect(() => {
         loadAssignedProperties();
+
+        // photos of already-published listings that never reached the public site
+        const agent = getCurrentAgent();
+        if (agent?.id) {
+            syncPublishedListingPhotos(agent.id)
+                .then((uploaded) => {
+                    if (uploaded > 0) loadAssignedProperties();
+                })
+                .catch((error) => console.error("Could not sync listing photos:", error));
+        }
     }, []);
 
     /*
@@ -674,8 +686,48 @@ function AgentEditListings() {
             }
         }
 
+        // the public listing lives in the backend, so every visitor sees it (home page, property page)
+        let publicNote = "";
+        try {
+            const unitId = Number(editingProperty.id);
+            const isRent = formData.listingType === "For Rent";
+            const fields = {
+                price: Number(isRent ? formData.rentalPrice : formData.askingPrice),
+                listingType: isRent ? "rent" : "sale",
+                description: formData.description,
+            };
+            const { items } = await listMyListings(currentUser.id, { unitId, pageSize: 10 });
+            const existing = items.find((item) => item.unitId === unitId);
+            if (existing) {
+                await updateListing(existing.id, { ...fields, status: "active" });
+            } else {
+                await createListing({ unitId, ...fields });
+            }
+        } catch (publicError) {
+            console.error("Could not save the public listing:", publicError);
+            publicNote = " It could not be shared on the public site right now — try publishing again.";
+        }
+
+        // photos go to the backend too, so every visitor on every device sees them
+        let photoNote = "";
+        const photoSync = await syncListingPhotos(updatedProperty);
+        if (photoSync.uploaded > 0) {
+            setProperties((current) =>
+                current.map((property) =>
+                    property.id === photoSync.property.id ? photoSync.property : property
+                )
+            );
+            setEditingProperty(photoSync.property);
+        }
+        if (photoSync.failed > 0) {
+            photoNote =
+                ` ${photoSync.failed} photo${photoSync.failed === 1 ? "" : "s"} could not be shared on the public site` +
+                (photoSync.error ? ` (${photoSync.error})` : "") +
+                ". Publish again to retry.";
+        }
+
         setMessage(
-            "Listing published. It is now live for buyers and renters." + progressNote
+            "Listing published. It is now live for buyers and renters." + progressNote + publicNote + photoNote
         );
     };
 

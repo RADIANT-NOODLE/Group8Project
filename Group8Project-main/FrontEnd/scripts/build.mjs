@@ -33,7 +33,8 @@ async function loadFrontendEnv() {
 
   return {
     VITE_API_BASE_URL:
-      process.env.VITE_API_BASE_URL || fileValues.VITE_API_BASE_URL || 'http://localhost:8000',
+      // empty = the browser works it out from the page address (see app/services/environment.js)
+      process.env.VITE_API_BASE_URL || fileValues.VITE_API_BASE_URL || '',
     VITE_USE_MOCK_AUTH:
       process.env.VITE_USE_MOCK_AUTH || fileValues.VITE_USE_MOCK_AUTH || 'false',
   };

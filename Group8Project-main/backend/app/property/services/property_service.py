@@ -57,12 +57,21 @@ class PropertyService:
         return (await self._with_photos([property_]))[0]
 
     async def _with_photos(self, properties: list[Property]) -> list[PropertyResponse]:
-        """Build responses with each property's photos (one query for all of them)."""
-        photos = await self._repo.list_photos([p.unit_id for p in properties])
+        """Build responses with each property's photos (one query for all of them).
+
+        A photo is `available` when its image is in the database or, for older
+        uploads, on this computer's disk. The cover (image_url) is the first
+        available photo, so a lost image never hides a good one.
+        """
+        photos = await self._repo.list_photos_with_status([p.unit_id for p in properties])
         by_unit: dict[int, list[PropertyPhotoResponse]] = {}
-        for photo in photos:
+        for photo, stored in photos:
             by_unit.setdefault(photo.unit_id, []).append(
-                PropertyPhotoResponse(id=photo.photo_id, url=storage.photo_url(photo.file_name))
+                PropertyPhotoResponse(
+                    id=photo.photo_id,
+                    url=storage.photo_url(photo.file_name),
+                    available=stored or storage.legacy_file(photo.file_name) is not None,
+                )
             )
 
         responses = []
@@ -70,7 +79,8 @@ class PropertyService:
             own = by_unit.get(property_.unit_id, [])
             response = PropertyResponse.model_validate(property_)
             response.photos = own
-            response.image_url = own[0].url if own else None
+            cover = next((photo for photo in own if photo.available), None)
+            response.image_url = cover.url if cover else None
             responses.append(response)
         return responses
 
@@ -83,20 +93,26 @@ class PropertyService:
         if extension is None:
             raise ValidationException("Upload a JPEG, PNG or WebP image.")
 
-        existing = await self._repo.list_photos([unit_id])
-        if len(existing) >= storage.MAX_PHOTOS_PER_PROPERTY:
+        # Only photos that can actually be shown count toward the limit: the
+        # image is in the database, or (older uploads) on this computer's disk.
+        # A record whose image was lost must not block new uploads.
+        existing = await self._repo.list_photos_with_status([unit_id])
+        usable = [
+            photo for photo, stored in existing
+            if stored or storage.legacy_file(photo.file_name) is not None
+        ]
+        if len(usable) >= storage.MAX_PHOTOS_PER_PROPERTY:
             raise ConflictException(
                 f"A property can have at most {storage.MAX_PHOTOS_PER_PROPERTY} photos."
             )
 
-        storage.ensure_dirs()
-        file_name = storage.new_file_name(extension)
-        (storage.PROPERTY_PHOTO_DIR / file_name).write_bytes(data)
-        try:
-            await self._repo.add_photo(unit_id, file_name)
-        except Exception:
-            storage.delete_file(file_name)
-            raise
+        # stored in the shared database, so every computer can show it
+        await self._repo.add_photo(
+            unit_id,
+            storage.new_file_name(extension),
+            data,
+            storage.CONTENT_TYPES[extension],
+        )
 
         return (await self._with_photos([property_]))[0]
 

@@ -269,7 +269,12 @@
   text-decoration: underline;
 }
 
-/* Stretch the corner link over its card so the whole card is clickable. */
+/* Stretch the corner link over its card so the whole card is clickable.
+   The card must be the positioned box, or the link covers the whole page. */
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all) {
+  position: relative;
+}
+
 .resident-dashboard-view-all::after {
   content: "";
   position: absolute;
@@ -277,14 +282,14 @@
   border-radius: 10px;
 }
 
-.resident-dashboard-card:has(.resident-dashboard-view-all) {
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all) {
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
-.resident-dashboard-card:has(.resident-dashboard-view-all:hover) {
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all:hover) {
   border-color: #d9cbe5;
   box-shadow: 0 6px 18px rgba(40, 30, 50, 0.08);
   transform: translateY(-2px);
@@ -294,17 +299,17 @@
   outline: none;
 }
 
-.resident-dashboard-card:has(.resident-dashboard-view-all:focus-visible) {
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all:focus-visible) {
   outline: 2px solid #563f6b;
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .resident-dashboard-card:has(.resident-dashboard-view-all) {
+  :is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all) {
     transition: none;
   }
 
-  .resident-dashboard-card:has(.resident-dashboard-view-all:hover) {
+  :is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all:hover) {
     transform: none;
   }
 }

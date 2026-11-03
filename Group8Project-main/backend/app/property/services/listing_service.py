@@ -58,6 +58,7 @@ class ListingService:
             unit_id=payload.unit_id,
             agent_id=agent.user_id,
             price=payload.price,
+            listing_type=payload.listing_type,
             description=payload.description,
             photo_url=payload.photo_url,
         )

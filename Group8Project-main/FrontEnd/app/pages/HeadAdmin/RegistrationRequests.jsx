@@ -3,7 +3,9 @@ import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { roleLabel } from "../../services/userApi";
 import "./RegistrationRequests.css";
+import "../../components/ValoraModal.css";
 import { getSessionToken, getStoredUser } from "../../services/session";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 /* =========================================================
    ROLE HELPERS
@@ -65,7 +67,7 @@ function isApproved(user) {
 
 async function fetchAllUsersFromApi() {
     const token = getSessionToken();
-    const response = await fetch("http://127.0.0.1:8000/api/v1/users/", { 
+    const response = await fetch(`${getApiBaseUrl()}/api/v1/users/`, { 
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json"}
     });
     if (!response.ok) throw new Error("Failed to fetch users");
@@ -136,7 +138,7 @@ function RegistrationRequests() {
         try {
             const token = getSessionToken();
             
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/users/${actionUserId}/${actionType}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/users/${actionUserId}/${actionType}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });

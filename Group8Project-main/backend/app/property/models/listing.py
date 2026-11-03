@@ -11,6 +11,7 @@ class Listing(Base):
     unit_id = Column(Integer, nullable=False)
     agent_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     price = Column(Numeric(12, 2), nullable=False)
+    listing_type = Column(String(10), nullable=True)  # "sale" or "rent"
     description = Column(Text, nullable=True)
     photo_url = Column(Text, nullable=True)
     status = Column(String(20), default="active")
