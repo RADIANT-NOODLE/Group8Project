@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+
 import { getProperties } from "../data/propertyStorage";
 import "./Home.css";
 
@@ -156,9 +157,13 @@ function Home() {
 
     return (
         <div className="app">
+            {/* NAVBAR */}
             <nav className="navbar">
                 <Link to="/" className="logo">
-                    <img src="/assets/valora-logo.jpg" alt="VALORA - go to home page" />
+                    <img
+                        src="/assets/valora-logo.jpg"
+                        alt="VALORA - go to home page"
+                    />
                 </Link>
 
                 <div className="nav-links">
@@ -175,8 +180,14 @@ function Home() {
                 </div>
             </nav>
 
-            {/* HARDCODED HERO */}
-            <section className="hero" id="home">
+            {/* HERO WITH BACKGROUND IMAGE */}
+            <section
+                className="hero"
+                id="home"
+                style={{
+    "--hero-background-image": 'url("/assets/ValoraLandingPage.jpeg")',
+}}
+            >
                 <div className="hero-layout">
                     <div className="hero-content">
                         <h1>
