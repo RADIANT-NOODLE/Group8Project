@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
-import "./PropertyManagement.css";
+import "./PropertyManagement.css";
+
 import { showAlert } from "../../components/AppDialog";
 import { getSessionToken } from "../../services/session";
 
@@ -23,7 +24,7 @@ function getLocation(property) {
 }
 
 function getListingStatus(property) {
-    return property.listing_status || "Published";
+    return property.listing_status || "Not Listed";
 }
 
 function getListingPrice(property) {
@@ -245,7 +246,7 @@ function PropertyManagement() {
 
         const problems = files.map(photoProblem).filter(Boolean);
         setPhotoError(problems.join(" "));
-        setNewPhotos(previous => [...previous, ...files.filter(file => !photoProblem(file))].slice(0, 8));
+        setNewPhotos(previous => [...previous, ...files.filter(file => !photoProblem(file))]);
     };
 
     const handleAddProperty = async (e) => {
@@ -448,7 +449,8 @@ function PropertyManagement() {
                         <div className="property-management-grid">
                             {filteredProperties.map((property, index) => {
                                 const propertyId = property.id || property.unit_id;
-                                const title = property.unit_no || property.complex_name || `Property ${propertyId || index + 1}`;
+                                const complexName = property.complex_name || "";
+                                const unitNo = property.unit_no || property.complex_name || `Property ${propertyId || index + 1}`;
                                 const image = getPropertyImage(property);
                                 const status = getListingStatus(property);
                                 const price = getListingPrice(property);
@@ -456,15 +458,17 @@ function PropertyManagement() {
                                 return (
                                     <article className="managed-property-card" key={propertyId || `property-${index}`}>
                                         <div className="managed-property-image">
-                                            {image ? <img src={image} alt={title} /> : <div className="managed-property-image-placeholder"><span aria-hidden="true">⌂</span><p>No image available</p></div>}
+                                            {image ? <img src={image} alt={complexName} /> : <div className="managed-property-image-placeholder"><span aria-hidden="true">⌂</span><p>No image available</p></div>}
                                             <span className={`property-status-badge status-${getStatusClass(status)}`}>{status}</span>
                                         </div>
 
                                         <div className="managed-property-content">
-                                            <div className="managed-property-title-row">
-                                                <div>
-                                                    <h3>{title}</h3>
-                                                    <p className="managed-property-id">ID: {propertyId || "Not assigned"}</p>
+                                            <div className="managed-property-title-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+                                                <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#111827"}}>{complexName}</h3>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                                                    <span style={{ color: "#9ca3af", fontSize: "0.95rem"}}>{unitNo}</span>
+                                                    <span style={{ color: "#9ca3af", fontSize: "0.75rem"}}>•</span>
+                                                    <p className="managed-property-id" style={{ margin: 0, color: "#6b7280", fontSize: "0.85rem"}}>ID: {propertyId || "Not assigned"}</p>
                                                 </div>
                                             </div>
                                             <p className="managed-property-location"><span aria-hidden="true">⌖</span> {getLocation(property)}</p>
@@ -554,7 +558,7 @@ function PropertyManagement() {
                                 </div>
 
                                 <div>
-                                    <label>Photos ({(editingProperty?.photos || []).length}/8)</label>
+                                    <label>Photos ({(editingProperty?.photos || []).length})</label>
                                     <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "8px" }}>
                                         {(editingProperty?.photos || []).map((photo, index) => (
                                             <div key={photo.id} style={{ position: "relative", width: "96px", height: "72px" }}>
@@ -584,7 +588,7 @@ function PropertyManagement() {
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
                                         multiple
-                                        disabled={photoBusy || (editingProperty?.photos || []).length >= 8}
+                                        disabled={photoBusy}
                                         onChange={handleUploadPhotos}
                                         style={{ marginTop: "10px" }}
                                     />
@@ -633,7 +637,7 @@ function PropertyManagement() {
                                         accept="image/jpeg,image/png,image/webp"
                                         multiple
                                         onChange={handlePickNewPhotos}
-                                        style={{ display: "block", marginTop: "8px" }}
+                                        style={{ display: "block", marginTop: "10px" }}
                                     />
                                     {newPhotos.length > 0 && (
                                         <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
