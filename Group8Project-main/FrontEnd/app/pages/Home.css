@@ -1,3 +1,4 @@
+
 /* =========================================================
    VALORA - FULLY RESPONSIVE LANDING PAGE
    PRIMARY COLOUR: #563F6B
@@ -45,22 +46,15 @@ body {
     top: 0;
     left: 0;
     right: 0;
-
     width: 100%;
     min-height: 70px;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 20px;
-
     padding: 10px clamp(15px, 5vw, 70px);
-
     background: #ffffff;
-
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-
     z-index: 9999;
 }
 
@@ -89,27 +83,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-
     gap: clamp(8px, 2vw, 30px);
-
     flex: 1 1 auto;
-
     min-width: 0;
-
     margin: 0;
 }
 
 .nav-links a {
     color: #333333;
-
     text-decoration: none;
-
     font-size: clamp(9px, 1vw, 14px);
-
     font-weight: bold;
-
     white-space: nowrap;
-
     transition: 0.2s ease;
 }
 
@@ -126,34 +111,24 @@ body {
 .nav-buttons {
     display: flex;
     align-items: center;
-
     gap: 8px;
-
     flex: 0 0 auto;
 }
 
 .login-btn,
 .register-btn {
     text-decoration: none;
-
     padding: 9px clamp(10px, 1.5vw, 18px);
-
     border-radius: 8px;
-
     font-size: clamp(10px, 1vw, 13px);
-
     font-weight: bold;
-
     white-space: nowrap;
-
     transition: 0.2s ease;
 }
 
 .login-btn {
     color: #563F6B;
-
     border: 1px solid #563F6B;
-
     background: #ffffff;
 }
 
@@ -163,9 +138,7 @@ body {
 
 .register-btn {
     color: #ffffff;
-
     background: #563F6B;
-
     border: 1px solid #563F6B;
 }
 
@@ -176,11 +149,13 @@ body {
 
 /* =========================================================
    HERO
+   Full image on right, fading behind text on left
    ========================================================= */
 
 .hero {
+    position: relative;
+    overflow: hidden;
     width: 100%;
-
     min-height: 100vh;
 
     display: flex;
@@ -191,23 +166,39 @@ body {
         clamp(20px, 8vw, 120px)
         clamp(50px, 8vh, 80px);
 
-    background: #f5f3f7;
+    background-color: #f7f7f5;
+
+    background-image:
+        linear-gradient(
+            90deg,
+            #f7f7f5 0%,
+            #f7f7f5 27%,
+            rgba(247, 247, 245, 0.97) 36%,
+            rgba(247, 247, 245, 0.82) 47%,
+            rgba(247, 247, 245, 0.48) 59%,
+            rgba(247, 247, 245, 0.12) 73%,
+            rgba(247, 247, 245, 0) 86%
+        ),
+        var(--hero-background-image);
+
+    background-size: cover;
+    background-position: center right;
+    background-repeat: no-repeat;
 }
 
 .hero-content {
+    position: relative;
+    z-index: 2;
     width: 100%;
     max-width: 950px;
-
-    margin: 0 auto;
+    margin: 0;
+    transform: translateX(-620px);
 }
 
 .hero h1 {
     color: #333333;
-
     font-size: clamp(32px, 5vw, 72px);
-
     line-height: 1.08;
-
     margin-bottom: clamp(15px, 3vh, 25px);
 }
 
@@ -218,13 +209,9 @@ body {
 .hero p {
     width: 100%;
     max-width: 700px;
-
     color: #666666;
-
     font-size: clamp(14px, 1.5vw, 18px);
-
     line-height: 1.6;
-
     margin-bottom: clamp(20px, 3vh, 30px);
 }
 
@@ -235,33 +222,22 @@ body {
 
 .hero-buttons {
     display: flex;
-
     flex-wrap: wrap;
-
     gap: 12px;
-
     margin-bottom: 15px;
 }
 
 .primary-btn,
 .secondary-btn {
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
-
     min-height: 45px;
-
     padding: 10px clamp(16px, 2vw, 24px);
-
     border-radius: 8px;
-
     text-decoration: none;
-
     font-weight: bold;
-
     font-size: clamp(12px, 1vw, 14px);
-
     transition: 0.2s ease;
 }
 
@@ -277,7 +253,6 @@ body {
 .secondary-btn {
     background: #ffffff;
     color: #563F6B;
-
     border: 1px solid #563F6B;
 }
 
@@ -302,7 +277,6 @@ body {
 .features {
     width: 100%;
     max-width: 1200px;
-
     margin: 0 auto;
 
     padding:
@@ -310,29 +284,19 @@ body {
         clamp(20px, 5vw, 60px);
 
     display: grid;
-
     grid-template-columns: repeat(3, minmax(0, 1fr));
-
     gap: clamp(15px, 2vw, 25px);
 }
 
 .feature-card {
     min-width: 0;
-
     background: #ffffff;
-
     padding: clamp(20px, 2.5vw, 30px);
-
     border-radius: 16px;
-
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-
     display: flex;
-
     gap: clamp(12px, 1.5vw, 20px);
-
     height: 100%;
-
     transition: 0.2s ease;
 }
 
@@ -342,45 +306,33 @@ body {
 
 .feature-icon {
     font-size: clamp(25px, 3vw, 35px);
-
     flex-shrink: 0;
 }
 
 .feature-card h3 {
     color: #563F6B;
-
     font-size: clamp(11px, 1vw, 13px);
-
     letter-spacing: 1px;
-
     margin-bottom: 8px;
 }
 
 .feature-card h4 {
     color: #333333;
-
     font-size: clamp(17px, 1.7vw, 20px);
-
     margin-bottom: 10px;
 }
 
 .feature-card p {
     color: #666666;
-
     line-height: 1.5;
-
     font-size: clamp(13px, 1.1vw, 16px);
-
     margin-bottom: 15px;
 }
 
 .feature-card a {
     color: #563F6B;
-
     text-decoration: none;
-
     font-weight: bold;
-
     font-size: 13px;
 }
 
@@ -391,13 +343,9 @@ body {
 
 .section-label {
     color: #563F6B;
-
     font-size: clamp(10px, 1vw, 12px);
-
     font-weight: bold;
-
     letter-spacing: 2px;
-
     margin-bottom: 10px;
 }
 
@@ -407,7 +355,6 @@ body {
 .how-it-works,
 .about-section {
     width: 100%;
-
     padding:
         clamp(55px, 8vw, 100px)
         clamp(20px, 8vw, 120px);
@@ -419,11 +366,8 @@ body {
 .how-it-works h2,
 .about-section h2 {
     color: #333333;
-
     font-size: clamp(28px, 4vw, 50px);
-
     line-height: 1.15;
-
     margin-bottom: 18px;
 }
 
@@ -439,7 +383,6 @@ body {
 .intelligence-content {
     width: 100%;
     max-width: 1100px;
-
     margin: 0 auto;
 }
 
@@ -450,47 +393,34 @@ body {
 
 .intelligence-text > p {
     color: #666666;
-
     line-height: 1.6;
-
     max-width: 750px;
-
     font-size: clamp(13px, 1.2vw, 16px);
 }
 
 .intelligence-features {
     display: grid;
-
     grid-template-columns: repeat(2, minmax(0, 1fr));
-
     gap: clamp(15px, 2vw, 20px);
-
     margin-top: clamp(25px, 4vw, 35px);
 }
 
 .intelligence-features div {
     min-width: 0;
-
     background: #ffffff;
-
     padding: clamp(18px, 2vw, 25px);
-
     border-radius: 12px;
 }
 
 .intelligence-features h3 {
     color: #563F6B;
-
     margin-bottom: 8px;
-
     font-size: clamp(16px, 1.7vw, 20px);
 }
 
 .intelligence-features p {
     color: #666666;
-
     line-height: 1.5;
-
     font-size: clamp(13px, 1.1vw, 16px);
 }
 
@@ -505,15 +435,10 @@ body {
 
 .listings-header {
     max-width: 1200px;
-
     margin: 0 auto clamp(25px, 4vw, 40px);
-
     display: flex;
-
     justify-content: space-between;
-
     align-items: flex-end;
-
     gap: 25px;
 }
 
@@ -523,27 +448,18 @@ body {
 
 .listings-header > div > p:last-child {
     color: #666666;
-
     line-height: 1.6;
-
     font-size: clamp(13px, 1.2vw, 16px);
 }
 
 .view-all {
     flex-shrink: 0;
-
     color: #563F6B;
-
     font-weight: bold;
-
     text-decoration: none;
-
     border: 1px solid #563F6B;
-
     padding: 10px 16px;
-
     border-radius: 8px;
-
     font-size: 13px;
 }
 
@@ -555,129 +471,87 @@ body {
 .property-cards {
     width: 100%;
     max-width: 1200px;
-
     margin: 0 auto;
-
     display: grid;
-
     grid-template-columns: repeat(3, minmax(0, 1fr));
-
     gap: clamp(15px, 2vw, 25px);
 }
 
 .property-card {
     min-width: 0;
-
     background: #ffffff;
-
     border-radius: 16px;
-
     overflow: hidden;
-
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-
     display: flex;
-
     flex-direction: column;
-
     height: 100%;
 }
 
 .property-card img {
     width: 100%;
-
     height: clamp(160px, 18vw, 220px);
-
     object-fit: cover;
-
     display: block;
 }
 
 .property-card-content {
     padding: clamp(18px, 2vw, 25px);
-
     display: flex;
-
     flex-direction: column;
-
     flex: 1;
 }
 
 .property-type {
     color: #563F6B;
-
     font-size: 10px;
-
     font-weight: bold;
-
     letter-spacing: 1px;
-
     margin-bottom: 8px;
 }
 
 .property-card h3 {
     color: #333333;
-
     font-size: clamp(17px, 1.8vw, 21px);
-
     margin-bottom: 8px;
 }
 
 .property-location {
     color: #777777;
-
     font-size: clamp(12px, 1vw, 15px);
-
     margin-bottom: 15px;
 }
 
 .property-details {
     display: flex;
-
     flex-wrap: wrap;
-
     gap: 10px;
-
     color: #666666;
-
     font-size: 12px;
-
     margin-bottom: 18px;
 }
 
 .property-bottom {
     margin-top: auto;
-
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
-
     gap: 10px;
 }
 
 .property-bottom strong {
     color: #333333;
-
     font-size: clamp(15px, 1.5vw, 18px);
 }
 
 .property-view-button {
     background: #563F6B;
-
     color: #ffffff;
-
     padding: 9px 12px;
-
     border-radius: 7px;
-
     text-decoration: none;
-
     font-size: 11px;
-
     font-weight: bold;
-
     white-space: nowrap;
 }
 
@@ -693,7 +567,6 @@ body {
 .community-content {
     width: 100%;
     max-width: 1100px;
-
     margin: 0 auto;
 }
 
@@ -703,45 +576,33 @@ body {
 
 .community-text > p {
     color: #666666;
-
     line-height: 1.6;
-
     font-size: clamp(13px, 1.2vw, 16px);
 }
 
 .community-features {
     display: grid;
-
     grid-template-columns: repeat(2, minmax(0, 1fr));
-
     gap: clamp(15px, 2vw, 20px);
-
     margin-top: clamp(25px, 4vw, 35px);
 }
 
 .community-feature {
     min-width: 0;
-
     background: #ffffff;
-
     padding: clamp(18px, 2vw, 25px);
-
     border-radius: 12px;
 }
 
 .community-feature h3 {
     color: #563F6B;
-
     margin-bottom: 8px;
-
     font-size: clamp(16px, 1.7vw, 20px);
 }
 
 .community-feature p {
     color: #666666;
-
     line-height: 1.5;
-
     font-size: clamp(13px, 1.1vw, 16px);
 }
 
@@ -756,65 +617,49 @@ body {
 
 .how-content {
     max-width: 1200px;
-
     margin: 0 auto;
 }
 
 .how-header {
     max-width: 750px;
-
     margin-bottom: clamp(25px, 4vw, 45px);
 }
 
 .how-header > p:last-child {
     color: #666666;
-
     line-height: 1.6;
-
     font-size: clamp(13px, 1.2vw, 16px);
 }
 
 .steps {
     display: grid;
-
     grid-template-columns: repeat(4, minmax(0, 1fr));
-
     gap: clamp(12px, 2vw, 20px);
 }
 
 .step {
     min-width: 0;
-
     padding: clamp(18px, 2vw, 25px);
-
     border-radius: 12px;
-
     background: #f5f3f7;
 }
 
 .step-number {
     color: #563F6B;
-
     font-size: clamp(22px, 2.5vw, 28px);
-
     font-weight: bold;
-
     margin-bottom: 15px;
 }
 
 .step h3 {
     color: #333333;
-
     margin-bottom: 10px;
-
     font-size: clamp(15px, 1.5vw, 18px);
 }
 
 .step p {
     color: #666666;
-
     line-height: 1.5;
-
     font-size: clamp(13px, 1.1vw, 16px);
 }
 
@@ -825,15 +670,12 @@ body {
 
 .about-section {
     background: #563F6B;
-
     color: #ffffff;
-
     text-align: center;
 }
 
 .about-content {
     max-width: 850px;
-
     margin: 0 auto;
 }
 
@@ -847,9 +689,7 @@ body {
 
 .about-section p:last-child {
     color: #eeeeee;
-
     line-height: 1.7;
-
     font-size: clamp(13px, 1.2vw, 16px);
 }
 
@@ -862,7 +702,6 @@ body {
 
     .navbar {
         gap: 10px;
-
         padding-left: 20px;
         padding-right: 20px;
     }
@@ -914,7 +753,6 @@ body {
     .login-btn,
     .register-btn {
         padding: 7px 9px;
-
         font-size: 9px;
     }
 
@@ -925,7 +763,6 @@ body {
 
     .listings-header {
         align-items: flex-start;
-
         flex-direction: column;
     }
 
@@ -941,19 +778,12 @@ body {
 
 @media (max-width: 650px) {
 
-    /* NAVBAR */
-
     .navbar {
         position: fixed;
-
         min-height: 60px;
-
         padding: 8px 12px;
-
         gap: 8px;
-
         flex-wrap: nowrap;
-
         justify-content: space-between;
     }
 
@@ -967,38 +797,28 @@ body {
 
     .nav-links {
         display: flex;
-
         flex: 1 1 auto;
-
         width: auto;
-
         min-width: 0;
-
         margin: 0;
-
         gap: 4px;
-
         justify-content: center;
     }
 
     .nav-links a {
         font-size: 7px;
-
         padding: 3px;
-
         white-space: nowrap;
     }
 
     .nav-buttons {
         flex-shrink: 0;
-
         gap: 4px;
     }
 
     .login-btn,
     .register-btn {
         padding: 6px 7px;
-
         font-size: 8px;
     }
 
@@ -1007,15 +827,23 @@ body {
 
     .hero {
         min-height: 100vh;
-
-        padding:
-            80px
-            18px
-            45px;
-
+        padding: 80px 18px 45px;
         text-align: center;
-
         align-items: center;
+
+        background-image:
+            linear-gradient(
+                90deg,
+                rgba(247, 247, 245, 0.97) 0%,
+                rgba(247, 247, 245, 0.90) 40%,
+                rgba(247, 247, 245, 0.72) 70%,
+                rgba(247, 247, 245, 0.55) 100%
+            ),
+            var(--hero-background-image);
+
+        background-position: center, 65% center;
+        background-size: cover;
+        background-repeat: no-repeat;
     }
 
     .hero-content {
@@ -1024,33 +852,26 @@ body {
 
     .hero h1 {
         font-size: clamp(28px, 9vw, 42px);
-
         margin-bottom: 15px;
     }
 
     .hero p {
         font-size: 14px;
-
         line-height: 1.5;
-
         margin-left: auto;
         margin-right: auto;
-
         margin-bottom: 20px;
     }
 
     .hero-buttons {
         justify-content: center;
-
         gap: 8px;
     }
 
     .primary-btn,
     .secondary-btn {
         min-height: 42px;
-
         padding: 9px 15px;
-
         font-size: 12px;
     }
 
@@ -1063,9 +884,7 @@ body {
 
     .features {
         grid-template-columns: 1fr;
-
         padding: 45px 18px;
-
         gap: 15px;
     }
 
@@ -1081,9 +900,7 @@ body {
     .community-section,
     .how-it-works,
     .about-section {
-        padding:
-            50px
-            18px;
+        padding: 50px 18px;
     }
 
     .intelligence-section h2,
@@ -1099,7 +916,6 @@ body {
 
     .intelligence-features {
         grid-template-columns: 1fr;
-
         gap: 15px;
     }
 
@@ -1108,7 +924,6 @@ body {
 
     .property-cards {
         grid-template-columns: 1fr;
-
         gap: 15px;
     }
 
@@ -1125,7 +940,6 @@ body {
 
     .community-features {
         grid-template-columns: 1fr;
-
         gap: 15px;
     }
 
@@ -1134,7 +948,6 @@ body {
 
     .steps {
         grid-template-columns: 1fr;
-
         gap: 15px;
     }
 
@@ -1152,7 +965,6 @@ body {
 
     .navbar {
         padding: 7px 8px;
-
         gap: 4px;
     }
 
@@ -1166,23 +978,17 @@ body {
 
     .nav-links a {
         font-size: 6px;
-
         padding: 2px;
     }
 
     .login-btn,
     .register-btn {
         padding: 5px 6px;
-
         font-size: 7px;
     }
 
-
     .hero {
-        padding:
-            75px
-            14px
-            35px;
+        padding: 75px 14px 35px;
     }
 
     .hero h1 {
@@ -1195,7 +1001,6 @@ body {
 
     .hero-buttons {
         flex-direction: column;
-
         align-items: stretch;
     }
 
@@ -1204,14 +1009,12 @@ body {
         width: 100%;
     }
 
-
     .features {
         padding: 40px 14px;
     }
 
     .feature-card {
         padding: 18px;
-
         gap: 12px;
     }
 
@@ -1223,17 +1026,13 @@ body {
         font-size: 13px;
     }
 
-
     .intelligence-section,
     .property-listings,
     .community-section,
     .how-it-works,
     .about-section {
-        padding:
-            45px
-            14px;
+        padding: 45px 14px;
     }
-
 
     .property-card-content {
         padding: 18px;
@@ -1245,13 +1044,11 @@ body {
 
     .property-bottom {
         align-items: stretch;
-
         flex-direction: column;
     }
 
     .property-view-button {
         width: 100%;
-
         text-align: center;
     }
 }
@@ -1259,7 +1056,6 @@ body {
 
 /* =========================================================
    EXTRA SMALL HEIGHT SCREENS
-   Helps content fit better on short laptop/tablet screens
    ========================================================= */
 
 @media (max-height: 700px) and (min-width: 651px) {
@@ -1271,22 +1067,18 @@ body {
 
     .hero h1 {
         font-size: clamp(30px, 4vw, 55px);
-
         margin-bottom: 15px;
     }
 
     .hero p {
         font-size: 14px;
-
         line-height: 1.45;
-
         margin-bottom: 18px;
     }
 
     .primary-btn,
     .secondary-btn {
         min-height: 40px;
-
         padding: 8px 18px;
     }
 }
@@ -1306,13 +1098,14 @@ body {
 .how-it-works,
 .about-section {
     overflow-wrap: break-word;
-
     word-wrap: break-word;
 }
 
+
 /* =========================================================
-   HOA ADMIN-MANAGED LANDING PAGE HERO IMAGE
-========================================================= */
+   HERO CONTENT LAYOUT
+   Retained for compatibility with existing JSX
+   ========================================================= */
 
 .hero-layout {
     width: 100%;
@@ -1355,7 +1148,7 @@ body {
 }
 
 .hero.hero-with-background {
-    background-position: center;
+    background-position: center right;
     background-repeat: no-repeat;
     background-size: cover;
 }
@@ -1366,6 +1159,7 @@ body {
 }
 
 @media (max-width: 900px) {
+
     .hero-layout-with-image {
         gap: 28px;
     }
@@ -1385,6 +1179,7 @@ body {
 }
 
 @media (max-width: 650px) {
+
     .hero-layout-with-image {
         flex-direction: column;
         align-items: stretch;
