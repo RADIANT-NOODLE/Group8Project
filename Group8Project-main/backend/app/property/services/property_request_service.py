@@ -1,7 +1,9 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.datetime_utils import utcnow
 from app.common.enums import PropertyRequestStatus, UserRole
+from app.community.models.resident_directory import ResidentDirectory
 from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException
 from app.identity.models.user import User
 from app.identity.repositories.user_repository import UserRepository
@@ -42,6 +44,7 @@ def to_response(request: PropertyRequest) -> PropertyRequestResponse:
 
 class PropertyRequestService:
     def __init__(self, db: AsyncSession) -> None:
+        self._db = db
         self._repo = PropertyRequestRepository(db)
         self._property_repo = PropertyRepository(db)
         self._user_repo = UserRepository(db)
@@ -63,6 +66,12 @@ class PropertyRequestService:
     ) -> PropertyRequestResponse:
         if await self._property_repo.get_by_id(payload.unit_id) is None:
             raise NotFoundException(f"Property with id {payload.unit_id} was not found.")
+        # A resident may only sell or rent the unit the HOA linked to them.
+        linked_unit = await self._db.scalar(
+            select(ResidentDirectory.property_id).where(ResidentDirectory.user_id == user.user_id)
+        )
+        if linked_unit != payload.unit_id:
+            raise ForbiddenException("You can only request a sale or rental of your own property.")
         if await self._repo.get_active_for_unit_and_user(user.user_id, payload.unit_id) is not None:
             raise ConflictException("You already have an open request for this property.")
 

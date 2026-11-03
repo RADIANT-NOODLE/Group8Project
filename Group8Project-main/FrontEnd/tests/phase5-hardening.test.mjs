@@ -244,7 +244,7 @@ test('signing in and out moves the session the guard depends on', async () => {
 test('each auth field renders exactly one labelled input', async () => {
   const forms = {
     'pages/Auth/Login.jsx': ['email', 'password'],
-    'pages/Auth/Register.jsx': ['firstName', 'lastName', 'email', 'phone', 'password'],
+    'pages/Auth/Register.jsx': ['firstName', 'lastName', 'email', 'phone', 'password', 'confirmPassword'],
   };
 
   for (const [page, fieldIds] of Object.entries(forms)) {

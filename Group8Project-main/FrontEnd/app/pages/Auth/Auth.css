@@ -82,7 +82,6 @@
 }
 
 .auth-logo img {
-    border-radius: 10px;
     display: block;
     width: 150px;
     max-width: 100%;
@@ -597,4 +596,23 @@ behind every field. Keep them apart.
     color: #2d4a38;
     font-size: 13px;
     line-height: 1.5;
+}
+
+
+/* =========================================================
+   CONFIRM PASSWORD MATCH HINT
+========================================================= */
+
+.auth-match-hint {
+    margin: 7px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.auth-match-hint.is-match {
+    color: #23683a;
+}
+
+.auth-match-hint.is-mismatch {
+    color: #a33a3a;
 }

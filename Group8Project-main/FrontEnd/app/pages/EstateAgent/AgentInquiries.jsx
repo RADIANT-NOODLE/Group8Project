@@ -17,7 +17,10 @@ function AgentInquiries() {
     */
     useEffect(() => {
         const fetchAgentInquiries = async () => {
-            if (!user) return;
+            if (!user) {
+                setLoading(false);
+                return;
+            }
 
             try {
                 const token = getSessionToken();
@@ -140,11 +143,63 @@ function AgentInquiries() {
     };
 
     if (loading) {
+        // a placeholder in the shape of the page, so nothing jumps when it loads
         return (
             <div className="agent-inquiries-page">
                 <DashboardSidebar suppliedUser={user} />
-                <main className="agent-inquiries-main" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                    <h2>Loading your inquiries...</h2>
+                <main className="agent-inquiries-main" aria-busy="true">
+                    <span className="agent-inquiries-visually-hidden" role="status">
+                        Loading your inquiries…
+                    </span>
+
+                    <header className="agent-inquiries-topbar">
+                        <div>
+                            <div className="agent-inquiries-breadcrumb">
+                                <span>Estate Agent</span>
+                                <span className="breadcrumb-separator">/</span>
+                                <span>Inquiry Log</span>
+                            </div>
+                            <h1>Inquiry Log</h1>
+                            <p>Manage buyer inquiries for your assigned VALORA properties.</p>
+                        </div>
+                    </header>
+
+                    <section className="agent-inquiries-stat-cards" aria-hidden="true">
+                        {[0, 1, 2, 3].map((index) => (
+                            <div className="agent-inquiries-stat-card" key={index}>
+                                <span className="agent-inquiries-skeleton agent-inquiries-skeleton-icon" />
+                                <div className="agent-inquiries-skeleton-stack">
+                                    <span className="agent-inquiries-skeleton agent-inquiries-skeleton-label" />
+                                    <span className="agent-inquiries-skeleton agent-inquiries-skeleton-number" />
+                                </div>
+                            </div>
+                        ))}
+                    </section>
+
+                    <section className="agent-inquiries-panel" aria-hidden="true">
+                        <div className="agent-inquiries-panel-heading">
+                            <div>
+                                <h2>Property Inquiries</h2>
+                                <p>Review and manage inquiries received for your listings.</p>
+                            </div>
+                        </div>
+
+                        <div className="agent-inquiries-skeleton-table">
+                            <span className="agent-inquiries-skeleton agent-inquiries-skeleton-head" />
+                            {[0, 1, 2, 3].map((index) => (
+                                <div className="agent-inquiries-skeleton-row" key={index}>
+                                    <span className="agent-inquiries-skeleton agent-inquiries-skeleton-avatar" />
+                                    <span className="agent-inquiries-skeleton-stack">
+                                        <span className="agent-inquiries-skeleton agent-inquiries-skeleton-line wide" />
+                                        <span className="agent-inquiries-skeleton agent-inquiries-skeleton-line" />
+                                    </span>
+                                    <span className="agent-inquiries-skeleton agent-inquiries-skeleton-line" />
+                                    <span className="agent-inquiries-skeleton agent-inquiries-skeleton-pill" />
+                                    <span className="agent-inquiries-skeleton agent-inquiries-skeleton-button" />
+                                </div>
+                            ))}
+                        </div>
+                    </section>
                 </main>
             </div>
         );
@@ -164,7 +219,7 @@ function AgentInquiries() {
                             <span>Inquiry Log</span>
                         </div>
                         <h1>Inquiry Log</h1>
-                        <p>Manage buyer and investor inquiries for your assigned VALORA properties.</p>
+                        <p>Manage buyer inquiries for your assigned VALORA properties.</p>
                     </div>
                 </header>
 

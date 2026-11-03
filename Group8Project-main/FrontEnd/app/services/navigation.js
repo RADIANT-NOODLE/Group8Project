@@ -37,7 +37,6 @@ export const NAVIGATION_BY_ROLE = Object.freeze({
     Object.freeze({ label: 'Maintenance', path: '/maintenance', icon: 'maintenance' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
     Object.freeze({ label: 'Community Announcements', path: '/community-announcements', icon: 'announcement' }),
-    Object.freeze({ label: 'Community Analytics', path: '/community-analytics', icon: 'dashboard' }),
   ]),
 
   /* A provider has no workspace yet (connection plan, Phase 4 item 6). */

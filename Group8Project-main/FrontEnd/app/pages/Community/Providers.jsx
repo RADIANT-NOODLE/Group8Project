@@ -486,7 +486,7 @@ function Providers() {
 
                                     {provider.avg_rating ? (
                                         <div className="provider-rating" style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
-                                            <span className="rating-stars" aria-hidden="true" style={{ color: "#F5A623" }}>
+                                            <span className="rating-stars" aria-hidden="true">
                                                 ★★★★★
                                             </span>
                                             <span style={{ fontSize: "12px", fontWeight: "600", color: "#563f6b" }}>
@@ -572,7 +572,7 @@ function Providers() {
                                                     <strong style={{ fontSize: "13px", color: "#563f6b" }}>{review.reviewer_name || review.full_name || "Resident"}</strong>
                                                     
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <span style={{ color: "#F5A623", fontSize: "13px" }}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                                                        <span style={{ color: "var(--valora-purple)", fontSize: "13px" }}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
                                                         
                                                         {/* DELETE BUTTON */}
                                                         {canManage && (

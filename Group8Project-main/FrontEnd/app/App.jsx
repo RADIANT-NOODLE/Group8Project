@@ -32,7 +32,6 @@ import HOAAdminDashboard from "./pages/Dashboards/HOAAdmin/HOAAdminDashboard";
 import EstateAgentDashboard from "./pages/Dashboards/EstateAgent/EstateAgentDashboard";
 
 /* HOA ADMIN */
-import LandingPageSettings from "./pages/Dashboards/HOAAdmin/LandingPageSettings";
 
 /* RESIDENT */
 import RequestToSell from "./pages/RequestToSell";
@@ -48,10 +47,8 @@ import CreateAgentAccount from "./pages/EstateAgent/CreateAgentAccount";
 import Providers from "./pages/Community/Providers";
 import CommunityAnnouncements from "./pages/Announcements/CommunityAnnouncements";
 import Announcements from "./pages/Announcements/Announcements";
-import CommunityAnalytics from "./pages/Community/CommunityAnalytics";
 
 /* AI */
-import AITrainingData from "./pages/AI/AITrainingData";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
@@ -195,16 +192,6 @@ function App() {
                     }
                 />
 
-                {/* LANDING PAGE SETTINGS */}
-                <Route
-                    path="/landing-page-settings"
-                    element={
-                        <RoleRoute path="/landing-page-settings">
-                            <LandingPageSettings />
-                        </RoleRoute>
-                    }
-                />
-
                 {/* REQUEST TO SELL / RENT */}
                 <Route
                     path="/request-to-sell"
@@ -273,16 +260,6 @@ function App() {
                     }
                 />
 
-                {/* COMMUNITY ANALYTICS */}
-                <Route
-                    path="/community-analytics"
-                    element={
-                        <RoleRoute path="/community-analytics">
-                            <CommunityAnalytics />
-                        </RoleRoute>
-                    }
-                />
-
                 {/* RESIDENT DIRECTORY */}
                 <Route
                     path="/resident-directory"
@@ -309,16 +286,6 @@ function App() {
                     element={
                         <RoleRoute path="/property-approvals">
                             <PropertyApprovals />
-                        </RoleRoute>
-                    }
-                />
-
-                {/* AI TRAINING DATA */}
-                <Route
-                    path="/ai-training-data"
-                    element={
-                        <RoleRoute path="/ai-training-data">
-                            <AITrainingData />
                         </RoleRoute>
                     }
                 />

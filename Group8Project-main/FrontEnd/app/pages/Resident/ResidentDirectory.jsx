@@ -116,7 +116,11 @@ function ResidentDirectory() {
     }, [properties]);
 
     const usedPropertyIds = useMemo(() => {
-        return new Set(residents.filter(r => r.occupancy === "Occupied").map(r => String(r.propertyId)));
+        return new Set(
+            residents
+                .filter(r => r.occupancy === "Occupied")
+                .map(r => String(r.property_id ?? r.propertyId))
+        );
     }, [residents]);
 
     const filteredResidents = useMemo(() => {
@@ -137,6 +141,20 @@ function ResidentDirectory() {
     const occupiedUnits = residents.filter(r => r.occupancy === "Occupied").length;
     const vacantUnits = Math.max(0, properties.length - occupiedUnits);
     const activeResidents = residents.filter(r => r.status === "Active").length;
+
+    // one tile per unit for the occupancy map, in unit-number order
+    const holderByProperty = new Map(
+        residents
+            .filter(r => r.occupancy === "Occupied")
+            .map(r => [String(r.property_id ?? r.propertyId), r.name])
+    );
+    const unitTiles = [...properties]
+        .map((property) => {
+            const id = String(property.id ?? property.unit_id);
+            return { id, unitNo: property.unit_no || id, holder: holderByProperty.get(id) || "" };
+        })
+        .sort((a, b) => String(a.unitNo).localeCompare(String(b.unitNo), undefined, { numeric: true }));
+    const occupancyShare = properties.length > 0 ? Math.round((occupiedUnits / properties.length) * 100) : 0;
 
     // 3. Form Handlers
     function resetForm() {
@@ -272,11 +290,56 @@ function ResidentDirectory() {
                 )}
 
                 {/* STATS */}
-                <section className="resident-directory-stat-cards">
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="total" size={19} /></div><div><p>Approved Holders</p><h3>{residents.length}</h3><small>Confirmed directory records</small></div></div>
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="occupied" size={19} /></div><div><p>Occupied Units</p><h3>{occupiedUnits}</h3><small>Confirmed property assignments</small></div></div>
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="vacant" size={19} /></div><div><p>Unassigned Units</p><h3>{vacantUnits}</h3><small>Units without a directory holder</small></div></div>
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="active" size={19} /></div><div><p>Active Records</p><h3>{activeResidents}</h3><small>Active directory entries</small></div></div>
+                {/* UNIT OCCUPANCY: one tile per unit in the estate */}
+                <section className="resident-directory-occupancy" aria-labelledby="resident-directory-occupancy-title">
+                    <div className="resident-directory-occupancy-summary">
+                        <p className="resident-directory-occupancy-eyebrow">Unit occupancy</p>
+                        <h2 id="resident-directory-occupancy-title">
+                            {loading
+                                ? "Loading units…"
+                                : `${occupiedUnits} of ${properties.length} ${properties.length === 1 ? "unit" : "units"} occupied`}
+                        </h2>
+                        <p className="resident-directory-occupancy-percent">{loading ? "" : `${occupancyShare}% of the estate has a confirmed holder`}</p>
+
+                        <dl className="resident-directory-occupancy-figures">
+                            <div>
+                                <dt>Approved holders</dt>
+                                <dd>{residents.length}</dd>
+                            </div>
+                            <div>
+                                <dt>Active records</dt>
+                                <dd>{activeResidents}</dd>
+                            </div>
+                            <div>
+                                <dt>Unassigned units</dt>
+                                <dd>{vacantUnits}</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div className="resident-directory-unit-map">
+                        <ul className="resident-directory-unit-grid" aria-label="Units in the estate">
+                            {unitTiles.map((tile) => (
+                                <li
+                                    key={tile.id}
+                                    className={`resident-directory-unit-tile${tile.holder ? " is-occupied" : ""}`}
+                                    title={tile.holder ? `Unit ${tile.unitNo} · ${tile.holder}` : `Unit ${tile.unitNo} · Unassigned`}
+                                    aria-label={tile.holder ? `Unit ${tile.unitNo}, occupied by ${tile.holder}` : `Unit ${tile.unitNo}, unassigned`}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M3 10.5 12 3l9 7.5" />
+                                        <path d="M5.5 9.5V21h13V9.5" />
+                                    </svg>
+                                    <span>{tile.unitNo}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <ul className="resident-directory-unit-legend">
+                            <li><span className="resident-directory-unit-swatch is-occupied" aria-hidden="true" />Occupied <strong>{occupiedUnits}</strong></li>
+                            <li><span className="resident-directory-unit-swatch" aria-hidden="true" />Unassigned <strong>{vacantUnits}</strong></li>
+                        </ul>
+                    </div>
                 </section>
 
                 {/* TABLE */}

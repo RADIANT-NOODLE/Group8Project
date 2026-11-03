@@ -10,6 +10,7 @@ import {
     complaintStatusTone,
     workOrderStatusLabel,
 } from "../../services/statusMap";
+import ComplaintStatusRing from "../../components/ComplaintStatusRing";
 import "./ResidentComplaints.css";
 import { roleLabel } from "../../services/roleMap";
 import { getStoredUser } from "../../services/session";
@@ -387,11 +388,36 @@ export default function ResidentComplaints() {
                     </div>
                 )}
 
-                <section className="resident-complaints-stat-cards" aria-label="Complaint statistics">
-                    <StatCard icon="total" label="Total Complaints" value={loading ? "..." : serverStats?.total ?? stats.total} description="All submitted complaints" />
-                    <StatCard icon="active" label="Active Complaints" value={loading ? "..." : stats.active} description="Require attention" />
-                    <StatCard icon="resolved" label="Resolved" value={loading ? "..." : stats.resolved} description="Resolved or closed" />
-                    <StatCard icon="urgent" label="With Work Orders" value={loading ? "..." : stats.withWorkOrder} description="A provider is assigned" />
+                <section className="resident-complaints-overview" aria-labelledby="resident-complaints-overview-title">
+                    <div className="resident-complaints-overview-heading">
+                        <div>
+                            <h2 id="resident-complaints-overview-title">Complaint overview</h2>
+                            <p>Where every community complaint stands right now.</p>
+                        </div>
+                    </div>
+
+                    <ComplaintStatusRing complaints={complaints} loading={loading} layout="row" />
+
+                    <div className="resident-complaints-overview-orders">
+                        <div className="resident-complaints-overview-orders-top">
+                            <span>Service providers assigned</span>
+                            <strong>
+                                {loading
+                                    ? "…"
+                                    : `${stats.withWorkOrder} of ${stats.total} ${stats.total === 1 ? "complaint" : "complaints"} ${stats.withWorkOrder === 1 ? "has" : "have"} a work order`}
+                            </strong>
+                        </div>
+                        <div
+                            className="resident-complaints-overview-orders-track"
+                            role="img"
+                            aria-label={`${stats.withWorkOrder} of ${stats.total} complaints have a work order`}
+                        >
+                            <span
+                                className="resident-complaints-overview-orders-fill"
+                                style={{ width: `${stats.total > 0 ? Math.round((stats.withWorkOrder / stats.total) * 100) : 0}%` }}
+                            />
+                        </div>
+                    </div>
                 </section>
 
                 <section className="resident-complaints-panel">
@@ -614,17 +640,3 @@ export default function ResidentComplaints() {
     );
 }
 
-function StatCard({ icon, label, value, description }) {
-    return (
-        <div className="resident-complaints-stat-card">
-            <div className="resident-complaints-stat-icon">
-                <Icon name={icon} />
-            </div>
-            <div className="resident-complaints-stat-content">
-                <p>{label}</p>
-                <h3>{value}</h3>
-                <small>{description}</small>
-            </div>
-        </div>
-    );
-}

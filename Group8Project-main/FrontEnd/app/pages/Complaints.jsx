@@ -5,6 +5,7 @@ import { apiRequest } from "../services/apiClient";
 import { listProperties } from "../services/propertyApi";
 import { listWorkOrders } from "../services/workOrderApi";
 import { COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
+import ComplaintStatusRing from "../components/ComplaintStatusRing";
 import "./Complaints.css";
 import { getStoredUser } from "../services/session";
 
@@ -175,18 +176,6 @@ export default function Complaints() {
         );
     }, [complaints, search]);
 
-    // 3. Counts
-    const counts = useMemo(() => {
-        const count = (status) => complaints.filter((item) => item.status === status).length;
-        return {
-            total: complaints.length,
-            submitted: count("submitted"),
-            underReview: count("under_review"),
-            inProgress: count("in_progress"),
-            resolved: count("resolved") + count("closed"),
-        };
-    }, [complaints]);
-
     // 4. Handle Image
     async function handleImageUpload(event) {
         const file = event.target.files?.[0];
@@ -316,219 +305,207 @@ export default function Complaints() {
 
                 {user && (isAdmin || canSubmit) && (
                     <>
-                        <section className="complaints-stats" aria-label="Complaint statistics">
-                            <div className="complaints-stat-card">
-                                <span>{isAdmin ? "All Complaints" : "My Complaints"}</span>
-                                <strong>{loading ? "..." : counts.total}</strong>
-                            </div>
-                            <div className="complaints-stat-card">
-                                <span>Submitted</span>
-                                <strong>{loading ? "..." : counts.submitted}</strong>
-                            </div>
-                            <div className="complaints-stat-card">
-                                <span>Under review</span>
-                                <strong>{loading ? "..." : counts.underReview}</strong>
-                            </div>
-                            <div className="complaints-stat-card">
-                                <span>In Progress</span>
-                                <strong>{loading ? "..." : counts.inProgress}</strong>
-                            </div>
-                            <div className="complaints-stat-card">
-                                <span>Resolved</span>
-                                <strong>{loading ? "..." : counts.resolved}</strong>
-                            </div>
-                        </section>
-
-                        <div className="complaints-layout-grid">
-                            {canSubmit && (
-                                <section className="complaints-panel">
-                                    <div className="complaints-panel-heading">
-                                        <div>
-                                            <h3>Submit a Complaint</h3>
-                                            <p>Your complaint is visible to you and the HOA/Head Admin only.</p>
+                        <div className="complaints-page-grid">
+                            <div className="complaints-layout-grid">
+                                {canSubmit && (
+                                    <section className="complaints-panel">
+                                        <div className="complaints-panel-heading">
+                                            <div>
+                                                <h3>Submit a Complaint</h3>
+                                                <p>Your complaint is visible to you and the HOA/Head Admin only.</p>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <form className="complaints-form" onSubmit={submitComplaint}>
-                                        {isAdmin ? (
-                                            <>
-                                            <label htmlFor="complaint-unit">Unit</label>
+                                        <form className="complaints-form" onSubmit={submitComplaint}>
+                                            {isAdmin ? (
+                                                <>
+                                                <label htmlFor="complaint-unit">Unit</label>
+                                                <select
+                                                    id="complaint-unit"
+                                                    value={unitId}
+                                                    onChange={(event) => setUnitId(event.target.value)}
+                                                    required
+                                                >
+                                                    <option value="">Select the unit this is about</option>
+                                                    {properties.map((property) => (
+                                                        <option key={property.id} value={property.id}>
+                                                            {[property.unitNo && `Unit ${property.unitNo}`, property.complexName]
+                                                                .filter(Boolean)
+                                                                .join(" — ") || `Unit #${property.id}`}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                </>
+                                            ) : unitLoaded && !unitId ? (
+                                                <p className="complaints-unit-notice" role="status">
+                                                    Your account is not linked to a unit yet, so complaints cannot be submitted.
+                                                    Ask the HOA to assign your unit.
+                                                </p>
+                                            ) : null}
+
+                                            <label htmlFor="complaint-category">Complaint Category</label>
                                             <select
-                                                id="complaint-unit"
-                                                value={unitId}
-                                                onChange={(event) => setUnitId(event.target.value)}
-                                                required
+                                                id="complaint-category"
+                                                value={category}
+                                                onChange={(event) => setCategory(event.target.value)}
                                             >
-                                                <option value="">Select the unit this is about</option>
-                                                {properties.map((property) => (
-                                                    <option key={property.id} value={property.id}>
-                                                        {[property.unitNo && `Unit ${property.unitNo}`, property.complexName]
-                                                            .filter(Boolean)
-                                                            .join(" — ") || `Unit #${property.id}`}
-                                                    </option>
+                                                {COMPLAINT_CATEGORIES.map((item) => (
+                                                    <option key={item} value={item}>{item}</option>
                                                 ))}
                                             </select>
-                                            </>
-                                        ) : unitLoaded && !unitId ? (
-                                            <p className="complaints-unit-notice" role="status">
-                                                Your account is not linked to a unit yet, so complaints cannot be submitted.
-                                                Ask the HOA to assign your unit.
-                                            </p>
-                                        ) : null}
 
-                                        <label htmlFor="complaint-category">Complaint Category</label>
-                                        <select
-                                            id="complaint-category"
-                                            value={category}
-                                            onChange={(event) => setCategory(event.target.value)}
-                                        >
-                                            {COMPLAINT_CATEGORIES.map((item) => (
-                                                <option key={item} value={item}>{item}</option>
-                                            ))}
-                                        </select>
-
-                                        <label htmlFor="complaint-description">Complaint Description</label>
-                                        <textarea
-                                            id="complaint-description"
-                                            value={description}
-                                            onChange={(event) => setDescription(event.target.value)}
-                                            placeholder="Describe the issue clearly..."
-                                            rows={5}
-                                            minLength={5}
-                                            maxLength={5000}
-                                            required
-                                        />
-
-                                        <div className="complaints-field">
-                                            <label htmlFor="complaint-image">Attach a Photo (Optional)</label>
-                                            <label className="complaints-image-upload-button" htmlFor="complaint-image">
-                                                <CameraIcon />
-                                                <span>{imageName || "Choose Image"}</span>
-                                            </label>
-                                            <input
-                                                id="complaint-image"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleImageUpload}
-                                                className="complaints-file-input"
+                                            <label htmlFor="complaint-description">Complaint Description</label>
+                                            <textarea
+                                                id="complaint-description"
+                                                value={description}
+                                                onChange={(event) => setDescription(event.target.value)}
+                                                placeholder="Describe the issue clearly..."
+                                                rows={5}
+                                                minLength={5}
+                                                maxLength={5000}
+                                                required
                                             />
-                                        </div>
 
-                                        {complaintImage && (
-                                            <div className="complaints-image-preview">
-                                                <img src={complaintImage} alt="Complaint evidence preview" />
-                                                <button
-                                                    type="button"
-                                                    className="complaints-text-button"
-                                                    onClick={() => { setComplaintImage(""); setImageName(""); }}
-                                                >
-                                                    Remove photo
-                                                </button>
+                                            <div className="complaints-field">
+                                                <label htmlFor="complaint-image">Attach a Photo (Optional)</label>
+                                                <label className="complaints-image-upload-button" htmlFor="complaint-image">
+                                                    <CameraIcon />
+                                                    <span>{imageName || "Choose Image"}</span>
+                                                </label>
+                                                <input
+                                                    id="complaint-image"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageUpload}
+                                                    className="complaints-file-input"
+                                                />
                                             </div>
-                                        )}
 
-                                        <label className="complaints-checkbox" htmlFor="complaint-anonymous">
-                                            <input
-                                                id="complaint-anonymous"
-                                                type="checkbox"
-                                                checked={isAnonymous}
-                                                onChange={(event) => setIsAnonymous(event.target.checked)}
-                                            />
-                                            <span>Hide my name from other people (the HOA will not see who sent it)</span>
-                                        </label>
+                                            {complaintImage && (
+                                                <div className="complaints-image-preview">
+                                                    <img src={complaintImage} alt="Complaint evidence preview" />
+                                                    <button
+                                                        type="button"
+                                                        className="complaints-text-button"
+                                                        onClick={() => { setComplaintImage(""); setImageName(""); }}
+                                                    >
+                                                        Remove photo
+                                                    </button>
+                                                </div>
+                                            )}
 
-                                        <button type="submit" className="complaints-submit-btn" disabled={isSubmitting || (!isAdmin && !unitId)}>
-                                            {isSubmitting ? "Submitting..." : "Submit Complaint"}
-                                        </button>
-                                    </form>
-                                </section>
-                            )}
+                                            <label className="complaints-checkbox" htmlFor="complaint-anonymous">
+                                                <input
+                                                    id="complaint-anonymous"
+                                                    type="checkbox"
+                                                    checked={isAnonymous}
+                                                    onChange={(event) => setIsAnonymous(event.target.checked)}
+                                                />
+                                                <span>Hide my name from other people (the HOA will not see who sent it)</span>
+                                            </label>
 
-                            <section className="complaints-panel complaints-history-panel">
-                                <div className="complaints-panel-heading">
-                                    <div>
-                                        <h3>{isAdmin ? "Complaint Register" : "My Complaint History"}</h3>
+                                            <button type="submit" className="complaints-submit-btn" disabled={isSubmitting || (!isAdmin && !unitId)}>
+                                                {isSubmitting ? "Submitting..." : "Submit Complaint"}
+                                            </button>
+                                        </form>
+                                    </section>
+                                )}
+
+                                <section className="complaints-panel complaints-history-panel">
+                                    <div className="complaints-panel-heading">
+                                        <div>
+                                            <h3>{isAdmin ? "Complaint Register" : "My Complaint History"}</h3>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <label className="complaints-search-label" htmlFor="complaints-search">
-                                    Search {isAdmin ? "complaints" : "your complaints"}
-                                </label>
-                                <input
-                                    id="complaints-search"
-                                    className="complaints-search"
-                                    type="search"
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                    placeholder="Search by ID, category or status..."
-                                />
+                                    <label className="complaints-search-label" htmlFor="complaints-search">
+                                        Search {isAdmin ? "complaints" : "your complaints"}
+                                    </label>
+                                    <input
+                                        id="complaints-search"
+                                        className="complaints-search"
+                                        type="search"
+                                        value={search}
+                                        onChange={(event) => setSearch(event.target.value)}
+                                        placeholder="Search by ID, category or status..."
+                                    />
 
-                                <div className="complaints-table-container">
-                                    <table className="complaints-data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Complaint ID</th>
-                                                {isAdmin && <th>Submitted By</th>}
-                                                <th>Category</th>
-                                                <th>Date</th>
-                                                <th>Status</th>
-                                                <th>Details</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {loading ? (
-                                                <tr><td colSpan={isAdmin ? 6 : 5} className="complaints-empty">Loading...</td></tr>
-                                            ) : filteredComplaints.length === 0 ? (
+                                    <div className="complaints-table-container">
+                                        <table className="complaints-data-table">
+                                            <thead>
                                                 <tr>
-                                                    <td colSpan={isAdmin ? 6 : 5} className="complaints-empty">
-                                                        No complaints found.
-                                                    </td>
+                                                    <th>Complaint ID</th>
+                                                    {isAdmin && <th>Submitted By</th>}
+                                                    <th>Category</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Details</th>
                                                 </tr>
-                                            ) : (
-                                                filteredComplaints.map((complaint) => (
-                                                    <tr key={complaint.id}>
-                                                        <td>#{complaint.id}</td>
-                                                        {isAdmin && (
-                                                            <td>
-                                                                <strong>
-                                                                    {complaint.userId == null ? "Anonymous" : `Resident #${complaint.userId}`}
-                                                                </strong>
-                                                            </td>
-                                                        )}
-                                                        <td>{complaint.category}</td>
-                                                        <td>{formatDate(complaint.createdAt)}</td>
-                                                        <td>
-                                                            <span className={statusClass(complaint.status)}>
-                                                                {complaintStatusLabel(complaint.rawStatus)}
-                                                            </span>
-                                                            {isAdmin && (
-                                                                <select
-                                                                    className="complaints-status-select"
-                                                                    value={complaint.status || "submitted"}
-                                                                    onChange={(event) => updateStatus(complaint.id, event.target.value)}
-                                                                >
-                                                                    {COMPLAINT_STATUSES.map((item) => (
-                                                                        <option key={item.value} value={item.value}>{item.label}</option>
-                                                                    ))}
-                                                                </select>
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            <button
-                                                                type="button"
-                                                                className="complaints-view-button"
-                                                                onClick={() => setSelectedComplaint(complaint)}
-                                                            >
-                                                                View
-                                                            </button>
+                                            </thead>
+                                            <tbody>
+                                                {loading ? (
+                                                    <tr><td colSpan={isAdmin ? 6 : 5} className="complaints-empty">Loading...</td></tr>
+                                                ) : filteredComplaints.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={isAdmin ? 6 : 5} className="complaints-empty">
+                                                            No complaints found.
                                                         </td>
                                                     </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
+                                                ) : (
+                                                    filteredComplaints.map((complaint) => (
+                                                        <tr key={complaint.id}>
+                                                            <td>#{complaint.id}</td>
+                                                            {isAdmin && (
+                                                                <td>
+                                                                    <strong>
+                                                                        {complaint.userId == null ? "Anonymous" : `Resident #${complaint.userId}`}
+                                                                    </strong>
+                                                                </td>
+                                                            )}
+                                                            <td>{complaint.category}</td>
+                                                            <td>{formatDate(complaint.createdAt)}</td>
+                                                            <td>
+                                                                <span className={statusClass(complaint.status)}>
+                                                                    {complaintStatusLabel(complaint.rawStatus)}
+                                                                </span>
+                                                                {isAdmin && (
+                                                                    <select
+                                                                        className="complaints-status-select"
+                                                                        value={complaint.status || "submitted"}
+                                                                        onChange={(event) => updateStatus(complaint.id, event.target.value)}
+                                                                    >
+                                                                        {COMPLAINT_STATUSES.map((item) => (
+                                                                            <option key={item.value} value={item.value}>{item.label}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                )}
+                                                            </td>
+                                                            <td>
+                                                                <button
+                                                                    type="button"
+                                                                    className="complaints-view-button"
+                                                                    onClick={() => setSelectedComplaint(complaint)}
+                                                                >
+                                                                    View
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+                            </div>
+
+                            {/* STATUS OVERVIEW */}
+                            <aside className="complaints-ring-card" aria-label="Complaint status overview">
+                                <div className="complaints-ring-card-heading">
+                                    <h3>{isAdmin ? "All Complaints" : "My Complaints"}</h3>
+                                    <p>Where {isAdmin ? "community" : "your"} complaints stand.</p>
                                 </div>
-                            </section>
+                                <ComplaintStatusRing complaints={complaints} loading={loading} />
+                            </aside>
                         </div>
                     </>
                 )}

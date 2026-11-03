@@ -225,26 +225,78 @@ function RegistrationRequests() {
                     </div>
                 </header>
 
-                {/* STATISTICS */}
-                <section className="registration-requests-stats">
-                    <div className="registration-requests-stat-card">
-                        <span>Pending Requests</span>
-                        <strong>{loading ? "..." : pendingUsers.length}</strong>
-                        <small>Awaiting review</small>
-                    </div>
+                {/* ACCOUNT APPROVALS: every account is either approved or waiting */}
+                {(() => {
+                    const pending = pendingUsers.length;
+                    const approved = approvedUsers.length;
+                    const total = pending + approved;
+                    const approvedShare = total > 0 ? Math.round((approved / total) * 100) : 0;
 
-                    <div className="registration-requests-stat-card">
-                        <span>Approved Accounts</span>
-                        <strong>{loading ? "..." : approvedUsers.length}</strong>
-                        <small>Total approved users</small>
-                    </div>
+                    return (
+                        <section className="registration-requests-summary" aria-labelledby="registration-summary-title">
+                            <div className="registration-requests-summary-headline">
+                                <span className="registration-requests-summary-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M19 8v6M16 11h6" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <p className="registration-requests-summary-eyebrow">Account approvals</p>
+                                    <h2 id="registration-summary-title">
+                                        {loading
+                                            ? "Loading accounts…"
+                                            : pending === 0
+                                                ? "No accounts waiting for approval"
+                                                : `${pending} ${pending === 1 ? "account is" : "accounts are"} waiting for your approval`}
+                                    </h2>
+                                </div>
+                            </div>
 
-                    <div className="registration-requests-stat-card">
-                        <span>Total Pending</span>
-                        <strong>{loading ? "..." : pendingUsers.length}</strong>
-                        <small>Waiting for approval</small>
-                    </div>
-                </section>
+                            <div className="registration-requests-summary-chart">
+                                <div className="registration-requests-summary-chart-top">
+                                    <span>{loading ? "…" : `${total} ${total === 1 ? "account" : "accounts"} in total`}</span>
+                                    <strong>{loading ? "" : `${approvedShare}% approved`}</strong>
+                                </div>
+
+                                <div
+                                    className="registration-requests-summary-bar"
+                                    role="img"
+                                    aria-label={`Approved: ${approved}, waiting for approval: ${pending}`}
+                                >
+                                    {!loading && approved > 0 && (
+                                        <span
+                                            className="registration-requests-summary-segment is-approved"
+                                            style={{ flexGrow: approved }}
+                                            title={`Approved: ${approved}`}
+                                        />
+                                    )}
+                                    {!loading && pending > 0 && (
+                                        <span
+                                            className="registration-requests-summary-segment is-pending"
+                                            style={{ flexGrow: pending }}
+                                            title={`Waiting for approval: ${pending}`}
+                                        />
+                                    )}
+                                </div>
+
+                                <ul className="registration-requests-summary-legend">
+                                    <li>
+                                        <span className="registration-requests-summary-swatch is-approved" aria-hidden="true" />
+                                        Approved
+                                        <strong>{loading ? "…" : approved}</strong>
+                                    </li>
+                                    <li>
+                                        <span className="registration-requests-summary-swatch is-pending" aria-hidden="true" />
+                                        Waiting for approval
+                                        <strong>{loading ? "…" : pending}</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </section>
+                    );
+                })()}
 
                 {/* PENDING REQUESTS */}
                 <section className="registration-requests-panel registration-requests-large-panel">

@@ -87,15 +87,6 @@
    STATS
 ========================================================= */
 
-.resident-dashboard-stats-grid {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 16px;
-
-  margin-bottom: 20px;
-}
 
 .resident-dashboard-stat-card {
   min-width: 0;
@@ -147,17 +138,49 @@
   text-transform: uppercase;
 }
 
-.resident-dashboard-stat-number {
-  display: block;
 
-  margin-bottom: 5px;
 
-  color: #2d2633;
 
-  font-size: 25px;
-  font-weight: 750;
+/* =========================================================
+   COMPLAINTS OVERVIEW (status ring)
+========================================================= */
 
-  line-height: 1;
+/* Property card on the left, the complaints column on the right. */
+.resident-dashboard-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: stretch;
+
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+.resident-dashboard-top-grid .my-property-card,
+.resident-dashboard-top-grid .my-property-empty-card {
+  margin: 0;
+}
+
+.resident-dashboard-complaints-card {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+}
+
+.resident-dashboard-complaints-card .resident-dashboard-card-header {
+  margin-bottom: 6px;
+}
+
+.resident-dashboard-complaints-card .resident-dashboard-stat-top {
+  margin-bottom: 0;
+}
+
+/* Narrower screens: the complaints card drops under the property card. */
+@media (max-width: 1250px) {
+  .resident-dashboard-top-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -168,7 +191,7 @@
 .resident-dashboard-content-grid {
   display: grid;
 
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 
   gap: 18px;
 
@@ -292,6 +315,8 @@
 ========================================================= */
 
 .resident-dashboard-request-card {
+  min-height: 0;
+
   margin-bottom: 0;
 }
 
@@ -369,80 +394,6 @@
 
 
 /* =========================================================
-   QUICK ACTIONS
-========================================================= */
-
-.resident-dashboard-quick-actions-card {
-  margin-bottom: 0;
-}
-
-.resident-dashboard-quick-actions {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-.resident-dashboard-quick-action {
-  min-width: 0;
-  min-height: 52px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 10px 12px;
-
-  border: 1px solid #e9e4ed;
-  border-radius: 8px;
-
-  background: #faf9fb;
-
-  color: #504558;
-
-  font-size: 9px;
-  font-weight: 650;
-
-  text-decoration: none;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.resident-dashboard-quick-action:hover {
-  background: #f4f0f6;
-
-  border-color: #dcd2e2;
-
-  transform: translateY(-1px);
-}
-
-.resident-dashboard-quick-action-icon {
-  width: 29px;
-  height: 29px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 6px;
-
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-.resident-dashboard-quick-action > span:last-child {
-  flex: 1;
-}
-
-
-/* =========================================================
    EMPTY STATE
 ========================================================= */
 
@@ -506,11 +457,6 @@
 /* =========================================================
    COMMUNITY ANNOUNCEMENTS
 ========================================================= */
-
-/* Sits under the request and quick-action cards, across the full width. */
-.resident-dashboard-announcements-card {
-  grid-column: 1 / -1;
-}
 
 .resident-dashboard-announcements-list {
   display: flex;
@@ -682,9 +628,6 @@
     margin-left: 200px;
   }
 
-  .resident-dashboard-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
 }
 
@@ -740,13 +683,6 @@
     font-size: 13px;
   }
 
-  .resident-dashboard-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .resident-dashboard-quick-actions {
-    grid-template-columns: 1fr;
-  }
 
   .resident-dashboard-request-content {
     flex-direction: column;

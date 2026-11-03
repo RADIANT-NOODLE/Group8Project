@@ -876,53 +876,86 @@ function AgentEditListings() {
                         </div>
                     )}
 
-                    {/* STATS */}
-                    <div className="agent-edit-stats">
-                        <div className="agent-edit-stat-card">
-                            <span>Assigned Properties</span>
-                            <strong>{properties.length}</strong>
-                        </div>
+                    {/* LISTING PROGRESS: where each assigned property stands */}
+                    {(() => {
+                        const total = properties.length;
+                        const published = properties.filter(
+                            (property) => getListingStatus(property) === "Published"
+                        ).length;
+                        const pending = properties.filter(
+                            (property) => getListingStatus(property) === "Pending HOA Approval"
+                        ).length;
+                        const notSubmitted = Math.max(total - published - pending, 0);
+                        const pendingPhotos = properties.reduce(
+                            (sum, property) => sum + getPendingImageCount(property),
+                            0
+                        );
 
-                        <div className="agent-edit-stat-card">
-                            <span>Published</span>
-                            <strong>
-                                {
-                                    properties.filter(
-                                        (property) =>
-                                            getListingStatus(property) ===
-                                            "Published"
-                                    ).length
-                                }
-                            </strong>
-                        </div>
+                        const segments = [
+                            { key: "published", label: "Published", value: published },
+                            { key: "pending", label: "Awaiting HOA approval", value: pending },
+                            { key: "draft", label: "Not yet submitted", value: notSubmitted },
+                        ];
+                        const percent = total > 0 ? Math.round((published / total) * 100) : 0;
 
-                        <div className="agent-edit-stat-card">
-                            <span>Pending Approval</span>
-                            <strong>
-                                {
-                                    properties.filter(
-                                        (property) =>
-                                            getListingStatus(property) ===
-                                            "Pending HOA Approval"
-                                    ).length
-                                }
-                            </strong>
-                        </div>
+                        return (
+                            <section className="agent-edit-progress" aria-labelledby="agent-edit-progress-title">
+                                <div className="agent-edit-progress-top">
+                                    <div>
+                                        <p className="agent-edit-progress-eyebrow">Listing progress</p>
+                                        <h2 id="agent-edit-progress-title">
+                                            {total === 0
+                                                ? "No properties assigned yet"
+                                                : `${published} of ${total} ${total === 1 ? "listing" : "listings"} published`}
+                                        </h2>
+                                    </div>
+                                    {total > 0 && (
+                                        <strong className="agent-edit-progress-percent">{percent}%</strong>
+                                    )}
+                                </div>
 
-                        <div className="agent-edit-stat-card">
-                            <span>Pending Photos</span>
-                            <strong>
-                                {
-                                    properties.reduce(
-                                        (total, property) =>
-                                            total +
-                                            getPendingImageCount(property),
-                                        0
-                                    )
-                                }
-                            </strong>
-                        </div>
-                    </div>
+                                <div
+                                    className="agent-edit-progress-bar"
+                                    role="img"
+                                    aria-label={segments.map((segment) => `${segment.label}: ${segment.value}`).join(", ")}
+                                >
+                                    {total > 0 &&
+                                        segments
+                                            .filter((segment) => segment.value > 0)
+                                            .map((segment) => (
+                                                <span
+                                                    key={segment.key}
+                                                    className={`agent-edit-progress-segment is-${segment.key}`}
+                                                    style={{ flexGrow: segment.value }}
+                                                    title={`${segment.label}: ${segment.value}`}
+                                                />
+                                            ))}
+                                </div>
+
+                                <div className="agent-edit-progress-footer">
+                                    <ul className="agent-edit-progress-legend">
+                                        {segments.map((segment) => (
+                                            <li key={segment.key}>
+                                                <span className={`agent-edit-progress-swatch is-${segment.key}`} aria-hidden="true" />
+                                                {segment.label}
+                                                <strong>{segment.value}</strong>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <span className={`agent-edit-progress-photos${pendingPhotos > 0 ? " has-pending" : ""}`}>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                                            <circle cx="12" cy="13" r="3.5" />
+                                        </svg>
+                                        {pendingPhotos === 0
+                                            ? "No photos waiting for review"
+                                            : `${pendingPhotos} ${pendingPhotos === 1 ? "photo" : "photos"} waiting for HOA review`}
+                                    </span>
+                                </div>
+                            </section>
+                        );
+                    })()}
 
                     {/* PROPERTY LIST */}
                     <section className="agent-edit-card">

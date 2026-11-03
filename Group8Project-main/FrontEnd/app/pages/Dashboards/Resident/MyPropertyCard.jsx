@@ -56,6 +56,7 @@ export default function MyPropertyCard({ record, loading: recordLoading }) {
     const [property, setProperty] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [photoFailed, setPhotoFailed] = useState(false);
 
     const propertyId = record?.property_id;
 
@@ -123,8 +124,8 @@ export default function MyPropertyCard({ record, loading: recordLoading }) {
     return (
         <section className="my-property-card">
             <div className="my-property-image">
-                {photo ? (
-                    <img src={photo} alt={`${title}, unit ${unitNo}`} />
+                {photo && !photoFailed ? (
+                    <img src={photo} alt={`${title}, unit ${unitNo}`} onError={() => setPhotoFailed(true)} />
                 ) : (
                     <div className="my-property-image-placeholder">
                         <PropertyIcon />

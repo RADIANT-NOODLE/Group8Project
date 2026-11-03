@@ -167,14 +167,11 @@ const SHARED_PATHS = Object.freeze([
 const ESTATE_ADMIN_PATHS = Object.freeze([
   '/hoa-admin',
   '/property-management',
-  '/landing-page-settings',
   '/maintenance',
   '/resident-directory',
   '/resident-complaints',
   '/property-requests',
   '/property-approvals',
-  '/community-analytics',
-  '/ai-training-data',
   '/registration-requests',
   '/create-agent',
 ]);

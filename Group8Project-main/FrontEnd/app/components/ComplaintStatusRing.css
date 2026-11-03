@@ -1,0 +1,220 @@
+/*
+=========================================================
+COMPLAINT STATUS RING
+
+Used in a narrow side column (resident dashboard, complaints
+page): ring on top, legend listed underneath. When the column
+drops under the main content on narrower screens the ring and
+legend sit side by side, then stack again on phones.
+=========================================================
+*/
+
+.complaint-ring {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+
+  gap: 22px;
+
+  padding-top: 8px;
+}
+
+.complaint-ring-chart {
+  position: relative;
+
+  flex-shrink: 0;
+  align-self: center;
+
+  width: 132px;
+  height: 132px;
+}
+
+.complaint-ring-chart svg {
+  display: block;
+}
+
+.complaint-ring-segment {
+  cursor: default;
+
+  transition: opacity 0.15s ease;
+}
+
+.complaint-ring-segment.is-dimmed {
+  opacity: 0.35;
+}
+
+.complaint-ring-centre {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+.complaint-ring-centre strong {
+  color: #2d2633;
+
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.complaint-ring-centre span {
+  margin-top: 4px;
+
+  color: #857b8c;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.complaint-ring-legend {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.complaint-ring-legend li {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px 12px;
+
+  border: 1px solid #eeeaf1;
+  border-radius: 8px;
+
+  background: #faf9fb;
+
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.complaint-ring-legend li.is-active {
+  border-color: #ddd2e5;
+
+  background: #f6f2f9;
+}
+
+.complaint-ring-swatch {
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+}
+
+.complaint-ring-label {
+  color: #857b8c;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.complaint-ring-legend strong {
+  margin-left: auto;
+
+  color: #2d2633;
+
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+/* wide cards: ring on the left, the three statuses as tiles beside it */
+.complaint-ring.is-row {
+  flex-direction: row;
+  align-items: center;
+
+  gap: 36px;
+
+  padding-top: 0;
+}
+
+.complaint-ring.is-row .complaint-ring-legend {
+  flex: 1;
+  flex-direction: row;
+}
+
+.complaint-ring.is-row .complaint-ring-legend li {
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+
+  gap: 8px;
+
+  padding: 14px 16px;
+}
+
+.complaint-ring.is-row .complaint-ring-legend strong {
+  margin-left: 0;
+
+  font-size: 24px;
+}
+
+@media (max-width: 1250px) {
+  .complaint-ring {
+    flex-direction: row;
+    align-items: center;
+
+    gap: 30px;
+  }
+
+  .complaint-ring-legend {
+    flex: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .complaint-ring {
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .complaint-ring-segment,
+  .complaint-ring-legend li {
+    transition: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .complaint-ring.is-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .complaint-ring.is-row .complaint-ring-legend {
+    flex-direction: column;
+  }
+
+  .complaint-ring.is-row .complaint-ring-legend li {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .complaint-ring.is-row .complaint-ring-legend strong {
+    margin-left: auto;
+
+    font-size: 16px;
+  }
+}

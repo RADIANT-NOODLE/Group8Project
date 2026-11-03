@@ -12,7 +12,7 @@ function RegistrationPending() {
                 <div className="auth-sidebar">
                     <Link to="/" className="auth-logo">
                         <img
-                            src="/assets/valora-logo.jpg"
+                            src="/assets/valora-logo-white.png"
                             alt="VALORA - go to home page"
                         />
                     </Link>

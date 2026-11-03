@@ -175,6 +175,11 @@ function CommunityAnnouncements() {
         item => item.status === "Draft"
     ).length;
 
+    // the newest announcement residents can currently see
+    const latestPublished = announcements
+        .filter(item => item.status === "Published")
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
+
     /* =====================================================
        SEARCH AND CATEGORY FILTER
     ===================================================== */
@@ -469,46 +474,74 @@ function CommunityAnnouncements() {
                     </div>
                 )}
 
-                {/* STATISTICS */}
+                {/* PUBLISHING SUMMARY + WHAT RESIDENTS SEE NOW */}
+                <section className="community-announcements-summary" aria-labelledby="community-announcements-summary-title">
+                    <div className="community-announcements-summary-status">
+                        <p className="community-announcements-summary-eyebrow">Publishing</p>
+                        <h2 id="community-announcements-summary-title">
+                            {publishedCount === 0
+                                ? "Nothing is live for residents yet"
+                                : `${publishedCount} ${publishedCount === 1 ? "announcement is" : "announcements are"} live for residents`}
+                        </h2>
+                        <p className="community-announcements-summary-sub">
+                            {draftCount === 0
+                                ? "No drafts waiting to be published."
+                                : `${draftCount} ${draftCount === 1 ? "draft is" : "drafts are"} waiting to be published.`}
+                        </p>
 
-                <section className="community-announcements-stat-cards">
-
-                    <div className="community-announcements-stat-card">
-                        <div className="community-announcements-stat-icon">
-                            <Icon type="announcement" size={23} />
+                        <div
+                            className="community-announcements-summary-bar"
+                            role="img"
+                            aria-label={`Published: ${publishedCount}, drafts: ${draftCount}`}
+                        >
+                            {publishedCount > 0 && (
+                                <span className="community-announcements-summary-segment is-published" style={{ flexGrow: publishedCount }} title={`Published: ${publishedCount}`} />
+                            )}
+                            {draftCount > 0 && (
+                                <span className="community-announcements-summary-segment is-draft" style={{ flexGrow: draftCount }} title={`Drafts: ${draftCount}`} />
+                            )}
                         </div>
 
-                        <div className="community-announcements-stat-content">
-                            <p>Total Announcements</p>
-                            <h3>{announcements.length}</h3>
-                            <small>All created announcements</small>
-                        </div>
+                        <ul className="community-announcements-summary-legend">
+                            <li><span className="community-announcements-summary-swatch is-published" aria-hidden="true" />Published <strong>{publishedCount}</strong></li>
+                            <li><span className="community-announcements-summary-swatch is-draft" aria-hidden="true" />Drafts <strong>{draftCount}</strong></li>
+                            <li>Total <strong>{announcements.length}</strong></li>
+                        </ul>
                     </div>
 
-                    <div className="community-announcements-stat-card">
-                        <div className="community-announcements-stat-icon published-icon">
-                            <Icon type="file" size={23} />
-                        </div>
+                    <div className="community-announcements-summary-latest">
+                        <p className="community-announcements-summary-eyebrow">Residents see now</p>
 
-                        <div className="community-announcements-stat-content">
-                            <p>Published</p>
-                            <h3>{publishedCount}</h3>
-                            <small>Published community updates</small>
-                        </div>
+                        {latestPublished ? (
+                            <article className="community-announcements-latest-card">
+                                <div className="community-announcements-latest-meta">
+                                    {latestPublished.category && (
+                                        <span className="community-announcements-latest-category">{latestPublished.category}</span>
+                                    )}
+                                    <span>{formatDate(latestPublished.createdAt)}</span>
+                                </div>
+                                <h3>{latestPublished.title || "Community announcement"}</h3>
+                                <p>{latestPublished.content || "No message was added."}</p>
+                                <button
+                                    type="button"
+                                    className="community-announcements-latest-open"
+                                    onClick={() => setViewing(latestPublished)}
+                                >
+                                    Open announcement
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M5 12h14" /><path d="m13 6 6 6-6 6" />
+                                    </svg>
+                                </button>
+                            </article>
+                        ) : (
+                            <div className="community-announcements-latest-empty">
+                                <p>Published announcements will be previewed here.</p>
+                                <button type="button" className="community-announcements-latest-open" onClick={openCreateForm}>
+                                    Write an announcement
+                                </button>
+                            </div>
+                        )}
                     </div>
-
-                    <div className="community-announcements-stat-card">
-                        <div className="community-announcements-stat-icon draft-icon">
-                            <Icon type="edit" size={23} />
-                        </div>
-
-                        <div className="community-announcements-stat-content">
-                            <p>Drafts</p>
-                            <h3>{draftCount}</h3>
-                            <small>Announcements not published</small>
-                        </div>
-                    </div>
-
                 </section>
 
                 {/* ANNOUNCEMENTS PANEL */}

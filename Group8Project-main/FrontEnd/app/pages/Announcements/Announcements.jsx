@@ -31,6 +31,16 @@ function getAnnouncementDate(announcement) {
     );
 }
 
+const NEW_FOR_DAYS = 7;
+
+/* Posted within the last week: worth flagging to residents. */
+function isRecent(value) {
+    if (!value) return false;
+    const posted = new Date(value).getTime();
+    if (Number.isNaN(posted)) return false;
+    return Date.now() - posted < NEW_FOR_DAYS * 24 * 60 * 60 * 1000;
+}
+
 function formatDate(value) {
     if (!value) {
         return "Date not provided";
@@ -434,14 +444,22 @@ function Announcements() {
                                             />
                                         </span>
 
-                                        <span className="announcement-published">
-                                            Published
-                                        </span>
-                                    </div>
+                                        <div className="announcement-meta">
+                                            <span className="announcement-category">
+                                                {categoryName}
+                                            </span>
+                                            <span className="announcement-date">
+                                                <CalendarIcon />
+                                                <time dateTime={date || undefined}>
+                                                    {formatDate(date)}
+                                                </time>
+                                            </span>
+                                        </div>
 
-                                    <span className="announcement-category">
-                                        {categoryName}
-                                    </span>
+                                        {isRecent(date) && (
+                                            <span className="announcement-new">New</span>
+                                        )}
+                                    </div>
 
                                     <h2>
                                         {announcement.title ||
@@ -453,18 +471,13 @@ function Announcements() {
                                             "No additional details were provided."}
                                     </p>
 
-                                    <div className="announcement-footer">
-                                        <span className="announcement-date">
-                                            <CalendarIcon />
-                                            {formatDate(date)}
-                                        </span>
-
-                                        {announcement.author && (
+                                    {announcement.author && (
+                                        <div className="announcement-footer">
                                             <span className="announcement-author">
-                                                {announcement.author}
+                                                Posted by {announcement.author}
                                             </span>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </article>
                             );
                         })}

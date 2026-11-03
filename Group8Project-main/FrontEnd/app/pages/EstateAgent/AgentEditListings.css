@@ -163,42 +163,149 @@
    STATS
 ========================================================= */
 
-.agent-edit-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 24px;
-}
-
-.agent-edit-stat-card {
-    min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 20px 22px;
-    background: var(--card-background);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-}
-
-.agent-edit-stat-card span {
-    margin-bottom: 9px;
-    color: var(--text-medium);
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.agent-edit-stat-card strong {
-    color: var(--valora-purple);
-    font-size: 28px;
-    line-height: 1;
-    font-weight: 700;
-}
-
 /* =========================================================
    CARDS
 ========================================================= */
+
+/* =========================================================
+   LISTING PROGRESS
+========================================================= */
+
+.agent-edit-progress {
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    border: 1px solid #e8e3eb;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
+}
+
+.agent-edit-progress-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.agent-edit-progress-eyebrow {
+    margin: 0 0 6px;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.agent-edit-progress-top h2 {
+    margin: 0;
+    color: #29242d;
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.agent-edit-progress-percent {
+    color: #563f6b;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* one bar split by state; segments are separated by a 2px gap */
+.agent-edit-progress-bar {
+    display: flex;
+    gap: 2px;
+    height: 14px;
+    overflow: hidden;
+    border-radius: 7px;
+    background: #f1edf4;
+}
+
+.agent-edit-progress-segment {
+    min-width: 6px;
+    height: 100%;
+}
+
+.agent-edit-progress-segment.is-published,
+.agent-edit-progress-swatch.is-published {
+    background: #0ca30c;
+}
+
+.agent-edit-progress-segment.is-pending,
+.agent-edit-progress-swatch.is-pending {
+    background: #fab219;
+}
+
+.agent-edit-progress-segment.is-draft,
+.agent-edit-progress-swatch.is-draft {
+    background: #c9b7d8;
+}
+
+.agent-edit-progress-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 24px;
+    margin-top: 16px;
+}
+
+.agent-edit-progress-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.agent-edit-progress-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #5f536c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.agent-edit-progress-legend strong {
+    color: #29242d;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.agent-edit-progress-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.agent-edit-progress-photos {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #f4f0f7;
+    color: #6f6577;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.agent-edit-progress-photos.has-pending {
+    background: #e4d9ed;
+    color: #563f6b;
+}
+
+@media (max-width: 600px) {
+    .agent-edit-progress {
+        padding: 20px 18px;
+    }
+
+    .agent-edit-progress-top h2 {
+        font-size: 18px;
+    }
+}
 
 .agent-edit-card {
     margin-bottom: 24px;
@@ -917,10 +1024,6 @@
         padding-right: 24px;
     }
 
-    .agent-edit-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .agent-edit-info-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -966,15 +1069,6 @@
 
     .agent-edit-content {
         padding: 18px 12px 30px;
-    }
-
-    .agent-edit-stats {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .agent-edit-stat-card {
-        min-height: 90px;
     }
 
     .agent-edit-info-grid {

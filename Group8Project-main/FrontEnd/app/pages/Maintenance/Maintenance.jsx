@@ -270,6 +270,15 @@ function Maintenance() {
     const inProgressRequests = requests.filter((r) => r.status === COMPLAINT_STATUS.in_progress).length;
     const resolvedRequests = requests.filter((r) => ACTIVE_EXCLUDED.includes(r.status)).length;
 
+    // the stages a request moves through, left to right
+    const pipeline = [
+        { key: "new", label: "Submitted", hint: "Waiting to be picked up", count: requests.filter((r) => r.status === COMPLAINT_STATUS.submitted).length },
+        { key: "review", label: "Under review", hint: "Being assessed", count: requests.filter((r) => r.status === COMPLAINT_STATUS.under_review).length },
+        { key: "progress", label: "In progress", hint: "Being worked on", count: inProgressRequests },
+        { key: "done", label: "Resolved", hint: "Completed or closed", count: resolvedRequests },
+    ];
+    const resolutionRate = totalRequests > 0 ? Math.round((resolvedRequests / totalRequests) * 100) : 0;
+
     function handleFormChange(event) {
         const { name, value } = event.target;
         setFormData((previous) => ({ ...previous, [name]: value }));
@@ -408,48 +417,49 @@ function Maintenance() {
                     </div>
                 )}
 
-                <section className="maintenance-stat-grid">
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon purple">
-                            <Icon name="wrench" />
-                        </div>
+                {/* REQUEST PIPELINE: where every request sits on its way to resolved */}
+                <section className="maintenance-pipeline" aria-labelledby="maintenance-pipeline-title">
+                    <div className="maintenance-pipeline-heading">
                         <div>
-                            <span>Total Requests</span>
-                            <strong>{totalRequests}</strong>
-                            <small>{isAdmin ? "Community requests" : "Your requests"}</small>
+                            <h2 id="maintenance-pipeline-title">Request pipeline</h2>
+                            <p>
+                                {totalRequests === 0
+                                    ? "No maintenance requests yet."
+                                    : `${totalRequests} ${isAdmin ? "community" : "of your"} ${totalRequests === 1 ? "request" : "requests"} · ${activeRequests} still open`}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon orange">
-                            <Icon name="clock" />
-                        </div>
-                        <div>
-                            <span>Active Requests</span>
-                            <strong>{activeRequests}</strong>
-                            <small>Require attention</small>
-                        </div>
-                    </div>
+                    <ol className="maintenance-pipeline-stages">
+                        {pipeline.map((stage, index) => (
+                            <li
+                                key={stage.key}
+                                className={`maintenance-pipeline-stage step-${index + 1}${stage.count > 0 ? " has-items" : ""}`}
+                                aria-label={`${stage.label}: ${stage.count}`}
+                            >
+                                <span className="maintenance-pipeline-node" aria-hidden="true">
+                                    {stage.key === "done" ? <Icon name="check" /> : stage.count}
+                                </span>
+                                <span className="maintenance-pipeline-label">{stage.label}</span>
+                                <strong className="maintenance-pipeline-count">{stage.count}</strong>
+                                <small>{stage.hint}</small>
+                            </li>
+                        ))}
+                    </ol>
 
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon blue">
-                            <Icon name="calendar" />
+                    <div className="maintenance-pipeline-rate">
+                        <div className="maintenance-pipeline-rate-top">
+                            <span>Resolution rate</span>
+                            <strong>
+                                {resolvedRequests} of {totalRequests} resolved · {resolutionRate}%
+                            </strong>
                         </div>
-                        <div>
-                            <span>In Progress</span>
-                            <strong>{inProgressRequests}</strong>
-                            <small>Being worked on</small>
-                        </div>
-                    </div>
-
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon green">
-                            <Icon name="check" />
-                        </div>
-                        <div>
-                            <span>Resolved</span>
-                            <strong>{resolvedRequests}</strong>
-                            <small>Completed requests</small>
+                        <div
+                            className="maintenance-pipeline-rate-track"
+                            role="img"
+                            aria-label={`${resolutionRate}% of requests resolved`}
+                        >
+                            <span className="maintenance-pipeline-rate-fill" style={{ width: `${resolutionRate}%` }} />
                         </div>
                     </div>
                 </section>

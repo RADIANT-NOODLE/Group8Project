@@ -5,6 +5,7 @@ import DashboardSidebar from "../shared/DashboardSidebar";
 import { listAnnouncements } from "../../../services/announcementApi";
 import { apiRequest } from "../../../services/apiClient";
 import { listComplaints } from "../../../services/complaintApi";
+import ComplaintStatusRing from "../../../components/ComplaintStatusRing";
 import MyPropertyCard from "./MyPropertyCard";
 import "./ResidentDashboard.css";
 
@@ -39,7 +40,7 @@ function ResidentDashboard({ user: suppliedUser }) {
     const user = suppliedUser || sessionUser || {};
 
     const [myProperty, setMyProperty] = useState(null);
-    const [complaintsCount, setComplaintsCount] = useState(0);
+    const [complaints, setComplaints] = useState([]);
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -60,7 +61,7 @@ function ResidentDashboard({ user: suppliedUser }) {
             setMyProperty(records[0] ?? null);
         }
 
-        if (complaints.status === "fulfilled") setComplaintsCount(complaints.value.items.length);
+        if (complaints.status === "fulfilled") setComplaints(complaints.value.items);
         if (published.status === "fulfilled") setAnnouncements(published.value);
 
         results.forEach((result) => {
@@ -101,104 +102,33 @@ function ResidentDashboard({ user: suppliedUser }) {
                     </div>
                 </div>
 
-                {/* STATS */}
-                <div className="resident-dashboard-stats-grid">
-                    <div className="resident-dashboard-stat-card">
-                        <div className="resident-dashboard-stat-top">
-                            <div className="resident-dashboard-stat-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M12 3 21 6v6c0 5-3.5 8-9 9-5.5-1-9-4-9-9V6l9-3Z" />
-                                    <path d="M12 8v5" />
-                                    <path d="M12 16h.01" />
-                                </svg>
-                            </div>
-                            <span className="resident-dashboard-stat-label">Complaints</span>
-                        </div>
-                        <div className="resident-dashboard-stat-number">
-                            {loading ? "..." : complaintsCount}
-                        </div>
-                    </div>
+                {/* PROPERTY + COMPLAINTS */}
+                <div className="resident-dashboard-top-grid">
+                    {/* MY PROPERTY */}
+                    <MyPropertyCard record={myProperty} loading={loading} />
 
-
-                    <div className="resident-dashboard-stat-card">
-                        <div className="resident-dashboard-stat-top">
-                            <div className="resident-dashboard-stat-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M4 11v2a2 2 0 0 0 2 2h2l3 5h2l-1.5-5H14l6 3V6l-6 3H6a2 2 0 0 0-2 2Z" />
-                                    <path d="M20 9v6" />
-                                </svg>
-                            </div>
-                            <span className="resident-dashboard-stat-label">Announcements</span>
-                        </div>
-                        <div className="resident-dashboard-stat-number">
-                            {loading ? "..." : announcements.length}
-                        </div>
-                    </div>
-                </div>
-
-                {/* MY PROPERTY */}
-                <MyPropertyCard record={myProperty} loading={loading} />
-
-                {/* MAIN CONTENT */}
-                <div className="resident-dashboard-content-grid">
-                    {/* PROPERTY REQUEST CARD */}
-                    <div className="resident-dashboard-card resident-dashboard-request-card">
-                        <div className="resident-dashboard-request-content">
-                            <div className="resident-dashboard-request-icon">
-                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <rect x="4" y="3" width="16" height="18" rx="2" />
-                                    <path d="M8 7h8" />
-                                    <path d="M8 11h8" />
-                                    <path d="M8 15h4" />
-                                    <path d="M16 14v5" />
-                                    <path d="M13.5 16.5h5" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2>Want to sell or rent your property?</h2>
-                                <p>Submit a request to the HOA for review.</p>
-                                <Link to="/request-to-sell" className="resident-dashboard-primary-button">
-                                    Request to Sell/Rent
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* QUICK ACTIONS */}
-                    <div className="resident-dashboard-card resident-dashboard-quick-actions-card">
+                    {/* COMPLAINTS OVERVIEW */}
+                    <section className="resident-dashboard-stat-card resident-dashboard-complaints-card">
                         <div className="resident-dashboard-card-header">
-                            <div>
-                                <h2>Quick Actions</h2>
-                                <p>Common resident actions.</p>
-                            </div>
-                        </div>
-                        <div className="resident-dashboard-quick-actions">
-                            <Link to="/complaints" className="resident-dashboard-quick-action">
-                                <span className="resident-dashboard-quick-action-icon">
+                            <div className="resident-dashboard-stat-top">
+                                <div className="resident-dashboard-stat-icon">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                         <path d="M12 3 21 6v6c0 5-3.5 8-9 9-5.5-1-9-4-9-9V6l9-3Z" />
                                         <path d="M12 8v5" />
                                         <path d="M12 16h.01" />
                                     </svg>
-                                </span>
-                                <span>Complaints</span>
-                            </Link>
-
-                            <Link
-                                to="/announcements"
-                                className="resident-dashboard-quick-action"
-                            >
-                                <span className="resident-dashboard-quick-action-icon">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                        <path d="M4 11v2a2 2 0 0 0 2 2h2l3 5h2l-1.5-5H14l6 3V6l-6 3H6a2 2 0 0 0-2 2Z" />
-                                        <path d="M20 9v6" />
-                                    </svg>
-                                </span>
-                                <span>Announcements</span>
-                            </Link>
+                                </div>
+                                <span className="resident-dashboard-stat-label">My Complaints</span>
+                            </div>
+                            <Link to="/complaints" className="resident-dashboard-view-all">View Complaints</Link>
                         </div>
-                    </div>
 
+                        <ComplaintStatusRing complaints={complaints} loading={loading} />
+                    </section>
+                </div>
+
+                {/* MAIN CONTENT */}
+                <div className="resident-dashboard-content-grid">
                     {/* COMMUNITY ANNOUNCEMENTS */}
                     <section className="resident-dashboard-card resident-dashboard-announcements-card">
                         <div className="resident-dashboard-card-header">
@@ -249,6 +179,29 @@ function ResidentDashboard({ user: suppliedUser }) {
                             </div>
                         )}
                     </section>
+
+                    {/* PROPERTY REQUEST CARD */}
+                    <div className="resident-dashboard-card resident-dashboard-request-card">
+                        <div className="resident-dashboard-request-content">
+                            <div className="resident-dashboard-request-icon">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <rect x="4" y="3" width="16" height="18" rx="2" />
+                                    <path d="M8 7h8" />
+                                    <path d="M8 11h8" />
+                                    <path d="M8 15h4" />
+                                    <path d="M16 14v5" />
+                                    <path d="M13.5 16.5h5" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2>Want to sell or rent your property?</h2>
+                                <p>Submit a request to the HOA for review.</p>
+                                <Link to="/request-to-sell" className="resident-dashboard-primary-button">
+                                    Request to Sell/Rent
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>

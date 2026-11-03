@@ -224,6 +224,9 @@ function AgentListings() {
         },
     ];
 
+    // every bar shares one scale, set by the largest figure
+    const chartMax = Math.max(...statCards.map((card) => card.value), 0);
+
     return (
         <div className="agent-listings-page">
             {/* SHARED SIDEBAR */}
@@ -267,20 +270,53 @@ function AgentListings() {
                     </div>
                 )}
 
-                <section className="agent-listings-stat-cards">
-                    {statCards.map((card) => (
-                        <div className="agent-listings-stat-card" key={card.label}>
-                            <div className="agent-listings-stat-icon">
-                                {card.icon}
-                            </div>
+                {/* SUMMARY: one horizontal bar per figure, all on the same scale */}
+                <section className="agent-listings-chart" aria-labelledby="agent-listings-chart-title">
+                    <div className="agent-listings-chart-heading">
+                        <h2 id="agent-listings-chart-title">Listing Summary</h2>
+                        <p>Your assigned properties at a glance.</p>
+                    </div>
 
-                            <div>
-                                <span>{card.label}</span>
-                                <strong>{card.value}</strong>
-                                <small>{card.description}</small>
-                            </div>
-                        </div>
-                    ))}
+                    <ul className="agent-listings-bars">
+                        {statCards.map((card) => {
+                            const share = chartMax > 0 ? (card.value / chartMax) * 100 : 0;
+
+                            return (
+                                <li
+                                    className="agent-listings-bar-row"
+                                    key={card.label}
+                                    tabIndex={0}
+                                    aria-label={`${card.label}: ${card.value} (${card.description})`}
+                                >
+                                    <span className="agent-listings-bar-label">
+                                        <span className="agent-listings-bar-icon" aria-hidden="true">
+                                            {card.icon}
+                                        </span>
+                                        <span>
+                                            {card.label}
+                                            <small>{card.description}</small>
+                                        </span>
+                                    </span>
+
+                                    <span className="agent-listings-bar-track" aria-hidden="true">
+                                        {card.value > 0 && (
+                                            <span
+                                                className="agent-listings-bar-fill"
+                                                style={{ width: `max(${share}%, 6px)` }}
+                                            />
+                                        )}
+                                        <span className="agent-listings-bar-tooltip" role="presentation">
+                                            {card.label}: <strong>{card.value}</strong>
+                                        </span>
+                                    </span>
+
+                                    <strong className="agent-listings-bar-value" aria-hidden="true">
+                                        {card.value}
+                                    </strong>
+                                </li>
+                            );
+                        })}
+                    </ul>
                 </section>
 
                 <section className="agent-listings-panel">

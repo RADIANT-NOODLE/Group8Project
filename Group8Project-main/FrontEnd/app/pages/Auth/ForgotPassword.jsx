@@ -52,7 +52,7 @@ function ForgotPassword() {
             <div className="auth-card">
                 <div className="auth-sidebar">
                     <Link to="/" className="auth-logo">
-                        <img src="/assets/valora-logo.jpg" alt="VALORA - go to home page" />
+                        <img src="/assets/valora-logo-white.png" alt="VALORA - go to home page" />
                     </Link>
 
                     <div className="auth-sidebar-content">

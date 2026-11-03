@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../services/session"; // <-- IMPORT SESSION
-import { listProperties } from "../services/propertyApi";
+import { apiRequest } from "../services/apiClient";
+import { getProperty } from "../services/propertyApi";
 import { createPropertyRequest, parsePrice } from "../services/propertyRequestApi";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import "./RequestToSell.css";
@@ -33,7 +34,6 @@ function RequestToSell() {
     /* =====================================================
        PROPERTY DATA (Fetch from API)
     ===================================================== */
-    const [properties, setProperties] = useState([]);
     const [selectedProperty, setSelectedProperty] = useState(null);
     const [propertiesLoading, setPropertiesLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -41,14 +41,23 @@ function RequestToSell() {
     useEffect(() => {
         let cancelled = false;
 
+        // A resident may only request a sale or rental of their own unit: the one the
+        // HOA linked to their account in the resident directory. It is selected for them.
         async function fetchProperties() {
             try {
-                // public endpoint; 100 is the API's largest page
-                const { items } = await listProperties({ pageSize: 100 });
-                if (!cancelled) setProperties(items);
+                const records = await apiRequest("/api/v1/resident-directory");
+                const ownRecord = (Array.isArray(records) ? records : records?.items || [])[0];
+
+                if (!ownRecord?.property_id) return;
+
+                const ownUnit = await getProperty(ownRecord.property_id);
+                if (cancelled) return;
+
+                setSelectedProperty(ownUnit);
+                setForm((previous) => ({ ...previous, propertyId: String(ownUnit.id) }));
             } catch (err) {
-                console.error("Failed to load properties:", err);
-                if (!cancelled) setLoadError("Unable to load the property list. Please refresh and try again.");
+                console.error("Failed to load your property:", err);
+                if (!cancelled) setLoadError("Unable to load your property. Please refresh and try again.");
             } finally {
                 if (!cancelled) setPropertiesLoading(false);
             }
@@ -73,7 +82,6 @@ function RequestToSell() {
         requestType: "Sell",
         askingPrice: "",
         rentalPeriod: "",
-        financialInformation: "",
         additionalDetails: "",
     });
 
@@ -111,17 +119,6 @@ function RequestToSell() {
         );
     }
 
-    /* =====================================================
-       PROPERTY SELECTION
-    ===================================================== */
-    const handlePropertyChange = (event) => {
-        const propertyId = event.target.value;
-        const property = properties.find((item) => String(item.id) === String(propertyId)) || null;
-        setSelectedProperty(property);
-        setForm((previous) => ({ ...previous, propertyId }));
-        setError("");
-    };
-
     const handleChange = (event) => {
         const { name, value } = event.target;
         setForm((previous) => ({ ...previous, [name]: value }));
@@ -139,7 +136,7 @@ function RequestToSell() {
         event.preventDefault();
         setError("");
 
-        if (!form.propertyId) return setError("Please select the property or unit you are requesting to sell or rent.");
+        if (!form.propertyId) return setError("Your account is not linked to a property yet. Ask the HOA to assign your unit first.");
         if (!selectedProperty) return setError("The selected property could not be found.");
         if (!form.askingPrice.trim()) {
             return setError(form.requestType === "Sell" ? "Please enter your asking sale price." : "Please enter your monthly rental price.");
@@ -156,7 +153,6 @@ function RequestToSell() {
                 requestType: form.requestType,
                 askingPrice: form.askingPrice,
                 rentalPeriod: form.requestType === "Rent" ? form.rentalPeriod : null,
-                financialInformation: form.financialInformation,
                 additionalDetails: form.additionalDetails,
             });
 
@@ -237,44 +233,25 @@ function RequestToSell() {
                             </div>
                         </section>
 
-                        {/* PROPERTY SELECTION */}
+                        {/* YOUR PROPERTY */}
                         <section className="form-section">
                             <div className="section-heading">
-                                <h2>Select Property</h2>
-                                <p>Select the existing VALORA unit you are requesting to sell or rent.</p>
+                                <h2>Your Property</h2>
+                                <p>The VALORA unit linked to your account. This request will be made for this property.</p>
                             </div>
-                            <div className="form-grid">
-                                <div className="form-field full">
-                                    <label htmlFor="propertyId">Property / Unit <span>*</span></label>
-                                    <select
-                                        id="propertyId"
-                                        name="propertyId"
-                                        value={form.propertyId}
-                                        onChange={handlePropertyChange}
-                                        disabled={propertiesLoading}
-                                    >
-                                        <option value="">
-                                            {propertiesLoading ? "Loading properties…" : "Select a property or unit"}
-                                        </option>
-                                        {properties.map((property) => (
-                                            <option key={property.id} value={property.id}>
-                                                {propertyLabel(property)}
-                                                {property.bedrooms != null ? ` — ${property.bedrooms} bed` : ""}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {loadError && <p className="form-error" role="alert">{loadError}</p>}
-                                    {!propertiesLoading && !loadError && properties.length === 0 && (
-                                        <p className="form-hint">No properties are registered yet. Ask the HOA to add your unit first.</p>
-                                    )}
-                                </div>
-                            </div>
+                            {propertiesLoading && <p className="form-hint">Loading your property…</p>}
+                            {loadError && <p className="form-error" role="alert">{loadError}</p>}
+                            {!propertiesLoading && !loadError && !selectedProperty && (
+                                <p className="form-hint">
+                                    Your account is not linked to a property yet. Ask the HOA to assign your unit before submitting a request.
+                                </p>
+                            )}
 
                             {selectedProperty && (
                                 <div className="selected-property">
                                     <div className="selected-property-header">
                                         <div>
-                                            <span>SELECTED PROPERTY</span>
+                                            <span>YOUR PROPERTY</span>
                                             <h3>{propertyLabel(selectedProperty)}</h3>
                                         </div>
                                         <strong>#{selectedProperty.id}</strong>
@@ -312,10 +289,6 @@ function RequestToSell() {
                                         </select>
                                     </div>
                                 )}
-                                <div className="form-field full">
-                                    <label>Financial Information</label>
-                                    <textarea name="financialInformation" value={form.financialInformation} onChange={handleChange} rows="4" placeholder="Provide any relevant financial information the HOA should consider." />
-                                </div>
                             </div>
                         </section>
 

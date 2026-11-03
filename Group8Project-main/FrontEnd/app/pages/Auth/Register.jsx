@@ -21,7 +21,10 @@ function Register() {
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
+
+    const passwordsMatch = confirmPassword.length > 0 && confirmPassword === password;
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event) => {
@@ -33,7 +36,8 @@ function Register() {
             !lastName.trim() ||
             !email.trim() ||
             !phone.trim() ||
-            !password
+            !password ||
+            !confirmPassword
         ) {
             setError("Please complete all registration fields.");
             return;
@@ -48,6 +52,11 @@ function Register() {
         const passwordProblem = validateRegistrationPassword(password);
         if (passwordProblem) {
             setError(passwordProblem);
+            return;
+        }
+
+        if (confirmPassword !== password) {
+            setError("The passwords do not match. Please re-enter your password.");
             return;
         }
 
@@ -82,7 +91,7 @@ function Register() {
                 <div className="auth-sidebar">
                     <Link to="/" className="auth-logo">
                         <img
-                            src="/assets/valora-logo.jpg"
+                            src="/assets/valora-logo-white.png"
                             alt="VALORA - go to home page"
                         />
                     </Link>
@@ -205,6 +214,33 @@ function Register() {
                                     rules={checkPasswordRules(password)}
                                     touched={password.length > 0}
                                 />
+                            </div>
+
+                            {/* CONFIRM PASSWORD */}
+                            <div className="auth-field">
+                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <input
+                                    id="confirmPassword"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(event) =>
+                                        setConfirmPassword(event.target.value)
+                                    }
+                                    placeholder="Re-enter your password"
+                                    autoComplete="new-password"
+                                    aria-describedby="confirm-password-status"
+                                    aria-invalid={confirmPassword.length > 0 && !passwordsMatch}
+                                    required
+                                />
+                                {confirmPassword.length > 0 && (
+                                    <p
+                                        id="confirm-password-status"
+                                        className={`auth-match-hint ${passwordsMatch ? "is-match" : "is-mismatch"}`}
+                                        aria-live="polite"
+                                    >
+                                        {passwordsMatch ? "✓ Passwords match" : "✕ Passwords don't match"}
+                                    </p>
+                                )}
                             </div>
 
                             {/* ACCOUNT TYPE */}

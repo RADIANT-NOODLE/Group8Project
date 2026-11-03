@@ -100,49 +100,151 @@
    STAT CARDS
 ========================================================= */
 
-.registration-requests-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 15px;
-    margin-bottom: 24px;
-}
-
-.registration-requests-stat-card {
-    min-width: 0;
-    min-height: 125px;
-    padding: 19px;
-    border: 1px solid #e4e0e7;
-    border-radius: 10px;
-    background: #ffffff;
-    box-shadow: 0 2px 8px rgba(40, 30, 50, 0.035);
-}
-
-.registration-requests-stat-card span {
-    display: block;
-    color: #77727b;
-    font-size: 11px;
-    font-weight: 550;
-}
-
-.registration-requests-stat-card strong {
-    display: block;
-    margin-top: 10px;
-    color: #302a34;
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.registration-requests-stat-card small {
-    display: block;
-    margin-top: 8px;
-    color: #98939a;
-    font-size: 10px;
-}
-
 /* =========================================================
    PANELS
 ========================================================= */
+
+/* =========================================================
+   ACCOUNT APPROVALS SUMMARY
+========================================================= */
+
+.registration-requests-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 1.1fr);
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    border: 1px solid #e8e3eb;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
+}
+
+.registration-requests-summary-headline {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.registration-requests-summary-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: #e4d9ed;
+    color: #563f6b;
+}
+
+.registration-requests-summary-eyebrow {
+    margin: 0 0 5px;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.registration-requests-summary-headline h2 {
+    margin: 0;
+    color: #29242d;
+    font-size: 19px;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.registration-requests-summary-chart-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 9px;
+    color: #5f536c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.registration-requests-summary-chart-top strong {
+    color: #563f6b;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* one bar split into approved and waiting, with a 2px gap between them */
+.registration-requests-summary-bar {
+    display: flex;
+    gap: 2px;
+    height: 14px;
+    overflow: hidden;
+    border-radius: 7px;
+    background: #f1edf4;
+}
+
+.registration-requests-summary-segment {
+    min-width: 6px;
+    height: 100%;
+}
+
+.registration-requests-summary-segment.is-approved,
+.registration-requests-summary-swatch.is-approved {
+    background: #563f6b;
+}
+
+.registration-requests-summary-segment.is-pending,
+.registration-requests-summary-swatch.is-pending {
+    background: #fab219;
+}
+
+.registration-requests-summary-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.registration-requests-summary-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #5f536c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.registration-requests-summary-legend strong {
+    color: #29242d;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.registration-requests-summary-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+@media (max-width: 900px) {
+    .registration-requests-summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .registration-requests-summary {
+        padding: 20px 18px;
+    }
+
+    .registration-requests-summary-headline h2 {
+        font-size: 17px;
+    }
+}
 
 .registration-requests-panel {
     min-width: 0;
@@ -404,10 +506,6 @@
 ========================================================= */
 
 @media (max-width: 1100px) {
-    .registration-requests-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .registration-requests-steps {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px 0;
@@ -450,10 +548,6 @@
         width: calc(100% - 170px);
         margin-left: 170px;
         padding: 22px 16px 30px;
-    }
-
-    .registration-requests-stats {
-        grid-template-columns: 1fr;
     }
 
     .registration-requests-topbar h1 {
@@ -502,16 +596,6 @@
         width: calc(100% - 68px);
         margin-left: 68px;
         padding: 20px 12px 25px;
-    }
-
-    .registration-requests-stats {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .registration-requests-stat-card {
-        min-height: 105px;
-        padding: 16px;
     }
 
     .registration-requests-panel-heading {

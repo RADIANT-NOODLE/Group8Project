@@ -180,68 +180,82 @@
    STAT CARDS
 ========================================================= */
 
-.resident-complaints-stat-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 15px;
-    margin-bottom: 22px;
-}
-
-.resident-complaints-stat-card {
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    padding: 18px;
-    border: 1px solid #e4e0e7;
-    border-radius: 10px;
-    background: #ffffff;
-    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
-}
-
-.resident-complaints-stat-icon {
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border-radius: 8px;
-    background: #f0ebf4;
-    color: #563f6b;
-}
-
-.resident-complaints-stat-content {
-    min-width: 0;
-}
-
-.resident-complaints-stat-card p {
-    margin: 0 0 7px;
-    color: #77717a;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.5;
-}
-
-.resident-complaints-stat-card h3 {
-    margin: 0;
-    color: #29232e;
-    font-size: 25px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.resident-complaints-stat-card small {
-    display: block;
-    margin-top: 7px;
-    color: #9a949c;
-    font-size: 10px;
-    line-height: 1.5;
-}
-
 /* =========================================================
    PANELS
 ========================================================= */
+
+/* =========================================================
+   COMPLAINT OVERVIEW (status ring)
+========================================================= */
+
+.resident-complaints-overview {
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    border: 1px solid #e8e3eb;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
+}
+
+.resident-complaints-overview-heading {
+    margin-bottom: 18px;
+}
+
+.resident-complaints-overview-heading h2 {
+    margin: 0 0 4px;
+    color: #29242d;
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.resident-complaints-overview-heading p {
+    margin: 0;
+    color: #77717d;
+    font-size: 12.5px;
+}
+
+.resident-complaints-overview-orders {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f0ecf2;
+}
+
+.resident-complaints-overview-orders-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 14px;
+    margin-bottom: 8px;
+    color: #5f536c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.resident-complaints-overview-orders-top strong {
+    color: #29242d;
+    font-size: 12.5px;
+}
+
+.resident-complaints-overview-orders-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 5px;
+    background: #f1edf4;
+}
+
+.resident-complaints-overview-orders-fill {
+    display: block;
+    height: 100%;
+    border-radius: 0 5px 5px 0;
+    background: #563f6b;
+}
+
+@media (max-width: 480px) {
+    .resident-complaints-overview {
+        padding: 20px 18px;
+    }
+}
 
 .resident-complaints-panel {
     width: 100%;
@@ -571,10 +585,6 @@
         padding: 28px 24px 40px;
     }
 
-    .resident-complaints-stat-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .resident-complaints-status-flow {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 24px;
@@ -657,15 +667,6 @@
 
     .resident-complaints-top-bar p {
         font-size: 12px;
-    }
-
-    .resident-complaints-stat-cards {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .resident-complaints-stat-card {
-        padding: 15px;
     }
 
     .resident-complaints-panel-heading {
