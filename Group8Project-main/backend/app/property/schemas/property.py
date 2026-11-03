@@ -1,3 +1,4 @@
+from typing import List
 from decimal import Decimal
 
 from pydantic import BaseModel, Field
@@ -39,6 +40,7 @@ class PropertyCreate(BaseModel):
     size_m2: Decimal | None = Field(default=None, gt=0, max_digits=8, decimal_places=2)
     bedrooms: int | None = Field(default=None, ge=0)
     bathrooms: int | None = Field(default=None, ge=0)
+    photos: List[str] = Field(default=[], max_items=50)
 
 class PropertyUpdate(BaseModel):
     unit_no: str | None = Field(default=None, max_length=10)
@@ -48,3 +50,4 @@ class PropertyUpdate(BaseModel):
     size_m2: Decimal | None = Field(default=None, gt=0, max_digits=8, decimal_places=2)
     bedrooms: int | None = Field(default=None, ge=0)
     bathrooms: int | None = Field(default=None, ge=0)
+    photos: List[str] = Field(default=[], max_items=50)

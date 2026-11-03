@@ -16,7 +16,7 @@ from app.property.services.property_service import PropertyService
 
 router = APIRouter(prefix="/properties", tags=["property"])
 
-# <--- DEFINE AdminOnly HERE SO THE PATCH ENDPOINT CAN USE IT
+# AdminOnly HERE SO THE PATCH ENDPOINT CAN USE IT
 AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]  # head admins pass too
 
 
