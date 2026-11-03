@@ -3,29 +3,23 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getProperties } from "../data/propertyStorage";
-import {
-    getLandingHeroSettings,
-    LANDING_CONTENT_UPDATED_EVENT,
-} from "../data/landingPageStorage";
-
 import "./Home.css";
 
 function Home() {
     const [properties, setProperties] = useState([]);
-    const [heroSettings, setHeroSettings] = useState(() =>
-        getLandingHeroSettings()
-    );
 
-        useEffect(() => {
+    useEffect(() => {
         const fetchProperties = async () => {
             try {
-                // Assuming this is a public endpoint (no token needed for viewing properties)
-                const response = await fetch("http://127.0.0.1:8000/api/v1/properties");
+                const response = await fetch(
+                    "http://127.0.0.1:8000/api/v1/properties"
+                );
+
                 if (response.ok) {
                     const data = await response.json();
                     const list = data.properties || data.items || data || [];
-                    // Map the backend schema to match what the UI expects
-                    const formattedProperties = list.map(p => ({
+
+                    const formattedProperties = list.map((p) => ({
                         id: p.id || p.unit_id,
                         title: p.complex_name || "Property",
                         location: p.street_address,
@@ -33,91 +27,35 @@ function Home() {
                         bedrooms: p.bedrooms,
                         bathrooms: p.bathrooms,
                         unitNumber: p.unit_no,
-                        listing: null // Or check if a listing exists
+                        listing: null,
                     }));
+
                     setProperties(formattedProperties);
                 }
             } catch (err) {
-                console.error("Failed to fetch properties for home page:", err);
+                console.error(
+                    "Failed to fetch properties for home page:",
+                    err
+                );
             }
         };
 
         fetchProperties();
     }, []);
 
-    useEffect(() => {
-        const refreshSettings = () => {
-            setHeroSettings(getLandingHeroSettings());
-        };
-
-        window.addEventListener("storage", refreshSettings);
-        window.addEventListener(
-            LANDING_CONTENT_UPDATED_EVENT,
-            refreshSettings
-        );
-
-        return () => {
-            window.removeEventListener("storage", refreshSettings);
-            window.removeEventListener(
-                LANDING_CONTENT_UPDATED_EVENT,
-                refreshSettings
-            );
-        };
-    }, []);
-
-    const content = heroSettings.content;
-
     const PropertyIcon = () => (
         <svg viewBox="0 0 24 24" aria-hidden="true" className="feature-svg">
-            <path
-                d="M3 10.5L12 3l9 7.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M5 9.5V21h14V9.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M9 21v-6h6v6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-            />
+            <path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5 9.5V21h14V9.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d="M9 21v-6h6v6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
         </svg>
     );
 
     const IntelligenceIcon = () => (
         <svg viewBox="0 0 24 24" aria-hidden="true" className="feature-svg">
-            <path
-                d="M4 19V5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
-            <path
-                d="M4 19h16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
-            <path
-                d="M7 15l4-4 3 2 5-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
+            <path d="M4 19V5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M4 19h16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M7 15l4-4 3 2 5-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             <circle cx="7" cy="15" r="1" fill="currentColor" />
             <circle cx="11" cy="11" r="1" fill="currentColor" />
             <circle cx="14" cy="13" r="1" fill="currentColor" />
@@ -127,36 +65,10 @@ function Home() {
 
     const CommunityIcon = () => (
         <svg viewBox="0 0 24 24" aria-hidden="true" className="feature-svg">
-            <circle
-                cx="9"
-                cy="8"
-                r="3"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-            />
-            <circle
-                cx="17"
-                cy="9"
-                r="2.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-            />
-            <path
-                d="M3.5 20c.5-3.2 2.5-5 5.5-5s5 1.8 5.5 5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
-            <path
-                d="M14.5 15.5c2.7.1 4.7 1.6 5 4.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
+            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <circle cx="17" cy="9" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M3.5 20c.5-3.2 2.5-5 5.5-5s5 1.8 5.5 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M14.5 15.5c2.7.1 4.7 1.6 5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
     );
 
@@ -189,33 +101,10 @@ function Home() {
 
         return (
             <div className="property-image-placeholder">
-                <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    className="property-placeholder-icon"
-                >
-                    <path
-                        d="M3 10.5L12 3l9 7.5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    />
-                    <path
-                        d="M5 9.5V21h14V9.5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinejoin="round"
-                    />
-                    <path
-                        d="M9 21v-6h6v6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinejoin="round"
-                    />
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="property-placeholder-icon">
+                    <path d="M3 10.5L12 3l9 7.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5 9.5V21h14V9.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                    <path d="M9 21v-6h6v6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                 </svg>
                 <strong>Photos Coming Soon</strong>
                 <span>
@@ -228,7 +117,6 @@ function Home() {
 
     const getListingType = (property) => {
         if (!isPublished(property)) return "UNIT AVAILABLE";
-
         return property.listing?.listingType?.toUpperCase() || "UNIT AVAILABLE";
     };
 
@@ -258,13 +146,11 @@ function Home() {
         }
 
         const bedrooms = Number(property.bedrooms) || 0;
-
         return `${bedrooms} ${bedrooms === 1 ? "Bedroom" : "Bedrooms"}`;
     };
 
     const getBathroomLabel = (property) => {
         const bathrooms = Number(property.bathrooms) || 0;
-
         return `${bathrooms} ${bathrooms === 1 ? "Bathroom" : "Bathrooms"}`;
     };
 
@@ -289,115 +175,98 @@ function Home() {
                 </div>
             </nav>
 
-            <section
-                className={`hero ${
-                    heroSettings.image && heroSettings.placement === "background"
-                        ? "hero-with-background"
-                        : ""
-                }`}
-                id="home"
-                style={
-                    heroSettings.image && heroSettings.placement === "background"
-                        ? {
-                              backgroundImage: `linear-gradient(rgba(245,243,247,0.86), rgba(245,243,247,0.86)), url("${heroSettings.image}")`,
-                          }
-                        : undefined
-                }
-            >
-                <div
-                    className={`hero-layout ${
-                        heroSettings.image && heroSettings.placement === "side"
-                            ? "hero-layout-with-image"
-                            : ""
-                    }`}
-                >
+            {/* HARDCODED HERO */}
+            <section className="hero" id="home">
+                <div className="hero-layout">
                     <div className="hero-content">
                         <h1>
-                            {content.hero.heading1}
+                            Smarter property decisions.
                             <br />
-                            {content.hero.heading2}
+                            Stronger
                             <br />
-                            <span>{content.hero.heading3}</span>
+                            <span>internal communities.</span>
                         </h1>
 
-                        <p>{content.hero.description}</p>
+                        <p>
+                            VALORA brings property management, intelligent
+                            insights, and community collaboration together
+                            in one connected platform.
+                        </p>
 
                         <div className="hero-buttons">
                             <a href="#properties" className="primary-btn">
-                                {content.hero.primaryButton}
+                                EXPLORE PROPERTIES
                             </a>
 
                             <Link to="/login" className="secondary-btn">
-                                {content.hero.secondaryButton}
+                                ACCESS YOUR ACCOUNT
                             </Link>
                         </div>
 
                         <p className="login-text">
-                            {content.hero.loginPrompt}{" "}
-                            <Link to="/login">{content.hero.loginLink} →</Link>
+                            Already part of a community?{" "}
+                            <Link to="/login">Log in here →</Link>
                         </p>
                     </div>
-
-                    {heroSettings.image && heroSettings.placement === "side" && (
-                        <div className="hero-image-container">
-                            <img
-                                src={heroSettings.image}
-                                alt="VALORA development"
-                                className="hero-development-image"
-                            />
-                        </div>
-                    )}
                 </div>
             </section>
 
+            {/* FEATURES */}
             <section className="features">
                 <div className="feature-card">
                     <div className="feature-icon"><PropertyIcon /></div>
                     <div>
-                        <h3>{content.features.propertyLabel}</h3>
-                        <h4>{content.features.propertyTitle}</h4>
-                        <p>{content.features.propertyDescription}</p>
-                        <a href="#properties">
-                            {content.features.propertyLink} →
-                        </a>
+                        <h3>PROPERTY MANAGEMENT</h3>
+                        <h4>Manage Properties With Confidence</h4>
+                        <p>
+                            Access property information, manage listings,
+                            and keep important property details organised.
+                        </p>
+                        <a href="#properties">Explore properties →</a>
                     </div>
                 </div>
 
                 <div className="feature-card">
                     <div className="feature-icon"><IntelligenceIcon /></div>
                     <div>
-                        <h3>{content.features.intelligenceLabel}</h3>
-                        <h4>{content.features.intelligenceTitle}</h4>
-                        <p>{content.features.intelligenceDescription}</p>
-                        <Link to="/login">
-                            {content.features.intelligenceLink} →
-                        </Link>
+                        <h3>VALORA INTELLIGENCE</h3>
+                        <h4>Make Informed Decisions</h4>
+                        <p>
+                            Use property valuation insights and investment
+                            analysis to support smarter property decisions.
+                        </p>
+                        <Link to="/login">Explore intelligence →</Link>
                     </div>
                 </div>
 
                 <div className="feature-card">
                     <div className="feature-icon"><CommunityIcon /></div>
                     <div>
-                        <h3>{content.features.communityLabel}</h3>
-                        <h4>{content.features.communityTitle}</h4>
-                        <p>{content.features.communityDescription}</p>
-                        <Link to="/login">
-                            {content.features.communityLink} →
-                        </Link>
+                        <h3>COMMUNITY</h3>
+                        <h4>Stronger Internal Communities</h4>
+                        <p>
+                            Support communication, announcements, and
+                            collaboration between residents and administrators.
+                        </p>
+                        <Link to="/login">Access your community →</Link>
                     </div>
                 </div>
             </section>
 
+            {/* PROPERTIES */}
             <section className="property-listings" id="properties">
                 <div className="listings-header">
                     <div>
-                        <p className="section-label">{content.properties.label}</p>
-                        <h2>{content.properties.heading}</h2>
-                        <p>{content.properties.description}</p>
+                        <p className="section-label">OUR PROPERTIES</p>
+                        <h2>Discover Your Next Property</h2>
+                        <p>
+                            Explore property information available through
+                            the VALORA platform.
+                        </p>
                     </div>
 
                     <Link to="/properties" className="view-all">
-                        {content.properties.viewAllButton}
+                        VIEW ALL PROPERTIES
                     </Link>
                 </div>
 
@@ -442,107 +311,146 @@ function Home() {
                 </div>
             </section>
 
+            {/* VALORA INTELLIGENCE */}
             <section className="intelligence-section" id="valuation">
                 <div className="intelligence-content">
                     <div className="intelligence-text">
-                        <p className="section-label">{content.intelligence.label}</p>
+                        <p className="section-label">VALORA INTELLIGENCE</p>
                         <h2>
-                            {content.intelligence.heading1}
+                            Insights That Empower
                             <br />
-                            {content.intelligence.heading2}
+                            Better Decisions
                         </h2>
-                        <p>{content.intelligence.description}</p>
+                        <p>
+                            Access tools designed to support property
+                            valuation, investment analysis, and informed
+                            decision-making.
+                        </p>
 
                         <div className="intelligence-features">
-                            {[1, 2, 3, 4].map((number) => (
-                                <div key={number}>
-                                    <h3>
-                                        {content.intelligence[`feature${number}Title`]}
-                                    </h3>
-                                    <p>
-                                        {content.intelligence[`feature${number}Description`]}
-                                    </p>
-                                </div>
-                            ))}
+                            <div>
+                                <h3>Property Valuation</h3>
+                                <p>Explore property value estimates and insights.</p>
+                            </div>
+                            <div>
+                                <h3>Investment Analysis</h3>
+                                <p>Review investment performance and potential returns.</p>
+                            </div>
+                            <div>
+                                <h3>Data-Driven Insights</h3>
+                                <p>Use available property information to guide decisions.</p>
+                            </div>
+                            <div>
+                                <h3>Centralised Information</h3>
+                                <p>Keep relevant property insights accessible in one place.</p>
+                            </div>
                         </div>
 
                         <Link to="/login" className="primary-btn">
-                            {content.intelligence.button}
+                            ACCESS VALORA INTELLIGENCE
                         </Link>
                     </div>
                 </div>
             </section>
 
+            {/* COMMUNITY */}
             <section className="community-section" id="community">
                 <div className="community-content">
                     <div className="community-text">
-                        <p className="section-label">{content.community.label}</p>
+                        <p className="section-label">OUR COMMUNITY</p>
                         <h2>
-                            {content.community.heading1}
+                            Connected People.
                             <br />
-                            {content.community.heading2}
+                            Stronger Communities.
                         </h2>
-                        <p>{content.community.description}</p>
+                        <p>
+                            VALORA helps residents, property professionals,
+                            and administrators work together through
+                            organised communication and community tools.
+                        </p>
 
                         <div className="community-features">
-                            {[1, 2, 3, 4].map((number) => (
-                                <div className="community-feature" key={number}>
-                                    <h3>
-                                        {content.community[`feature${number}Title`]}
-                                    </h3>
-                                    <p>
-                                        {content.community[`feature${number}Description`]}
-                                    </p>
-                                </div>
-                            ))}
+                            <div className="community-feature">
+                                <h3>Community Announcements</h3>
+                                <p>Keep up with important community updates.</p>
+                            </div>
+                            <div className="community-feature">
+                                <h3>Resident Collaboration</h3>
+                                <p>Support communication between residents and management.</p>
+                            </div>
+                            <div className="community-feature">
+                                <h3>Service Provider Directory</h3>
+                                <p>Find relevant service providers through the platform.</p>
+                            </div>
+                            <div className="community-feature">
+                                <h3>Community Management</h3>
+                                <p>Help administrators organise community activities.</p>
+                            </div>
                         </div>
 
                         <Link to="/login" className="primary-btn">
-                            {content.community.button}
+                            ENTER YOUR COMMUNITY
                         </Link>
                     </div>
                 </div>
             </section>
 
+            {/* HOW IT WORKS */}
             <section className="how-it-works">
                 <div className="how-content">
                     <div className="how-header">
-                        <p className="section-label">{content.howItWorks.label}</p>
+                        <p className="section-label">HOW IT WORKS</p>
                         <h2>
-                            {content.howItWorks.heading1}
+                            Your Property Journey,
                             <br />
-                            {content.howItWorks.heading2}
+                            Made Simpler
                         </h2>
-                        <p>{content.howItWorks.description}</p>
+                        <p>
+                            Get started with VALORA and access the tools
+                            relevant to your role and community.
+                        </p>
                     </div>
 
                     <div className="steps">
-                        {[1, 2, 3, 4].map((number) => (
-                            <div className="step" key={number}>
-                                <div className="step-number">
-                                    {String(number).padStart(2, "0")}
-                                </div>
-                                <h3>
-                                    {content.howItWorks[`step${number}Title`]}
-                                </h3>
-                                <p>
-                                    {content.howItWorks[`step${number}Description`]}
-                                </p>
-                            </div>
-                        ))}
+                        <div className="step">
+                            <div className="step-number">01</div>
+                            <h3>Access Your Account</h3>
+                            <p>Log in to access your role-specific dashboard.</p>
+                        </div>
+                        <div className="step">
+                            <div className="step-number">02</div>
+                            <h3>Explore Your Tools</h3>
+                            <p>View the property and community features available to you.</p>
+                        </div>
+                        <div className="step">
+                            <div className="step-number">03</div>
+                            <h3>Manage and Connect</h3>
+                            <p>Use the platform to manage tasks and communicate.</p>
+                        </div>
+                        <div className="step">
+                            <div className="step-number">04</div>
+                            <h3>Make Informed Decisions</h3>
+                            <p>Use available information to support your property journey.</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
+            {/* ABOUT */}
             <section className="about-section" id="about">
                 <div className="about-content">
-                    <p className="section-label">{content.about.label}</p>
+                    <p className="section-label">ABOUT VALORA</p>
                     <h2>
-                        {content.about.heading1}
+                        A Smarter Approach to
                         <br />
-                        {content.about.heading2}
+                        Property and Community
                     </h2>
-                    <p>{content.about.description}</p>
+                    <p>
+                        VALORA is a property and community management
+                        platform designed to bring property information,
+                        management tools, intelligent insights, and
+                        community collaboration into one connected experience.
+                    </p>
                 </div>
             </section>
         </div>
