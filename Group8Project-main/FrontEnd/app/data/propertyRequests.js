@@ -1,292 +1,87 @@
 /* =========================================================
-   VALORA PROPERTY REQUEST DATA
-   Sell / Rent Requests
+   VALORA PROPERTY REQUESTS (Sell / Rent)
+
+   These used to live in localStorage, which meant a request
+   made by a resident was never visible to the HOA admin or the
+   estate agent (each browser had its own copy). They now come
+   from the API; this module keeps the names the pages already
+   use so the screens only have to `await` them.
 ========================================================= */
 
-const STORAGE_KEY = "valoraPropertyRequests";
+import {
+    approvePropertyRequest as apiApprove,
+    assignEstateAgent as apiAssignAgent,
+    createPropertyRequest as apiCreate,
+    listPropertyRequests,
+    rejectPropertyRequest as apiReject,
+} from "../services/propertyRequestApi";
+import { getProperties, saveProperties } from "./propertyStorage";
 
-
-/* =========================================================
-   GET REQUESTS
-========================================================= */
-
-export function getPropertyRequests() {
-  try {
-    return JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || "[]"
-    );
-  } catch (error) {
-    console.error(
-      "Unable to load VALORA property requests:",
-      error
-    );
-
-    return [];
-  }
+/** Every request the signed-in user may see (the API scopes it by role). */
+export async function getPropertyRequests() {
+    const { items } = await listPropertyRequests({ pageSize: 100 });
+    return items;
 }
 
-
-/* =========================================================
-   SAVE REQUESTS
-========================================================= */
-
-export function savePropertyRequests(requests) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(requests)
-  );
+export async function getPendingHOARequests() {
+    const { items } = await listPropertyRequests({ status: "pending_review", pageSize: 100 });
+    return items;
 }
-
-
-/* =========================================================
-   CREATE REQUEST
-========================================================= */
 
 export function createPropertyRequest(requestData) {
-
-  const requests = getPropertyRequests();
-
-  const newRequest = {
-
-    id:
-      "PR-" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .substring(2, 7)
-        .toUpperCase(),
-
-    requesterId:
-      requestData.requesterId || "",
-
-    requesterName:
-      requestData.requesterName || "",
-
-    requesterEmail:
-      requestData.requesterEmail || "",
-
-    requesterRole:
-      requestData.requesterRole || "",
-
-    propertyId:
-      requestData.propertyId || "",
-
-    propertyAddress:
-      requestData.propertyAddress || "",
-
-    propertyType:
-      requestData.propertyType || "",
-
-    bedrooms:
-      requestData.bedrooms || "",
-
-    bathrooms:
-      requestData.bathrooms || "",
-
-    propertySize:
-      requestData.propertySize || "",
-
-    requestType:
-      requestData.requestType || "",
-
-    askingPrice:
-      requestData.askingPrice || "",
-
-    rentalPeriod:
-      requestData.rentalPeriod || "",
-
-    additionalDetails:
-      requestData.additionalDetails || "",
-
-    financialInformation:
-      requestData.financialInformation || "",
-
-    status: "Pending HOA Review",
-
-    hoaDecision:
-      "",
-
-    rejectionReason:
-      "",
-
-    assignedAgentId:
-      "",
-
-    assignedAgentName:
-      "",
-
-    assignedAt:
-      "",
-
-    createdAt:
-      new Date().toISOString(),
-
-    updatedAt:
-      new Date().toISOString(),
-
-  };
-
-
-  requests.push(newRequest);
-
-  savePropertyRequests(requests);
-
-  return newRequest;
-}
-
-
-/* =========================================================
-   UPDATE REQUEST
-========================================================= */
-
-export function updatePropertyRequest(
-  requestId,
-  updates
-) {
-
-  const requests = getPropertyRequests();
-
-  const updatedRequests =
-    requests.map((request) => {
-
-      if (request.id !== requestId) {
-        return request;
-      }
-
-      return {
-        ...request,
-        ...updates,
-        updatedAt:
-          new Date().toISOString(),
-      };
-
+    return apiCreate({
+        unitId: requestData.unitId ?? requestData.propertyId,
+        requestType: requestData.requestType,
+        askingPrice: requestData.askingPrice,
+        rentalPeriod: requestData.rentalPeriod,
+        financialInformation: requestData.financialInformation,
+        additionalDetails: requestData.additionalDetails,
     });
-
-  savePropertyRequests(updatedRequests);
-
-  return updatedRequests.find(
-    (request) =>
-      request.id === requestId
-  );
 }
 
-
-/* =========================================================
-   GET REQUESTS FOR USER
-========================================================= */
-
-export function getRequestsForUser(
-  userId
-) {
-
-  return getPropertyRequests().filter(
-    (request) =>
-      request.requesterId === userId
-  );
-
+export function approvePropertyRequest(requestId) {
+    return apiApprove(requestId);
 }
 
-
-/* =========================================================
-   GET PENDING HOA REQUESTS
-========================================================= */
-
-export function getPendingHOARequests() {
-
-  return getPropertyRequests().filter(
-    (request) =>
-      request.status ===
-      "Pending HOA Review"
-  );
-
+export function rejectPropertyRequest(requestId, reason) {
+    return apiReject(requestId, reason || "Property request was not approved.");
 }
 
-
-/* =========================================================
-   APPROVE REQUEST
-========================================================= */
-
-export function approvePropertyRequest(
-  requestId
-) {
-
-  return updatePropertyRequest(
-    requestId,
-    {
-      status:
-        "Approved - Awaiting Agent Assignment",
-
-      hoaDecision:
-        "Approved",
-
-      rejectionReason:
-        "",
-    }
-  );
-
+export function assignEstateAgent(requestId, agentId) {
+    return apiAssignAgent(requestId, agentId);
 }
 
+/**
+ * The agent screens edit listing text and photos in the local property store
+ * (there is no listing-photo API yet). A request now points at a database unit,
+ * so make sure a local record exists for it and return that record.
+ */
+export function ensureLocalPropertyForRequest(request) {
+    if (!request?.propertyId) return null;
 
-/* =========================================================
-   REJECT REQUEST
-========================================================= */
+    const existing = getProperties();
+    const found = existing.find((property) => String(property.id) === String(request.propertyId));
+    if (found) return found;
 
-export function rejectPropertyRequest(
-  requestId,
-  reason
-) {
+    const created = {
+        id: String(request.propertyId),
+        unitNumber: request.unitNo ? `Unit ${request.unitNo}` : `Unit ${request.propertyId}`,
+        propertyType: request.propertyType || "Apartment",
+        bedrooms: request.bedrooms === "" ? null : request.bedrooms,
+        bathrooms: request.bathrooms === "" ? null : request.bathrooms,
+        floorArea: request.propertySize || "",
+        development: request.complexName || "VALORA Estate",
+        location: request.propertyAddress || request.complexName || "VALORA Estate",
+        unitStatus: "Available",
+        images: [],
+        listing: {
+            listingType: request.requestType === "Rent" ? "For Rent" : "For Sale",
+            listingStatus: "Assigned",
+            ownerId: request.requesterId,
+            ownerName: request.requesterName,
+        },
+    };
 
-  return updatePropertyRequest(
-    requestId,
-    {
-      status:
-        "Rejected",
-
-      hoaDecision:
-        "Rejected",
-
-      rejectionReason:
-        reason ||
-        "Property request was not approved.",
-    }
-  );
-
+    saveProperties([...existing, created]);
+    return created;
 }
-
-
-/* =========================================================
-   ASSIGN ESTATE AGENT
-========================================================= */
-
-export function assignEstateAgent(
-  requestId,
-  agentId,
-  agentName
-) {
-
-  return updatePropertyRequest(
-    requestId,
-    {
-      assignedAgentId:
-        agentId,
-
-      assignedAgentName:
-        agentName,
-
-      assignedAt:
-        new Date().toISOString(),
-
-      status:
-        "Assigned to Estate Agent",
-    }
-  );
-
-}
-
-
-/* =========================================================
-   EXPORT STORAGE KEY
-========================================================= */
-
-export { STORAGE_KEY };

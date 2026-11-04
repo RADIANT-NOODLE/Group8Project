@@ -4,7 +4,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.datetime_utils import utcnow
-from app.common.enums import ComplaintStatus, UserRole
+from app.common.enums import ADMIN_ROLES, ComplaintStatus, UserRole
 from app.community.models.complaint import Complaint
 from app.community.repositories.complaint_repository import ComplaintRepository
 from app.community.schemas.complaint import (
@@ -30,7 +30,7 @@ class ComplaintService:
 
     @staticmethod
     def _is_admin(user: User) -> bool:
-        return user.role == UserRole.hoa_admin.value
+        return user.role in ADMIN_ROLES
 
     @staticmethod
     def _to_response(complaint: Complaint, viewer: User) -> ComplaintResponse:

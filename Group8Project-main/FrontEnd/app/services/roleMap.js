@@ -9,7 +9,6 @@
 export const ROLES = Object.freeze({
   casualVisitor: 'casual_visitor',
   resident: 'resident',
-  investor: 'investor',
   estateAgent: 'estate_agent',
   hoaAdmin: 'hoa_admin',
   serviceProvider: 'service_provider',
@@ -20,7 +19,6 @@ export const DASHBOARD_PATH = '/dashboard';
 export const HOA_ADMIN_PATH = '/hoa-admin'; 
 export const HEAD_ADMIN_PATH = '/head-admin';
 export const ESTATE_AGENT_PATH = '/agent-dashboard';
-export const INVESTOR_PATH = '/investor-dashboard';
 
 /** The public landing route for roles with no signed-in area. */
 export const PUBLIC_HOME_PATH = '/';
@@ -34,12 +32,6 @@ export const ROLE_DEFINITIONS = Object.freeze([
     label: 'Resident',
     description: 'Follow the context and updates that matter around your home.',
     dashboardPath: DASHBOARD_PATH,
-  }),
-  Object.freeze({
-    value: ROLES.investor,
-    label: 'Investor',
-    description: 'Track property and growth insights across the estate.',
-    dashboardPath: INVESTOR_PATH,
   }),
   Object.freeze({
     value: ROLES.estateAgent,
@@ -84,7 +76,6 @@ const LEGACY_ROLE_ALIASES = Object.freeze({
   'head administrator': ROLES.hoaAdmin,
   'property owner': ROLES.resident,
   owner: ROLES.resident,
-  buyer: ROLES.investor,
   agent: ROLES.estateAgent,
   'estate agent': ROLES.estateAgent,
   provider: ROLES.serviceProvider,
@@ -152,6 +143,8 @@ const PUBLIC_PATHS = Object.freeze([
   '/',
   '/login',
   '/register',
+  '/forgot-password',
+  '/reset-password',
   '/registration-pending',
   '/properties',
   '/property/:propertyId',
@@ -171,22 +164,31 @@ const SHARED_PATHS = Object.freeze([
 
 /** Screens that belong to one role's workspace. Keyed by role value, so the
  *  index below can be built without a second lookup. */
+const ESTATE_ADMIN_PATHS = Object.freeze([
+  '/hoa-admin',
+  '/property-management',
+  '/maintenance',
+  '/resident-directory',
+  '/resident-complaints',
+  '/property-requests',
+  '/property-approvals',
+  '/registration-requests',
+  '/create-agent',
+]);
+
 export const ROLE_PATHS = Object.freeze({
-  [ROLES.resident]: Object.freeze(['/property', '/valuation', '/request-to-sell', '/complaints', '/maintenance', '/resident-directory']),
-  [ROLES.investor]: Object.freeze(['/property', '/valuation', '/roi']),
-  [ROLES.estateAgent]: Object.freeze(['/agent-listings', '/agent-edit-listings', '/agent-inquiries', '/valuation']),
-  [ROLES.hoaAdmin]: Object.freeze([
-    '/maintenance',
-    '/resident-directory',
-    '/resident-complaints',
-    '/property-requests',
-    '/property-approvals',
-    '/community-analytics',
-    '/ai-training-data',
-    '/head-admin',
-    '/registration-requests',
-    '/user-management',
+  /* Residents log and rate their own maintenance requests on /maintenance. */
+  [ROLES.resident]: Object.freeze(['/valuation', '/request-to-sell', '/complaints', '/maintenance']),
+  [ROLES.estateAgent]: Object.freeze([
+    '/agent-dashboard',
+    '/agent-listings',
+    '/agent-edit-listings',
+    '/agent-inquiries',
+    '/valuation',
   ]),
+  [ROLES.hoaAdmin]: ESTATE_ADMIN_PATHS,
+  /* The head administrator runs everything the HOA does, plus user management. */
+  head_admin: Object.freeze([...ESTATE_ADMIN_PATHS, '/head-admin', '/user-management']),
   [ROLES.serviceProvider]: Object.freeze([]),
   [ROLES.casualVisitor]: Object.freeze([]),
 });

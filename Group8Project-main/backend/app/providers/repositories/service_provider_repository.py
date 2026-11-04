@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.common.validators import escape_like
 from app.providers.models.service_provider import ServiceProvider
 
 
@@ -17,7 +18,8 @@ class ServiceProviderRepository:
     ) -> list[ServiceProvider]:
         stmt = select(ServiceProvider).order_by(ServiceProvider.provider_id)
         if trade is not None:
-            stmt = stmt.where(ServiceProvider.trade.ilike(trade))
+            # match the trade literally: '%' and '_' typed by a user must not act as wildcards
+            stmt = stmt.where(ServiceProvider.trade.ilike(escape_like(trade.strip()), escape="\\"))
         if verified is not None:
             stmt = stmt.where(ServiceProvider.verified == verified)
         if emergency_available is not None:

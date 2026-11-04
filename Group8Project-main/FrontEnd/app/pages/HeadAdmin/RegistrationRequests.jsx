@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { roleLabel } from "../../services/userApi";
 import "./RegistrationRequests.css";
+import "../../components/ValoraModal.css";
+import { getSessionToken, getStoredUser } from "../../services/session";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 /* =========================================================
    ROLE HELPERS
@@ -10,12 +14,12 @@ import "./RegistrationRequests.css";
 function normalizeRole(value) {
     const role = String(value || "").trim().toLowerCase();
 
-    if (["head admin", "head administrator", "headadministrator"].includes(role)) {
-        return "Head Admin";
+    if (["head admin", "head administrator", "headadministrator", "head_admin"].includes(role)) {
+        return "head_admin";
     }
 
     if (["hoa", "hoa admin", "hoa administrator", "administrator", "hoa_admin"].includes(role)) {
-        return "HOA Admin";
+        return "hoa_admin";
     }
 
     return value || "";
@@ -27,9 +31,9 @@ function normalizeRole(value) {
 
 function getCurrentUser() {
     try {
-        const storedUser = localStorage.getItem("valoraUser");
+        const storedUser = getStoredUser();
         if (!storedUser) return null;
-        const user = JSON.parse(storedUser);
+        const user = storedUser;
         if (!user || typeof user !== "object") return null;
 
         const firstName = user.firstName || user.firstname || user.first_name || "";
@@ -62,8 +66,8 @@ function isApproved(user) {
 ========================================================= */
 
 async function fetchAllUsersFromApi() {
-    const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-    const response = await fetch("http://127.0.0.1:8000/api/v1/users/", { 
+    const token = getSessionToken();
+    const response = await fetch(`${getApiBaseUrl()}/api/v1/users/`, { 
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json"}
     });
     if (!response.ok) throw new Error("Failed to fetch users");
@@ -132,17 +136,21 @@ function RegistrationRequests() {
         setModalConfig(prev => ({ ...prev, isOpen: false }));
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/users/${actionUserId}/${actionType}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/users/${actionUserId}/${actionType}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
             
             if (!response.ok) throw new Error(`Failed to ${actionType} user`);
             
-            // Remove user from the list in the UI
-            setAllUsers(allUsers.filter(u => u.id !== actionUserId));
+            // Approved users stay in the list (now approved); rejected users are deleted by the API.
+            setAllUsers(previous =>
+                isApprove
+                    ? previous.map(u => (u.id === actionUserId ? { ...u, hoa_approved: true } : u))
+                    : previous.filter(u => u.id !== actionUserId)
+            );
 
             // Show success alert
             setModalConfig({
@@ -178,11 +186,11 @@ function RegistrationRequests() {
         return <Navigate to="/registration-pending" replace />;
     }
 
-    if (!["Head Admin", "HOA Admin"].includes(currentUser.role)) {
+    if (!["head_admin", "hoa_admin"].includes(currentUser.role)) {
         return <Navigate to="/dashboard" replace />;
     }
 
-    const isHeadAdmin = currentUser.role === "Head Admin";
+    const isHeadAdmin = currentUser.role === "head_admin";
 
     /* =====================================================
        PAGE CONTENT
@@ -214,31 +222,83 @@ function RegistrationRequests() {
 
                         <div>
                             <strong>{currentUser.fullName}</strong>
-                            <span>{currentUser.role}</span>
+                            <span>{roleLabel(currentUser.role)}</span>
                         </div>
                     </div>
                 </header>
 
-                {/* STATISTICS */}
-                <section className="registration-requests-stats">
-                    <div className="registration-requests-stat-card">
-                        <span>Pending Requests</span>
-                        <strong>{loading ? "..." : pendingUsers.length}</strong>
-                        <small>Awaiting review</small>
-                    </div>
+                {/* ACCOUNT APPROVALS: every account is either approved or waiting */}
+                {(() => {
+                    const pending = pendingUsers.length;
+                    const approved = approvedUsers.length;
+                    const total = pending + approved;
+                    const approvedShare = total > 0 ? Math.round((approved / total) * 100) : 0;
 
-                    <div className="registration-requests-stat-card">
-                        <span>Approved Accounts</span>
-                        <strong>{loading ? "..." : approvedUsers.length}</strong>
-                        <small>Total approved users</small>
-                    </div>
+                    return (
+                        <section className="registration-requests-summary" aria-labelledby="registration-summary-title">
+                            <div className="registration-requests-summary-headline">
+                                <span className="registration-requests-summary-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M19 8v6M16 11h6" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <p className="registration-requests-summary-eyebrow">Account approvals</p>
+                                    <h2 id="registration-summary-title">
+                                        {loading
+                                            ? "Loading accounts…"
+                                            : pending === 0
+                                                ? "No accounts waiting for approval"
+                                                : `${pending} ${pending === 1 ? "account is" : "accounts are"} waiting for your approval`}
+                                    </h2>
+                                </div>
+                            </div>
 
-                    <div className="registration-requests-stat-card">
-                        <span>Total Pending</span>
-                        <strong>{loading ? "..." : pendingUsers.length}</strong>
-                        <small>Waiting for approval</small>
-                    </div>
-                </section>
+                            <div className="registration-requests-summary-chart">
+                                <div className="registration-requests-summary-chart-top">
+                                    <span>{loading ? "…" : `${total} ${total === 1 ? "account" : "accounts"} in total`}</span>
+                                    <strong>{loading ? "" : `${approvedShare}% approved`}</strong>
+                                </div>
+
+                                <div
+                                    className="registration-requests-summary-bar"
+                                    role="img"
+                                    aria-label={`Approved: ${approved}, waiting for approval: ${pending}`}
+                                >
+                                    {!loading && approved > 0 && (
+                                        <span
+                                            className="registration-requests-summary-segment is-approved"
+                                            style={{ flexGrow: approved }}
+                                            title={`Approved: ${approved}`}
+                                        />
+                                    )}
+                                    {!loading && pending > 0 && (
+                                        <span
+                                            className="registration-requests-summary-segment is-pending"
+                                            style={{ flexGrow: pending }}
+                                            title={`Waiting for approval: ${pending}`}
+                                        />
+                                    )}
+                                </div>
+
+                                <ul className="registration-requests-summary-legend">
+                                    <li>
+                                        <span className="registration-requests-summary-swatch is-approved" aria-hidden="true" />
+                                        Approved
+                                        <strong>{loading ? "…" : approved}</strong>
+                                    </li>
+                                    <li>
+                                        <span className="registration-requests-summary-swatch is-pending" aria-hidden="true" />
+                                        Waiting for approval
+                                        <strong>{loading ? "…" : pending}</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </section>
+                    );
+                })()}
 
                 {/* PENDING REQUESTS */}
                 <section className="registration-requests-panel registration-requests-large-panel">
@@ -287,7 +347,7 @@ function RegistrationRequests() {
 
                                             <td>
                                                 <span className="registration-requests-role">
-                                                    {normalizeRole(user.role) || "Not specified"}
+                                                    {roleLabel(user.role) || "Not specified"}
                                                 </span>
                                             </td>
 

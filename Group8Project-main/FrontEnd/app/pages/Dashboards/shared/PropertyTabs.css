@@ -1,0 +1,93 @@
+/* =========================================================
+   PROPERTY TABS
+   Shared tab bar for Properties / Requests / Approvals
+========================================================= */
+
+.property-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+
+    margin-bottom: 22px;
+    padding-top: 24px;
+
+    border-bottom: 1px solid #e4e0e7;
+}
+
+.property-tab {
+    position: relative;
+
+    padding: 10px 16px;
+
+    color: #77727b;
+
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+
+    border-radius: 7px 7px 0 0;
+
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
+}
+
+.property-tab:hover {
+    color: #563f6b;
+    background: #f5f1f8;
+}
+
+/* Same font weight as inactive tabs, so switching never changes tab widths. */
+.property-tab.active {
+    color: #563f6b;
+}
+
+.property-tab.active::after {
+    content: "";
+
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+
+    height: 2px;
+
+    border-radius: 2px;
+    background: #563f6b;
+}
+
+/* =========================================================
+   CONSISTENT PLACEMENT
+   The three pages pad their <main> differently (Requests has
+   none), so drop their top padding and let the tab bar supply
+   it. The tabs then sit at the same height on every page.
+   "main." raises specificity over each page's media queries.
+========================================================= */
+
+main.property-management-main,
+main.property-approvals-main {
+    padding-top: 0;
+}
+
+.property-requests-main > .property-tabs {
+    margin-left: 34px;
+    margin-right: 34px;
+}
+
+.property-tab:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .property-tab {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .property-tab {
+        transition: none;
+    }
+}

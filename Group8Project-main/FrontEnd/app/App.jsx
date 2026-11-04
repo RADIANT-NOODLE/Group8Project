@@ -6,29 +6,32 @@ import {
     Navigate,
 } from "react-router-dom";
 
+/* SESSION */
+import { useSession } from "./services/session";
+import { canAccessRoute } from "./services/roleMap";
+
 /* PUBLIC PAGES */
 import Home from "./pages/Home";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 import RegistrationPending from "./pages/Auth/RegistrationPending";
 
 /* PROPERTY */
 import Property from "./pages/Property/Property";
-import MyProperty from "./pages/Property/MyProperty";
 import Properties from "./pages/Property/Properties";
 import PropertyRequests from "./pages/Property/PropertyRequests";
 import PropertyApprovals from "./pages/Property/PropertyApprovals";
 import PropertyManagement from "./pages/Property/PropertyManagement";
 
 /* DASHBOARDS */
-import Dashboard from "./pages/Dashboard";
+import ResidentDashboard from "./pages/Dashboards/Resident/ResidentDashboard";
 import HeadAdminDashboard from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard";
 import HOAAdminDashboard from "./pages/Dashboards/HOAAdmin/HOAAdminDashboard";
-import EstateAgentDashboard from "./pages/Dashboards/EstateAgent/EstateAgentDashboard"
-import InvestorDashboard from "./pages/Dashboards/Investor/InvestorDashboard";
+import EstateAgentDashboard from "./pages/Dashboards/EstateAgent/EstateAgentDashboard";
 
 /* HOA ADMIN */
-import LandingPageSettings from "./pages/Dashboards/HOAAdmin/LandingPageSettings";
 
 /* RESIDENT */
 import RequestToSell from "./pages/RequestToSell";
@@ -38,24 +41,22 @@ import ResidentDirectory from "./pages/Resident/ResidentDirectory";
 
 /* MAINTENANCE */
 import Maintenance from "./pages/Maintenance/Maintenance";
+import CreateAgentAccount from "./pages/EstateAgent/CreateAgentAccount";
 
 /* COMMUNITY */
 import Providers from "./pages/Community/Providers";
 import CommunityAnnouncements from "./pages/Announcements/CommunityAnnouncements";
 import Announcements from "./pages/Announcements/Announcements";
-import CommunityAnalytics from "./pages/Community/CommunityAnalytics";
 
 /* AI */
-import AITrainingData from "./pages/AI/AITrainingData";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
 import AgentEditListings from "./pages/EstateAgent/AgentEditListings";
 import AgentInquiries from "./pages/EstateAgent/AgentInquiries";
 
-/* INVESTOR */
-import Valuation from "./pages/Investor/Valuation";
-import ROI from "./pages/Investor/ROI";
+/* AI VALUATION */
+import Valuation from "./pages/Valuation/Valuation";
 
 /* HEAD ADMIN */
 import RegistrationRequests from "./pages/HeadAdmin/RegistrationRequests";
@@ -65,304 +66,62 @@ import UserManagement from "./pages/HeadAdmin/UserManagement";
 import Profile from "./pages/Profile";
 
 /* GLOBAL CSS */
+import DialogHost from "./components/AppDialog";
 import "./App.css";
 
-/* DEFAULT HEAD ADMIN ACCOUNT */
-const headAdminAccount = {
-    id: "head-admin-001",
-    firstName: "Head",
-    lastName: "Administrator",
-    email: "admin@valora.co.za",
-    password: "Admin12345",
-    role: "Head Admin",
-    status: "Approved",
-};
 
-/* DEFAULT HOA ADMIN ACCOUNT */
-const hoaAdminAccount = {
-    id: "hoa-admin-001",
-    firstName: "HOA",
-    lastName: "Administrator",
-    email: "hoa.admin@valora.co.za",
-    password: "HOAAdmin12345",
-    role: "HOA Admin",
-    status: "Approved",
-};
+/* =========================================================
+   ROUTE GUARDS 
+========================================================= */
 
-/* INITIALISE DEFAULT ACCOUNTS */
-function initialiseDefaultAccounts() {
-    let existingUsers = [];
-
-    try {
-        const savedUsers = JSON.parse(
-            localStorage.getItem("valoraUsers") || "[]"
-        );
-
-        if (Array.isArray(savedUsers)) {
-            existingUsers = savedUsers;
-        }
-    } catch (error) {
-        console.error("Unable to read VALORA users:", error);
-    }
-
-    const defaultAccounts = [
-        headAdminAccount,
-        hoaAdminAccount,
-    ];
-
-    let usersChanged = false;
-
-    defaultAccounts.forEach((defaultAccount) => {
-        const accountExists = existingUsers.some(
-            (user) =>
-                String(user.email || "").trim().toLowerCase() ===
-                defaultAccount.email.toLowerCase()
-        );
-
-        if (!accountExists) {
-            existingUsers.push(defaultAccount);
-            usersChanged = true;
-        }
-    });
-
-    if (
-        usersChanged ||
-        !localStorage.getItem("valoraUsers")
-    ) {
-        localStorage.setItem(
-            "valoraUsers",
-            JSON.stringify(existingUsers)
-        );
-    }
-}
-
-/* NORMALISE ROLE */
-function normalizeRole(roleValue) {
-    const role = String(roleValue || "").trim().toLowerCase();
-
-    if (
-        [
-            "hoa",
-            "hoa admin",
-            "hoa administrator",
-            "administrator",
-            "hoa_admin",
-        ].includes(role)
-    ) {
-        return "HOA Admin";
-    }
-
-    if (
-        [
-            "head admin",
-            "headadministrator",
-            "head administrator",
-            "head_admin",
-        ].includes(role)
-    ) {
-        return "Head Admin";
-    }
-
-    if (
-        ["property owner", "resident"].includes(role)
-    ) {
-        return "Resident";
-    }
-
-    if (["buyer", "investor"].includes(role)) {
-        return "Investor";
-    }
-
-    if (role === "estate agent" || role === "estate_agent") {
-        return "Estate Agent";
-    }
-
-    return String(roleValue || "").trim();
-}
-
-/* GET CURRENT USER */
-function getCurrentUser() {
-    const storedUser = localStorage.getItem("valoraUser");
-
-    if (!storedUser) {
-        return null;
-    }
-
-    try {
-        const user = JSON.parse(storedUser);
-
-        if (!user || typeof user !== "object") {
-            return null;
-        }
-
-        const normalizedRole = normalizeRole(user.role);
-
-        const firstName =
-            user.firstName ||
-            user.firstname ||
-            user.first_name ||
-            "";
-
-        const lastName =
-            user.lastName ||
-            user.lastname ||
-            user.last_name ||
-            "";
-
-        const fullName =
-            user.fullName ||
-            user.name ||
-            `${firstName} ${lastName}`.trim();
-
-        let initials = user.initials || "";
-
-        if (!initials) {
-            initials =
-                `${firstName.charAt(0)}${lastName.charAt(0)}`
-                    .toUpperCase();
-        }
-
-        if (!initials && fullName) {
-            initials = fullName
-                .trim()
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((part) => part.charAt(0))
-                .join("")
-                .toUpperCase();
-        }
-
-        return {
-            ...user,
-            role: normalizedRole,
-            firstName,
-            lastName,
-            fullName,
-            initials,
-        };
-    } catch (error) {
-        console.error("Unable to read VALORA user:", error);
-        return null;
-    }
-}
-
-/* CHECK APPROVAL STATUS */
-function isUserApproved(user) {
-    if (!user) return false;
-
-    if (user.hoa_approved === true) return true;
-
-    const status = String(user?.status || "").trim().toLowerCase();
-    
-    return status === "approved" || status === "active";
-}
-
-/* PROTECTED ROUTE */
 function ProtectedRoute({ children }) {
-    const user = getCurrentUser();
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    if (!isUserApproved(user)) {
-        return <Navigate to="/registration-pending" replace />;
-    }
-
+    const { user, isAuthenticated } = useSession();
+    
+    if (user === undefined) return <div style={{ padding: "50px" }}>Loading...</div>; // Session is loading
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    
     return children;
 }
 
-/* HEAD ADMIN ROUTE */
-function HeadAdminRoute({ children }) {
-    const user = getCurrentUser();
+/* Role-restricted screens. Who may open what lives in roleMap.js, so the
+   sidebar and the guard can never disagree. */
+function RoleRoute({ path, children }) {
+    const { user, isAuthenticated } = useSession();
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
+    if (user === undefined) return <div style={{ padding: "50px" }}>Loading...</div>;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-    if (!isUserApproved(user)) {
-        return <Navigate to="/registration-pending" replace />;
-    }
-
-    if (user.role !== "Head Admin") {
+    if (!canAccessRoute(user.role, path)) {
         return <Navigate to="/dashboard" replace />;
     }
 
     return children;
 }
 
-/* HOA ADMIN ROUTE */
-function HOAAdminRoute({ children }) {
-    const user = getCurrentUser();
+/* =========================================================
+   DASHBOARD WRAPPERS
+========================================================= */
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    if (!isUserApproved(user)) {
-        return <Navigate to="/registration-pending" replace />;
-    }
-
-    // accept the backend format ("hoa_admin") and the frontend format ("HOA Admin")
-    const role = String(user.role || "").toLowerCase();
-    if (!["head admin", "hoa admin", "head_admin", "hoa_admin"].includes(role)) {
-        return <Navigate to="/dashboard" replace />;
-    }
-
-    return children;
+function HOADashboardWrapper() {
+    const { user } = useSession();
+    return <HOAAdminDashboard user={user} />;
 }
 
-/* INVESTOR ROUTE */
-function InvestorRoute({ children }) {
-    const user = getCurrentUser();
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    if (!isUserApproved(user)) {
-        return <Navigate to="/registration-pending" replace />;
-    }
-
-    // If the logged-in user is NOT an investor, kick them to the generic dashboard
-    if (user.role !== "Investor") {
-        return <Navigate to="/dashboard" replace />;
-    }
-
-    return children;
+function AgentDashboardWrapper() {
+    const { user } = useSession();
+    return <EstateAgentDashboard user={user} />;
 }
 
-/* ADMIN MANAGEMENT ROUTE */
-function AdminManagementRoute({ children }) {
-    const user = getCurrentUser();
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    if (!isUserApproved(user)) {
-        return <Navigate to="/registration-pending" replace />;
-    }
-
-    // accept lowercase roles
-    const role = String(user.role || "").toLowerCase();
-    if (!["head admin", "hoa admin", "head_admin", "hoa_admin"].includes(role)) {
-        return <Navigate to="/dashboard" replace />;
-    }
-
-    return children;
+function ResidentDashboardWrapper() {
+    // The dashboard already uses useSession internally, so we just render it
+    return <ResidentDashboard />;
 }
 
-/* INVESTOR WRAPPER */
-function InvestorDashboardWrapper() {
-    const user = getCurrentUser();
-    return <InvestorDashboard user={user} />;
-}
 
-/* APP */
+/* =========================================================
+   APP
+========================================================= */
 function App() {
-    initialiseDefaultAccounts();
-
     return (
         <BrowserRouter>
             <Routes>
@@ -372,49 +131,34 @@ function App() {
                 {/* AUTHENTICATION */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route
                     path="/registration-pending"
                     element={<RegistrationPending />}
                 />
 
                 {/* PUBLIC PROPERTY BROWSING */}
-                <Route
-                    path="/properties"
-                    element={<Properties />}
-                />
+                <Route path="/properties" element={<Properties />} />
+                <Route path="/property/:propertyId" element={<Property />} />
 
-                <Route
-                    path="/property/:propertyId"
-                    element={<Property />}
-                />
-
-                {/* MY PROPERTY */}
-                <Route
-                    path="/property"
-                    element={
-                        <ProtectedRoute>
-                            <MyProperty />
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* PROPERTY MANAGEMENT */}
-                <Route
-                    path="/property-management"
-                    element={
-                        <HOAAdminRoute>
-                            <PropertyManagement />
-                        </HOAAdminRoute>
-                    }
-                />
-
-                {/* MAIN DASHBOARD */}
+                {/* MAIN DASHBOARD (Resident) */}
                 <Route
                     path="/dashboard"
                     element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <ResidentDashboard/>
                         </ProtectedRoute>
+                    }
+                />
+
+                {/* PROPERTY MANAGEMENT (HOA Only) */}
+                <Route
+                    path="/property-management"
+                    element={
+                        <RoleRoute path="/property-management">
+                            <PropertyManagement />
+                        </RoleRoute>
                     }
                 />
 
@@ -422,9 +166,9 @@ function App() {
                 <Route
                     path="/head-admin"
                     element={
-                        <HeadAdminRoute>
+                        <RoleRoute path="/head-admin">
                             <HeadAdminDashboard />
-                        </HeadAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -432,41 +176,19 @@ function App() {
                 <Route
                     path="/hoa-admin"
                     element={
-                        <HOAAdminRoute>
-                            <HOAAdminDashboard />
-                        </HOAAdminRoute>
+                        <RoleRoute path="/hoa-admin">
+                            <HOADashboardWrapper />
+                        </RoleRoute>
                     }
                 />
-
-             
 
                 {/* ESTATE AGENT DASHBOARD */}
                 <Route
                     path="/agent-dashboard"
                     element={
                         <ProtectedRoute>
-                            <EstateAgentDashboard />
+                            <AgentDashboardWrapper />
                         </ProtectedRoute>
-                    }
-                />
-
-                {/* INVESTOR DASHBOARD */}
-                <Route
-                    path="/investor-dashboard"
-                    element={
-                        <ProtectedRoute>
-                            <InvestorDashboardWrapper/>
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* LANDING PAGE SETTINGS */}
-                <Route
-                    path="/landing-page-settings"
-                    element={
-                        <HOAAdminRoute>
-                            <LandingPageSettings />
-                        </HOAAdminRoute>
                     }
                 />
 
@@ -493,9 +215,9 @@ function App() {
                 <Route
                     path="/resident-complaints"
                     element={
-                        <ProtectedRoute>
+                        <RoleRoute path="/resident-complaints">
                             <ResidentComplaints />
-                        </ProtectedRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -538,23 +260,13 @@ function App() {
                     }
                 />
 
-                {/* COMMUNITY ANALYTICS */}
-                <Route
-                    path="/community-analytics"
-                    element={
-                        <HOAAdminRoute>
-                            <CommunityAnalytics />
-                        </HOAAdminRoute>
-                    }
-                />
-
                 {/* RESIDENT DIRECTORY */}
                 <Route
                     path="/resident-directory"
                     element={
-                        <HOAAdminRoute>
+                        <RoleRoute path="/resident-directory">
                             <ResidentDirectory />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -562,9 +274,9 @@ function App() {
                 <Route
                     path="/property-requests"
                     element={
-                        <AdminManagementRoute>
+                        <RoleRoute path="/property-requests">
                             <PropertyRequests />
-                        </AdminManagementRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -572,19 +284,9 @@ function App() {
                 <Route
                     path="/property-approvals"
                     element={
-                        <AdminManagementRoute>
+                        <RoleRoute path="/property-approvals">
                             <PropertyApprovals />
-                        </AdminManagementRoute>
-                    }
-                />
-
-                {/* AI TRAINING DATA */}
-                <Route
-                    path="/ai-training-data"
-                    element={
-                        <HOAAdminRoute>
-                            <AITrainingData />
-                        </HOAAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -594,16 +296,6 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Valuation />
-                        </ProtectedRoute>
-                    }
-                />
-
-                {/* INVESTOR ROI */}
-                <Route
-                    path="/roi"
-                    element={
-                        <ProtectedRoute>
-                            <ROI />
                         </ProtectedRoute>
                     }
                 />
@@ -640,9 +332,19 @@ function App() {
                 <Route
                     path="/registration-requests"
                     element={
-                        <AdminManagementRoute>
+                        <RoleRoute path="/registration-requests">
                             <RegistrationRequests />
-                        </AdminManagementRoute>
+                        </RoleRoute>
+                    }
+                />
+
+                {/* CREATE ESTATE AGENT ACCOUNT */}
+                <Route
+                    path="/create-agent"
+                    element={
+                        <RoleRoute path="/create-agent">
+                            <CreateAgentAccount />
+                        </RoleRoute>
                     }
                 />
 
@@ -650,9 +352,9 @@ function App() {
                 <Route
                     path="/user-management"
                     element={
-                        <HeadAdminRoute>
+                        <RoleRoute path="/user-management">
                             <UserManagement />
-                        </HeadAdminRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -672,6 +374,7 @@ function App() {
                     element={<Navigate to="/" replace />}
                 />
             </Routes>
+            <DialogHost />
         </BrowserRouter>
     );
 }

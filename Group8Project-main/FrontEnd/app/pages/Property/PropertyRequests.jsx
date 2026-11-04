@@ -2,13 +2,19 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import {
     getPropertyRequests,
     approvePropertyRequest,
     rejectPropertyRequest,
     assignEstateAgent,
 } from "../../data/propertyRequests";
-import "./PropertyRequests.css";
+import { listUsers } from "../../services/userApi";
+import "./PropertyRequests.css";
+import { showConfirm } from "../../components/AppDialog";
+import { roleLabel } from "../../services/roleMap";
+import { getStoredUser } from "../../services/session";
+import StageSummary from "../../components/StageSummary";
 
 /* =========================================================
    CURRENT USER
@@ -18,15 +24,15 @@ function normalizeRole(value) {
     const role = String(value || "").trim().toLowerCase();
 
     if (
-        ["head admin", "head administrator", "headadministrator"].includes(role)
+        ["head admin", "head administrator", "headadministrator", "head_admin"].includes(role)
     ) {
-        return "Head Admin";
+        return "head_admin";
     }
 
     if (
-        ["hoa", "hoa admin", "hoa administrator", "administrator"].includes(role)
+        ["hoa", "hoa admin", "hoa administrator", "administrator", "hoa_admin"].includes(role)
     ) {
-        return "HOA Admin";
+        return "hoa_admin";
     }
 
     return value || "";
@@ -34,9 +40,7 @@ function normalizeRole(value) {
 
 function getCurrentUser() {
     try {
-        const user = JSON.parse(
-            localStorage.getItem("valoraUser") || "null"
-        );
+        const user = getStoredUser();
 
         if (!user || typeof user !== "object") {
             return null;
@@ -195,35 +199,29 @@ function PropertyRequests() {
        LOAD REQUESTS AND APPROVED ESTATE AGENTS
     ===================================================== */
 
-    function loadData() {
+    async function loadData() {
         setLoading(true);
 
         try {
-            const storedRequests = getPropertyRequests();
-
-            setRequests(
-                Array.isArray(storedRequests) ? storedRequests : []
+            // Estate agents come from the user list (HOA admins only); only
+            // approved estate agent accounts can be assigned a request.
+            // Both lists load together.
+            const [loadedRequests, users] = await Promise.all([
+                getPropertyRequests(),
+                listUsers().catch((agentError) => {
+                    console.error("Unable to load estate agents:", agentError);
+                    return [];
+                }),
+            ]);
+            setRequests(Array.isArray(loadedRequests) ? loadedRequests : []);
+            setAgents(
+                users.filter(
+                    (user) =>
+                        String(user.role || "").toLowerCase() === "estate_agent" &&
+                        user.hoa_approved === true
+                )
             );
 
-            const storedUsers = JSON.parse(
-                localStorage.getItem("valoraUsers") || "[]"
-            );
-
-            const approvedAgents = (
-                Array.isArray(storedUsers) ? storedUsers : []
-            ).filter((user) => {
-                const role = String(user.role || "")
-                    .trim()
-                    .toLowerCase();
-
-                const status = String(user.status || "")
-                    .trim()
-                    .toLowerCase();
-
-                return role === "estate agent" && status === "approved";
-            });
-
-            setAgents(approvedAgents);
             setError("");
         } catch (loadError) {
             console.error("Unable to load property requests:", loadError);
@@ -256,7 +254,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         return <Navigate to="/dashboard" replace />;
     }
 
-    const isHeadAdmin = currentUser.role === "Head Admin";
+    const isHeadAdmin = currentUser.role === "head_admin";
 
     /* =====================================================
        REQUEST COUNTS
@@ -271,8 +269,15 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             request.status === "Approved - Awaiting Agent Assignment"
     );
 
+    // with an agent: assigned, or already listed on the market
     const assignedRequests = requests.filter(
-        (request) => request.status === "Assigned to Estate Agent"
+        (request) =>
+            request.status === "Assigned to Estate Agent" ||
+            request.status === "Listed on the Market"
+    );
+
+    const completedRequests = requests.filter(
+        (request) => request.status === "Sold" || request.status === "Rented"
     );
 
     const rejectedRequests = requests.filter(
@@ -303,11 +308,11 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
        APPROVE REQUEST
     ===================================================== */
 
-    function handleApprove() {
+    async function handleApprove() {
         if (!selectedRequest) return;
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 "Are you sure you want to approve this property request?"
             )
         ) {
@@ -315,15 +320,15 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
 
         try {
-            approvePropertyRequest(selectedRequest.id);
+            await approvePropertyRequest(selectedRequest.id);
             setSelectedRequest(null);
             setMessage(
                 "Property request approved successfully. An Estate Agent can now be assigned."
             );
-            loadData();
+            await loadData();
         } catch (approveError) {
             console.error("Unable to approve property request:", approveError);
-            setError("Unable to approve the property request.");
+            setError(approveError?.message || "Unable to approve the property request.");
         }
     }
 
@@ -331,7 +336,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
        REJECT REQUEST
     ===================================================== */
 
-    function handleReject() {
+    async function handleReject() {
         if (!selectedRequest) return;
 
         const reason = rejectionReason.trim();
@@ -342,7 +347,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 "Are you sure you want to reject this property request?"
             )
         ) {
@@ -350,14 +355,14 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
 
         try {
-            rejectPropertyRequest(selectedRequest.id, reason);
+            await rejectPropertyRequest(selectedRequest.id, reason);
             setSelectedRequest(null);
             setRejectionReason("");
             setMessage("Property request rejected successfully.");
-            loadData();
+            await loadData();
         } catch (rejectError) {
             console.error("Unable to reject property request:", rejectError);
-            setError("Unable to reject the property request.");
+            setError(rejectError?.message || "Unable to reject the property request.");
         }
     }
 
@@ -365,7 +370,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
        ASSIGN ESTATE AGENT
     ===================================================== */
 
-    function handleAssignAgent() {
+    async function handleAssignAgent() {
         if (!selectedRequest) return;
 
         if (!selectedAgentId) {
@@ -383,14 +388,13 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
 
         const agentName =
-            `${selectedAgent.firstName || ""} ${selectedAgent.lastName || ""}`
-                .trim() ||
+            selectedAgent.full_name ||
             selectedAgent.name ||
             selectedAgent.email ||
             "Estate Agent";
 
         if (
-            !window.confirm(
+            !await showConfirm(
                 `Assign ${agentName} to this property request?`
             )
         ) {
@@ -398,19 +402,15 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
 
         try {
-            assignEstateAgent(
-                selectedRequest.id,
-                selectedAgent.id,
-                agentName
-            );
+            await assignEstateAgent(selectedRequest.id, selectedAgent.id);
 
             setSelectedRequest(null);
             setSelectedAgentId("");
             setMessage(`${agentName} has been assigned successfully.`);
-            loadData();
+            await loadData();
         } catch (assignError) {
             console.error("Unable to assign Estate Agent:", assignError);
-            setError("Unable to assign the Estate Agent.");
+            setError(assignError?.message || "Unable to assign the Estate Agent.");
         }
     }
 
@@ -468,7 +468,11 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             case "Approved - Awaiting Agent Assignment":
                 return "status-approved";
             case "Assigned to Estate Agent":
+            case "Listed on the Market":
                 return "status-assigned";
+            case "Sold":
+            case "Rented":
+                return "status-approved";
             case "Rejected":
                 return "status-rejected";
             default:
@@ -517,6 +521,8 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             <DashboardSidebar />
 
             <main className="property-requests-main">
+                <PropertyTabs />
+
                 <header className="property-requests-topbar">
                     <div>
                         <p className="property-requests-eyebrow">
@@ -528,7 +534,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                         <h1>Property Requests</h1>
 
                         <p>
-                            Review resident and investor requests to sell or
+                            Review resident requests to sell or
                             rent their units.
                         </p>
                     </div>
@@ -540,7 +546,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
 
                         <div>
                             <strong>{currentUser.fullName}</strong>
-                            <span>{currentUser.role}</span>
+                            <span>{roleLabel(currentUser.role)}</span>
                         </div>
                     </div>
                 </header>
@@ -570,57 +576,23 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                         </div>
                     )}
 
-                    {/* STATISTICS */}
-
-                    <div className="property-requests-stats">
-                        {[
-                            {
-                                label: "Pending Review",
-                                count: pendingRequests.length,
-                                description: "Requests awaiting review",
-                                icon: "pending",
-                                type: "pending",
-                            },
-                            {
-                                label: "Awaiting Agent",
-                                count: approvedRequests.length,
-                                description: "Approved requests awaiting assignment",
-                                icon: "approval",
-                                type: "approved",
-                            },
-                            {
-                                label: "Assigned",
-                                count: assignedRequests.length,
-                                description: "Requests assigned to agents",
-                                icon: "assigned",
-                                type: "assigned",
-                            },
-                            {
-                                label: "Rejected",
-                                count: rejectedRequests.length,
-                                description: "Requests not approved",
-                                icon: "rejected",
-                                type: "rejected",
-                            },
-                        ].map((stat) => (
-                            <div
-                                className="property-requests-stat-card"
-                                key={stat.label}
-                            >
-                                <div className="property-requests-stat-top">
-                                    <span
-                                        className={`property-requests-stat-icon ${stat.type}`}
-                                    >
-                                        <Icon type={stat.icon} />
-                                    </span>
-                                    <span>{stat.label}</span>
-                                </div>
-
-                                <strong>{stat.count}</strong>
-                                <p>{stat.description}</p>
-                            </div>
-                        ))}
-                    </div>
+                    {/* SUMMARY */}
+                    <StageSummary
+                        eyebrow="Request pipeline"
+                        title={
+                            pendingRequests.length === 0
+                                ? "No requests waiting for your review"
+                                : `${pendingRequests.length} ${pendingRequests.length === 1 ? "request is" : "requests are"} waiting for your review`
+                        }
+                        subtitle="Sale and rental requests, from review to an assigned agent."
+                        stages={[
+                            { key: "pending", label: "Pending review", hint: "Waiting for a decision", count: pendingRequests.length, tone: "waiting" },
+                            { key: "approved", label: "Awaiting agent", hint: "Approved, no agent yet", count: approvedRequests.length, tone: "neutral" },
+                            { key: "assigned", label: "With an agent", hint: "Assigned or listed", count: assignedRequests.length, tone: "progress" },
+                            { key: "completed", label: "Sold / rented", hint: "Request completed", count: completedRequests.length, tone: "done" },
+                            { key: "rejected", label: "Rejected", hint: "Not approved", count: rejectedRequests.length, tone: "rejected" },
+                        ]}
+                    />
 
                     {/* REQUEST TABLE */}
 
@@ -630,7 +602,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                 <h2>Property Requests</h2>
                                 <p>
                                     All sell and rent requests submitted by
-                                    residents and investors.
+                                    residents.
                                 </p>
                             </div>
 
@@ -799,7 +771,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                     <div>
                                         <h3>Requester Information</h3>
                                         <p>
-                                            Details of the resident or investor
+                                            Details of the resident
                                             who submitted the request.
                                         </p>
                                     </div>
@@ -1096,8 +1068,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
 
                                                     {agents.map((agent) => {
                                                         const agentName =
-                                                            `${agent.firstName || ""} ${agent.lastName || ""}`
-                                                                .trim() ||
+                                                            agent.full_name ||
                                                             agent.name ||
                                                             agent.email ||
                                                             "Estate Agent";
@@ -1132,8 +1103,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
 
                             {/* ASSIGNED REQUEST */}
 
-                            {selectedRequest.status ===
-                                "Assigned to Estate Agent" && (
+                            {["Assigned to Estate Agent", "Listed on the Market", "Sold", "Rented"].includes(selectedRequest.status) && (
                                 <section className="property-requests-review-section">
                                     <div className="property-requests-section-heading">
                                         <div className="property-requests-section-icon">

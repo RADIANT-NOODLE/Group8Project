@@ -1,17 +1,35 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import {
+    createComplaint,
+    listComplaints,
+    updateComplaintStatus,
+} from "../../services/complaintApi";
+import { listProperties } from "../../services/propertyApi";
+import { listProviders } from "../../services/providerApi";
+import {
+    listWorkOrders,
+    rateWorkOrder,
+    updateWorkOrder,
+} from "../../services/workOrderApi";
+import {
+    COMPLAINT_STATUS,
+    COMPLAINT_STATUSES,
+    WORK_ORDER_STATUS,
+    complaintStatusLabel,
+    workOrderStatusLabel,
+} from "../../services/statusMap";
 import "./Maintenance.css";
+import { getStoredUser } from "../../services/session";
 
-const MAINTENANCE_STORAGE_KEY = "valoraMaintenanceRequests";
-
-const STATUS_OPTIONS = [
-    "Submitted",
-    "Acknowledged",
-    "In Progress",
-    "Scheduled",
-    "Resolved",
-    "Cancelled",
-];
+/**
+ * HOA Maintenance page.
+ *
+ * A maintenance request is a complaint; when an administrator assigns a
+ * service provider it also has a work order. Everything comes from the API:
+ * administrators see every request, residents see their own and can rate a
+ * finished job. The backend enforces who may see and change what.
+ */
 
 const CATEGORY_OPTIONS = [
     "General",
@@ -24,196 +42,58 @@ const CATEGORY_OPTIONS = [
     "Other",
 ];
 
-/* =========================================================
-   USER AND ROLE HELPERS
-========================================================= */
+const STATUS_CLASS = {
+    submitted: "submitted",
+    under_review: "acknowledged",
+    in_progress: "in-progress",
+    resolved: "resolved",
+    closed: "cancelled",
+};
 
-function normalizeRole(value) {
-    const role = String(value || "").trim().toLowerCase();
+const ACTIVE_EXCLUDED = ["resolved", "closed"];
 
-    if (
-        ["head admin", "head administrator", "headadministrator"].includes(role)
-    ) {
-        return "Head Admin";
-    }
-
-    if (
-        ["hoa", "hoa admin", "hoa administrator", "administrator", "admin"].includes(role)
-    ) {
-        return "HOA Admin";
-    }
-
-    if (["resident", "property owner"].includes(role)) {
-        return "Resident";
-    }
-
-    if (["investor", "buyer"].includes(role)) {
-        return "Investor";
-    }
-
-    if (["estate agent", "agent"].includes(role)) {
-        return "Estate Agent";
-    }
-
-    return value || "";
-}
-
-function getCurrentUser() {
+function readUser() {
     try {
-        const stored = localStorage.getItem("valoraUser");
-
-        if (!stored) return null;
-
-        const user = JSON.parse(stored);
-
-        if (!user || typeof user !== "object") return null;
-
-        const firstName =
-            user.firstName || user.firstname || user.first_name || "";
-
-        const lastName =
-            user.lastName || user.lastname || user.last_name || "";
-
-        const fullName =
-            user.fullName ||
-            user.name ||
-            `${firstName} ${lastName}`.trim() ||
-            "VALORA User";
-
-        return {
-            ...user,
-            role: normalizeRole(
-                user.role || user.userType || user.accountType
-            ),
-            fullName,
-            userId: String(
-                user.id ||
-                user.userId ||
-                user.email ||
-                user.username ||
-                ""
-            ).trim().toLowerCase(),
-        };
-    } catch (error) {
-        console.error("Unable to read VALORA user:", error);
+        return getStoredUser();
+    } catch {
         return null;
     }
 }
 
-function getUserName(user) {
-    if (!user) return "";
+/** Accepts "hoa_admin", "HOA Admin", "head admin" and so on. */
+function roleKey(user) {
+    const role = String(user?.role || user?.userType || user?.accountType || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]/g, " ");
 
-    return (
-        user.fullName ||
-        user.name ||
-        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-        "VALORA User"
-    );
+    if (role.includes("head")) return "head_admin";
+    if (role.includes("hoa") || role === "admin" || role === "administrator") return "hoa_admin";
+    if (role === "resident" || role === "property owner") return "resident";
+    return role.replace(/\s+/g, "_");
 }
 
-function getRequestOwnerId(request) {
-    return String(
-        request.reportedById ||
-        request.userId ||
-        request.createdById ||
-        ""
-    ).trim().toLowerCase();
-}
+function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
 
-/* =========================================================
-   SHARED MAINTENANCE STORAGE
-
-   No hardcoded maintenance requests are created.
-   All requests must come from shared localStorage.
-========================================================= */
-
-function loadMaintenanceRequests() {
-    try {
-        const stored = localStorage.getItem(MAINTENANCE_STORAGE_KEY);
-
-        if (!stored) {
-            return [];
-        }
-
-        const parsed = JSON.parse(stored);
-
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        // Remove the previous five demo records if they were saved.
-        const demoIds = [
-            "MNT-001",
-            "MNT-002",
-            "MNT-003",
-            "MNT-004",
-            "MNT-005",
-        ];
-
-        const actualRequests = parsed.filter(
-            (request) => !demoIds.includes(request.id)
-        );
-
-        if (actualRequests.length !== parsed.length) {
-            localStorage.setItem(
-                MAINTENANCE_STORAGE_KEY,
-                JSON.stringify(actualRequests)
-            );
-        }
-
-        return actualRequests;
-    } catch (error) {
-        console.error("Unable to load maintenance requests:", error);
-        return [];
-    }
-}
-
-function saveMaintenanceRequests(requests) {
-    try {
-        localStorage.setItem(
-            MAINTENANCE_STORAGE_KEY,
-            JSON.stringify(requests)
-        );
-
-        // Notify other components in this same tab.
-        window.dispatchEvent(
-            new CustomEvent("valoraMaintenanceUpdated", {
-                detail: requests,
-            })
-        );
-
-        return true;
-    } catch (error) {
-        console.error("Unable to save maintenance requests:", error);
-        alert("Unable to save maintenance changes. Please try again.");
-        return false;
-    }
-}
-
-function generateRequestId(requests) {
-    const highest = requests.reduce((max, request) => {
-        const number = parseInt(
-            String(request.id || "").replace("MNT-", ""),
-            10
-        );
-
-        return Number.isNaN(number) ? max : Math.max(max, number);
-    }, 0);
-
-    return `MNT-${String(highest + 1).padStart(3, "0")}`;
-}
-
-function getCurrentDate() {
-    return new Date().toLocaleDateString("en-GB", {
+    return date.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
     });
 }
 
-/* =========================================================
-   ICONS
-========================================================= */
+function titleFor(complaint) {
+    const text = String(complaint.description || "").trim();
+    if (!text) return complaint.category;
+    return text.length > 60 ? `${text.slice(0, 57)}...` : text;
+}
+
+function statusClass(status) {
+    return `maintenance-badge status-${STATUS_CLASS[status] || "submitted"}`;
+}
 
 function Icon({ name, size = 19 }) {
     const props = {
@@ -292,270 +172,201 @@ function Icon({ name, size = 19 }) {
    MAINTENANCE PAGE
 ========================================================= */
 
+const EMPTY_FORM = { category: "General", unitId: "", description: "" };
+
 function Maintenance() {
-    const [currentUser, setCurrentUser] = useState(getCurrentUser);
-    const [maintenanceRequests, setMaintenanceRequests] = useState(
-        loadMaintenanceRequests
-    );
+    const [currentUser] = useState(readUser);
+    const role = roleKey(currentUser);
+    const isHOAAdmin = role === "hoa_admin";
+    const isHeadAdmin = role === "head_admin";
+    const isAdmin = isHOAAdmin || isHeadAdmin;
+    const isResident = role === "resident";
+
+    const [complaints, setComplaints] = useState([]);
+    const [workOrders, setWorkOrders] = useState([]);
+    const [providers, setProviders] = useState([]);
+    const [units, setUnits] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [notice, setNotice] = useState("");
+    const [busyId, setBusyId] = useState(null);
 
     const [statusFilter, setStatusFilter] = useState("All");
-    const [priorityFilter, setPriorityFilter] = useState("All");
+    const [categoryFilter, setCategoryFilter] = useState("All");
     const [showAddRequest, setShowAddRequest] = useState(false);
-    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [selectedId, setSelectedId] = useState(null);
+    const [formData, setFormData] = useState(EMPTY_FORM);
+    const [submitting, setSubmitting] = useState(false);
+    const [ratingValue, setRatingValue] = useState("5");
 
-    const [formData, setFormData] = useState({
-        issue: "",
-        category: "General",
-        location: "",
-        description: "",
-        priority: "Medium",
-    });
+    const load = useCallback(async () => {
+        if (!isAdmin && !isResident) {
+            setLoading(false);
+            return;
+        }
 
-    const userRole = normalizeRole(
-        currentUser?.role ||
-        currentUser?.userType ||
-        currentUser?.accountType
-    );
+        try {
+            const [complaintPage, workOrderPage, providerPage] = await Promise.all([
+                listComplaints({ pageSize: 100 }),
+                // Head admins are not allowed to list work orders; show requests anyway.
+                listWorkOrders({ pageSize: 100 }).catch(() => ({ items: [] })),
+                isAdmin ? listProviders({ pageSize: 100 }).catch(() => ({ items: [] })) : { items: [] },
+            ]);
 
-    const isHOAAdmin = userRole === "HOA Admin";
-    const isHeadAdmin = userRole === "Head Admin";
-    const isAdmin = isHOAAdmin || isHeadAdmin;
-    const isResident = userRole === "Resident";
-
-    const currentUserName = getUserName(currentUser);
-
-    /* =====================================================
-       SYNCHRONIZE SHARED DATA
-    ===================================================== */
-
-    const refreshRequests = useCallback(() => {
-        setMaintenanceRequests(loadMaintenanceRequests());
-    }, []);
+            setComplaints(complaintPage.items);
+            setWorkOrders(workOrderPage.items);
+            setProviders(providerPage.items);
+            setError("");
+        } catch (loadError) {
+            console.error("Unable to load maintenance requests:", loadError);
+            setError(loadError?.message || "Unable to load maintenance requests right now.");
+        } finally {
+            setLoading(false);
+        }
+    }, [isAdmin, isResident]);
 
     useEffect(() => {
-        function handleStorage(event) {
-            if (event.key === MAINTENANCE_STORAGE_KEY) {
-                refreshRequests();
+        load();
+    }, [load]);
+
+    useEffect(() => {
+        if (!isResident) return;
+
+        listProperties({ pageSize: 100 })
+            .then((page) => setUnits(page.items))
+            .catch((unitError) => console.error("Unable to load units:", unitError));
+    }, [isResident]);
+
+    const providerName = useMemo(() => {
+        const names = new Map(providers.map((provider) => [provider.id, provider.fullName]));
+        return (providerId) => names.get(providerId) || (providerId ? `Provider #${providerId}` : "Not Assigned");
+    }, [providers]);
+
+    // One request per complaint, joined to its work order (if any).
+    const requests = useMemo(() => {
+        const byComplaint = new Map();
+        workOrders.forEach((workOrder) => {
+            if (!byComplaint.has(workOrder.complaintId)) {
+                byComplaint.set(workOrder.complaintId, workOrder);
             }
+        });
 
-            if (event.key === "valoraUser") {
-                setCurrentUser(getCurrentUser());
-                refreshRequests();
-            }
-        }
+        return complaints.map((complaint) => ({
+            ...complaint,
+            workOrder: byComplaint.get(complaint.id) || null,
+        }));
+    }, [complaints, workOrders]);
 
-        function handleSameTabUpdate(event) {
-            const incoming = event.detail;
-
-            if (Array.isArray(incoming)) {
-                setMaintenanceRequests((previous) =>
-                    JSON.stringify(previous) === JSON.stringify(incoming)
-                        ? previous
-                        : incoming
-                );
-            } else {
-                refreshRequests();
-            }
-        }
-
-        function handleFocus() {
-            setCurrentUser(getCurrentUser());
-            refreshRequests();
-        }
-
-        window.addEventListener("storage", handleStorage);
-        window.addEventListener(
-            "valoraMaintenanceUpdated",
-            handleSameTabUpdate
-        );
-        window.addEventListener("focus", handleFocus);
-
-        return () => {
-            window.removeEventListener("storage", handleStorage);
-            window.removeEventListener(
-                "valoraMaintenanceUpdated",
-                handleSameTabUpdate
-            );
-            window.removeEventListener("focus", handleFocus);
-        };
-    }, [refreshRequests]);
-
-    /* =====================================================
-       PERMISSIONS AND REQUEST VISIBILITY
-    ===================================================== */
-
-    const roleBasedRequests = isAdmin
-        ? maintenanceRequests
-        : isResident
-            ? maintenanceRequests.filter((request) => {
-                const ownerId = getRequestOwnerId(request);
-
-                if (ownerId && currentUser?.userId) {
-                    return ownerId === currentUser.userId;
-                }
-
-                return (
-                    String(request.reportedBy || "").trim().toLowerCase() ===
-                    currentUserName.trim().toLowerCase()
-                );
-            })
-            : [];
-
-    const filteredRequests = roleBasedRequests.filter((request) => {
-        const matchesStatus =
-            statusFilter === "All" || request.status === statusFilter;
-
-        const matchesPriority =
-            priorityFilter === "All" || request.priority === priorityFilter;
-
-        return matchesStatus && matchesPriority;
+    const filteredRequests = requests.filter((request) => {
+        const matchesStatus = statusFilter === "All" || request.status === statusFilter;
+        const matchesCategory = categoryFilter === "All" || request.category === categoryFilter;
+        return matchesStatus && matchesCategory;
     });
 
-    const totalRequests = roleBasedRequests.length;
+    const selectedRequest = requests.find((request) => request.id === selectedId) || null;
 
-    const activeRequests = roleBasedRequests.filter(
-        (request) =>
-            request.status !== "Resolved" &&
-            request.status !== "Cancelled"
-    ).length;
+    const totalRequests = requests.length;
+    const activeRequests = requests.filter((r) => !ACTIVE_EXCLUDED.includes(r.status)).length;
+    const inProgressRequests = requests.filter((r) => r.status === COMPLAINT_STATUS.in_progress).length;
+    const resolvedRequests = requests.filter((r) => ACTIVE_EXCLUDED.includes(r.status)).length;
 
-    const scheduledRequests = roleBasedRequests.filter(
-        (request) => request.status === "Scheduled"
-    ).length;
-
-    const resolvedRequests = roleBasedRequests.filter(
-        (request) => request.status === "Resolved"
-    ).length;
-
-    const highPriorityRequests = roleBasedRequests.filter(
-        (request) => request.priority === "High"
-    ).length;
-
-    const inProgressRequests = roleBasedRequests.filter(
-        (request) => request.status === "In Progress"
-    ).length;
-
-    /* =====================================================
-       FORM HANDLERS
-    ===================================================== */
+    // the stages a request moves through, left to right
+    const pipeline = [
+        { key: "new", label: "Submitted", hint: "Waiting to be picked up", count: requests.filter((r) => r.status === COMPLAINT_STATUS.submitted).length },
+        { key: "review", label: "Under review", hint: "Being assessed", count: requests.filter((r) => r.status === COMPLAINT_STATUS.under_review).length },
+        { key: "progress", label: "In progress", hint: "Being worked on", count: inProgressRequests },
+        { key: "done", label: "Resolved", hint: "Completed or closed", count: resolvedRequests },
+    ];
+    const resolutionRate = totalRequests > 0 ? Math.round((resolvedRequests / totalRequests) * 100) : 0;
 
     function handleFormChange(event) {
         const { name, value } = event.target;
-
-        setFormData((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
+        setFormData((previous) => ({ ...previous, [name]: value }));
     }
 
     function handleOpenAddRequest() {
-        setFormData({
-            issue: "",
-            category: "General",
-            location: "",
-            description: "",
-            priority: "Medium",
-        });
-
+        setFormData({ ...EMPTY_FORM, unitId: units.length === 1 ? String(units[0].id) : "" });
         setShowAddRequest(true);
+        setNotice("");
     }
 
-    function handleSubmitRequest(event) {
+    async function handleSubmitRequest(event) {
         event.preventDefault();
 
-        if (!currentUser) {
-            alert("Please log in before submitting a maintenance request.");
+        if (!isResident) {
+            setError("Only residents can submit maintenance requests.");
             return;
         }
 
-        if (!isResident && !isAdmin) {
-            alert("Only residents and administrators can submit maintenance requests.");
+        if (!formData.unitId || formData.description.trim().length < 10) {
+            setError("Choose your unit and describe the issue (at least 10 characters).");
             return;
         }
 
-        if (
-            !formData.issue.trim() ||
-            !formData.location.trim() ||
-            !formData.description.trim()
-        ) {
-            alert("Please complete all required fields.");
-            return;
+        setSubmitting(true);
+        setError("");
+
+        try {
+            await createComplaint({
+                unitId: formData.unitId,
+                category: formData.category,
+                description: formData.description,
+            });
+
+            setShowAddRequest(false);
+            setFormData(EMPTY_FORM);
+            setNotice("Your maintenance request has been submitted.");
+            await load();
+        } catch (submitError) {
+            setError(submitError?.message || "Unable to submit the request. Please try again.");
+        } finally {
+            setSubmitting(false);
         }
-
-        // Load the latest shared list before adding a new request.
-        const latestRequests = loadMaintenanceRequests();
-
-        const newRequest = {
-            id: generateRequestId(latestRequests),
-            issue: formData.issue.trim(),
-            location: formData.location.trim(),
-            reportedBy: currentUserName,
-            reportedById: currentUser.userId || "",
-            userId: currentUser.userId || "",
-            provider: "Not Assigned",
-            priority: formData.priority,
-            status: "Submitted",
-            date: getCurrentDate(),
-            category: formData.category,
-            description: formData.description.trim(),
-        };
-
-        const updatedRequests = [newRequest, ...latestRequests];
-
-        if (!saveMaintenanceRequests(updatedRequests)) return;
-
-        setMaintenanceRequests(updatedRequests);
-        setShowAddRequest(false);
-
-        setFormData({
-            issue: "",
-            category: "General",
-            location: "",
-            description: "",
-            priority: "Medium",
-        });
-
-        alert(`${newRequest.id} has been submitted successfully.`);
     }
 
-    /* =====================================================
-       ADMIN STATUS UPDATES
-    ===================================================== */
+    async function handleStatusChange(request, newStatus) {
+        if (!isAdmin) return;
 
-    function handleStatusChange(id, newStatus) {
-        if (!isAdmin) {
-            alert("Only the HOA Admin or Head Admin can update request status.");
-            return;
+        setBusyId(request.id);
+        setError("");
+
+        try {
+            await updateComplaintStatus(request.id, { status: newStatus });
+
+            // Keep the linked work order in step with the request.
+            const workOrder = request.workOrder;
+            if (workOrder && isHOAAdmin) {
+                if (newStatus === COMPLAINT_STATUS.resolved && workOrder.status !== WORK_ORDER_STATUS.completed) {
+                    await updateWorkOrder(workOrder.id, { status: WORK_ORDER_STATUS.completed });
+                } else if (newStatus === COMPLAINT_STATUS.in_progress && workOrder.status === WORK_ORDER_STATUS.assigned) {
+                    await updateWorkOrder(workOrder.id, { status: WORK_ORDER_STATUS.in_progress });
+                }
+            }
+
+            await load();
+        } catch (updateError) {
+            setError(updateError?.message || "Unable to update the request status.");
+        } finally {
+            setBusyId(null);
         }
-
-        if (!STATUS_OPTIONS.includes(newStatus)) return;
-
-        const latestRequests = loadMaintenanceRequests();
-
-        const updatedRequests = latestRequests.map((request) =>
-            request.id === id
-                ? { ...request, status: newStatus }
-                : request
-        );
-
-        if (!saveMaintenanceRequests(updatedRequests)) return;
-
-        setMaintenanceRequests(updatedRequests);
-
-        setSelectedRequest((previous) =>
-            previous?.id === id
-                ? { ...previous, status: newStatus }
-                : previous
-        );
     }
 
-    function handleViewRequest(request) {
-        setSelectedRequest(request);
-    }
+    async function handleRate(request) {
+        if (!request.workOrder) return;
 
-    /* =====================================================
-       RENDER
-    ===================================================== */
+        setBusyId(request.id);
+        setError("");
+
+        try {
+            await rateWorkOrder(request.workOrder.id, ratingValue);
+            setNotice("Thank you. Your rating has been recorded.");
+            await load();
+        } catch (rateError) {
+            setError(rateError?.message || "Unable to save your rating.");
+        } finally {
+            setBusyId(null);
+        }
+    }
 
     return (
         <div className="maintenance-page">
@@ -591,65 +402,67 @@ function Maintenance() {
                 {currentUser && !isAdmin && !isResident && (
                     <div className="maintenance-panel maintenance-access-message">
                         Maintenance requests are available to residents and administrators.
-                        You can view the Service Provider Directory below.
                     </div>
                 )}
 
-                {/* STATISTICS */}
+                {error && (
+                    <div className="maintenance-panel maintenance-access-message" role="alert">
+                        {error}
+                    </div>
+                )}
 
-                <section className="maintenance-stat-grid">
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon purple">
-                            <Icon name="wrench" />
-                        </div>
+                {notice && (
+                    <div className="maintenance-panel maintenance-access-message" role="status">
+                        {notice}
+                    </div>
+                )}
 
+                {/* REQUEST PIPELINE: where every request sits on its way to resolved */}
+                <section className="maintenance-pipeline" aria-labelledby="maintenance-pipeline-title">
+                    <div className="maintenance-pipeline-heading">
                         <div>
-                            <span>Total Requests</span>
-                            <strong>{totalRequests}</strong>
-                            <small>
-                                {isAdmin ? "Community requests" : "Your requests"}
-                            </small>
+                            <h2 id="maintenance-pipeline-title">Request pipeline</h2>
+                            <p>
+                                {totalRequests === 0
+                                    ? "No maintenance requests yet."
+                                    : `${totalRequests} ${isAdmin ? "community" : "of your"} ${totalRequests === 1 ? "request" : "requests"} · ${activeRequests} still open`}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon orange">
-                            <Icon name="clock" />
-                        </div>
+                    <ol className="maintenance-pipeline-stages">
+                        {pipeline.map((stage, index) => (
+                            <li
+                                key={stage.key}
+                                className={`maintenance-pipeline-stage step-${index + 1}${stage.count > 0 ? " has-items" : ""}`}
+                                aria-label={`${stage.label}: ${stage.count}`}
+                            >
+                                <span className="maintenance-pipeline-node" aria-hidden="true">
+                                    {stage.key === "done" ? <Icon name="check" /> : stage.count}
+                                </span>
+                                <span className="maintenance-pipeline-label">{stage.label}</span>
+                                <strong className="maintenance-pipeline-count">{stage.count}</strong>
+                                <small>{stage.hint}</small>
+                            </li>
+                        ))}
+                    </ol>
 
-                        <div>
-                            <span>Active Requests</span>
-                            <strong>{activeRequests}</strong>
-                            <small>Require attention</small>
+                    <div className="maintenance-pipeline-rate">
+                        <div className="maintenance-pipeline-rate-top">
+                            <span>Resolution rate</span>
+                            <strong>
+                                {resolvedRequests} of {totalRequests} resolved · {resolutionRate}%
+                            </strong>
                         </div>
-                    </div>
-
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon blue">
-                            <Icon name="calendar" />
-                        </div>
-
-                        <div>
-                            <span>Scheduled</span>
-                            <strong>{scheduledRequests}</strong>
-                            <small>Upcoming maintenance</small>
-                        </div>
-                    </div>
-
-                    <div className="maintenance-stat-card">
-                        <div className="maintenance-stat-icon green">
-                            <Icon name="check" />
-                        </div>
-
-                        <div>
-                            <span>Resolved</span>
-                            <strong>{resolvedRequests}</strong>
-                            <small>Completed requests</small>
+                        <div
+                            className="maintenance-pipeline-rate-track"
+                            role="img"
+                            aria-label={`${resolutionRate}% of requests resolved`}
+                        >
+                            <span className="maintenance-pipeline-rate-fill" style={{ width: `${resolutionRate}%` }} />
                         </div>
                     </div>
                 </section>
-
-                {/* REQUEST MANAGEMENT */}
 
                 {(isAdmin || isResident) && (
                     <section className="maintenance-panel maintenance-large-panel">
@@ -663,31 +476,25 @@ function Maintenance() {
                                 </p>
                             </div>
 
-                            <button
-                                type="button"
-                                className="maintenance-primary-btn"
-                                onClick={handleOpenAddRequest}
-                            >
-                                <Icon name="plus" size={17} />
-                                <span>Add Request</span>
-                            </button>
+                            {isResident && (
+                                <button
+                                    type="button"
+                                    className="maintenance-primary-btn"
+                                    onClick={handleOpenAddRequest}
+                                >
+                                    <Icon name="plus" size={17} />
+                                    <span>Add Request</span>
+                                </button>
+                            )}
                         </div>
-
-                        {/* ADD REQUEST FORM */}
 
                         {showAddRequest && (
                             <div className="maintenance-add-form">
                                 <div className="maintenance-form-header">
                                     <div>
-                                        <p className="maintenance-eyebrow">
-                                            NEW REQUEST
-                                        </p>
-
+                                        <p className="maintenance-eyebrow">NEW REQUEST</p>
                                         <h2>Submit Maintenance Request</h2>
-
-                                        <p>
-                                            Enter the details of the maintenance issue you want to report.
-                                        </p>
+                                        <p>Enter the details of the maintenance issue you want to report.</p>
                                     </div>
 
                                     <button
@@ -700,32 +507,10 @@ function Maintenance() {
                                     </button>
                                 </div>
 
-                                <form
-                                    className="maintenance-form"
-                                    onSubmit={handleSubmitRequest}
-                                >
-                                    <div className="maintenance-form-group">
-                                        <label htmlFor="maintenance-issue">
-                                            Issue *
-                                        </label>
-
-                                        <input
-                                            id="maintenance-issue"
-                                            name="issue"
-                                            type="text"
-                                            value={formData.issue}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. Water leak"
-                                            required
-                                        />
-                                    </div>
-
+                                <form className="maintenance-form" onSubmit={handleSubmitRequest}>
                                     <div className="maintenance-form-row">
                                         <div className="maintenance-form-group">
-                                            <label htmlFor="maintenance-category">
-                                                Category *
-                                            </label>
-
+                                            <label htmlFor="maintenance-category">Category *</label>
                                             <select
                                                 id="maintenance-category"
                                                 name="category"
@@ -733,10 +518,7 @@ function Maintenance() {
                                                 onChange={handleFormChange}
                                             >
                                                 {CATEGORY_OPTIONS.map((category) => (
-                                                    <option
-                                                        key={category}
-                                                        value={category}
-                                                    >
+                                                    <option key={category} value={category}>
                                                         {category}
                                                     </option>
                                                 ))}
@@ -744,44 +526,26 @@ function Maintenance() {
                                         </div>
 
                                         <div className="maintenance-form-group">
-                                            <label htmlFor="maintenance-priority">
-                                                Priority *
-                                            </label>
-
+                                            <label htmlFor="maintenance-unit">Location / Unit *</label>
                                             <select
-                                                id="maintenance-priority"
-                                                name="priority"
-                                                value={formData.priority}
+                                                id="maintenance-unit"
+                                                name="unitId"
+                                                value={formData.unitId}
                                                 onChange={handleFormChange}
+                                                required
                                             >
-                                                <option value="Low">Low</option>
-                                                <option value="Medium">Medium</option>
-                                                <option value="High">High</option>
+                                                <option value="">Select your unit</option>
+                                                {units.map((unit) => (
+                                                    <option key={unit.id} value={unit.id}>
+                                                        {unit.unitNo ? `Unit ${unit.unitNo}` : `Property #${unit.id}`}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
 
                                     <div className="maintenance-form-group">
-                                        <label htmlFor="maintenance-location">
-                                            Location / Unit *
-                                        </label>
-
-                                        <input
-                                            id="maintenance-location"
-                                            name="location"
-                                            type="text"
-                                            value={formData.location}
-                                            onChange={handleFormChange}
-                                            placeholder="e.g. Unit 15 / Bathroom"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="maintenance-form-group">
-                                        <label htmlFor="maintenance-description">
-                                            Description *
-                                        </label>
-
+                                        <label htmlFor="maintenance-description">Description *</label>
                                         <textarea
                                             id="maintenance-description"
                                             name="description"
@@ -789,6 +553,8 @@ function Maintenance() {
                                             onChange={handleFormChange}
                                             placeholder="Describe the issue..."
                                             rows="5"
+                                            minLength={10}
+                                            maxLength={2000}
                                             required
                                         />
                                     </div>
@@ -805,58 +571,48 @@ function Maintenance() {
                                         <button
                                             type="submit"
                                             className="maintenance-primary-btn"
+                                            disabled={submitting}
                                         >
                                             <Icon name="send" size={16} />
-                                            Submit Request
+                                            {submitting ? "Submitting..." : "Submit Request"}
                                         </button>
                                     </div>
                                 </form>
                             </div>
                         )}
 
-                        {/* REQUEST TABLE */}
-
                         {!showAddRequest && (
                             <>
                                 <div className="maintenance-filters">
                                     <div className="maintenance-filter-group">
-                                        <label htmlFor="maintenance-status-filter">
-                                            Status
-                                        </label>
-
+                                        <label htmlFor="maintenance-status-filter">Status</label>
                                         <select
                                             id="maintenance-status-filter"
                                             value={statusFilter}
-                                            onChange={(event) =>
-                                                setStatusFilter(event.target.value)
-                                            }
+                                            onChange={(event) => setStatusFilter(event.target.value)}
                                         >
                                             <option value="All">All Statuses</option>
-
-                                            {STATUS_OPTIONS.map((status) => (
-                                                <option key={status} value={status}>
-                                                    {status}
+                                            {COMPLAINT_STATUSES.map((status) => (
+                                                <option key={status.value} value={status.value}>
+                                                    {status.label}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
 
                                     <div className="maintenance-filter-group">
-                                        <label htmlFor="maintenance-priority-filter">
-                                            Priority
-                                        </label>
-
+                                        <label htmlFor="maintenance-category-filter">Category</label>
                                         <select
-                                            id="maintenance-priority-filter"
-                                            value={priorityFilter}
-                                            onChange={(event) =>
-                                                setPriorityFilter(event.target.value)
-                                            }
+                                            id="maintenance-category-filter"
+                                            value={categoryFilter}
+                                            onChange={(event) => setCategoryFilter(event.target.value)}
                                         >
-                                            <option value="All">All Priorities</option>
-                                            <option value="High">High Priority</option>
-                                            <option value="Medium">Medium Priority</option>
-                                            <option value="Low">Low Priority</option>
+                                            <option value="All">All Categories</option>
+                                            {CATEGORY_OPTIONS.map((category) => (
+                                                <option key={category} value={category}>
+                                                    {category}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>
@@ -866,10 +622,8 @@ function Maintenance() {
                                         <thead>
                                             <tr>
                                                 <th>Request</th>
-                                                <th>Location</th>
-                                                <th>Reported By</th>
+                                                <th>Category</th>
                                                 <th>Service Provider</th>
-                                                <th>Priority</th>
                                                 <th>Status</th>
                                                 <th>Date</th>
                                                 <th>Action</th>
@@ -877,52 +631,44 @@ function Maintenance() {
                                         </thead>
 
                                         <tbody>
-                                            {filteredRequests.length > 0 ? (
+                                            {loading ? (
+                                                <tr>
+                                                    <td colSpan="6" className="maintenance-empty">
+                                                        Loading maintenance requests...
+                                                    </td>
+                                                </tr>
+                                            ) : filteredRequests.length > 0 ? (
                                                 filteredRequests.map((request) => (
                                                     <tr key={request.id}>
                                                         <td>
                                                             <div className="maintenance-request-cell">
-                                                                <strong>
-                                                                    {request.issue}
-                                                                </strong>
-
-                                                                <small>{request.id}</small>
+                                                                <strong>{titleFor(request)}</strong>
+                                                                <small>REQ-{String(request.id).padStart(3, "0")}</small>
                                                             </div>
                                                         </td>
 
-                                                        <td>{request.location}</td>
-                                                        <td>{request.reportedBy}</td>
+                                                        <td>{request.category}</td>
 
                                                         <td>
-                                                            {request.provider || "Not Assigned"}
+                                                            {request.workOrder
+                                                                ? providerName(request.workOrder.providerId)
+                                                                : "Not Assigned"}
                                                         </td>
 
                                                         <td>
-                                                            <span
-                                                                className={`maintenance-badge priority-${String(request.priority || "Medium").toLowerCase()}`}
-                                                            >
-                                                                {request.priority || "Medium"}
+                                                            <span className={statusClass(request.status)}>
+                                                                {complaintStatusLabel(request.status)}
                                                             </span>
                                                         </td>
 
-                                                        <td>
-                                                            <span
-                                                                className={`maintenance-badge status-${String(request.status || "Submitted").toLowerCase().replace(/\s+/g, "-")}`}
-                                                            >
-                                                                {request.status || "Submitted"}
-                                                            </span>
-                                                        </td>
-
-                                                        <td>{request.date}</td>
+                                                        <td>{formatDate(request.createdAt)}</td>
 
                                                         <td>
                                                             <div className="maintenance-actions">
                                                                 <button
                                                                     type="button"
                                                                     className="maintenance-view-btn"
-                                                                    onClick={() =>
-                                                                        handleViewRequest(request)
-                                                                    }
+                                                                    onClick={() => setSelectedId(request.id)}
                                                                 >
                                                                     <Icon name="eye" size={15} />
                                                                     View
@@ -931,21 +677,16 @@ function Maintenance() {
                                                                 {isAdmin && (
                                                                     <select
                                                                         className="maintenance-status-select"
-                                                                        aria-label={`Update status for ${request.id}`}
+                                                                        aria-label={`Update status for request ${request.id}`}
                                                                         value={request.status}
+                                                                        disabled={busyId === request.id}
                                                                         onChange={(event) =>
-                                                                            handleStatusChange(
-                                                                                request.id,
-                                                                                event.target.value
-                                                                            )
+                                                                            handleStatusChange(request, event.target.value)
                                                                         }
                                                                     >
-                                                                        {STATUS_OPTIONS.map((status) => (
-                                                                            <option
-                                                                                key={status}
-                                                                                value={status}
-                                                                            >
-                                                                                {status}
+                                                                        {COMPLAINT_STATUSES.map((status) => (
+                                                                            <option key={status.value} value={status.value}>
+                                                                                {status.label}
                                                                             </option>
                                                                         ))}
                                                                     </select>
@@ -956,10 +697,7 @@ function Maintenance() {
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td
-                                                        colSpan="8"
-                                                        className="maintenance-empty"
-                                                    >
+                                                    <td colSpan="6" className="maintenance-empty">
                                                         {isResident
                                                             ? "You have no maintenance requests yet."
                                                             : "No maintenance requests found."}
@@ -973,19 +711,13 @@ function Maintenance() {
                         )}
                     </section>
                 )}
-
-                
             </main>
-
-            {/* REQUEST DETAILS MODAL */}
 
             {selectedRequest && (
                 <div
                     className="maintenance-modal-overlay"
                     onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) {
-                            setSelectedRequest(null);
-                        }
+                        if (event.target === event.currentTarget) setSelectedId(null);
                     }}
                 >
                     <div
@@ -997,20 +729,16 @@ function Maintenance() {
                         <div className="maintenance-form-header">
                             <div>
                                 <p className="maintenance-eyebrow">
-                                    {selectedRequest.id}
+                                    REQ-{String(selectedRequest.id).padStart(3, "0")}
                                 </p>
-
-                                <h2 id="maintenance-modal-title">
-                                    {selectedRequest.issue}
-                                </h2>
-
+                                <h2 id="maintenance-modal-title">{titleFor(selectedRequest)}</h2>
                                 <p>Maintenance request details</p>
                             </div>
 
                             <button
                                 type="button"
                                 className="maintenance-modal-close"
-                                onClick={() => setSelectedRequest(null)}
+                                onClick={() => setSelectedId(null)}
                                 aria-label="Close"
                             >
                                 <Icon name="close" size={18} />
@@ -1024,73 +752,105 @@ function Maintenance() {
                             </div>
 
                             <div>
-                                <span>Priority</span>
-                                <strong>{selectedRequest.priority}</strong>
-                            </div>
-
-                            <div>
-                                <span>Location</span>
-                                <strong>{selectedRequest.location}</strong>
-                            </div>
-
-                            <div>
-                                <span>Reported By</span>
-                                <strong>{selectedRequest.reportedBy}</strong>
+                                <span>Date</span>
+                                <strong>{formatDate(selectedRequest.createdAt)}</strong>
                             </div>
 
                             <div>
                                 <span>Service Provider</span>
                                 <strong>
-                                    {selectedRequest.provider || "Not Assigned"}
+                                    {selectedRequest.workOrder
+                                        ? providerName(selectedRequest.workOrder.providerId)
+                                        : "Not Assigned"}
                                 </strong>
                             </div>
 
                             <div>
-                                <span>Date</span>
-                                <strong>{selectedRequest.date}</strong>
+                                <span>Work Order</span>
+                                <strong>
+                                    {selectedRequest.workOrder
+                                        ? workOrderStatusLabel(selectedRequest.workOrder.status)
+                                        : "None yet"}
+                                </strong>
                             </div>
 
                             <div className="maintenance-request-detail-full">
                                 <span>Status</span>
-                                <strong>{selectedRequest.status}</strong>
+                                <strong>{complaintStatusLabel(selectedRequest.status)}</strong>
                             </div>
 
                             <div className="maintenance-request-detail-full">
                                 <span>Description</span>
                                 <p>{selectedRequest.description}</p>
                             </div>
+
+                            {selectedRequest.workOrder?.completionNotes && (
+                                <div className="maintenance-request-detail-full">
+                                    <span>Completion Notes</span>
+                                    <p>{selectedRequest.workOrder.completionNotes}</p>
+                                </div>
+                            )}
+
+                            {selectedRequest.workOrder?.residentRating != null && (
+                                <div className="maintenance-request-detail-full">
+                                    <span>Your Rating</span>
+                                    <strong>{selectedRequest.workOrder.residentRating} / 5</strong>
+                                </div>
+                            )}
                         </div>
 
                         {isAdmin && (
                             <div className="maintenance-admin-status">
-                                <label htmlFor="maintenance-view-status">
-                                    Update Status
-                                </label>
-
+                                <label htmlFor="maintenance-view-status">Update Status</label>
                                 <select
                                     id="maintenance-view-status"
                                     value={selectedRequest.status}
+                                    disabled={busyId === selectedRequest.id}
                                     onChange={(event) =>
-                                        handleStatusChange(
-                                            selectedRequest.id,
-                                            event.target.value
-                                        )
+                                        handleStatusChange(selectedRequest, event.target.value)
                                     }
                                 >
-                                    {STATUS_OPTIONS.map((status) => (
-                                        <option key={status} value={status}>
-                                            {status}
+                                    {COMPLAINT_STATUSES.map((status) => (
+                                        <option key={status.value} value={status.value}>
+                                            {status.label}
                                         </option>
                                     ))}
                                 </select>
                             </div>
                         )}
 
+                        {isResident &&
+                            selectedRequest.workOrder?.status === "completed" &&
+                            selectedRequest.workOrder.residentRating == null && (
+                                <div className="maintenance-admin-status">
+                                    <label htmlFor="maintenance-rating">Rate this job</label>
+                                    <select
+                                        id="maintenance-rating"
+                                        value={ratingValue}
+                                        onChange={(event) => setRatingValue(event.target.value)}
+                                    >
+                                        {[5, 4, 3, 2, 1].map((value) => (
+                                            <option key={value} value={value}>
+                                                {value} / 5
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        className="maintenance-primary-btn"
+                                        disabled={busyId === selectedRequest.id}
+                                        onClick={() => handleRate(selectedRequest)}
+                                    >
+                                        Submit rating
+                                    </button>
+                                </div>
+                            )}
+
                         <div className="maintenance-form-actions">
                             <button
                                 type="button"
                                 className="maintenance-secondary-btn"
-                                onClick={() => setSelectedRequest(null)}
+                                onClick={() => setSelectedId(null)}
                             >
                                 Close
                             </button>

@@ -16,6 +16,9 @@ let snapshot = readStorage();
 
 const listeners = new Set();
 
+let cachedUser = null;
+let cachedRawUser = null;
+
 function readStorage() {
   try {
     return authService.getSession();
@@ -32,6 +35,7 @@ function sameSession(current, next) {
     current.token === next.token &&
     current.user?.id === next.user?.id &&
     current.user?.email === next.user?.email &&
+    current.user?.phoneno === next.user?.phoneno &&
     current.user?.role === next.user?.role &&
     current.user?.full_name === next.user?.full_name
   );
@@ -65,8 +69,10 @@ export function subscribe(listener) {
  * Returns `null` when nobody is signed in.
  */
 export function getSessionUser(rawUser = getSessionSnapshot().user) {
-  if (!rawUser || !rawUser.id) return null;
+  if (!rawUser || (!rawUser.id && !rawUser.user_id)) return null;
 
+  // MEMOIZATION : If the rawUser has not changed, return the cached user
+  if (cachedRawUser === rawUser) return cachedUser;
   const fullName = String(rawUser.full_name ?? '').trim();
   const nameParts = fullName.split(/\s+/).filter(Boolean);
 
@@ -79,17 +85,45 @@ export function getSessionUser(rawUser = getSessionSnapshot().user) {
 
   const role = toRole(rawUser.role);
 
-  return {
-    ...rawUser,
+  cachedRawUser = rawUser;
+  cachedUser = {
+    id: rawUser.id || rawUser.user_id,
     full_name: fullName,
     firstName,
     lastName,
     fullName: fullName || 'VALORA User',
     name: fullName || 'VALORA User',
     initials,
+    email: String(rawUser.email ?? '').trim(),
+    phoneno: rawUser.phoneno ?? null,
     role,
     roleLabel: roleLabel(role),
     isAdministrator: isAdministrator(role),
+  };
+
+  return cachedUser;
+}
+
+/** The signed-in user's access token, or null. Read fresh from storage. */
+export function getSessionToken() {
+  return readStorage().token;
+}
+
+/**
+ * The stored profile in the shape the older screens were written against
+ * (`firstName`, `fullName`, `status` beside the API fields), or null when
+ * nobody is signed in. Read fresh from storage, so it is safe outside React.
+ */
+export function getStoredUser() {
+  const { user } = readStorage();
+  if (!user) return null;
+
+  return {
+    ...user,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    fullName: user.full_name,
+    status: user.hoa_approved ? 'Approved' : 'Pending',
   };
 }
 
@@ -130,7 +164,7 @@ export function useSession() {
   return {
     token: session.token,
     user: getSessionUser(session.user),
-    isAuthenticated: Boolean(session.token && session.user?.id),
+    isAuthenticated: Boolean(session.token && (session.user?.id || session.user?.user_id)),
     login,
     register,
     logout,

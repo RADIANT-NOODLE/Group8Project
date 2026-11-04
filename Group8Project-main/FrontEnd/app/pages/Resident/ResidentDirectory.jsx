@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./ResidentDirectory.css";
-import { useSession } from "../../services/session";
+import { useSession, getSessionToken } from "../../services/session";
+import { showConfirm } from "../../components/AppDialog";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 /*
 =========================================================
@@ -57,25 +59,29 @@ function ResidentDirectory() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const headers = { "Authorization": `Bearer ${token}` };
 
-            const usersRes = await fetch("http://127.0.0.1:8000/api/v1/users/", { headers });
+            // the three lists are independent, so fetch them together
+            const [usersRes, propRes, dirRes] = await Promise.all([
+                fetch(`${getApiBaseUrl()}/api/v1/users/`, { headers }),
+                fetch(`${getApiBaseUrl()}/api/v1/properties`, { headers }),
+                fetch(`${getApiBaseUrl()}/api/v1/resident-directory`, { headers }),
+            ]);
+
             if (usersRes.ok) {
                 const usersData = await usersRes.json();
                 const userList = usersData.users || usersData || [];
                 setUsers(userList.filter(u => 
-                    ["resident", "investor"].includes(String(u.role).toLowerCase()) && u.hoa_approved === true
+                    String(u.role).toLowerCase() === "resident" && u.hoa_approved === true
                 ));
             }
 
-            const propRes = await fetch("http://127.0.0.1:8000/api/v1/properties", { headers });
             if (propRes.ok) {
                 const propData = await propRes.json();
                 setProperties(propData.properties || propData.items || propData || []);
             }
 
-            const dirRes = await fetch("http://127.0.0.1:8000/api/v1/resident-directory", { headers });
             if (dirRes.ok) {
                 const dirData = await dirRes.json();
                 setResidents(dirData.items || dirData || []);
@@ -115,7 +121,11 @@ function ResidentDirectory() {
     }, [properties]);
 
     const usedPropertyIds = useMemo(() => {
-        return new Set(residents.filter(r => r.occupancy === "Occupied").map(r => String(r.propertyId)));
+        return new Set(
+            residents
+                .filter(r => r.occupancy === "Occupied")
+                .map(r => String(r.property_id ?? r.propertyId))
+        );
     }, [residents]);
 
     const filteredResidents = useMemo(() => {
@@ -136,6 +146,20 @@ function ResidentDirectory() {
     const occupiedUnits = residents.filter(r => r.occupancy === "Occupied").length;
     const vacantUnits = Math.max(0, properties.length - occupiedUnits);
     const activeResidents = residents.filter(r => r.status === "Active").length;
+
+    // one tile per unit for the occupancy map, in unit-number order
+    const holderByProperty = new Map(
+        residents
+            .filter(r => r.occupancy === "Occupied")
+            .map(r => [String(r.property_id ?? r.propertyId), r.name])
+    );
+    const unitTiles = [...properties]
+        .map((property) => {
+            const id = String(property.id ?? property.unit_id);
+            return { id, unitNo: property.unit_no || id, holder: holderByProperty.get(id) || "" };
+        })
+        .sort((a, b) => String(a.unitNo).localeCompare(String(b.unitNo), undefined, { numeric: true }));
+    const occupancyShare = properties.length > 0 ? Math.round((occupiedUnits / properties.length) * 100) : 0;
 
     // 3. Form Handlers
     function resetForm() {
@@ -178,10 +202,16 @@ function ResidentDirectory() {
             return setFormError("Please select an account and a property.");
         }
 
+        const confirmed = await showConfirm(
+            modalMode === "edit" ? "Save changes to this directory record?" : "Add this resident to the directory?",
+            { title: modalMode === "edit" ? "Save changes?" : "Add resident?", confirmLabel: modalMode === "edit" ? "Save" : "Add resident" }
+        );
+        if (!confirmed) return;
+
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
-            const response = await fetch("http://127.0.0.1:8000/api/v1/resident-directory", {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/resident-directory`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -209,14 +239,14 @@ function ResidentDirectory() {
 
     // Delete / Unassign Record
     async function handleUnassign(resident) {
-        if (!window.confirm(`Unassign ${resident.name} from this property? The user account will not be deleted.`)) {
+        if (!await showConfirm(`Unassign ${resident.name} from this property? The user account will not be deleted.`)) {
             return;
         }
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/resident-directory/${resident.id}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/resident-directory/${resident.id}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -252,7 +282,7 @@ function ResidentDirectory() {
                     <div>
                         <span className="resident-directory-eyebrow">COMMUNITY MANAGEMENT</span>
                         <h2>Resident Directory</h2>
-                        <p>Confirm property holders and manage approved resident and investor assignments.</p>
+                        <p>Confirm property holders and manage approved resident assignments.</p>
                     </div>
                     <div className="resident-directory-profile-small">
                         <div className="resident-directory-profile-circle">
@@ -271,11 +301,56 @@ function ResidentDirectory() {
                 )}
 
                 {/* STATS */}
-                <section className="resident-directory-stat-cards">
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="total" size={19} /></div><div><p>Approved Holders</p><h3>{residents.length}</h3><small>Confirmed directory records</small></div></div>
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="occupied" size={19} /></div><div><p>Occupied Units</p><h3>{occupiedUnits}</h3><small>Confirmed property assignments</small></div></div>
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="vacant" size={19} /></div><div><p>Unassigned Units</p><h3>{vacantUnits}</h3><small>Units without a directory holder</small></div></div>
-                    <div className="resident-directory-stat-card"><div className="resident-directory-stat-icon"><Icon name="active" size={19} /></div><div><p>Active Records</p><h3>{activeResidents}</h3><small>Active directory entries</small></div></div>
+                {/* UNIT OCCUPANCY: one tile per unit in the estate */}
+                <section className="resident-directory-occupancy" aria-labelledby="resident-directory-occupancy-title">
+                    <div className="resident-directory-occupancy-summary">
+                        <p className="resident-directory-occupancy-eyebrow">Unit occupancy</p>
+                        <h2 id="resident-directory-occupancy-title">
+                            {loading
+                                ? "Loading units…"
+                                : `${occupiedUnits} of ${properties.length} ${properties.length === 1 ? "unit" : "units"} occupied`}
+                        </h2>
+                        <p className="resident-directory-occupancy-percent">{loading ? "" : `${occupancyShare}% of the estate has a confirmed holder`}</p>
+
+                        <dl className="resident-directory-occupancy-figures">
+                            <div>
+                                <dt>Approved holders</dt>
+                                <dd>{residents.length}</dd>
+                            </div>
+                            <div>
+                                <dt>Active records</dt>
+                                <dd>{activeResidents}</dd>
+                            </div>
+                            <div>
+                                <dt>Unassigned units</dt>
+                                <dd>{vacantUnits}</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div className="resident-directory-unit-map">
+                        <ul className="resident-directory-unit-grid" aria-label="Units in the estate">
+                            {unitTiles.map((tile) => (
+                                <li
+                                    key={tile.id}
+                                    className={`resident-directory-unit-tile${tile.holder ? " is-occupied" : ""}`}
+                                    title={tile.holder ? `Unit ${tile.unitNo} · ${tile.holder}` : `Unit ${tile.unitNo} · Unassigned`}
+                                    aria-label={tile.holder ? `Unit ${tile.unitNo}, occupied by ${tile.holder}` : `Unit ${tile.unitNo}, unassigned`}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M3 10.5 12 3l9 7.5" />
+                                        <path d="M5.5 9.5V21h13V9.5" />
+                                    </svg>
+                                    <span>{tile.unitNo}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <ul className="resident-directory-unit-legend">
+                            <li><span className="resident-directory-unit-swatch is-occupied" aria-hidden="true" />Occupied <strong>{occupiedUnits}</strong></li>
+                            <li><span className="resident-directory-unit-swatch" aria-hidden="true" />Unassigned <strong>{vacantUnits}</strong></li>
+                        </ul>
+                    </div>
                 </section>
 
                 {/* TABLE */}
@@ -299,7 +374,7 @@ function ResidentDirectory() {
                             <option value="All">All Statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option>
                         </select>
                         <select className="resident-directory-filter-select resident-directory-role-filter" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                            <option value="All">All Account Types</option><option value="resident">Residents</option><option value="investor">Investors</option>
+                            <option value="All">All Account Types</option><option value="resident">Residents</option>
                         </select>
                     </div>
 
@@ -368,7 +443,7 @@ function ResidentDirectory() {
                         <form className="resident-directory-modal-body" onSubmit={handleSave}>
                             {modalMode === "add" && (
                                 <div className="resident-directory-form-group">
-                                    <label>Approved Resident / Investor Account *</label>
+                                    <label>Approved Resident Account *</label>
                                     <select value={form.userId} onChange={(e) => handleUserChange(e.target.value)} required>
                                         <option value="">Select an approved account</option>
                                         {users.map((user) => (

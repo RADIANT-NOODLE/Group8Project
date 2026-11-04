@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import "./Valuation.css";
+import { showAlert } from "../../components/AppDialog";
 
 
 /* =========================================================
@@ -122,7 +123,7 @@ export default function Valuation() {
             Number(propertySize) <= 0
         ) {
 
-            alert(
+            showAlert(
                 "Please enter a property location and valid property size."
             );
 

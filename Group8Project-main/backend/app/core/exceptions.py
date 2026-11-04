@@ -31,3 +31,10 @@ class ConflictException(HTTPException):
 
     def __init__(self, detail: str = "Conflict with existing resource.") -> None:
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
+class ValidationException(HTTPException):
+    """Raised when a request is well-formed but its content is not acceptable."""
+
+    def __init__(self, detail: str = "The request was not valid.") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)

@@ -403,3 +403,123 @@
         font-size: 24px;
     }
 }
+
+
+/* =========================================================
+   LOADING SKELETON
+========================================================= */
+
+.agent-inquiries-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.agent-inquiries-skeleton {
+    display: block;
+    border-radius: 7px;
+    background: linear-gradient(90deg, #ece7f0 0%, #f6f3f8 40%, #ece7f0 80%);
+    background-size: 220% 100%;
+    animation: agent-inquiries-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes agent-inquiries-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -120% 0; }
+}
+
+.agent-inquiries-skeleton-stack {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+}
+
+.agent-inquiries-skeleton-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+}
+
+.agent-inquiries-skeleton-label {
+    width: 90px;
+    height: 12px;
+}
+
+.agent-inquiries-skeleton-number {
+    width: 44px;
+    height: 24px;
+}
+
+.agent-inquiries-skeleton-table {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 18px;
+}
+
+.agent-inquiries-skeleton-head {
+    height: 38px;
+    margin-bottom: 6px;
+    border-radius: 9px;
+}
+
+.agent-inquiries-skeleton-row {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 2fr) minmax(0, 1.4fr) 90px 80px;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 6px;
+    border-bottom: 1px solid #f2eff4;
+}
+
+.agent-inquiries-skeleton-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+}
+
+.agent-inquiries-skeleton-line {
+    width: 70%;
+    height: 12px;
+}
+
+.agent-inquiries-skeleton-line.wide {
+    width: 85%;
+    height: 14px;
+}
+
+.agent-inquiries-skeleton-pill {
+    width: 80px;
+    height: 24px;
+    border-radius: 20px;
+}
+
+.agent-inquiries-skeleton-button {
+    width: 70px;
+    height: 32px;
+    border-radius: 8px;
+}
+
+@media (max-width: 700px) {
+    .agent-inquiries-skeleton-row {
+        grid-template-columns: 38px minmax(0, 1fr) 70px;
+    }
+
+    .agent-inquiries-skeleton-row > :nth-child(3),
+    .agent-inquiries-skeleton-row > :nth-child(4) {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agent-inquiries-skeleton {
+        animation: none;
+        background: #ece7f0;
+    }
+}

@@ -8,10 +8,16 @@ import {
 } from "../../data/propertyStorage";
 
 import {
+    ensureLocalPropertyForRequest,
     getPropertyRequests,
 } from "../../data/propertyRequests";
+import { updateRequestProgress } from "../../services/propertyRequestApi";
+import { createListing, listMyListings, updateListing } from "../../services/listingApi";
+import { syncListingPhotos, syncPublishedListingPhotos } from "../../services/listingPhotoSync";
 
 import "./AgentEditListings.css";
+import { showConfirm } from "../../components/AppDialog";
+import { getStoredUser } from "../../services/session";
 
 /*
 =========================================================
@@ -122,13 +128,13 @@ function AgentEditListings() {
 
     const getCurrentAgent = () => {
         try {
-            const storedUser = localStorage.getItem("valoraUser");
+            const storedUser = getStoredUser();
 
             if (!storedUser) {
                 return null;
             }
 
-            return JSON.parse(storedUser);
+            return storedUser;
         } catch (error) {
             console.error(
                 "Unable to read current VALORA user:",
@@ -163,7 +169,7 @@ function AgentEditListings() {
     =========================================================
     */
 
-    const loadAssignedProperties = () => {
+    const loadAssignedProperties = async () => {
         const currentUser = getCurrentAgent();
 
         if (!currentUser) {
@@ -172,14 +178,26 @@ function AgentEditListings() {
             return;
         }
 
+        let allRequests = [];
+
+        try {
+            // the API only returns the requests assigned to this agent
+            allRequests = (await getPropertyRequests()) || [];
+        } catch (error) {
+            console.error("Unable to load assigned property requests:", error);
+            setMessage("Unable to load your assigned properties. Please try again.");
+        }
+
+        // make sure each assigned unit has a local listing record to edit
+        allRequests.forEach((request) => ensureLocalPropertyForRequest(request));
+
         const allProperties = getProperties();
-        const allRequests = getPropertyRequests();
         const currentAgentName = getAgentName(currentUser);
 
         const agentRequests = allRequests.filter((request) => {
             const assignedById =
                 request.assignedAgentId &&
-                request.assignedAgentId === currentUser.id;
+                String(request.assignedAgentId) === String(currentUser.id);
 
             const assignedByName =
                 request.assignedAgentName &&
@@ -192,7 +210,7 @@ function AgentEditListings() {
             .map((request) =>
                 allProperties.find(
                     (property) =>
-                        property.id === request.propertyId
+                        String(property.id) === String(request.propertyId)
                 )
             )
             .filter(Boolean);
@@ -221,6 +239,16 @@ function AgentEditListings() {
 
     useEffect(() => {
         loadAssignedProperties();
+
+        // photos of already-published listings that never reached the public site
+        const agent = getCurrentAgent();
+        if (agent?.id) {
+            syncPublishedListingPhotos(agent.id)
+                .then((uploaded) => {
+                    if (uploaded > 0) loadAssignedProperties();
+                })
+                .catch((error) => console.error("Could not sync listing photos:", error));
+        }
     }, []);
 
     /*
@@ -232,7 +260,7 @@ function AgentEditListings() {
     const getRequestForProperty = (propertyId) => {
         return (
             assignedRequests.find(
-                (request) => request.propertyId === propertyId
+                (request) => String(request.propertyId) === String(propertyId)
             ) || null
         );
     };
@@ -383,7 +411,7 @@ function AgentEditListings() {
             setMessage(
                 `${convertedImages.length} photo${
                     convertedImages.length === 1 ? "" : "s"
-                } selected and ready for HOA submission.`
+                } selected. They will go live when you publish the listing.`
             );
         } catch (error) {
             console.error(error);
@@ -410,9 +438,9 @@ function AgentEditListings() {
 
     /*
     =========================================================
-    REMOVE APPROVED PHOTO
-    Requests HOA approval; does not immediately remove the
-    publicly approved photograph.
+    REMOVE PHOTO
+    The agent manages the listing directly, so the photo is
+    taken off the listing straight away.
     =========================================================
     */
 
@@ -451,47 +479,16 @@ function AgentEditListings() {
             return;
         }
 
-        const alreadyPending = existingRemovals.some(
-            (image) => {
-                if (typeof image === "string") {
-                    return image === imageId;
-                }
-
-                if (typeof imageToRemove === "string") {
-                    return false;
-                }
-
-                return image.id === imageToRemove.id;
-            }
-        );
-
-        if (alreadyPending) {
-            setMessage(
-                "This photo is already marked for removal and is awaiting HOA approval."
-            );
-            return;
-        }
-
-        const updatedPendingRemovals = [
-            ...existingRemovals,
-            imageToRemove,
-        ];
+        const sameImage = (image) =>
+            typeof image === "string" || typeof imageToRemove === "string"
+                ? image === imageToRemove
+                : image.id === imageToRemove.id;
 
         const updatedProperty = updateProperty(
             editingProperty.id,
             {
-                pendingPhotoRemovals:
-                    updatedPendingRemovals,
-
-                listing: {
-                    ...(editingProperty.listing || {}),
-
-                    listingStatus: "Pending HOA Approval",
-                    hoaApprovalStatus: "Pending Review",
-
-                    hoaReviewMessage:
-                        "An approved property photo has been marked for removal by the assigned Estate Agent and requires HOA review.",
-                },
+                images: currentImages.filter((image) => !sameImage(image)),
+                pendingPhotoRemovals: existingRemovals.filter((image) => !sameImage(image)),
             }
         );
 
@@ -513,13 +510,14 @@ function AgentEditListings() {
         );
 
         setMessage(
-            "Photo removal has been submitted for HOA approval. The current public photo will remain visible until the HOA approves the change."
+            "The photo has been removed from the listing."
         );
     };
 
     /*
     =========================================================
-    SAVE LISTING + SUBMIT PHOTOS
+    PUBLISH LISTING + PHOTOS
+    The estate agent publishes directly; no HOA approval step.
     =========================================================
     */
 
@@ -583,16 +581,28 @@ function AgentEditListings() {
             return;
         }
 
-        const existingPendingImages =
-            editingProperty.pendingImages || [];
+        const confirmed = await showConfirm(
+            `Publish ${editingProperty.unitNumber || "this listing"}? It will go live for buyers and renters straight away.`,
+            { title: "Publish listing?", confirmLabel: "Publish" }
+        );
+        if (!confirmed) return;
 
-        const updatedPendingImages = [
-            ...existingPendingImages,
-            ...selectedFiles,
-        ];
-
+        // photos go live with the listing: anything still waiting from an
+        // earlier submission is published too, and queued removals are applied
         const pendingPhotoRemovals =
             editingProperty.pendingPhotoRemovals || [];
+        const isRemoved = (image) =>
+            pendingPhotoRemovals.some((removal) =>
+                typeof removal === "string" || typeof image === "string"
+                    ? removal === image
+                    : removal.id === image.id
+            );
+
+        const publishedImages = [
+            ...(editingProperty.images || []).filter((image) => !isRemoved(image)),
+            ...(editingProperty.pendingImages || []),
+            ...selectedFiles,
+        ];
 
         const updatedListing = {
             ...(editingProperty.listing || {}),
@@ -624,19 +634,19 @@ function AgentEditListings() {
             assignedAgentId: currentUser.id,
             assignedAgentName: getAgentName(currentUser),
 
-            listingStatus: "Pending HOA Approval",
-            hoaApprovalStatus: "Pending Review",
-
-            hoaReviewMessage:
-                "Listing changes submitted by the assigned Estate Agent and awaiting HOA approval.",
+            listingStatus: "Published",
+            hoaApprovalStatus: "Not Required",
+            hoaReviewMessage: "",
+            publishedAt: new Date().toISOString(),
         };
 
         const updatedProperty = updateProperty(
             editingProperty.id,
             {
                 listing: updatedListing,
-                pendingImages: updatedPendingImages,
-                pendingPhotoRemovals,
+                images: publishedImages,
+                pendingImages: [],
+                pendingPhotoRemovals: [],
             }
         );
 
@@ -658,8 +668,66 @@ function AgentEditListings() {
         setEditingProperty(updatedProperty);
         setSelectedFiles([]);
 
+        // tell the resident: their request moves to "Listed"
+        let progressNote = "";
+        if (["assigned", "listed"].includes(request.rawStatus)) {
+            try {
+                await updateRequestProgress(request.id, "listed");
+                setAssignedRequests((current) =>
+                    current.map((item) =>
+                        item.id === request.id
+                            ? { ...item, rawStatus: "listed", status: "Listed on the Market" }
+                            : item
+                    )
+                );
+            } catch (progressError) {
+                console.error("Could not mark the request as listed:", progressError);
+                progressNote = " The resident's request status could not be updated right now.";
+            }
+        }
+
+        // the public listing lives in the backend, so every visitor sees it (home page, property page)
+        let publicNote = "";
+        try {
+            const unitId = Number(editingProperty.id);
+            const isRent = formData.listingType === "For Rent";
+            const fields = {
+                price: Number(isRent ? formData.rentalPrice : formData.askingPrice),
+                listingType: isRent ? "rent" : "sale",
+                description: formData.description,
+            };
+            const { items } = await listMyListings(currentUser.id, { unitId, pageSize: 10 });
+            const existing = items.find((item) => item.unitId === unitId);
+            if (existing) {
+                await updateListing(existing.id, { ...fields, status: "active" });
+            } else {
+                await createListing({ unitId, ...fields });
+            }
+        } catch (publicError) {
+            console.error("Could not save the public listing:", publicError);
+            publicNote = " It could not be shared on the public site right now — try publishing again.";
+        }
+
+        // photos go to the backend too, so every visitor on every device sees them
+        let photoNote = "";
+        const photoSync = await syncListingPhotos(updatedProperty);
+        if (photoSync.uploaded > 0) {
+            setProperties((current) =>
+                current.map((property) =>
+                    property.id === photoSync.property.id ? photoSync.property : property
+                )
+            );
+            setEditingProperty(photoSync.property);
+        }
+        if (photoSync.failed > 0) {
+            photoNote =
+                ` ${photoSync.failed} photo${photoSync.failed === 1 ? "" : "s"} could not be shared on the public site` +
+                (photoSync.error ? ` (${photoSync.error})` : "") +
+                ". Publish again to retry.";
+        }
+
         setMessage(
-            "Listing changes and photos have been submitted to the HOA for approval."
+            "Listing published. It is now live for buyers and renters." + progressNote + publicNote + photoNote
         );
     };
 
@@ -670,7 +738,7 @@ function AgentEditListings() {
     =========================================================
     */
 
-    const handleRemoveListing = (property) => {
+    const handleRemoveListing = async (property) => {
         const request = getRequestForProperty(property.id);
 
         if (!request) {
@@ -680,7 +748,7 @@ function AgentEditListings() {
             return;
         }
 
-        const confirmed = window.confirm(
+        const confirmed = await showConfirm(
             `Remove the listing information for ${
                 property.unitNumber || property.id
             }? The unit itself will not be deleted.`
@@ -830,8 +898,8 @@ function AgentEditListings() {
                         <h1>Edit Listings</h1>
 
                         <p>
-                            Update assigned property listings
-                            and submit changes for HOA approval.
+                            Update your assigned property listings
+                            and publish them straight to buyers and renters.
                         </p>
                     </div>
                 </header>
@@ -861,53 +929,74 @@ function AgentEditListings() {
                         </div>
                     )}
 
-                    {/* STATS */}
-                    <div className="agent-edit-stats">
-                        <div className="agent-edit-stat-card">
-                            <span>Assigned Properties</span>
-                            <strong>{properties.length}</strong>
-                        </div>
+                    {/* LISTING PROGRESS: where each assigned property stands */}
+                    {(() => {
+                        const total = properties.length;
+                        const published = properties.filter(
+                            (property) => getListingStatus(property) === "Published"
+                        ).length;
+                        const pending = properties.filter(
+                            (property) => getListingStatus(property) === "Pending HOA Approval"
+                        ).length;
+                        const notSubmitted = Math.max(total - published - pending, 0);
 
-                        <div className="agent-edit-stat-card">
-                            <span>Published</span>
-                            <strong>
-                                {
-                                    properties.filter(
-                                        (property) =>
-                                            getListingStatus(property) ===
-                                            "Published"
-                                    ).length
-                                }
-                            </strong>
-                        </div>
+                        // "awaiting approval" only exists for listings sent under the old HOA review flow
+                        const segments = [
+                            { key: "published", label: "Published", value: published },
+                            ...(pending > 0 ? [{ key: "pending", label: "Submitted earlier", value: pending }] : []),
+                            { key: "draft", label: "Not yet published", value: notSubmitted },
+                        ];
+                        const percent = total > 0 ? Math.round((published / total) * 100) : 0;
 
-                        <div className="agent-edit-stat-card">
-                            <span>Pending Approval</span>
-                            <strong>
-                                {
-                                    properties.filter(
-                                        (property) =>
-                                            getListingStatus(property) ===
-                                            "Pending HOA Approval"
-                                    ).length
-                                }
-                            </strong>
-                        </div>
+                        return (
+                            <section className="agent-edit-progress" aria-labelledby="agent-edit-progress-title">
+                                <div className="agent-edit-progress-top">
+                                    <div>
+                                        <p className="agent-edit-progress-eyebrow">Listing progress</p>
+                                        <h2 id="agent-edit-progress-title">
+                                            {total === 0
+                                                ? "No properties assigned yet"
+                                                : `${published} of ${total} ${total === 1 ? "listing" : "listings"} published`}
+                                        </h2>
+                                    </div>
+                                    {total > 0 && (
+                                        <strong className="agent-edit-progress-percent">{percent}%</strong>
+                                    )}
+                                </div>
 
-                        <div className="agent-edit-stat-card">
-                            <span>Pending Photos</span>
-                            <strong>
-                                {
-                                    properties.reduce(
-                                        (total, property) =>
-                                            total +
-                                            getPendingImageCount(property),
-                                        0
-                                    )
-                                }
-                            </strong>
-                        </div>
-                    </div>
+                                <div
+                                    className="agent-edit-progress-bar"
+                                    role="img"
+                                    aria-label={segments.map((segment) => `${segment.label}: ${segment.value}`).join(", ")}
+                                >
+                                    {total > 0 &&
+                                        segments
+                                            .filter((segment) => segment.value > 0)
+                                            .map((segment) => (
+                                                <span
+                                                    key={segment.key}
+                                                    className={`agent-edit-progress-segment is-${segment.key}`}
+                                                    style={{ flexGrow: segment.value }}
+                                                    title={`${segment.label}: ${segment.value}`}
+                                                />
+                                            ))}
+                                </div>
+
+                                <div className="agent-edit-progress-footer">
+                                    <ul className="agent-edit-progress-legend">
+                                        {segments.map((segment) => (
+                                            <li key={segment.key}>
+                                                <span className={`agent-edit-progress-swatch is-${segment.key}`} aria-hidden="true" />
+                                                {segment.label}
+                                                <strong>{segment.value}</strong>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                </div>
+                            </section>
+                        );
+                    })()}
 
                     {/* PROPERTY LIST */}
                     <section className="agent-edit-card">
@@ -1207,8 +1296,8 @@ function AgentEditListings() {
                                         <h3>Listing Details</h3>
 
                                         <p>
-                                            Enter the information that should
-                                            be submitted to the HOA for approval.
+                                            Enter the information buyers and
+                                            renters will see on the listing.
                                         </p>
                                     </div>
 
@@ -1395,8 +1484,8 @@ function AgentEditListings() {
                                                                 />
 
                                                                 {isPendingRemoval
-                                                                    ? "Removal Pending HOA"
-                                                                    : "Request Photo Removal"}
+                                                                    ? "Removed on publish"
+                                                                    : "Remove Photo"}
                                                             </button>
                                                         </div>
                                                     );
@@ -1406,17 +1495,18 @@ function AgentEditListings() {
                                     )}
                                 </div>
 
-                                {/* PENDING PHOTOS */}
+                                {/* PHOTOS FROM AN EARLIER SUBMISSION (published on the next save) */}
+                                {(editingProperty.pendingImages || []).length > 0 && (
                                 <div className="agent-edit-photo-section">
                                     <div className="agent-edit-form-heading">
                                         <h3>
-                                            Photos Awaiting HOA Approval
+                                            Photos Waiting to Be Published
                                         </h3>
 
                                         <p>
-                                            These photographs have been
-                                            submitted but are not yet
-                                            visible publicly.
+                                            These photographs were added
+                                            earlier and will go live the next
+                                            time you publish.
                                         </p>
                                     </div>
 
@@ -1458,7 +1548,7 @@ function AgentEditListings() {
                                                         </div>
 
                                                         <div className="agent-edit-photo-status">
-                                                            Awaiting HOA approval
+                                                            Goes live on publish
                                                         </div>
                                                     </div>
                                                 );
@@ -1466,6 +1556,7 @@ function AgentEditListings() {
                                         </div>
                                     )}
                                 </div>
+                                )}
 
                                 {/* PENDING PHOTO REMOVALS */}
                                 {(editingProperty.pendingPhotoRemovals || [])
@@ -1473,15 +1564,11 @@ function AgentEditListings() {
                                     <div className="agent-edit-photo-section">
                                         <div className="agent-edit-form-heading">
                                             <h3>
-                                                Photo Removals Awaiting HOA
-                                                Approval
+                                                Photos Marked for Removal
                                             </h3>
-
                                             <p>
-                                                These approved photographs
-                                                have been marked for removal.
-                                                They remain public until the
-                                                HOA approves the change.
+                                                These photographs will be taken off
+                                                the listing the next time you publish.
                                             </p>
                                         </div>
 
@@ -1512,8 +1599,7 @@ function AgentEditListings() {
                                                         </div>
 
                                                         <div className="agent-edit-photo-status agent-edit-photo-status-warning">
-                                                            Removal awaiting HOA
-                                                            approval
+                                                            Removed on publish
                                                         </div>
                                                     </div>
                                                 );
@@ -1528,9 +1614,8 @@ function AgentEditListings() {
                                         <h3>Upload New Photos</h3>
 
                                         <p>
-                                            New photographs will be submitted
-                                            to the HOA for approval before
-                                            becoming public.
+                                            New photographs are added to the
+                                            listing when you publish it.
                                         </p>
                                     </div>
 
@@ -1617,7 +1702,7 @@ function AgentEditListings() {
                                         className="agent-edit-submit-btn"
                                     >
                                         <Icon name="check" size={17} />
-                                        Submit Changes for HOA Approval
+                                        Publish Listing
                                     </button>
 
                                     <button

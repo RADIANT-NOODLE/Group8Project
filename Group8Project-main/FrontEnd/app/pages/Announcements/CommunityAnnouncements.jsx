@@ -1,10 +1,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { useSession } from "../../services/session";
+import {
+    createAnnouncement,
+    deleteAnnouncement as deleteAnnouncementRequest,
+    listAnnouncements,
+    updateAnnouncement,
+} from "../../services/announcementApi";
 import "./CommunityAnnouncements.css";
-
-const STORAGE_KEY = "valoraCommunityAnnouncements";
-const UPDATE_EVENT = "valora:community-announcements-updated";
+import { showConfirm } from "../../components/AppDialog";
 
 /* =========================================================
    ICONS
@@ -75,46 +80,40 @@ function Icon({ type, size = 20 }) {
 }
 
 /* =========================================================
-   STORAGE
-   No demo announcements are created.
-
-   Every save dispatches a custom event so other VALORA
-   components in the same tab can refresh immediately.
+   API
+   Announcements are stored by the backend so every resident
+   sees what the HOA publishes (they used to live in this
+   browser storage only).
 ========================================================= */
 
-function readAnnouncements() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-
-        if (!saved) return [];
-
-        const parsed = JSON.parse(saved);
-
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-        console.error("Unable to load announcements:", error);
-        return [];
-    }
+/** The shape this screen renders, from an announcement the API returned. */
+function toViewModel(announcement) {
+    return {
+        id: announcement.id,
+        title: announcement.title,
+        content: announcement.message,
+        category: announcement.category,
+        status: announcement.isPublished ? "Published" : "Draft",
+        date: announcement.createdAt,
+        createdAt: announcement.createdAt,
+        updatedAt: announcement.updatedAt,
+        expiresAt: announcement.expiresAt,
+    };
 }
 
-function writeAnnouncements(items) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-
-    window.dispatchEvent(
-        new CustomEvent(UPDATE_EVENT, {
-            detail: { announcements: items },
-        })
-    );
-}
+const ADMIN_ROLES = ["hoa_admin", "head_admin"];
 
 /* =========================================================
    MAIN COMPONENT
 ========================================================= */
 
 function CommunityAnnouncements() {
-    const [announcements, setAnnouncements] = useState(
-        readAnnouncements
-    );
+    const { user } = useSession();
+    const isAdmin = ADMIN_ROLES.includes(String(user?.role || "").toLowerCase());
+
+    const [announcements, setAnnouncements] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [category, setCategory] = useState("All");
     const [search, setSearch] = useState("");
@@ -135,42 +134,34 @@ function CommunityAnnouncements() {
     const [form, setForm] = useState({ ...emptyForm });
 
     /* =====================================================
-       LISTEN FOR SHARED ANNOUNCEMENT CHANGES
+       LOAD ANNOUNCEMENTS FROM THE API
+       Admins also see drafts and expired announcements.
     ===================================================== */
 
+    async function loadAnnouncements() {
+        try {
+            const page = await listAnnouncements({ pageSize: 100, includeExpired: true });
+            setAnnouncements(page.items.map(toViewModel));
+            setFormError("");
+        } catch (error) {
+            console.error("Unable to load announcements:", error);
+            setFormError(
+                error?.status === 0
+                    ? "Could not connect to the server. Please try again."
+                    : error?.message || "Unable to load announcements."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
-        function refreshFromStorage(event) {
-            if (
-                event.key === STORAGE_KEY ||
-                event.key === null
-            ) {
-                setAnnouncements(readAnnouncements());
-            }
+        if (isAdmin) {
+            loadAnnouncements();
+        } else {
+            setLoading(false);
         }
-
-        function refreshFromAnnouncementEvent() {
-            setAnnouncements(readAnnouncements());
-        }
-
-        window.addEventListener("storage", refreshFromStorage);
-
-        window.addEventListener(
-            UPDATE_EVENT,
-            refreshFromAnnouncementEvent
-        );
-
-        return () => {
-            window.removeEventListener(
-                "storage",
-                refreshFromStorage
-            );
-
-            window.removeEventListener(
-                UPDATE_EVENT,
-                refreshFromAnnouncementEvent
-            );
-        };
-    }, []);
+    }, [isAdmin]);
 
     /* =====================================================
        STATISTICS
@@ -183,6 +174,11 @@ function CommunityAnnouncements() {
     const draftCount = announcements.filter(
         item => item.status === "Draft"
     ).length;
+
+    // the newest announcement residents can currently see
+    const latestPublished = announcements
+        .filter(item => item.status === "Published")
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
 
     /* =====================================================
        SEARCH AND CATEGORY FILTER
@@ -206,22 +202,28 @@ function CommunityAnnouncements() {
     }, [announcements, category, search]);
 
     /* =====================================================
-       SAVE ANNOUNCEMENTS
+       SAVE HELPER
+       Runs an API call, then reloads the list so the screen
+       always shows what the server actually stored.
     ===================================================== */
 
-    function persist(nextAnnouncements) {
-        try {
-            writeAnnouncements(nextAnnouncements);
+    async function save(action, successMessage) {
+        setIsSaving(true);
 
-            setAnnouncements(nextAnnouncements);
-            setMessage("Announcements updated successfully.");
+        try {
+            await action();
+            await loadAnnouncements();
+            setMessage(successMessage);
             setFormError("");
+            return true;
         } catch (error) {
             console.error("Unable to save announcements:", error);
-
             setFormError(
-                "Unable to save changes in this browser. Please check available storage."
+                (error?.message || "Unable to save the announcement.").replace(/Value error,\s*/gi, "")
             );
+            return false;
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -263,7 +265,7 @@ function CommunityAnnouncements() {
        SUBMIT CREATE / EDIT FORM
     ===================================================== */
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault();
 
         if (!form.title.trim()) {
@@ -281,41 +283,39 @@ function CommunityAnnouncements() {
             return;
         }
 
-        const now = new Date().toISOString();
+        const fields = {
+            title: form.title.trim(),
+            message: form.content.trim(),
+            category: form.category.trim(),
+            isPublished: form.status === "Published",
+        };
 
-        let nextAnnouncements;
+        const confirmed = await showConfirm(
+            editingId
+                ? "Save changes to this announcement?"
+                : fields.isPublished
+                    ? "Publish this announcement? Residents will see it straight away."
+                    : "Save this announcement as a draft?",
+            {
+                title: editingId ? "Save changes?" : fields.isPublished ? "Publish announcement?" : "Save draft?",
+                confirmLabel: editingId ? "Save" : fields.isPublished ? "Publish" : "Save draft",
+            }
+        );
+        if (!confirmed) return;
 
-        if (editingId) {
-            nextAnnouncements = announcements.map(item =>
-                item.id === editingId
-                    ? {
-                          ...item,
-                          ...form,
-                          title: form.title.trim(),
-                          category: form.category.trim(),
-                          content: form.content.trim(),
-                          updatedAt: now,
-                      }
-                    : item
-            );
-        } else {
-            const newAnnouncement = {
-                id: `ANN-${Date.now()}`,
-                ...form,
-                title: form.title.trim(),
-                category: form.category.trim(),
-                content: form.content.trim(),
-                createdAt: now,
-                updatedAt: now,
-            };
+        const saved = await save(
+            () =>
+                editingId
+                    ? updateAnnouncement(editingId, fields)
+                    : createAnnouncement(fields),
+            editingId
+                ? "Announcement updated successfully."
+                : fields.isPublished
+                    ? "Announcement published. Residents can now see it."
+                    : "Announcement saved as a draft."
+        );
 
-            nextAnnouncements = [
-                newAnnouncement,
-                ...announcements,
-            ];
-        }
-
-        persist(nextAnnouncements);
+        if (!saved) return;
 
         setShowForm(false);
         setEditingId(null);
@@ -328,41 +328,42 @@ function CommunityAnnouncements() {
        PUBLISH / UNPUBLISH
     ===================================================== */
 
-    function togglePublished(announcement) {
-        const nextStatus =
-            announcement.status === "Published"
-                ? "Draft"
-                : "Published";
+    async function togglePublished(announcement) {
+        const publish = announcement.status !== "Published";
 
-        const updated = announcements.map(item =>
-            item.id === announcement.id
-                ? {
-                      ...item,
-                      status: nextStatus,
-                      updatedAt: new Date().toISOString(),
-                  }
-                : item
+        const confirmed = await showConfirm(
+            publish
+                ? `Publish "${announcement.title}"? Residents will see it straight away.`
+                : `Move "${announcement.title}" back to drafts? Residents will no longer see it.`,
+            { title: publish ? "Publish announcement?" : "Move to drafts?", confirmLabel: publish ? "Publish" : "Move to drafts" }
         );
+        if (!confirmed) return;
 
-        persist(updated);
+        await save(
+            () => updateAnnouncement(announcement.id, { isPublished: publish }),
+            publish ? "Announcement published." : "Announcement moved back to drafts."
+        );
     }
 
     /* =====================================================
        DELETE ANNOUNCEMENT
     ===================================================== */
 
-    function deleteAnnouncement(announcement) {
-        const confirmed = window.confirm(
+    async function deleteAnnouncement(announcement) {
+        const confirmed = await showConfirm(
             `Delete "${announcement.title}"? This cannot be undone.`
         );
 
         if (!confirmed) return;
 
-        persist(
-            announcements.filter(
-                item => item.id !== announcement.id
-            )
+        const deleted = await save(
+            async () => {
+                await deleteAnnouncementRequest(announcement.id);
+            },
+            "Announcement deleted."
         );
+
+        if (!deleted) return;
 
         if (viewing?.id === announcement.id) {
             setViewing(null);
@@ -412,6 +413,25 @@ function CommunityAnnouncements() {
     /* =====================================================
        RENDER
     ===================================================== */
+
+    if (!isAdmin) {
+        return (
+            <div className="community-announcements-page">
+                <DashboardSidebar />
+
+                <main className="community-announcements-main">
+                    <section className="community-announcements-top-bar">
+                        <h1>Community Announcements</h1>
+                        <p>
+                            Only HOA administrators can manage announcements.
+                            You can read published announcements on the
+                            Announcements page.
+                        </p>
+                    </section>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="community-announcements-page">
@@ -475,46 +495,74 @@ function CommunityAnnouncements() {
                     </div>
                 )}
 
-                {/* STATISTICS */}
+                {/* PUBLISHING SUMMARY + WHAT RESIDENTS SEE NOW */}
+                <section className="community-announcements-summary" aria-labelledby="community-announcements-summary-title">
+                    <div className="community-announcements-summary-status">
+                        <p className="community-announcements-summary-eyebrow">Publishing</p>
+                        <h2 id="community-announcements-summary-title">
+                            {publishedCount === 0
+                                ? "Nothing is live for residents yet"
+                                : `${publishedCount} ${publishedCount === 1 ? "announcement is" : "announcements are"} live for residents`}
+                        </h2>
+                        <p className="community-announcements-summary-sub">
+                            {draftCount === 0
+                                ? "No drafts waiting to be published."
+                                : `${draftCount} ${draftCount === 1 ? "draft is" : "drafts are"} waiting to be published.`}
+                        </p>
 
-                <section className="community-announcements-stat-cards">
-
-                    <div className="community-announcements-stat-card">
-                        <div className="community-announcements-stat-icon">
-                            <Icon type="announcement" size={23} />
+                        <div
+                            className="community-announcements-summary-bar"
+                            role="img"
+                            aria-label={`Published: ${publishedCount}, drafts: ${draftCount}`}
+                        >
+                            {publishedCount > 0 && (
+                                <span className="community-announcements-summary-segment is-published" style={{ flexGrow: publishedCount }} title={`Published: ${publishedCount}`} />
+                            )}
+                            {draftCount > 0 && (
+                                <span className="community-announcements-summary-segment is-draft" style={{ flexGrow: draftCount }} title={`Drafts: ${draftCount}`} />
+                            )}
                         </div>
 
-                        <div className="community-announcements-stat-content">
-                            <p>Total Announcements</p>
-                            <h3>{announcements.length}</h3>
-                            <small>All created announcements</small>
-                        </div>
+                        <ul className="community-announcements-summary-legend">
+                            <li><span className="community-announcements-summary-swatch is-published" aria-hidden="true" />Published <strong>{publishedCount}</strong></li>
+                            <li><span className="community-announcements-summary-swatch is-draft" aria-hidden="true" />Drafts <strong>{draftCount}</strong></li>
+                            <li>Total <strong>{announcements.length}</strong></li>
+                        </ul>
                     </div>
 
-                    <div className="community-announcements-stat-card">
-                        <div className="community-announcements-stat-icon published-icon">
-                            <Icon type="file" size={23} />
-                        </div>
+                    <div className="community-announcements-summary-latest">
+                        <p className="community-announcements-summary-eyebrow">Residents see now</p>
 
-                        <div className="community-announcements-stat-content">
-                            <p>Published</p>
-                            <h3>{publishedCount}</h3>
-                            <small>Published community updates</small>
-                        </div>
+                        {latestPublished ? (
+                            <article className="community-announcements-latest-card">
+                                <div className="community-announcements-latest-meta">
+                                    {latestPublished.category && (
+                                        <span className="community-announcements-latest-category">{latestPublished.category}</span>
+                                    )}
+                                    <span>{formatDate(latestPublished.createdAt)}</span>
+                                </div>
+                                <h3>{latestPublished.title || "Community announcement"}</h3>
+                                <p>{latestPublished.content || "No message was added."}</p>
+                                <button
+                                    type="button"
+                                    className="community-announcements-latest-open"
+                                    onClick={() => setViewing(latestPublished)}
+                                >
+                                    Open announcement
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M5 12h14" /><path d="m13 6 6 6-6 6" />
+                                    </svg>
+                                </button>
+                            </article>
+                        ) : (
+                            <div className="community-announcements-latest-empty">
+                                <p>Published announcements will be previewed here.</p>
+                                <button type="button" className="community-announcements-latest-open" onClick={openCreateForm}>
+                                    Write an announcement
+                                </button>
+                            </div>
+                        )}
                     </div>
-
-                    <div className="community-announcements-stat-card">
-                        <div className="community-announcements-stat-icon draft-icon">
-                            <Icon type="edit" size={23} />
-                        </div>
-
-                        <div className="community-announcements-stat-content">
-                            <p>Drafts</p>
-                            <h3>{draftCount}</h3>
-                            <small>Announcements not published</small>
-                        </div>
-                    </div>
-
                 </section>
 
                 {/* ANNOUNCEMENTS PANEL */}
@@ -539,6 +587,7 @@ function CommunityAnnouncements() {
                             type="button"
                             className="community-announcements-primary-btn"
                             onClick={openCreateForm}
+                            disabled={loading}
                         >
                             <Icon type="plus" size={17} />
                             Create Announcement

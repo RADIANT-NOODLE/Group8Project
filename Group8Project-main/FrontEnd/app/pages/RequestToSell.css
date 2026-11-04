@@ -791,3 +791,238 @@
         margin: 40px auto;
     }
 }
+
+.form-hint {
+    margin: 8px 0 0;
+    color: #777777;
+    font-size: 13px;
+}
+
+.primary-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   REQUEST TRACKER
+========================================================= */
+
+.request-tracker {
+    margin-bottom: 22px;
+}
+
+.request-tracker-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 18px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    background: #e5f5ea;
+    color: #23683a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.request-tracker-notice svg {
+    width: 16px;
+    height: 16px;
+}
+
+.request-tracker-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.request-tracker-head h2 {
+    margin: 6px 0 4px;
+    color: #29242d;
+    font-size: 20px;
+    font-weight: 750;
+}
+
+.request-tracker-head p {
+    margin: 0;
+    color: #77717d;
+    font-size: 13px;
+}
+
+.request-tracker-status {
+    flex-shrink: 0;
+    padding: 6px 13px;
+    border-radius: 20px;
+    background: #e4d9ed;
+    color: #563f6b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.request-tracker-status.status-pending_review {
+    background: #fdf3d8;
+    color: #8a6212;
+}
+
+.request-tracker-status.status-sold,
+.request-tracker-status.status-rented {
+    background: #e5f5ea;
+    color: #23683a;
+}
+
+.request-tracker-status.status-rejected {
+    background: #fbeaea;
+    color: #a33a3a;
+}
+
+/* five steps joined by a line; done steps fill in purple */
+.request-tracker-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.request-tracker-steps::before {
+    position: absolute;
+    top: 17px;
+    right: 10%;
+    left: 10%;
+    height: 2px;
+    background: #e4d9ed;
+    content: "";
+}
+
+.request-tracker-steps li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.request-tracker-steps strong {
+    display: block;
+    color: #8f8698;
+    font-size: 12.5px;
+    font-weight: 750;
+}
+
+.request-tracker-steps small {
+    display: block;
+    margin-top: 2px;
+    color: #a39aa9;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.request-tracker-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #d9cbe5;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #a597b2;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px #ffffff;
+}
+
+.request-tracker-steps li.is-done .request-tracker-dot {
+    border-color: #563f6b;
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.request-tracker-steps li.is-done strong {
+    color: #29242d;
+}
+
+.request-tracker-steps li.is-current .request-tracker-dot {
+    border-color: #563f6b;
+    color: #563f6b;
+    box-shadow: 0 0 0 4px #ffffff, 0 0 0 7px #e4d9ed;
+}
+
+.request-tracker-steps li.is-current strong {
+    color: #563f6b;
+}
+
+.request-tracker-steps li.is-rejected .request-tracker-dot {
+    border-color: #d03b3b;
+    background: #d03b3b;
+    color: #ffffff;
+}
+
+.request-tracker-steps li.is-rejected strong {
+    color: #a33a3a;
+}
+
+.request-tracker-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid #f0ecf2;
+}
+
+.request-tracker-footer p {
+    margin: 0;
+    color: #77717d;
+    font-size: 13px;
+}
+
+.request-tracker-footer button {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 9px;
+    background: #563f6b;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.request-tracker-loading {
+    margin: 0;
+    color: #77717d;
+    font-size: 13px;
+}
+
+@media (max-width: 760px) {
+    .request-tracker-steps {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .request-tracker-steps::before {
+        top: 18px;
+        bottom: 18px;
+        right: auto;
+        left: 17px;
+        width: 2px;
+        height: auto;
+    }
+
+    .request-tracker-steps li {
+        flex-direction: row;
+        text-align: left;
+    }
+
+    .request-tracker-head {
+        flex-direction: column;
+    }
+}

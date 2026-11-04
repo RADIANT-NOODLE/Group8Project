@@ -180,68 +180,82 @@
    STAT CARDS
 ========================================================= */
 
-.resident-complaints-stat-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 15px;
-    margin-bottom: 22px;
-}
-
-.resident-complaints-stat-card {
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    padding: 18px;
-    border: 1px solid #e4e0e7;
-    border-radius: 10px;
-    background: #ffffff;
-    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
-}
-
-.resident-complaints-stat-icon {
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border-radius: 8px;
-    background: #f0ebf4;
-    color: #563f6b;
-}
-
-.resident-complaints-stat-content {
-    min-width: 0;
-}
-
-.resident-complaints-stat-card p {
-    margin: 0 0 7px;
-    color: #77717a;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.5;
-}
-
-.resident-complaints-stat-card h3 {
-    margin: 0;
-    color: #29232e;
-    font-size: 25px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.resident-complaints-stat-card small {
-    display: block;
-    margin-top: 7px;
-    color: #9a949c;
-    font-size: 10px;
-    line-height: 1.5;
-}
-
 /* =========================================================
    PANELS
 ========================================================= */
+
+/* =========================================================
+   COMPLAINT OVERVIEW (status ring)
+========================================================= */
+
+.resident-complaints-overview {
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    border: 1px solid #e8e3eb;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
+}
+
+.resident-complaints-overview-heading {
+    margin-bottom: 18px;
+}
+
+.resident-complaints-overview-heading h2 {
+    margin: 0 0 4px;
+    color: #29242d;
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.resident-complaints-overview-heading p {
+    margin: 0;
+    color: #77717d;
+    font-size: 12.5px;
+}
+
+.resident-complaints-overview-orders {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f0ecf2;
+}
+
+.resident-complaints-overview-orders-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 14px;
+    margin-bottom: 8px;
+    color: #5f536c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.resident-complaints-overview-orders-top strong {
+    color: #29242d;
+    font-size: 12.5px;
+}
+
+.resident-complaints-overview-orders-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 5px;
+    background: #f1edf4;
+}
+
+.resident-complaints-overview-orders-fill {
+    display: block;
+    height: 100%;
+    border-radius: 0 5px 5px 0;
+    background: #563f6b;
+}
+
+@media (max-width: 480px) {
+    .resident-complaints-overview {
+        padding: 20px 18px;
+    }
+}
 
 .resident-complaints-panel {
     width: 100%;
@@ -571,10 +585,6 @@
         padding: 28px 24px 40px;
     }
 
-    .resident-complaints-stat-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .resident-complaints-status-flow {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 24px;
@@ -659,15 +669,6 @@
         font-size: 12px;
     }
 
-    .resident-complaints-stat-cards {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .resident-complaints-stat-card {
-        padding: 15px;
-    }
-
     .resident-complaints-panel-heading {
         padding: 16px;
     }
@@ -679,4 +680,123 @@
     .resident-complaints-status-flow {
         padding: 20px 16px;
     }
+}
+
+/* work orders raised from a complaint */
+.resident-complaints-workorders {
+    display: grid;
+    gap: 6px;
+    min-width: 170px;
+}
+
+.resident-complaints-workorder {
+    display: grid;
+    gap: 4px;
+    font-size: 12.5px;
+}
+
+.resident-complaints-link-button {
+    justify-self: start;
+    padding: 5px 10px;
+    border: 1px solid #563f6b;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #563f6b;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.resident-complaints-link-button:hover {
+    background: #f6f3f8;
+}
+
+.resident-complaints-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(25, 20, 30, 0.45);
+}
+
+.resident-complaints-modal {
+    display: grid;
+    gap: 8px;
+    width: min(460px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.resident-complaints-modal h3 {
+    margin: 0;
+}
+
+.resident-complaints-modal label {
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.resident-complaints-modal select,
+.resident-complaints-modal input {
+    padding: 10px 12px;
+    border: 1px solid #d8d2dc;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.resident-complaints-modal-lead {
+    margin: 0;
+    color: #6a6170;
+    font-size: 13px;
+}
+
+.resident-complaints-modal-description {
+    margin: 0 0 6px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f6f3f8;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.resident-complaints-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.resident-complaints-modal-actions button {
+    padding: 10px 16px;
+    border: 1px solid #563f6b;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #563f6b;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.resident-complaints-modal-actions button[type="submit"] {
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.resident-complaints-modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* date filter under the search box */
+.resident-complaints-date-filter {
+    margin-top: 12px;
 }

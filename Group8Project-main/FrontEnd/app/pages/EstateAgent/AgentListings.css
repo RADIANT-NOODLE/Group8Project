@@ -90,72 +90,177 @@
 
 /* STAT CARDS */
 
-.agent-listings-stat-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 25px;
-}
+/* PANELS */
 
-.agent-listings-stat-card {
-    min-height: 108px;
-    padding: 20px;
+/* =========================================================
+   LISTING SUMMARY (horizontal bar chart)
+========================================================= */
+
+.agent-listings-chart {
+    margin-bottom: 24px;
+    padding: 24px 28px 18px;
+    border: 1px solid #e8e3eb;
+    border-radius: 12px;
     background: #ffffff;
-    border: 1px solid #e8e8eb;
-    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
+}
+
+.agent-listings-chart-heading {
+    margin-bottom: 14px;
+}
+
+.agent-listings-chart-heading h2 {
+    margin: 0 0 4px;
+    color: #29242d;
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.agent-listings-chart-heading p {
+    margin: 0;
+    color: #77717d;
+    font-size: 12.5px;
+}
+
+.agent-listings-bars {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.agent-listings-bar-row {
+    display: grid;
+    grid-template-columns: minmax(170px, 230px) minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 18px;
+    padding: 11px 8px;
+    border-radius: 8px;
+    outline: none;
+}
+
+.agent-listings-bar-row + .agent-listings-bar-row {
+    border-top: 1px solid #f2eff4;
+}
+
+.agent-listings-bar-row:hover,
+.agent-listings-bar-row:focus-visible {
+    background: #faf8fb;
+}
+
+.agent-listings-bar-row:focus-visible {
+    box-shadow: 0 0 0 2px #563f6b;
+}
+
+.agent-listings-bar-label {
     display: flex;
     align-items: center;
-    gap: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.025);
-    box-sizing: border-box;
-}
-
-.agent-listings-stat-icon {
-    width: 43px;
-    height: 43px;
-    border-radius: 9px;
-    background: #f0ebf4;
-    color: #563f6b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.agent-listings-stat-icon svg {
-    width: 21px;
-    height: 21px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.agent-listings-stat-card span {
-    display: block;
-    color: #77777e;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.agent-listings-stat-card strong {
-    display: block;
-    margin-top: 5px;
-    color: #28272d;
-    font-size: 25px;
-    line-height: 1;
+    gap: 11px;
+    min-width: 0;
+    color: #3a3040;
+    font-size: 13px;
     font-weight: 700;
 }
 
-.agent-listings-stat-card small {
+.agent-listings-bar-label small {
     display: block;
-    margin-top: 6px;
-    color: #96969c;
+    margin-top: 2px;
+    color: #938a99;
     font-size: 11px;
+    font-weight: 500;
 }
 
-/* PANELS */
+.agent-listings-bar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #e4d9ed;
+    color: #563f6b;
+}
+
+.agent-listings-bar-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* the track is the zero-to-largest scale; bars grow from its left edge */
+.agent-listings-bar-track {
+    position: relative;
+    display: block;
+    height: 18px;
+    border-left: 1px solid #c9bfd3;
+    background: linear-gradient(90deg, #f4f0f7, #f4f0f7) left center / 100% 6px no-repeat;
+}
+
+.agent-listings-bar-fill {
+    display: block;
+    height: 100%;
+    max-width: 100%;
+    border-radius: 0 4px 4px 0;
+    background: #563f6b;
+    transition: width 0.4s ease, background 0.15s ease;
+}
+
+.agent-listings-bar-row:hover .agent-listings-bar-fill,
+.agent-listings-bar-row:focus-visible .agent-listings-bar-fill {
+    background: #463256;
+}
+
+.agent-listings-bar-value {
+    color: #29242d;
+    font-size: 18px;
+    font-weight: 800;
+    text-align: right;
+}
+
+/* hover / focus tooltip */
+.agent-listings-bar-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 2;
+    padding: 6px 10px;
+    border-radius: 7px;
+    background: #29242d;
+    color: #ffffff;
+    font-size: 11.5px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(3px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.agent-listings-bar-row:hover .agent-listings-bar-tooltip,
+.agent-listings-bar-row:focus-visible .agent-listings-bar-tooltip {
+    opacity: 1;
+    transform: none;
+}
+
+@media (max-width: 700px) {
+    .agent-listings-chart {
+        padding: 20px 18px 14px;
+    }
+
+    .agent-listings-bar-row {
+        grid-template-columns: minmax(0, 1fr) 40px;
+        gap: 8px 12px;
+    }
+
+    .agent-listings-bar-label {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agent-listings-bar-fill,
+    .agent-listings-bar-tooltip {
+        transition: none;
+    }
+}
 
 .agent-listings-panel {
     min-width: 0;
@@ -422,12 +527,6 @@
    Match the shared sidebar breakpoints and widths.
 */
 
-@media (max-width: 1200px) {
-    .agent-listings-stat-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 @media (max-width: 900px) {
     .agent-listings-main {
         margin-left: 200px;
@@ -469,10 +568,6 @@
         display: none;
     }
 
-    .agent-listings-stat-cards {
-        grid-template-columns: 1fr;
-    }
-
     .agent-listings-panel-heading {
         align-items: flex-start;
         flex-direction: column;
@@ -485,4 +580,297 @@
     .agent-listings-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
+
+
+/* =========================================================
+   LISTING DETAILS PANEL
+========================================================= */
+
+.agent-listing-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(40, 28, 52, 0.55);
+    animation: agent-listing-fade 0.15s ease-out;
+}
+
+.agent-listing-modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    border-top: 5px solid #563f6b;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(40, 28, 52, 0.35);
+    animation: agent-listing-pop 0.18s ease-out;
+}
+
+.agent-listing-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px 16px;
+}
+
+.agent-listing-modal-eyebrow {
+    margin: 0 0 6px;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.agent-listing-modal-header h2 {
+    margin: 0;
+    color: #29242d;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.agent-listing-modal-address {
+    margin: 4px 0 0;
+    color: #77717d;
+    font-size: 13px;
+}
+
+.agent-listing-modal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.agent-listing-modal-tag {
+    padding: 4px 11px;
+    border-radius: 20px;
+    background: #f1edf4;
+    color: #6f6577;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.agent-listing-modal-tag.is-live {
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.agent-listing-modal-tag.is-soft {
+    background: #e4d9ed;
+    color: #563f6b;
+}
+
+.agent-listing-modal-close {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e8e3eb;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #563f6b;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.agent-listing-modal-close:hover {
+    background: #f6f2f9;
+}
+
+.agent-listing-modal-photo {
+    display: block;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.agent-listing-modal-body {
+    overflow-y: auto;
+    padding: 18px 24px 6px;
+}
+
+.agent-listing-modal-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e4d9ed 0%, #ece4f3 100%);
+}
+
+.agent-listing-modal-price span {
+    color: #6f5b82;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.agent-listing-modal-price strong {
+    color: #563f6b;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.agent-listing-modal-body h3 {
+    margin: 0 0 8px;
+    color: #8f8698;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.agent-listing-modal-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 18px;
+}
+
+.agent-listing-modal-facts div {
+    padding: 10px 12px;
+    border: 1px solid #eeeaf1;
+    border-radius: 10px;
+    background: #faf9fb;
+}
+
+.agent-listing-modal-facts dt {
+    color: #8f8698;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.agent-listing-modal-facts dd {
+    margin: 3px 0 0;
+    color: #29242d;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.agent-listing-modal-owner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #eeeaf1;
+    border-radius: 12px;
+}
+
+.agent-listing-modal-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #e4d9ed;
+    color: #563f6b;
+    font-weight: 800;
+}
+
+.agent-listing-modal-owner strong {
+    display: block;
+    color: #29242d;
+    font-size: 13.5px;
+}
+
+.agent-listing-modal-owner span {
+    color: #8f8698;
+    font-size: 12px;
+}
+
+.agent-listing-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px 20px;
+    border-top: 1px solid #f0ecf2;
+}
+
+.agent-listing-modal-button {
+    min-width: 110px;
+    padding: 10px 16px;
+    border: 1px solid #e4d9ed;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #563f6b;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.agent-listing-modal-button:hover {
+    background: #f6f2f9;
+}
+
+.agent-listing-modal-button.is-primary {
+    border-color: #563f6b;
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.agent-listing-modal-button.is-primary:hover {
+    background: #463256;
+}
+
+.agent-listing-modal-button:focus-visible,
+.agent-listing-modal-close:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+@keyframes agent-listing-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes agent-listing-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 480px) {
+    .agent-listing-modal-facts {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .agent-listing-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .agent-listing-modal-button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agent-listing-modal-overlay,
+    .agent-listing-modal {
+        animation: none;
+    }
+}
+
+.agent-listing-modal-button.is-complete {
+    border-color: #0ca30c;
+    background: #e5f5ea;
+    color: #23683a;
+}
+
+.agent-listing-modal-button.is-complete:hover {
+    background: #d4efdc;
 }

@@ -1,6 +1,6 @@
 # VALORA Project Progress & Integration Tracker
 
-> **Last Updated:** November 2, 2026  
+> **Last Updated:** November 4, 2026  
 > **Status:** Active Deployment Preparation (`main` branch)  
 > **Reference Branch:** `valora_new` (by `radiant_noodle` / `Kaiii-zen` / Kaitlin Biggas)
 
@@ -10,7 +10,7 @@ This document tracks all features, APIs, and architectural improvements brought 
 
 ## 1. What We Took from radiant_noodle (Integrated into `main`)
 
-The following functionality was merged from the `valora_new` branch into `main`. It successfully moves the application from browser `localStorage` prototypes to an integrated, database-backed system:
+The following functionality was merged from the `valora_new` branch into `main`. It successfully transitions the application from browser `localStorage` prototypes into an integrated, database-backed system with complete API contracts:
 
 ### 1.1 Resident Directory & Occupancy Linking
 * **Backend Models & Schemas:**
@@ -18,7 +18,7 @@ The following functionality was merged from the `valora_new` branch into `main`.
   * Added schemas for directory record creation, updates, and responses (`Group8Project-main/backend/app/community/schemas/resident_directory.py`).
 * **Backend API Endpoints (`/api/v1/resident-directory`):**
   * `GET /`: Lists all directory assignments with joined user details (name, email, role) and property details (unit number, complex, address).
-  * `POST /`: Assigns an approved resident or investor to a property unit (restricts admins from improper unit assignment).
+  * `POST /`: Assigns an approved resident to a property unit (restricts admins from improper unit assignment).
   * `PATCH /{id}`: Updates occupancy status (`Occupied`, `Vacant`, `Under Renovation`) and HOA notes.
   * `DELETE /{id}`: Unassigns a resident from a unit.
   * `GET /eligible-users` & `GET /eligible-properties`: Helper queries returning unassigned approved members and unassigned units.
@@ -37,9 +37,9 @@ The following functionality was merged from the `valora_new` branch into `main`.
   * In `App.jsx`, aligned route protection for `/property-management` to `HOAAdminRoute`.
   * Added an inline "Add Property" quick-form card directly onto `HOAAdminDashboard.jsx`.
 
-### 1.3 Live "My Property" Page for Residents
-* Refactored `MyProperty.jsx` away from fake hardcoded unit cards.
-* Connected to authenticated resident sessions (`useSession()`): the page queries `/api/v1/resident-directory` to identify the logged-in user's assigned property ID and fetches live unit details from `/api/v1/properties/{id}`.
+### 1.3 Live "My Property" Card for Residents
+* Refactored resident property view away from fake hardcoded unit cards.
+* Inlined `MyPropertyCard.jsx` into `ResidentDashboard.jsx`: queries `/api/v1/resident-directory` to identify the logged-in resident's assigned unit and fetches live property details from `/api/v1/properties/{id}`.
 
 ### 1.4 User Profile & Password Management
 * **Backend:**
@@ -59,67 +59,103 @@ The following functionality was merged from the `valora_new` branch into `main`.
   * Connected `Providers.jsx` to live provider and review endpoints.
   * Added review moderation and deletion confirmation dialog for HOA Admins.
 
-### 1.6 Database Connection Stability & CORS
-* **Database Pooling:** Updated `session.py` with SQLAlchemy connection pooling configuration:
-  * `pool_pre_ping=True` (checks database connection health before checkout)
-  * `pool_recycle=300` (recycles connections every 5 minutes to prevent stale dropped connections)
-  * `timeout=30`, `pool_size=5`, `max_overflow=10`
-* **CORS Settings:** Configured `main.py` CORS origins to explicitly whitelist local Vite development ports (`5173` and `4173`).
+### 1.6 User Administration & Registration Requests
+* **Backend Endpoints (`/api/v1/users`):**
+  * `GET /`: Lists all system users with role/status filters.
+  * `GET /pending`: Returns pending registration applications.
+  * `GET /estate-agents`: Returns approved estate agents for property assignments.
+  * `POST /{id}/approve`: Approves a pending user account.
+  * `POST /{id}/reject`: Rejects a registration application.
+  * `POST /{id}/revoke`: Revokes access for an active user.
+* **Frontend Integration:**
+  * Added `userApi.js` encapsulating all admin user-management operations.
+  * Connected `RegistrationRequests.jsx` and `UserManagement.jsx` directly to backend endpoints.
 
-### 1.7 Repository Hygiene & Cleanup
-* Untracked over 4,500 accidentally committed virtual environment files (`backend/venv`) and cached `.pyc` files.
-* Added a comprehensive root `.gitignore` and `backend/.gitignore`.
-* Preserved the developer's local `.env` database and JWT settings safely on disk.
+### 1.7 Property Requests (Sale/Rent & HOA Approvals)
+* **Backend Models & Endpoints (`/api/v1/property-requests`):**
+  * Added `PropertyRequest` database model with alembic migration `7a1d4c2b9e10_add_property_requests_table.py`.
+  * Status lifecycle: `pending` -> `hoa_approved` / `hoa_rejected` -> `agent_assigned` -> `listed` / `cancelled`.
+  * Role-scoped listing (residents view own; HOA admins view all pending/decided; estate agents view assigned).
+* **Frontend Integration:**
+  * Added `propertyRequestApi.js`.
+  * Connected `RequestToSell.jsx` for residents to create sale/rent requests.
+  * Connected `PropertyRequests.jsx` for HOA Admins to approve, reject, or assign estate agents.
+
+### 1.8 Real File & Photo Storage
+* **Backend Infrastructure:**
+  * Added `PropertyPhoto` database model with alembic migration `e5a0c3b7d9f2_store_property_photos_in_db.py`.
+  * Added `POST /api/v1/properties/{id}/photos` supporting multipart file uploads (`UploadFile`).
+  * Added `GET /uploads/properties/{file_name}` serving photo files with `Cache-Control: public, max-age=31536000, immutable`.
+  * Added `storage.py` abstraction for local/cloud photo persistence.
+
+### 1.9 Buyer & Agent Inquiries API
+* **Backend Endpoints (`/api/v1/inquiries`):**
+  * Added `Inquiry` model and alembic migration `ad4f7b5e2c43_add_inquiries_table.py`.
+  * Endpoints for submitting inquiries against listed properties and managing inquiry status (`new`, `in_progress`, `resolved`).
+* **Frontend Integration:**
+  * Added `inquiryApi.js`.
+  * Connected `AgentInquiries.jsx` allowing estate agents to view, track, and resolve buyer inquiries.
+
+### 1.10 Password Reset & Email Notifications
+* **Backend (`/api/v1/auth`):**
+  * `POST /auth/forgot-password`: Generates secure password reset tokens.
+  * `POST /auth/reset-password`: Validates reset tokens and safely updates credentials.
+  * Added `core/email.py` SMTP / background email dispatch abstraction.
+* **Frontend:**
+  * Added `ForgotPassword.jsx` and `ResetPassword.jsx`.
+  * Added `PasswordRequirements.jsx` real-time validation indicator.
+
+### 1.11 Accessible UI Overhaul & Dead Code Elimination
+* Replaced native browser `alert()` and `confirm()` calls across all pages with accessible in-page `AppDialog.jsx` modal dialogs.
+* Added `DateRangeFilter.jsx`, `ComplaintStatusRing.jsx`, `StageSummary.jsx`, and `PropertyTabs.jsx`.
+* Retired obsolete prototype screens: eliminated stale `Investor` role pages, old `AITrainingData.jsx`, duplicate dashboards, and standalone `MyProperty.jsx` in favor of modular dashboard cards.
+
+### 1.12 Database Pooling, Security, & Testing
+* **Database Pooling:** Configured `pool_pre_ping=True`, `pool_recycle=300`, `pool_size=5`, `max_overflow=10` in `session.py`.
+* **CORS Settings:** Explicitly whitelisted local Vite development ports (`5173` and `4173`).
+* **Automated Test Suite:**
+  * Frontend: 52/52 tests passing (`phase2-roles`, `phase3-auth`, `phase3-api`, `phase5-hardening`, `phase6-api`).
+  * Backend: 26/26 security tests passing in `tests/test_security.py`.
 
 ---
 
 ## 2. What's Left to Get Fully Working on the Actual Live System
 
-While the core operational architecture is now connected to the live database, the following items remain to achieve complete end-to-end functionality across all screens:
+With user management, property requests, photos, inquiries, and password reset fully wired into `main`, the remaining tasks focus on live production deployment and remaining operational features:
 
-### 2.1 User Administration & Registration Requests (Priority 1)
-* **Current State:** Backend has async endpoints (`/users/pending`, `/users/approved`, `/users/{id}/approve`, `/users/{id}/reject`, and `UserRepository.list_all`).
+### 2.1 Service Provider Dedicated Portal & Work Orders (Priority 1)
+* **Current State:** Service providers are listed in `Providers.jsx` and HOA Admins can manage work orders via `/api/v1/work-orders`.
 * **What's Left:**
-  * Verify `RegistrationRequests.jsx` and `UserManagement.jsx` are cleanly calling these endpoints with JWT authentication.
-  * Ensure user role mappings (`hoa_admin`, `resident`, `investor`, `estate_agent`) are consistently handled between frontend select menus and database records.
+  * Provide a dedicated interface or token-based dispatch view (`ProviderWork.jsx`) for contractors to view assigned jobs.
+  * Enable contractors to update job status (`In Progress`, `Completed`, `Blocked`) and submit completion notes or invoices.
 
-### 2.2 Property Sale & Rent Requests (Priority 2)
-* **Current State:** Frontend screens exist (`RequestToSell.jsx` for residents and `PropertyRequests.jsx` for HOA Admins), but they currently use local state.
+### 2.2 Operational Analytics Aggregation (Priority 2)
+* **Current State:** Living score endpoints exist. Secondary charts on `CommunityAnalytics.jsx` were deprecated in favor of streamlined metrics.
 * **What's Left:**
-  * Create backend database model and endpoints (`POST /api/v1/property-requests`, `GET /api/v1/property-requests`, `PATCH /api/v1/property-requests/{id}/status`).
-  * Wire resident submissions to the database and allow HOA Admins to approve/reject requests before converting them into public listings.
+  * Implement aggregated summary endpoints for HOA Admin dashboard: complaint resolution turnaround time, active occupancy percentage, and maintenance spend.
+  * Bind remaining dashboard KPI metric widgets to live aggregates.
 
-### 2.3 Real File & Photo Uploads (Priority 3)
-* **Current State:** Photos are currently referenced via external image URLs, base64 strings, or SVG placeholders.
+### 2.3 Live Database Migration & Seeding Verification (Priority 3)
+* **Current State:** Alembic migration scripts exist for all models (`7a1d4c2b9e10`, `8b2e5d3c0f21`, `9c3f6e4d1a32`, `ad4f7b5e2c43`, `c3e8a1f5b7d9`, `d4f9b2a6c8e1`, `e5a0c3b7d9f2`).
 * **What's Left:**
-  * Implement file upload API endpoints (using FastAPI `UploadFile` or cloud/static storage).
-  * Allow residents to attach photo evidence to maintenance complaints (`Complaints.jsx`).
-  * Allow HOA Admins and agents to upload real property listing photos.
+  * Run `alembic upgrade head` against the live PostgreSQL database.
+  * Verify initial seed script creates default HOA Head Admin account and baseline estate/property seed data for demo testing.
 
-### 2.4 Buyer & Agent Inquiries (Priority 4)
-* **Current State:** `AgentInquiries.jsx` and public property inquiry forms store logs in browser memory.
+### 2.4 End-to-End Smoke Test & Browser Verification (Priority 4)
+* **Current State:** Unit and integration tests pass (52 frontend + 26 backend).
 * **What's Left:**
-  * Implement inquiry database table and router (`POST /api/v1/inquiries`, `GET /api/v1/inquiries`).
-  * Enable prospective buyers/investors to submit questions about listed properties and allow assigned estate agents to view and reply.
+  * Start live FastAPI server (`uvicorn app.main:app`) and frontend dev server (`npm run dev`).
+  * Perform end-to-end user journeys:
+    1. Resident registration -> HOA Admin approval -> Resident login -> Submit Request to Sell.
+    2. HOA Admin approves request & assigns Estate Agent.
+    3. Estate Agent lists property with photos -> Public visitor submits inquiry.
+    4. Estate Agent reviews inquiry.
 
-### 2.5 Dedicated Service Provider Portal & Login (Priority 5)
-* **Current State:** Service providers are listed in the public/resident directory (`Providers.jsx`), but cannot log in to an independent dashboard.
+### 2.5 Production Deployment Configuration (Priority 5)
+* **Current State:** Project runs in local dev environment.
 * **What's Left:**
-  * Enable service provider authentication or work order dispatch view (`ProviderWork.jsx`).
-  * Allow contractors to view assigned jobs, update job status (`In Progress`, `Completed`), and submit completion notes.
-
-### 2.6 Extended Operational Analytics (Priority 6)
-* **Current State:** The Living Score engine (`/api/v1/analytics/living-score`) is functional. However, `CommunityAnalytics.jsx` still relies on hardcoded example statistics.
-* **What's Left:**
-  * Add aggregated database reporting endpoints: complaint resolution turnaround time, occupancy percentage, monthly maintenance expenditure, and resident satisfaction score.
-  * Connect charts and metric cards in `CommunityAnalytics.jsx` to live aggregates.
-
-### 2.7 Visual Polish & Responsive Styling (Priority 7)
-* **Current State:** Core desktop layouts are responsive, but secondary screens need refinement.
-* **What's Left:**
-  * Responsive pass for tablet and mobile viewport widths across all dashboards.
-  * Audit and replace temporary placeholder badge counters with live badge counts.
-  * Standardize high-resolution logo and SVG icons across sidebar navigation.
+  * Finalize Dockerfile or cloud deployment configurations (e.g., Render, Railway, AWS, or Azure).
+  * Configure environment variables for production database URL, JWT secret key, and SMTP credentials.
 
 ---
 
@@ -128,9 +164,13 @@ While the core operational architecture is now connected to the live database, t
 | Component | Status | Notes |
 | :--- | :--- | :--- |
 | **Frontend Production Build** | **PASSING** | Built cleanly via `npm run build` (`dist/`) |
+| **Frontend Test Suite** | **PASSING** | **52/52** tests passing across phases 2, 3, 5, 6 |
 | **Backend Python Compilation** | **PASSING** | Compiled with 0 syntax or import errors via `compileall` |
-| **Git Working Tree** | **CLEAN** | On `main` branch; `venv` and `.pyc` clutter untracked |
-| **Authentication Flow** | **LIVE** | JWT authentication, session persistence, role routing active |
-| **Resident Directory** | **LIVE** | Fully connected to PostgreSQL database |
-| **Property Management** | **LIVE** | Create, view, and patch updates functional |
-| **Complaints & Issues** | **LIVE** | Basic complaint submission and list connected to API |
+| **Backend Security Tests** | **PASSING** | **26/26** tests passing in `tests/test_security.py` |
+| **Authentication & Password Reset** | **LIVE** | JWT login, registration, password change & reset flow |
+| **User Administration** | **LIVE** | User approvals, role filtering, revocation active |
+| **Resident Directory** | **LIVE** | Unit assignments, occupancy tracking connected to DB |
+| **Property Management** | **LIVE** | Create, view, edit properties live via API |
+| **Property Requests (Sale/Rent)** | **LIVE** | Resident submission and HOA approval workflow live |
+| **Photo Storage & Serving** | **LIVE** | Database storage with immutable HTTP cache headers |
+| **Inquiries** | **LIVE** | Buyer inquiries and agent response endpoints live |

@@ -88,11 +88,13 @@ class ListingRepository:
         price: Decimal,
         description: str | None,
         photo_url: str | None,
+        listing_type: str | None = None,
     ) -> Listing:
         listing = Listing(
             unit_id=unit_id,
             agent_id=agent_id,
             price=price,
+            listing_type=listing_type,
             description=description,
             photo_url=photo_url,
             status="active",

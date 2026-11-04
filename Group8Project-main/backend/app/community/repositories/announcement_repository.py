@@ -12,7 +12,11 @@ class AnnouncementRepository:
 
     @staticmethod
     def _only_active(stmt: Select, now: datetime) -> Select:
-        return stmt.where(or_(Announcement.expires_at.is_(None), Announcement.expires_at > now))
+        """What residents see: published and not yet expired."""
+        return stmt.where(
+            Announcement.is_published.is_(True),
+            or_(Announcement.expires_at.is_(None), Announcement.expires_at > now),
+        )
 
     async def search(
         self, *, offset: int, limit: int, include_expired: bool, now: datetime
@@ -39,10 +43,22 @@ class AnnouncementRepository:
         return result.scalar_one_or_none()
 
     async def create(
-        self, *, title: str, message: str, created_by: int, expires_at: datetime | None
+        self,
+        *,
+        title: str,
+        message: str,
+        created_by: int,
+        expires_at: datetime | None,
+        category: str = "General",
+        is_published: bool = True,
     ) -> Announcement:
         announcement = Announcement(
-            title=title, message=message, created_by=created_by, expires_at=expires_at
+            title=title,
+            message=message,
+            category=category,
+            is_published=is_published,
+            created_by=created_by,
+            expires_at=expires_at,
         )
         self._db.add(announcement)
         await self._db.commit()

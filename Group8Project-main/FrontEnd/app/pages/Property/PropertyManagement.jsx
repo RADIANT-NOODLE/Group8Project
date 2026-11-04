@@ -1,13 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import PropertyTabs from "../Dashboards/shared/PropertyTabs";
+import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
 import "./PropertyManagement.css";
+import "../../components/ValoraModal.css";
+
+import { showAlert, showConfirm } from "../../components/AppDialog";
+import { getSessionToken } from "../../services/session";
+import StageSummary from "../../components/StageSummary";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 /*
 =========================================================
 VALORA PROPERTY MANAGEMENT
 =========================================================
 */
+
+/* Local listing labels (not backend statuses) that still count as unpublished. */
+const UNPUBLISHED_LISTING_STATUSES = ["draft", "assigned"];
 
 function getLocation(property) {
     const address = property.street_address || "";
@@ -16,7 +27,7 @@ function getLocation(property) {
 }
 
 function getListingStatus(property) {
-    return property.listing_status || "Published";
+    return property.listing_status || "Not Listed";
 }
 
 function getListingPrice(property) {
@@ -28,7 +39,17 @@ function getPropertyType(property) {
 }
 
 function getPropertyImage(property) {
-    return property.image_url || null;
+    return photoSrc(property.image_url);
+}
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/** Returns a message when the file can't be uploaded, otherwise "". */
+function photoProblem(file) {
+    if (!PHOTO_TYPES.includes(file.type)) return `${file.name}: use a JPEG, PNG or WebP image.`;
+    if (file.size > MAX_PHOTO_BYTES) return `${file.name}: photos can be at most 5 MB.`;
+    return "";
 }
 
 function getStatusClass(status) {
@@ -49,6 +70,9 @@ function PropertyManagement() {
     // --- TOAST STATE ---
     const [toastMessage, setToastMessage] = useState("");
 
+    // photos whose file is missing (uploaded on another computer) show the placeholder instead
+    const [brokenImages, setBrokenImages] = useState([]);
+
     // EDIT MODAL STATE
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProperty, setEditingProperty] = useState(null);
@@ -62,6 +86,11 @@ function PropertyManagement() {
         bathrooms: 1
     });
        
+    // PHOTO STATE
+    const [photoBusy, setPhotoBusy] = useState(false);
+    const [photoError, setPhotoError] = useState("");
+    const [newPhotos, setNewPhotos] = useState([]);
+
     // ADD MODAL STATE
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [addForm, setAddForm] = useState({
@@ -84,8 +113,8 @@ function PropertyManagement() {
         setError("");
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
+            const token = getSessionToken();
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -125,16 +154,19 @@ function PropertyManagement() {
             bedrooms: property.bedrooms || 1,
             bathrooms: property.bathrooms || 1
         });
+        setPhotoError("");
         setIsEditModalOpen(true);
     };
 
     const handleUpdateProperty = async (e) => {
         e.preventDefault();
+        const unitLabel = editingProperty?.unit_no ? `Unit ${editingProperty.unit_no}` : "this property";
+        if (!(await showConfirm(`Save changes to ${unitLabel}?`, { title: "Save changes?", confirmLabel: "Save" }))) return;
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const id = editingProperty.id || editingProperty.unit_id;
 
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/properties/${id}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties/${id}`, {
                 method: "PATCH",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -161,15 +193,76 @@ function PropertyManagement() {
             setToastMessage("Property updated successfully!");
             setTimeout(() => setToastMessage(""), 3000);
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
+    };
+
+    /*
+    =========================================================
+    PHOTOS
+    =========================================================
+    */
+    const handleUploadPhotos = async (event) => {
+        const files = Array.from(event.target.files || []);
+        event.target.value = "";
+        if (!files.length || !editingProperty) return;
+
+        const id = editingProperty.id || editingProperty.unit_id;
+        setPhotoBusy(true);
+        setPhotoError("");
+
+        const problems = [];
+        for (const file of files) {
+            const problem = photoProblem(file);
+            if (problem) {
+                problems.push(problem);
+                continue;
+            }
+
+            try {
+                const updated = await uploadPropertyPhoto(id, file);
+                setEditingProperty(previous => ({ ...previous, image_url: updated.imageUrl, photos: updated.photos }));
+            } catch (uploadError) {
+                problems.push(`${file.name}: ${uploadError.message}`);
+            }
+        }
+
+        setPhotoError(problems.join(" "));
+        setPhotoBusy(false);
+        await loadProperties();
+    };
+
+    const handleDeletePhoto = async (photoId) => {
+        const id = editingProperty.id || editingProperty.unit_id;
+        setPhotoBusy(true);
+        setPhotoError("");
+
+        try {
+            const updated = await deletePropertyPhoto(id, photoId);
+            setEditingProperty(previous => ({ ...previous, image_url: updated.imageUrl, photos: updated.photos }));
+            await loadProperties();
+        } catch (deleteError) {
+            setPhotoError(deleteError.message);
+        } finally {
+            setPhotoBusy(false);
+        }
+    };
+
+    const handlePickNewPhotos = (event) => {
+        const files = Array.from(event.target.files || []);
+        event.target.value = "";
+
+        const problems = files.map(photoProblem).filter(Boolean);
+        setPhotoError(problems.join(" "));
+        setNewPhotos(previous => [...previous, ...files.filter(file => !photoProblem(file))]);
     };
 
     const handleAddProperty = async (e) => {
         e.preventDefault();
+        if (!(await showConfirm("Add this property to the estate?", { title: "Add property?", confirmLabel: "Add property" }))) return;
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
+            const token = getSessionToken();
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -191,13 +284,30 @@ function PropertyManagement() {
                 throw new Error(errData.detail || "Failed to add property");
             }
 
+            const created = await response.json();
+            const createdId = created.id || created.unit_id;
+            const failedPhotos = [];
+
+            for (const file of newPhotos) {
+                try {
+                    await uploadPropertyPhoto(createdId, file);
+                } catch (uploadError) {
+                    failedPhotos.push(`${file.name}: ${uploadError.message}`);
+                }
+            }
+
             setIsAddModalOpen(false);
             setAddForm({ unit_no: "", complex_name: "", street_address: "", suburb: "", size_m2: "", bedrooms: 1, bathrooms: 1 });
+            setNewPhotos([]);
+            setPhotoError("");
             await loadProperties();
+            if (failedPhotos.length) {
+                showAlert(`The property was added, but some photos could not be uploaded:\n${failedPhotos.join("\n")}\nYou can add them with Edit.`);
+            }
             setToastMessage("Property added successfully!");
             setTimeout(() => setToastMessage(""), 3000);
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
     };
 
@@ -235,7 +345,7 @@ function PropertyManagement() {
     const publishedProperties = properties.filter(p => getListingStatus(p).toLowerCase() === "published").length;
     const pendingProperties = properties.filter(p => {
         const status = getListingStatus(p).toLowerCase();
-        return status.includes("pending") || status === "draft" || status === "assigned";
+        return status.includes("pending") || UNPUBLISHED_LISTING_STATUSES.includes(status);
     }).length;
 
     /*
@@ -248,6 +358,7 @@ function PropertyManagement() {
             <DashboardSidebar />
 
             <main className="property-management-main">
+                <PropertyTabs />
                 
                 {/* SUCCESS TOAST NOTIFICATION */}
                 {toastMessage && (
@@ -285,27 +396,23 @@ function PropertyManagement() {
                         <button type="button" className="property-refresh-button" onClick={loadProperties} disabled={loading}>
                             <span aria-hidden="true">↻</span> {loading ? "Loading..." : "Refresh"}
                         </button>
-                        <button type="button" className="property-add-button" onClick={() => setIsAddModalOpen(true)}>
+                        <button type="button" className="property-add-button" onClick={() => { setNewPhotos([]); setPhotoError(""); setIsAddModalOpen(true); }}>
                             + Add Property
                         </button>
                     </div>
                 </header>
             
-                {/* STATS */}
-                <section className="property-management-stats" aria-label="Property statistics">
-                    <div className="property-stat-card">
-                        <div className="property-stat-icon"><span aria-hidden="true">⌂</span></div>
-                        <div><p>Total Properties</p><h2>{totalProperties}</h2><span>All available records</span></div>
-                    </div>
-                    <div className="property-stat-card">
-                        <div className="property-stat-icon published-icon"><span aria-hidden="true">✓</span></div>
-                        <div><p>Published Listings</p><h2>{publishedProperties}</h2><span>Approved and published</span></div>
-                    </div>
-                    <div className="property-stat-card">
-                        <div className="property-stat-icon pending-icon"><span aria-hidden="true">◷</span></div>
-                        <div><p>Awaiting Action</p><h2>{pendingProperties}</h2><span>Pending, assigned or draft</span></div>
-                    </div>
-                </section>
+                {/* SUMMARY */}
+                <StageSummary
+                    eyebrow="Listing status"
+                    title={`${publishedProperties} of ${totalProperties} ${totalProperties === 1 ? "property" : "properties"} published`}
+                    subtitle="Where every property in the estate stands."
+                    stages={[
+                        { key: "published", label: "Published", hint: "Approved and live", count: publishedProperties, tone: "done" },
+                        { key: "action", label: "Awaiting action", hint: "Pending, assigned or draft", count: pendingProperties, tone: "waiting" },
+                        { key: "unlisted", label: "Not listed", hint: "Not on the market", count: Math.max(totalProperties - publishedProperties - pendingProperties, 0), tone: "neutral" },
+                    ]}
+                />
 
                 {/* SEARCH AND FILTERS */}
                 <section className="property-management-toolbar">
@@ -347,7 +454,8 @@ function PropertyManagement() {
                         <div className="property-management-grid">
                             {filteredProperties.map((property, index) => {
                                 const propertyId = property.id || property.unit_id;
-                                const title = property.unit_no || property.complex_name || `Property ${propertyId || index + 1}`;
+                                const complexName = property.complex_name || "";
+                                const unitNo = property.unit_no || property.complex_name || `Property ${propertyId || index + 1}`;
                                 const image = getPropertyImage(property);
                                 const status = getListingStatus(property);
                                 const price = getListingPrice(property);
@@ -355,15 +463,23 @@ function PropertyManagement() {
                                 return (
                                     <article className="managed-property-card" key={propertyId || `property-${index}`}>
                                         <div className="managed-property-image">
-                                            {image ? <img src={image} alt={title} /> : <div className="managed-property-image-placeholder"><span aria-hidden="true">⌂</span><p>No image available</p></div>}
+                                            {image && !brokenImages.includes(image) ? (
+                                                <img
+                                                    src={image}
+                                                    alt={complexName}
+                                                    onError={() => setBrokenImages(previous => (previous.includes(image) ? previous : [...previous, image]))}
+                                                />
+                                            ) : <div className="managed-property-image-placeholder"><span aria-hidden="true">⌂</span><p>No image available</p></div>}
                                             <span className={`property-status-badge status-${getStatusClass(status)}`}>{status}</span>
                                         </div>
 
                                         <div className="managed-property-content">
-                                            <div className="managed-property-title-row">
-                                                <div>
-                                                    <h3>{title}</h3>
-                                                    <p className="managed-property-id">ID: {propertyId || "Not assigned"}</p>
+                                            <div className="managed-property-title-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+                                                <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#111827"}}>{complexName}</h3>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                                                    <span style={{ color: "#9ca3af", fontSize: "0.95rem"}}>{unitNo}</span>
+                                                    <span style={{ color: "#9ca3af", fontSize: "0.75rem"}}>•</span>
+                                                    <p className="managed-property-id" style={{ margin: 0, color: "#6b7280", fontSize: "0.85rem"}}>ID: {propertyId || "Not assigned"}</p>
                                                 </div>
                                             </div>
                                             <p className="managed-property-location"><span aria-hidden="true">⌖</span> {getLocation(property)}</p>
@@ -452,6 +568,60 @@ function PropertyManagement() {
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label>Photos ({(editingProperty?.photos || []).length})</label>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "8px" }}>
+                                        {(editingProperty?.photos || []).map((photo, index) => (
+                                            <div key={photo.id} style={{ position: "relative", width: "96px", height: "72px" }}>
+                                                {photo.available === false || brokenImages.includes(photoSrc(photo.url)) ? (
+                                                    <div
+                                                        title="This photo's image is missing. Remove it and upload it again."
+                                                        style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", textAlign: "center", borderRadius: "6px", border: "1px dashed #cfc3da", background: "#f5f3f7", color: "#8f8698", fontSize: "10px", lineHeight: 1.3 }}
+                                                    >
+                                                        Image<br />missing
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={photoSrc(photo.url)}
+                                                        alt={`Property photo ${index + 1}`}
+                                                        onError={() => {
+                                                            const src = photoSrc(photo.url);
+                                                            setBrokenImages(previous => (previous.includes(src) ? previous : [...previous, src]));
+                                                        }}
+                                                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "6px", border: "1px solid #ddd" }}
+                                                    />
+                                                )}
+                                                {index === 0 && (
+                                                    <span style={{ position: "absolute", left: "4px", bottom: "4px", background: "#563f6b", color: "#fff", fontSize: "10px", padding: "1px 5px", borderRadius: "4px" }}>
+                                                        Cover
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Remove photo ${index + 1}`}
+                                                    disabled={photoBusy}
+                                                    onClick={() => handleDeletePhoto(photo.id)}
+                                                    style={{ position: "absolute", top: "-6px", right: "-6px", width: "20px", height: "20px", borderRadius: "50%", border: "none", background: "#8a3b3b", color: "#fff", cursor: "pointer", lineHeight: "20px", padding: 0 }}
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        multiple
+                                        disabled={photoBusy}
+                                        onChange={handleUploadPhotos}
+                                        style={{ marginTop: "10px" }}
+                                    />
+                                    <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
+                                        {photoBusy ? "Uploading..." : "JPEG, PNG or WebP, up to 5 MB each. The first photo is the cover image."}
+                                    </p>
+                                    {photoError && <p role="alert" style={{ fontSize: "12px", color: "#8a3b3b", margin: "6px 0 0" }}>{photoError}</p>}
+                                </div>
+
                                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                                     <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ padding: "10px 15px", borderRadius: "6px", border: "1px solid #ddd", background: "white", cursor: "pointer" }}>
                                         Cancel
@@ -483,6 +653,24 @@ function PropertyManagement() {
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                                     <div><label>Bedrooms</label><input type="number" value={addForm.bedrooms} onChange={e => setAddForm({...addForm, bedrooms: e.target.value})} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }} /></div>
                                     <div><label>Bathrooms</label><input type="number" value={addForm.bathrooms} onChange={e => setAddForm({...addForm, bathrooms: e.target.value})} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }} /></div>
+                                </div>
+                                <div>
+                                    <label>Photos (optional)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        multiple
+                                        onChange={handlePickNewPhotos}
+                                        style={{ display: "block", marginTop: "10px" }}
+                                    />
+                                    {newPhotos.length > 0 && (
+                                        <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
+                                            {newPhotos.map(file => file.name).join(", ")}
+                                            {" "}
+                                            <button type="button" onClick={() => setNewPhotos([])} style={{ border: "none", background: "none", color: "#563f6b", cursor: "pointer", padding: 0 }}>Clear</button>
+                                        </p>
+                                    )}
+                                    {photoError && <p role="alert" style={{ fontSize: "12px", color: "#8a3b3b", margin: "6px 0 0" }}>{photoError}</p>}
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>
                                     <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: "10px 15px", borderRadius: "6px", border: "1px solid #ddd", background: "white", cursor: "pointer" }}>Cancel</button>

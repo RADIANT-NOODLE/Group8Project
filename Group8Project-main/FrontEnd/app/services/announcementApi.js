@@ -1,8 +1,9 @@
 /**
  * Announcements — `/api/v1/announcements`.
  *
- * Every signed-in role may read them; only HOA administrators may publish, edit
- * or delete, and the author comes from the access token.
+ * Every signed-in role may read the published ones; only HOA administrators may
+ * publish, edit or delete (drafts are theirs alone), and the author comes from
+ * the access token.
  */
 import { apiRequest } from './apiClient.js';
 import { buildQuery, readPage, toNumber, toStringOrNull } from './apiResponse.js';
@@ -14,6 +15,8 @@ export function toAnnouncement(record) {
     id: toNumber(record?.id),
     title: toStringOrNull(record?.title) ?? '',
     message: toStringOrNull(record?.message) ?? '',
+    category: toStringOrNull(record?.category) ?? 'General',
+    isPublished: record?.is_published !== false,
     createdBy: toNumber(record?.created_by),
     expiresAt: toStringOrNull(record?.expires_at),
     createdAt: toStringOrNull(record?.created_at),
@@ -38,25 +41,29 @@ export async function getAnnouncement(announcementId) {
   return toAnnouncement(await apiRequest(`${BASE_PATH}/${encodeURIComponent(announcementId)}`));
 }
 
-export async function createAnnouncement({ title, message, expiresAt }) {
+export async function createAnnouncement({ title, message, category, isPublished = true, expiresAt }) {
   return toAnnouncement(
     await apiRequest(BASE_PATH, {
       method: 'POST',
       body: {
         title: String(title ?? '').trim(),
         message: String(message ?? '').trim(),
+        category: String(category ?? '').trim() || 'General',
+        is_published: Boolean(isPublished),
         expires_at: expiresAt ?? null,
       },
     }),
   );
 }
 
-/** `patch`: any of `title`, `message`, `expiresAt`. */
+/** `patch`: any of `title`, `message`, `category`, `isPublished`, `expiresAt`. */
 export async function updateAnnouncement(announcementId, patch = {}) {
   const body = {};
 
   if (patch.title !== undefined) body.title = String(patch.title).trim();
   if (patch.message !== undefined) body.message = String(patch.message).trim();
+  if (patch.category !== undefined) body.category = String(patch.category).trim() || 'General';
+  if (patch.isPublished !== undefined) body.is_published = Boolean(patch.isPublished);
   if (patch.expiresAt !== undefined) body.expires_at = patch.expiresAt ?? null;
 
   return toAnnouncement(

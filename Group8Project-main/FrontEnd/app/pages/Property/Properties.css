@@ -1,864 +1,224 @@
 /* =========================================================
    VALORA PROPERTIES PAGE
-   USES THE SAME VISUAL SYSTEM AS HOME
-   PRIMARY COLOUR: #563F6B
-   ========================================================= */
-
-
-/* =========================================================
-   GLOBAL PAGE
-   ========================================================= */
-
-.properties-page {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-
-    background: #ffffff;
-}
-
-
-/* =========================================================
-   SAME NAVBAR AS HOME
-   ========================================================= */
-
-.properties-page .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-
-    width: 100%;
-    min-height: 70px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 20px;
-
-    padding: 10px clamp(15px, 5vw, 70px);
-
-    background: #ffffff;
-
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-
-    z-index: 9999;
-}
-
-
-.properties-page .logo {
-    flex: 0 0 auto;
-}
-
-
-.properties-page .logo img {
-    width: clamp(80px, 9vw, 120px);
-
-    max-width: 100%;
-
-    height: auto;
-
-    display: block;
-}
-
-
-.properties-page .nav-links {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    gap: clamp(8px, 2vw, 30px);
-
-    flex: 1 1 auto;
-
-    min-width: 0;
-
-    margin: 0;
-}
-
-
-.properties-page .nav-links a {
-    color: #333333;
-
-    text-decoration: none;
-
-    font-size: clamp(9px, 1vw, 14px);
-
-    font-weight: bold;
-
-    white-space: nowrap;
-
-    transition: 0.2s ease;
-}
-
-
-.properties-page .nav-links a:hover,
-.properties-page .nav-links a.active {
-    color: #563F6B;
-}
-
-
-.properties-page .nav-buttons {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    flex: 0 0 auto;
-}
-
-
-.properties-page .login-btn,
-.properties-page .register-btn {
-    text-decoration: none;
-
-    padding: 9px clamp(10px, 1.5vw, 18px);
-
-    border-radius: 8px;
-
-    font-size: clamp(10px, 1vw, 13px);
-
-    font-weight: bold;
-
-    white-space: nowrap;
-
-    transition: 0.2s ease;
-}
-
-
-.properties-page .login-btn {
-    color: #563F6B;
-
-    border: 1px solid #563F6B;
-
-    background: #ffffff;
-}
-
-
-.properties-page .login-btn:hover {
-    background: #f1edf4;
-}
-
-
-.properties-page .register-btn {
-    color: #ffffff;
-
-    background: #563F6B;
-
-    border: 1px solid #563F6B;
-}
-
-
-.properties-page .register-btn:hover {
-    background: #463256;
-}
-
-
-/* =========================================================
-   PAGE HEADER
-   ========================================================= */
-
-.properties-page-header {
-    width: 100%;
-
-    min-height: 390px;
-
-    display: flex;
-
-    align-items: center;
-
-    padding:
-        clamp(120px, 15vw, 165px)
-        clamp(20px, 8vw, 120px)
-        clamp(60px, 8vw, 90px);
-
-    background: #f5f3f7;
-}
-
-
-.properties-page-header-content {
-    width: 100%;
-
-    max-width: 1100px;
-
-    margin: 0 auto;
-}
-
-
-.properties-page-header h1 {
-    color: #333333;
-
-    font-size: clamp(32px, 5vw, 60px);
-
-    line-height: 1.08;
-
-    margin-bottom: 18px;
-}
-
-
-.properties-page-header > div > p:last-child {
-    max-width: 750px;
-
-    color: #666666;
-
-    line-height: 1.6;
-
-    font-size: clamp(14px, 1.5vw, 18px);
-}
-
-
-/* =========================================================
-   PROPERTY LISTINGS
-   SAME STYLE AS HOME
-   ========================================================= */
-
-.properties-page .property-listings {
-    width: 100%;
-
-    padding:
-        clamp(55px, 8vw, 100px)
-        clamp(20px, 8vw, 120px);
-
-    background: #ffffff;
-}
-
-
-.properties-page .listings-header {
-    max-width: 1200px;
-
-    margin: 0 auto clamp(25px, 4vw, 40px);
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: flex-end;
-
-    gap: 25px;
-}
-
-
-.properties-page .listings-header > div {
-    max-width: 750px;
-}
-
-
-.properties-page .listings-header > div > p:last-child {
-    color: #666666;
-
-    line-height: 1.6;
-
-    font-size: clamp(13px, 1.2vw, 16px);
-}
-
-
-.properties-page .property-cards {
-    width: 100%;
-
-    max-width: 1200px;
-
-    margin: 0 auto;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: clamp(15px, 2vw, 25px);
-}
-
-
-.properties-page .property-card {
-    min-width: 0;
-
-    background: #ffffff;
-
-    border-radius: 16px;
-
+   Header, footer and property cards come from the shared
+   public-site styles (pages/Landing.css, "lp-" classes);
+   this file only styles the banner and the toolbar.
+========================================================= */
+
+.props-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
-
-    box-shadow:
-        0 5px 20px rgba(0, 0, 0, 0.08);
-
-    display: flex;
-
-    flex-direction: column;
-
-    height: 100%;
-
-    transition: 0.2s ease;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
 }
 
+/* banner */
 
-.properties-page .property-card:hover {
-    transform: translateY(-4px);
-
-    box-shadow:
-        0 8px 24px rgba(0, 0, 0, 0.11);
-}
-
-
-/* =========================================================
-   PROPERTY IMAGE
-   ========================================================= */
-
-.properties-page .property-card > img {
-    width: 100%;
-
-    height: clamp(160px, 18vw, 220px);
-
-    object-fit: cover;
-
-    display: block;
-}
-
-
-.properties-page .property-image-placeholder {
-    width: 100%;
-
-    height: clamp(160px, 18vw, 220px);
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 8px;
-
-    padding: 20px;
-
+.props-banner {
+    padding: 64px 6% 56px;
     background:
-        linear-gradient(
-            135deg,
-            #f5f3f7 0%,
-            #ebe7ee 100%
-        );
+        radial-gradient(circle at 90% 10%, rgba(180, 156, 203, 0.35) 0, rgba(180, 156, 203, 0) 40%),
+        #f7f4fa;
+}
 
-    color: #563F6B;
+.props-banner h1 {
+    margin: 0;
+    color: #29242d;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1px;
+}
 
+.props-banner p {
+    max-width: 640px;
+    margin: 14px 0 0;
+    color: #6f6577;
+    font-size: 16.5px;
+    line-height: 1.6;
+}
+
+.props-content {
+    padding: 36px 6% 88px;
+}
+
+/* toolbar */
+
+.props-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 26px;
+    padding: 16px;
+    border: 1px solid #eee8f3;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgba(60, 40, 80, 0.06);
+}
+
+.props-search {
+    display: flex;
+    flex: 1 1 280px;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid #dcd6e2;
+    border-radius: 12px;
+    color: #8f8698;
+}
+
+.props-search:focus-within {
+    border-color: #563f6b;
+    outline: 2px solid rgba(86, 63, 107, 0.2);
+}
+
+.props-search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: #29242d;
+    font-family: inherit;
+    font-size: 14.5px;
+}
+
+.props-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid #e8e3eb;
+    border-radius: 12px;
+    background: #f6f3f8;
+}
+
+.props-tabs button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #6f6577;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.props-tabs button.is-active {
+    background: #ffffff;
+    color: #563f6b;
+    box-shadow: 0 1px 4px rgba(40, 30, 50, 0.1);
+}
+
+.props-tabs button:focus-visible,
+.props-count button:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+.props-tabs span {
+    min-width: 22px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e4d9ed;
+    color: #563f6b;
+    font-size: 11.5px;
     text-align: center;
 }
 
-
-.properties-page .property-image-placeholder
-.properties-page-icon {
-    width: 48px;
-    height: 48px;
-
-    margin-bottom: 3px;
-}
-
-
-.properties-page .property-image-placeholder strong {
-    color: #563F6B;
-
-    font-size: 14px;
-
-    letter-spacing: 0.3px;
-}
-
-
-.properties-page .property-image-placeholder span {
-    max-width: 230px;
-
-    color: #777777;
-
-    font-size: 11px;
-
-    line-height: 1.45;
-}
-
-
-/* =========================================================
-   PROPERTY CARD CONTENT
-   ========================================================= */
-
-.properties-page .property-card-content {
-    padding: clamp(18px, 2vw, 25px);
-
+.props-select {
     display: flex;
-
     flex-direction: column;
-
-    flex: 1;
+    gap: 5px;
 }
 
-
-.properties-page .property-type {
-    color: #563F6B;
-
-    font-size: 10px;
-
-    font-weight: bold;
-
-    letter-spacing: 1px;
-
-    margin-bottom: 8px;
+.props-select span {
+    color: #6f6577;
+    font-size: 12px;
+    font-weight: 700;
 }
 
-
-.properties-page .property-card h3 {
-    color: #333333;
-
-    font-size: clamp(17px, 1.8vw, 21px);
-
-    margin-bottom: 8px;
+.props-select select {
+    min-height: 46px;
+    padding: 0 12px;
+    border: 1px solid #dcd6e2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #29242d;
+    font-family: inherit;
+    font-size: 14px;
 }
 
-
-.properties-page .property-location {
-    color: #777777;
-
-    font-size: clamp(12px, 1vw, 15px);
-
-    margin-bottom: 15px;
+.props-select select:focus {
+    border-color: #563f6b;
+    outline: 2px solid rgba(86, 63, 107, 0.2);
 }
 
-
-/* =========================================================
-   PROPERTY DETAILS
-   ========================================================= */
-
-.properties-page .property-details {
+.props-count {
     display: flex;
-
     flex-wrap: wrap;
-
-    gap: 7px;
-
-    color: #666666;
-
-    font-size: 11px;
-
-    margin-bottom: 10px;
-}
-
-
-.properties-page .property-details span {
-    padding: 5px 8px;
-
-    background: #f5f3f7;
-
-    border-radius: 5px;
-}
-
-
-/* =========================================================
-   PROPERTY UNIT
-   ========================================================= */
-
-.properties-page .property-unit {
-    display: flex;
-
     align-items: center;
-
-    justify-content: space-between;
-
-    gap: 10px;
-
-    padding-bottom: 16px;
-
-    margin-bottom: 15px;
-
-    border-bottom: 1px solid #eeeeee;
-
-    color: #777777;
-
-    font-size: 11px;
-}
-
-
-.properties-page .property-unit span:first-child {
-    color: #563F6B;
-
-    font-weight: bold;
-}
-
-
-/* =========================================================
-   PROPERTY BOTTOM
-   ========================================================= */
-
-.properties-page .property-bottom {
-    margin-top: auto;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 10px;
-}
-
-
-.properties-page .property-bottom strong {
-    color: #333333;
-
-    font-size: clamp(13px, 1.3vw, 16px);
-}
-
-
-.properties-page .property-view-button {
-    background: #563F6B;
-
-    color: #ffffff;
-
-    padding: 9px 12px;
-
-    border-radius: 7px;
-
-    text-decoration: none;
-
-    font-size: 11px;
-
-    font-weight: bold;
-
-    white-space: nowrap;
-
-    transition: 0.2s ease;
-}
-
-
-.properties-page .property-view-button:hover {
-    background: #463256;
-}
-
-
-/* =========================================================
-   BOTTOM INFORMATION
-   ========================================================= */
-
-.properties-page-information {
-    width: 100%;
-
-    padding:
-        clamp(55px, 8vw, 100px)
-        clamp(20px, 8vw, 120px);
-
-    background: #f5f3f7;
-}
-
-
-.properties-page-information-content {
-    width: 100%;
-
-    max-width: 900px;
-
-    margin: 0 auto;
-}
-
-
-.properties-page-information h2 {
-    color: #333333;
-
-    font-size: clamp(28px, 4vw, 50px);
-
-    line-height: 1.15;
-
-    margin-bottom: 18px;
-}
-
-
-.properties-page-information-content > p:not(.section-label) {
-    color: #666666;
-
-    line-height: 1.6;
-
-    font-size: clamp(13px, 1.2vw, 16px);
-
-    max-width: 750px;
-}
-
-
-.properties-page-actions {
-    display: flex;
-
-    flex-wrap: wrap;
-
     gap: 12px;
-
-    margin-top: 30px;
+    margin: 0 0 16px;
+    color: #77717d;
+    font-size: 14px;
 }
 
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 1000px) {
-
-    .properties-page .navbar {
-        gap: 10px;
-
-        padding-left: 20px;
-        padding-right: 20px;
-    }
-
-
-    .properties-page .nav-links {
-        gap: 8px;
-    }
-
-
-    .properties-page .nav-links a {
-        font-size: 9px;
-    }
-
-
-    .properties-page .property-cards {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
+.props-count button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #563f6b;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-
-@media (max-width: 800px) {
-
-    .properties-page .navbar {
-        min-height: 65px;
-    }
-
-
-    .properties-page .logo img {
-        width: 90px;
-    }
-
-
-    .properties-page .nav-links {
-        gap: 5px;
-    }
-
-
-    .properties-page .nav-links a {
-        font-size: 8px;
-    }
-
-
-    .properties-page .login-btn,
-    .properties-page .register-btn {
-        padding: 7px 9px;
-
-        font-size: 9px;
-    }
-
-
-    .properties-page-header {
-        padding-top: 100px;
-    }
-
+.props-count button:hover {
+    text-decoration: underline;
 }
 
+.props-empty-action {
+    margin-top: 18px;
+}
 
-@media (max-width: 650px) {
+/* the current page in the shared header */
+.lp .lp-nav a.is-current {
+    color: #563f6b;
+    box-shadow: inset 0 -2px 0 #563f6b;
+}
 
-    .properties-page .navbar {
-        position: fixed;
-
-        min-height: 60px;
-
-        padding: 8px 12px;
-
-        gap: 8px;
-
-        flex-wrap: nowrap;
-
-        justify-content: space-between;
+@media (max-width: 600px) {
+    .props-banner {
+        padding: 44px 16px 40px;
     }
 
-
-    .properties-page .logo {
-        flex-shrink: 0;
+    .props-content {
+        padding: 24px 16px 60px;
     }
 
-
-    .properties-page .logo img {
-        width: 75px;
+    .props-toolbar {
+        align-items: stretch;
     }
 
+    .props-tabs {
+        width: 100%;
+    }
 
-    .properties-page .nav-links {
-        display: flex;
-
-        flex: 1 1 auto;
-
-        width: auto;
-
-        min-width: 0;
-
-        margin: 0;
-
-        gap: 4px;
-
+    .props-tabs button {
+        flex: 1;
         justify-content: center;
     }
 
-
-    .properties-page .nav-links a {
-        font-size: 7px;
-
-        padding: 3px;
-
-        white-space: nowrap;
+    .props-select {
+        flex: 1;
     }
-
-
-    .properties-page .nav-buttons {
-        flex-shrink: 0;
-
-        gap: 4px;
-    }
-
-
-    .properties-page .login-btn,
-    .properties-page .register-btn {
-        padding: 6px 7px;
-
-        font-size: 8px;
-    }
-
-
-    .properties-page-header {
-        min-height: 340px;
-
-        padding:
-            85px
-            18px
-            45px;
-    }
-
-
-    .properties-page-header h1 {
-        font-size: clamp(28px, 9vw, 42px);
-    }
-
-
-    .properties-page-header > div > p:last-child {
-        font-size: 14px;
-
-        line-height: 1.5;
-    }
-
-
-    .properties-page .property-listings {
-        padding:
-            50px
-            18px;
-    }
-
-
-    .properties-page .property-cards {
-        grid-template-columns: 1fr;
-
-        gap: 15px;
-    }
-
-
-    .properties-page .property-card > img,
-    .properties-page .property-image-placeholder {
-        height: 190px;
-    }
-
-
-    .properties-page .property-bottom {
-        flex-wrap: wrap;
-    }
-
-
-    .properties-page-information {
-        padding:
-            50px
-            18px;
-    }
-
-}
-
-
-@media (max-width: 420px) {
-
-    .properties-page .navbar {
-        padding: 7px 8px;
-
-        gap: 4px;
-    }
-
-
-    .properties-page .logo img {
-        width: 65px;
-    }
-
-
-    .properties-page .nav-links {
-        gap: 2px;
-    }
-
-
-    .properties-page .nav-links a {
-        font-size: 6px;
-
-        padding: 2px;
-    }
-
-
-    .properties-page .login-btn,
-    .properties-page .register-btn {
-        padding: 5px 6px;
-
-        font-size: 7px;
-    }
-
-
-    .properties-page-header {
-        padding:
-            75px
-            14px
-            35px;
-    }
-
-
-    .properties-page .property-listings {
-        padding:
-            45px
-            14px;
-    }
-
-
-    .properties-page .property-card-content {
-        padding: 18px;
-    }
-
-
-    .properties-page .property-card > img,
-    .properties-page .property-image-placeholder {
-        height: 175px;
-    }
-
-
-    .properties-page .property-bottom {
-        align-items: stretch;
-
-        flex-direction: column;
-    }
-
-
-    .properties-page .property-view-button {
-        width: 100%;
-
-        text-align: center;
-    }
-
-
-    .properties-page-information {
-        padding:
-            45px
-            14px;
-    }
-
 }

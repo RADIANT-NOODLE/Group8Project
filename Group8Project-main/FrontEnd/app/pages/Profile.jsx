@@ -2,7 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import { useSession } from "../services/session"
+import {
+  changePassword as changePasswordRequest,
+  me as fetchMe,
+  updateProfile,
+} from "../services/authApi.js";
+import { getPasswordErrorMessage } from "../services/authErrorMessages.js";
+import { checkPasswordRules, validateNewPassword } from "../services/validation.js";
+import PasswordRequirements from "./Auth/PasswordRequirements.jsx";
 import "./Profile.css";
+import { showAlert, showConfirm } from "../components/AppDialog";
+import { getSessionToken } from "../services/session";
 
 function Profile() {
 
@@ -14,7 +24,7 @@ function Profile() {
   // user info states
   const [name, setName] = useState(user?.fullName || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.phone || "");
+  const [phone, setPhone] = useState(user?.phoneno || user?.phone || "");
 
   // edit form states
   const [editName, setEditName] = useState(name);
@@ -31,8 +41,25 @@ function Profile() {
       setEmail(user.email || "");
       setEditName(user.fullName || "");
       setEditEmail(user.email || "");
+      if (user.phoneno || user.phone) {
+        setPhone(user.phoneno || user.phone);
+      }
     }
   }, [user]);
+
+  // Sessions started before phone numbers were returned have none cached: read it once.
+  useEffect(() => {
+    const token = getSessionToken();
+    if (!token) return;
+
+    fetchMe(token)
+      .then((fresh) => {
+        setPhone(fresh?.phoneno || "");
+        updateSessionUser({ phoneno: fresh?.phoneno || null });
+      })
+      .catch((error) => console.error("Unable to refresh profile:", error));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // notification states
   const [notifications, setNotifications] = useState(true);
@@ -44,6 +71,8 @@ function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   /*
   =========================================================
@@ -150,52 +179,34 @@ function Profile() {
   */
 
    const saveProfile = async () => {
-    if (editName.trim() === "" || editEmail.trim() === "") {
-      alert("Please complete all profile fields.");
+    if (editName.trim().length < 2) {
+      showAlert("Please enter your full name.");
       return;
     }
+
+    if (!(await showConfirm("Save changes to your profile?", { title: "Save profile?", confirmLabel: "Save" }))) return;
 
     setIsSaving(true);
 
     try {
-      const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-      
-      const response = await fetch("http://127.0.0.1:8000/api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          full_name: editName,
-          email: editEmail,
-          phone: editPhone // Sent to backend, even if backend ignores it for now
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to update profile");
-      }
+      const data = await updateProfile({ fullName: editName, phone: editPhone });
 
       // Update the local React state
       setName(data.full_name);
-      setEmail(data.email);
-      setPhone(editPhone);
-      
-      // Update the session storage so the sidebar and other pages see the new name immediately
-      updateSessionUser({ 
-        full_name: data.full_name, 
-        email: data.email 
+      setPhone(data.phoneno || "");
+
+      // Update the session so the sidebar and other pages see the change immediately
+      updateSessionUser({
+        full_name: data.full_name,
+        phoneno: data.phoneno || null,
       });
 
       setEditing(false);
-      alert("Profile updated successfully.");
+      showAlert("Profile updated successfully.");
 
     } catch (error) {
       console.error("Profile update error:", error);
-      alert(error.message);
+      showAlert(error.message);
     } finally {
       setIsSaving(false);
     }
@@ -212,6 +223,7 @@ function Profile() {
     setIsPasswordModalOpen(true);
     setCurrentPassword("");
     setNewPassword("");
+    setConfirmNewPassword("");
     setPasswordError("");
     setPasswordSuccess("");
   };
@@ -221,39 +233,40 @@ function Profile() {
     setPasswordError("");
     setPasswordSuccess("");
 
-    if (newPassword.length < 8) {
-      setPasswordError("New password must be at least 8 characters long.");
+    const passwordProblem = validateNewPassword(newPassword);
+    if (passwordProblem) {
+      setPasswordError(passwordProblem);
       return;
     }
 
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("The new passwords do not match.");
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setPasswordError("Your new password must be different from your current password.");
+      return;
+    }
+
+    if (!(await showConfirm("Change your password? You'll use the new password the next time you sign in.", { title: "Change password?", confirmLabel: "Change password" }))) return;
+
+    setIsChangingPassword(true);
+
     try {
-      const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-      
-      const response = await fetch("http://127.0.0.1:8000/api/users/me/password", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          current_password: currentPassword,
-          new_password: newPassword
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to change password");
-      }
+      await changePasswordRequest({ currentPassword, newPassword });
 
       setPasswordSuccess("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
       setTimeout(() => {
         setIsPasswordModalOpen(false);
       }, 2000); // Close modal after 2 seconds
-
     } catch (error) {
-      setPasswordError(error.message);
+      setPasswordError(getPasswordErrorMessage(error));
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -419,7 +432,7 @@ function Profile() {
                 </span>
 
                 <strong>
-                  {phone}
+                  {phone || "Not provided"}
                 </strong>
 
               </div>
@@ -473,9 +486,9 @@ function Profile() {
                   id="profile-email"
                   type="email"
                   value={editEmail}
-                  onChange={(event) =>
-                    setEditEmail(event.target.value)
-                  }
+                  readOnly
+                  disabled
+                  title="Your email address cannot be changed here."
                 />
 
               </div>
@@ -489,7 +502,8 @@ function Profile() {
 
                 <input
                   id="profile-phone"
-                  type="text"
+                  type="tel"
+                  maxLength={20}
                   value={editPhone}
                   onChange={(event) =>
                     setEditPhone(event.target.value)
@@ -795,23 +809,45 @@ function Profile() {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
                   />
                 </div>
 
                 <div className="resident-profile-form-field">
-                  <label>New Password (min 8 characters)</label>
+                  <label>New Password</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <PasswordRequirements
+                    id="profile-password-requirements"
+                    rules={checkPasswordRules(newPassword)}
+                    touched={newPassword.length > 0}
+                  />
+                </div>
+
+                <div className="resident-profile-form-field">
+                  <label>Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    autoComplete="new-password"
                     required
                   />
                 </div>
 
                 <div className="resident-profile-edit-buttons">
-                  <button type="submit" className="resident-profile-save-button">
-                    Update Password
+                  <button
+                    type="submit"
+                    className="resident-profile-save-button"
+                    disabled={isChangingPassword}
+                  >
+                    {isChangingPassword ? "Updating…" : "Update Password"}
                   </button>
                   <button 
                     type="button" 

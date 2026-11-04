@@ -4,10 +4,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { getRegistrationErrorMessage } from "../../services/authErrorMessages.js";
 import { dashboardPathForRole, ROLES } from "../../services/roleMap.js";
 import { register } from "../../services/session.js";
+import {
+    checkPasswordRules,
+    validateRequiredPhone,
+    validateRegistrationPassword,
+} from "../../services/validation.js";
+import PasswordRequirements from "./PasswordRequirements.jsx";
 
 import "./Auth.css";
-
-const MINIMUM_PASSWORD_LENGTH = 8;
 
 function Register() {
     const navigate = useNavigate();
@@ -15,8 +19,12 @@ function Register() {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
+
+    const passwordsMatch = confirmPassword.length > 0 && confirmPassword === password;
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event) => {
@@ -27,16 +35,28 @@ function Register() {
             !firstName.trim() ||
             !lastName.trim() ||
             !email.trim() ||
-            !password
+            !phone.trim() ||
+            !password ||
+            !confirmPassword
         ) {
             setError("Please complete all registration fields.");
             return;
         }
 
-        if (password.length < MINIMUM_PASSWORD_LENGTH) {
-            setError(
-                `Choose a password of at least ${MINIMUM_PASSWORD_LENGTH} characters.`
-            );
+        const phoneProblem = validateRequiredPhone(phone);
+        if (phoneProblem) {
+            setError(phoneProblem);
+            return;
+        }
+
+        const passwordProblem = validateRegistrationPassword(password);
+        if (passwordProblem) {
+            setError(passwordProblem);
+            return;
+        }
+
+        if (confirmPassword !== password) {
+            setError("The passwords do not match. Please re-enter your password.");
             return;
         }
 
@@ -47,6 +67,7 @@ function Register() {
                 first_name: firstName.trim(),
                 last_name: lastName.trim(),
                 email: email.trim().toLowerCase(),
+                phone: phone.trim(),
                 password,
                 role: ROLES.resident,
             });
@@ -68,12 +89,12 @@ function Register() {
             <div className="auth-card">
                 {/* LEFT SIDE */}
                 <div className="auth-sidebar">
-                    <div className="auth-logo">
+                    <Link to="/" className="auth-logo">
                         <img
-                            src="/assets/valora-logo.svg"
-                            alt="VALORA"
+                            src="/assets/valora-logo-white.png"
+                            alt="VALORA - go to home page"
                         />
-                    </div>
+                    </Link>
 
                     <div className="auth-sidebar-content">
                         <p className="auth-eyebrow">
@@ -155,6 +176,24 @@ function Register() {
                                 />
                             </div>
 
+                            {/* PHONE */}
+                            <div className="auth-field">
+                                <label htmlFor="phone">Phone Number</label>
+                                <input
+                                    id="phone"
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(event) =>
+                                        setPhone(event.target.value)
+                                    }
+                                    placeholder="e.g. 082 123 4567"
+                                    autoComplete="tel"
+                                    inputMode="tel"
+                                    maxLength={20}
+                                    required
+                                />
+                            </div>
+
                             {/* PASSWORD */}
                             <div className="auth-field">
                                 <label htmlFor="password">Password</label>
@@ -167,18 +206,47 @@ function Register() {
                                     }
                                     placeholder="Create a password"
                                     autoComplete="new-password"
-                                    minLength={MINIMUM_PASSWORD_LENGTH}
+                                    aria-describedby="password-requirements"
                                     required
                                 />
-                                <p className="auth-hint">
-                                    At least {MINIMUM_PASSWORD_LENGTH} characters.
-                                </p>
+                                <PasswordRequirements
+                                    id="password-requirements"
+                                    rules={checkPasswordRules(password)}
+                                    touched={password.length > 0}
+                                />
+                            </div>
+
+                            {/* CONFIRM PASSWORD */}
+                            <div className="auth-field">
+                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <input
+                                    id="confirmPassword"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(event) =>
+                                        setConfirmPassword(event.target.value)
+                                    }
+                                    placeholder="Re-enter your password"
+                                    autoComplete="new-password"
+                                    aria-describedby="confirm-password-status"
+                                    aria-invalid={confirmPassword.length > 0 && !passwordsMatch}
+                                    required
+                                />
+                                {confirmPassword.length > 0 && (
+                                    <p
+                                        id="confirm-password-status"
+                                        className={`auth-match-hint ${passwordsMatch ? "is-match" : "is-mismatch"}`}
+                                        aria-live="polite"
+                                    >
+                                        {passwordsMatch ? "✓ Passwords match" : "✕ Passwords don't match"}
+                                    </p>
+                                )}
                             </div>
 
                             {/* ACCOUNT TYPE */}
                             <div className="auth-account-note">
                                 You are registering as a <strong>Resident</strong>. HOA
-                                administrator, estate agent and service provider accounts
+                                administrator and estate agent accounts
                                 are issued by a VALORA administrator.
                             </div>
 

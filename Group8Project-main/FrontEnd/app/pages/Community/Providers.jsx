@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import { useSession } from "../../services/session";
+import { useSession, getSessionToken } from "../../services/session";
 import "./Providers.css";
+import { showConfirm, showAlert } from "../../components/AppDialog";
+import { getApiBaseUrl } from "../../services/apiClient";
 
 const SERVICE_CATEGORIES = [
     { value: "plumbing", label: "Plumbing", icon: "tools" },
@@ -75,8 +77,8 @@ function Providers() {
     const fetchProviders = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch("http://127.0.0.1:8000/api/v1/providers", {
+            const token = getSessionToken();
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -151,12 +153,19 @@ function Providers() {
             return;
         }
 
+        const providerName = form.full_name.trim();
+        const confirmed = await showConfirm(
+            editingId ? `Save changes to ${providerName}?` : `Add ${providerName} to the service provider directory?`,
+            { title: editingId ? "Save changes?" : "Add provider?", confirmLabel: editingId ? "Save" : "Add provider" }
+        );
+        if (!confirmed) return;
+
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             
             const url = editingId 
-                ? `http://127.0.0.1:8000/api/v1/providers/${editingId}`
-                : "http://127.0.0.1:8000/api/v1/providers";
+                ? `${getApiBaseUrl()}/api/v1/providers/${editingId}`
+                : `${getApiBaseUrl()}/api/v1/providers`;
                 
             const method = editingId ? "PATCH" : "POST";
 
@@ -206,13 +215,13 @@ function Providers() {
     // 4. Delete Provider
     async function deleteProvider(provider) {
         if (!canManage) return;
-        if (!window.confirm(`Remove "${provider.full_name}"?`)) return;
+        if (!await showConfirm(`Remove "${provider.full_name}"?`)) return;
 
         const id = provider.provider_id || provider.id;
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${id}`, {
+            const token = getSessionToken();
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${id}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -242,8 +251,8 @@ function Providers() {
     const fetchReviews = async (providerId) => {
         setReviewsLoading(true);
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews`, {
+            const token = getSessionToken();
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${providerId}/reviews`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -272,10 +281,10 @@ function Providers() {
         setReviewError("");
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const providerId = selectedProvider.provider_id || selectedProvider.id;
             
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${providerId}/reviews`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -309,10 +318,10 @@ function Providers() {
         if (!reviewToDelete) return;
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
+            const token = getSessionToken();
             const providerId = selectedProvider.provider_id || selectedProvider.id;
 
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/providers/${providerId}/reviews/${reviewToDelete}`, {
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/providers/${providerId}/reviews/${reviewToDelete}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -325,7 +334,7 @@ function Providers() {
             await fetchProviders();
             
         } catch (err) {
-            alert(err.message);
+            showAlert(err.message);
         }
     };
 
@@ -485,7 +494,7 @@ function Providers() {
 
                                     {provider.avg_rating ? (
                                         <div className="provider-rating" style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
-                                            <span className="rating-stars" aria-hidden="true" style={{ color: "#F5A623" }}>
+                                            <span className="rating-stars" aria-hidden="true">
                                                 ★★★★★
                                             </span>
                                             <span style={{ fontSize: "12px", fontWeight: "600", color: "#563f6b" }}>
@@ -571,7 +580,7 @@ function Providers() {
                                                     <strong style={{ fontSize: "13px", color: "#563f6b" }}>{review.reviewer_name || review.full_name || "Resident"}</strong>
                                                     
                                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <span style={{ color: "#F5A623", fontSize: "13px" }}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                                                        <span style={{ color: "var(--valora-purple)", fontSize: "13px" }}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
                                                         
                                                         {/* DELETE BUTTON */}
                                                         {canManage && (
@@ -591,8 +600,8 @@ function Providers() {
                                     </div>
                                 )}
 
-                                {/* REVIEW FORM (Only visible to Residents/Investors/Agents) */}
-                                {["resident", "investor", "estate_agent"].includes(role) && (
+                                {/* REVIEW FORM (Only visible to Residents/Agents) */}
+                                {["resident", "estate_agent"].includes(role) && (
                                     <form onSubmit={submitReview} style={{ marginTop: "20px", background: "#f5f3f7", padding: "15px", borderRadius: "8px" }}>
                                         <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#29242d" }}>Leave a Review</h4>
                                         

@@ -126,61 +126,6 @@
    STAT CARDS
 ========================================================= */
 
-.resident-directory-stat-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 15px;
-    margin-bottom: 22px;
-}
-
-.resident-directory-stat-card {
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    padding: 18px;
-    border: 1px solid #e4e0e7;
-    border-radius: 9px;
-    background: #ffffff;
-    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
-    box-sizing: border-box;
-}
-
-.resident-directory-stat-icon {
-    width: 38px;
-    height: 38px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    background: #f0ebf4;
-    color: #563f6b;
-}
-
-.resident-directory-stat-card p {
-    margin: 0 0 5px;
-    color: #77717a;
-    font-size: 9px;
-    font-weight: 600;
-}
-
-.resident-directory-stat-card h3 {
-    margin: 0;
-    color: #29232e;
-    font-size: 23px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.resident-directory-stat-card small {
-    display: block;
-    margin-top: 6px;
-    color: #9a949c;
-    font-size: 8px;
-    line-height: 1.5;
-}
-
 /* =========================================================
    DIRECTORY PANEL
 ========================================================= */
@@ -868,10 +813,6 @@
         padding: 28px 25px 40px;
     }
 
-    .resident-directory-stat-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .resident-directory-role-filter {
         width: 155px;
     }
@@ -929,15 +870,6 @@
         align-self: flex-start;
     }
 
-    .resident-directory-stat-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-    }
-
-    .resident-directory-stat-card {
-        padding: 14px;
-    }
-
     .resident-directory-panel-heading {
         align-items: flex-start;
         flex-direction: column;
@@ -990,14 +922,6 @@
 
     .resident-directory-top-bar p {
         font-size: 10px;
-    }
-
-    .resident-directory-stat-cards {
-        grid-template-columns: 1fr;
-    }
-
-    .resident-directory-stat-card {
-        padding: 15px;
     }
 
     .resident-directory-panel-heading {
@@ -1060,5 +984,173 @@
 
     .resident-directory-modal-footer button {
         flex: 1;
+    }
+}
+
+
+/* =========================================================
+   UNIT OCCUPANCY MAP
+========================================================= */
+
+.resident-directory-occupancy {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.4fr);
+    gap: 28px;
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    border: 1px solid #e8e3eb;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
+}
+
+.resident-directory-occupancy-eyebrow {
+    margin: 0 0 6px;
+    color: #563f6b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.resident-directory-occupancy-summary h2 {
+    margin: 0;
+    color: #29242d;
+    font-size: 22px;
+    font-weight: 750;
+}
+
+.resident-directory-occupancy-percent {
+    margin: 6px 0 18px;
+    color: #77717d;
+    font-size: 12.5px;
+}
+
+.resident-directory-occupancy-figures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.resident-directory-occupancy-figures div {
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: #f6f2f9;
+}
+
+.resident-directory-occupancy-figures dt {
+    color: #857b8c;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+
+.resident-directory-occupancy-figures dd {
+    margin: 4px 0 0;
+    color: #29242d;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.resident-directory-unit-map {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.resident-directory-unit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* unassigned unit: outlined tile */
+.resident-directory-unit-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 56px;
+    padding: 6px 4px;
+    border: 1.5px dashed #c9b7d8;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #8a7a98;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: default;
+}
+
+/* occupied unit: filled tile */
+.resident-directory-unit-tile.is-occupied {
+    border: 1.5px solid #563f6b;
+    background: #563f6b;
+    color: #ffffff;
+}
+
+.resident-directory-unit-tile span {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.resident-directory-unit-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.resident-directory-unit-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #5f536c;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.resident-directory-unit-legend strong {
+    color: #29242d;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.resident-directory-unit-swatch {
+    width: 12px;
+    height: 12px;
+    border: 1.5px dashed #c9b7d8;
+    border-radius: 3px;
+    background: #ffffff;
+}
+
+.resident-directory-unit-swatch.is-occupied {
+    border: 1.5px solid #563f6b;
+    background: #563f6b;
+}
+
+@media (max-width: 1000px) {
+    .resident-directory-occupancy {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .resident-directory-occupancy {
+        padding: 20px 18px;
+    }
+
+    .resident-directory-occupancy-figures {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

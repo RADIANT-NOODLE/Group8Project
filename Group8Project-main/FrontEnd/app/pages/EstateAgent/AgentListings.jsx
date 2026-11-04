@@ -1,27 +1,72 @@
 import React, { useEffect, useState } from "react";
-import { getProperties } from "../../data/propertyStorage";
-import { getPropertyRequests } from "../../data/propertyRequests";
+import { getProperties, updateProperty } from "../../data/propertyStorage";
+import { updateRequestProgress } from "../../services/propertyRequestApi";
+import { listMyListings, updateListing } from "../../services/listingApi";
+import { syncPublishedListingPhotos } from "../../services/listingPhotoSync";
+import {
+    ensureLocalPropertyForRequest,
+    getPropertyRequests,
+} from "../../data/propertyRequests";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { useNavigate } from "react-router-dom";
 import "./AgentListings.css";
+import { showAlert, showConfirm } from "../../components/AppDialog";
+import { getStoredUser } from "../../services/session";
 
 function AgentListings() {
     const navigate = useNavigate();
+    // the listing open in the details panel, or null
+    const [viewing, setViewing] = useState(null);
 
     const [properties, setProperties] = useState([]);
     const [propertyRequests, setPropertyRequests] = useState([]);
 
     const [currentUser] = useState(() => {
         try {
-            return JSON.parse(localStorage.getItem("valoraUser") || "null");
+            return getStoredUser();
         } catch {
             return null;
         }
     });
 
+    const [loadError, setLoadError] = useState("");
+
     useEffect(() => {
-        setProperties(getProperties() || []);
-        setPropertyRequests(getPropertyRequests() || []);
+        let cancelled = false;
+
+        async function load() {
+            try {
+                // the API only returns the requests assigned to this agent
+                const requests = (await getPropertyRequests()) || [];
+                if (cancelled) return;
+
+                requests.forEach((request) => ensureLocalPropertyForRequest(request));
+                setProperties(getProperties() || []);
+                setPropertyRequests(requests);
+                setLoadError("");
+            } catch (error) {
+                console.error("Unable to load assigned property requests:", error);
+                if (!cancelled) {
+                    setProperties(getProperties() || []);
+                    setLoadError("Unable to load your assigned properties. Please try again.");
+                }
+            }
+        }
+
+        load();
+
+        // photos of already-published listings that never reached the public site
+        if (currentUser?.id) {
+            syncPublishedListingPhotos(currentUser.id)
+                .then((uploaded) => {
+                    if (uploaded > 0 && !cancelled) setProperties(getProperties() || []);
+                })
+                .catch((error) => console.error("Could not sync listing photos:", error));
+        }
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const currentAgentName =
@@ -101,26 +146,62 @@ function AgentListings() {
     );
 
     const handleView = ({ request, property }) => {
-        const listing = property?.listing || {};
-
-        alert(
-            `${property?.unitNumber || request.propertyAddress || request.propertyId || "Property"}\n\n` +
-            `Owner: ${getOwnerName({ request, property })}\n` +
-            `Property Type: ${property?.propertyType || request.propertyType || "Not specified"}\n` +
-            `Bedrooms: ${property?.bedrooms || request.bedrooms || "Not specified"}\n` +
-            `Bathrooms: ${property?.bathrooms || request.bathrooms || "Not specified"}\n` +
-            `Property Size: ${property?.size || property?.area || request.propertySize || "Not specified"}\n\n` +
-            `Listing Type: ${getListingType({ request, property })}\n` +
-            `Price: ${getListingPrice({ request, property })}\n` +
-            `Request Status: ${getRequestStatus({ request })}\n` +
-            `Listing Status: ${getListingStatus({ property })}\n` +
-            `HOA Approval: ${listing.hoaApprovalStatus || "Not Submitted"}`
-        );
+        setViewing({ request, property });
     };
+
+    // the agent closes the deal: the request (and the resident's tracker) moves to sold / rented
+    const handleMarkComplete = async ({ request, property }) => {
+        const isRent = String(request.requestType).toLowerCase() === "rent";
+        const target = isRent ? "rented" : "sold";
+        const unit = property?.unitNumber || request.propertyAddress || "this property";
+
+        const confirmed = await showConfirm(
+            `Mark ${unit} as ${target}? The resident will see that their request is complete.`,
+            { title: isRent ? "Mark as rented?" : "Mark as sold?", confirmLabel: isRent ? "Mark as rented" : "Mark as sold" }
+        );
+        if (!confirmed) return;
+
+        try {
+            const updated = await updateRequestProgress(request.id, target);
+
+            // take the public listing off the market as well
+            try {
+                const unitId = Number(request.propertyId);
+                const { items } = await listMyListings(currentUser?.id, { unitId, pageSize: 10 });
+                const live = items.find((item) => item.unitId === unitId && item.status === "active");
+                if (live) await updateListing(live.id, { status: target });
+            } catch (listingError) {
+                console.error("Could not update the public listing:", listingError);
+            }
+            setPropertyRequests((current) =>
+                current.map((item) => (item.id === request.id ? { ...item, ...updated } : item))
+            );
+            if (property) {
+                updateProperty(property.id, {
+                    listing: { ...(property.listing || {}), listingStatus: isRent ? "Rented" : "Sold" },
+                });
+                setProperties(getProperties() || []);
+            }
+            setViewing(null);
+            showAlert(`${unit} has been marked as ${target}.`, { title: "Request complete" });
+        } catch (err) {
+            showAlert(err?.message || "The request could not be updated. Please try again.");
+        }
+    };
+
+    // Escape closes the details panel
+    useEffect(() => {
+        if (!viewing) return undefined;
+        const onKey = (event) => {
+            if (event.key === "Escape") setViewing(null);
+        };
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, [viewing]);
 
     const handleEditListing = ({ request, property }) => {
         if (!property) {
-            alert("The property record linked to this request could not be found.");
+            showAlert("The property record linked to this request could not be found.");
             return;
         }
 
@@ -136,7 +217,7 @@ function AgentListings() {
     };
 
     const handleAddListing = () => {
-        alert(
+        showAlert(
             "New listings are created through the HOA property request and agent assignment process."
         );
     };
@@ -193,6 +274,9 @@ function AgentListings() {
         },
     ];
 
+    // every bar shares one scale, set by the largest figure
+    const chartMax = Math.max(...statCards.map((card) => card.value), 0);
+
     return (
         <div className="agent-listings-page">
             {/* SHARED SIDEBAR */}
@@ -230,20 +314,59 @@ function AgentListings() {
                     </div>
                 </header>
 
-                <section className="agent-listings-stat-cards">
-                    {statCards.map((card) => (
-                        <div className="agent-listings-stat-card" key={card.label}>
-                            <div className="agent-listings-stat-icon">
-                                {card.icon}
-                            </div>
+                {loadError && (
+                    <div className="agent-listings-empty" role="alert">
+                        {loadError}
+                    </div>
+                )}
 
-                            <div>
-                                <span>{card.label}</span>
-                                <strong>{card.value}</strong>
-                                <small>{card.description}</small>
-                            </div>
-                        </div>
-                    ))}
+                {/* SUMMARY: one horizontal bar per figure, all on the same scale */}
+                <section className="agent-listings-chart" aria-labelledby="agent-listings-chart-title">
+                    <div className="agent-listings-chart-heading">
+                        <h2 id="agent-listings-chart-title">Listing Summary</h2>
+                        <p>Your assigned properties at a glance.</p>
+                    </div>
+
+                    <ul className="agent-listings-bars">
+                        {statCards.map((card) => {
+                            const share = chartMax > 0 ? (card.value / chartMax) * 100 : 0;
+
+                            return (
+                                <li
+                                    className="agent-listings-bar-row"
+                                    key={card.label}
+                                    tabIndex={0}
+                                    aria-label={`${card.label}: ${card.value} (${card.description})`}
+                                >
+                                    <span className="agent-listings-bar-label">
+                                        <span className="agent-listings-bar-icon" aria-hidden="true">
+                                            {card.icon}
+                                        </span>
+                                        <span>
+                                            {card.label}
+                                            <small>{card.description}</small>
+                                        </span>
+                                    </span>
+
+                                    <span className="agent-listings-bar-track" aria-hidden="true">
+                                        {card.value > 0 && (
+                                            <span
+                                                className="agent-listings-bar-fill"
+                                                style={{ width: `max(${share}%, 6px)` }}
+                                            />
+                                        )}
+                                        <span className="agent-listings-bar-tooltip" role="presentation">
+                                            {card.label}: <strong>{card.value}</strong>
+                                        </span>
+                                    </span>
+
+                                    <strong className="agent-listings-bar-value" aria-hidden="true">
+                                        {card.value}
+                                    </strong>
+                                </li>
+                            );
+                        })}
+                    </ul>
                 </section>
 
                 <section className="agent-listings-panel">
@@ -335,7 +458,7 @@ function AgentListings() {
                                                 <td>
                                                     <span
                                                         className={`agent-listings-status ${
-                                                            requestStatus === "Assigned to Estate Agent"
+                                                            ["Assigned to Estate Agent", "Listed on the Market", "Sold", "Rented"].includes(requestStatus)
                                                                 ? "status-approved"
                                                                 : "status-default"
                                                         }`}
@@ -454,6 +577,125 @@ function AgentListings() {
                     </div>
                 </section>
             </main>
+
+            {viewing && (() => {
+                const { request, property } = viewing;
+                const listing = property?.listing || {};
+                const title = property?.unitNumber || request.propertyAddress || `Property ${request.propertyId}`;
+                const address = request.propertyAddress || property?.location || property?.development || "";
+                const firstImage = (property?.images || [])[0];
+                const photo = typeof firstImage === "string" ? firstImage : firstImage?.data || "";
+                const listingStatus = getListingStatus({ property });
+                const hoaStatus = listing.hoaApprovalStatus || "Not Submitted";
+
+                const facts = [
+                    ["Property type", property?.propertyType || request.propertyType],
+                    ["Bedrooms", property?.bedrooms ?? request.bedrooms],
+                    ["Bathrooms", property?.bathrooms ?? request.bathrooms],
+                    ["Size", property?.size || property?.area || request.propertySize],
+                ];
+
+                return (
+                    <div
+                        className="agent-listing-modal-overlay"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget) setViewing(null);
+                        }}
+                    >
+                        <section
+                            className="agent-listing-modal"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="agent-listing-modal-title"
+                        >
+                            <header className="agent-listing-modal-header">
+                                <div>
+                                    <p className="agent-listing-modal-eyebrow">Listing details</p>
+                                    <h2 id="agent-listing-modal-title">{title}</h2>
+                                    {address && <p className="agent-listing-modal-address">{address}</p>}
+                                    <div className="agent-listing-modal-tags">
+                                        <span className={`agent-listing-modal-tag${listingStatus === "Published" ? " is-live" : ""}`}>
+                                            {listingStatus}
+                                        </span>
+                                        <span className="agent-listing-modal-tag is-soft">HOA: {hoaStatus}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="agent-listing-modal-close"
+                                    onClick={() => setViewing(null)}
+                                    aria-label="Close listing details"
+                                >
+                                    ×
+                                </button>
+                            </header>
+
+                            {photo && <img className="agent-listing-modal-photo" src={photo} alt={title} />}
+
+                            <div className="agent-listing-modal-body">
+                                <div className="agent-listing-modal-price">
+                                    <span>{getListingType({ request, property })}</span>
+                                    <strong>{getListingPrice({ request, property })}</strong>
+                                </div>
+
+                                <h3>Property</h3>
+                                <dl className="agent-listing-modal-facts">
+                                    {facts.map(([label, value]) => (
+                                        <div key={label}>
+                                            <dt>{label}</dt>
+                                            <dd>{value || "Not specified"}</dd>
+                                        </div>
+                                    ))}
+                                </dl>
+
+                                <h3>Owner</h3>
+                                <div className="agent-listing-modal-owner">
+                                    <span className="agent-listing-modal-avatar" aria-hidden="true">
+                                        {String(getOwnerName({ request, property }) || "?").trim().charAt(0).toUpperCase()}
+                                    </span>
+                                    <div>
+                                        <strong>{getOwnerName({ request, property })}</strong>
+                                        <span>{request.requesterEmail || "No email on record"}</span>
+                                    </div>
+                                </div>
+
+                                <h3>Status</h3>
+                                <dl className="agent-listing-modal-facts">
+                                    <div><dt>Request</dt><dd>{getRequestStatus({ request })}</dd></div>
+                                    <div><dt>Listing</dt><dd>{listingStatus}</dd></div>
+                                    <div><dt>HOA approval</dt><dd>{hoaStatus}</dd></div>
+                                    <div><dt>Views</dt><dd>{listing.views || 0}</dd></div>
+                                </dl>
+                            </div>
+
+                            <footer className="agent-listing-modal-footer">
+                                <button type="button" className="agent-listing-modal-button" onClick={() => setViewing(null)}>
+                                    Close
+                                </button>
+                                {request.rawStatus === "listed" && (
+                                    <button
+                                        type="button"
+                                        className="agent-listing-modal-button is-complete"
+                                        onClick={() => handleMarkComplete({ request, property })}
+                                    >
+                                        {String(request.requestType).toLowerCase() === "rent" ? "Mark as rented" : "Mark as sold"}
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    className="agent-listing-modal-button is-primary"
+                                    onClick={() => {
+                                        setViewing(null);
+                                        handleEditListing({ request, property });
+                                    }}
+                                >
+                                    Edit listing
+                                </button>
+                            </footer>
+                        </section>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

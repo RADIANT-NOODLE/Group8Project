@@ -151,46 +151,53 @@
    STATISTICS
 ========================================================= */
 
-.complaints-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 15px;
-    margin-bottom: 22px;
-}
-
-.complaints-stat-card {
-    min-width: 0;
-    padding: 19px;
-    border: 1px solid #e5e1e9;
-    border-radius: 10px;
-    background: #ffffff;
-    box-shadow: 0 2px 8px rgba(31, 25, 38, 0.03);
-}
-
-.complaints-stat-card span {
-    display: block;
-    margin-bottom: 9px;
-    color: #77727b;
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-.complaints-stat-card strong {
-    display: block;
-    color: #563f6b;
-    font-size: 27px;
-    font-weight: 700;
-}
-
 /* =========================================================
    CONTENT GRID
 ========================================================= */
 
-.complaints-layout-grid {
+/* Panels on the left, one under the other; the status ring column on the right. */
+.complaints-page-grid {
     display: grid;
-    grid-template-columns: minmax(290px, 0.85fr) minmax(0, 1.65fr);
+    grid-template-columns: minmax(0, 1fr) 280px;
     align-items: start;
     gap: 20px;
+}
+
+.complaints-layout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+    min-width: 0;
+}
+
+.complaints-ring-card {
+    position: sticky;
+    top: 24px;
+    min-width: 0;
+    padding: 23px;
+    border: 1px solid #e5e1e9;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(31, 25, 38, 0.04);
+}
+
+.complaints-ring-card-heading {
+    margin-bottom: 14px;
+}
+
+.complaints-ring-card-heading h3 {
+    margin: 0 0 6px;
+    color: #2d2633;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.complaints-ring-card-heading p {
+    margin: 0;
+    color: #77727b;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 /* =========================================================
@@ -235,6 +242,18 @@
     padding: 0 12px;
     margin-bottom: 18px;
 }
+
+.complaints-unit-notice {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border: 1px solid #f0dcb4;
+    border-radius: 8px;
+    background: #fdf6e7;
+    color: #7a5a17;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 
 .complaints-form textarea {
     min-height: 130px;
@@ -672,13 +691,15 @@
    Sidebar itself remains controlled by DashboardSidebar.css.
 ========================================================= */
 
-@media (max-width: 1200px) {
-    .complaints-layout-grid {
+/* Narrower screens: the status overview moves above the panels. */
+@media (max-width: 1250px) {
+    .complaints-page-grid {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .complaints-stats {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+    .complaints-ring-card {
+        position: static;
+        order: -1;
     }
 }
 
@@ -689,13 +710,6 @@
         padding: 32px 22px 42px;
     }
 
-    .complaints-stats {
-        gap: 10px;
-    }
-
-    .complaints-stat-card {
-        padding: 15px;
-    }
 }
 
 @media (max-width: 700px) {
@@ -707,10 +721,6 @@
 
     .complaints-top-bar h2 {
         font-size: 25px;
-    }
-
-    .complaints-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .complaints-panel {
@@ -735,18 +745,6 @@
 
     .complaints-top-bar p {
         font-size: 13px;
-    }
-
-    .complaints-stats {
-        gap: 9px;
-    }
-
-    .complaints-stat-card {
-        padding: 13px;
-    }
-
-    .complaints-stat-card strong {
-        font-size: 23px;
     }
 
     .complaints-panel {
@@ -775,4 +773,25 @@
         max-height: calc(100vh - 24px);
         padding: 17px;
     }
+}
+
+.complaints-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 4px 0 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    cursor: pointer;
+}
+
+.complaints-checkbox input {
+    margin-top: 3px;
+    width: auto;
+}
+
+
+/* date filter under the search box */
+.complaints-date-filter {
+    margin: 4px 0 18px;
 }

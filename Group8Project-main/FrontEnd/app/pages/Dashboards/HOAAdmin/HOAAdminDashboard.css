@@ -1,5 +1,7 @@
 /* =========================================================
    VALORA HOA ADMIN DASHBOARD
+   Colours follow the sidebar: VALORA purple #563f6b and its
+   light purple #e4d9ed.
 ========================================================= */
 
 .hoa-admin-dashboard-layout {
@@ -8,11 +10,6 @@
   background: #f5f3f7;
   color: #1f2933;
 }
-
-
-/* =========================================================
-   MAIN
-========================================================= */
 
 .hoa-admin-dashboard-main {
   width: calc(100% - 220px);
@@ -26,119 +23,370 @@
    HEADER
 ========================================================= */
 
-.hoa-admin-dashboard-header {
-  min-height: 80px;
+.hoa-dash-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 25px;
-  margin-bottom: 25px;
+  gap: 18px 24px;
+  margin-bottom: 30px;
 }
 
-.hoa-admin-dashboard-eyebrow {
-  display: block;
-  margin-bottom: 6px;
-  color: #8f8498;
-  font-size: 9px;
+.hoa-dash-eyebrow {
+  margin: 0 0 14px;
+  color: #563f6b;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
 }
 
-.hoa-admin-dashboard-header h1 {
-  margin: 0 0 7px;
+.hoa-dash-header h1 {
+  margin: 0 0 12px;
+  line-height: 1.2;
   color: #2c2532;
-  font-size: 25px;
+  font-size: 28px;
   font-weight: 750;
   letter-spacing: -0.4px;
 }
 
-.hoa-admin-dashboard-header p {
+.hoa-dash-header p {
   margin: 0;
-  color: #8d8492;
-  font-size: 11px;
+  color: #77717d;
+  font-size: 13.5px;
   line-height: 1.6;
 }
 
-.hoa-admin-dashboard-avatar {
-  width: 40px;
-  height: 40px;
+.hoa-dash-header-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #563f6b;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 
 /* =========================================================
-   STATS
+   BUTTONS & LINKS
 ========================================================= */
 
-.hoa-admin-dashboard-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.hoa-admin-dashboard-stat-card {
-  min-width: 0;
-  min-height: 125px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e0e9;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
-}
-
-.hoa-admin-dashboard-stat-top {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 14px;
-}
-
-.hoa-admin-dashboard-stat-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
+.hoa-dash-button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  border-radius: 7px;
-  background: #eee8f2;
+  gap: 7px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.hoa-dash-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hoa-dash-button:focus-visible,
+.hoa-dash-link:focus-visible,
+.hoa-dash-attention-item:focus-visible {
+  outline: 2px solid #563f6b;
+  outline-offset: 2px;
+}
+
+.hoa-dash-button-primary {
+  background: #563f6b;
+  color: #ffffff;
+}
+
+.hoa-dash-button-primary:hover:not(:disabled) {
+  background: #463256;
+}
+
+.hoa-dash-button-secondary {
+  border-color: #e4d9ed;
+  background: #ffffff;
   color: #563f6b;
 }
 
-.hoa-admin-dashboard-stat-top span {
-  color: #857b8c;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
+.hoa-dash-button-secondary:hover:not(:disabled) {
+  background: #f6f2f9;
 }
 
-.hoa-admin-dashboard-stat-card > strong {
-  display: block;
-  color: #2d2633;
-  font-size: 25px;
-  font-weight: 750;
-  line-height: 1;
+.hoa-dash-button-ghost {
+  border-color: #e4d9ed;
+  background: transparent;
+  color: #6f6577;
+}
+
+.hoa-dash-button-ghost:hover:not(:disabled) {
+  border-color: #f0c2c2;
+  background: #fdf3f3;
+  color: #a33a3a;
+}
+
+.hoa-dash-button-small {
+  padding: 7px 12px;
+  font-size: 11.5px;
+}
+
+.hoa-dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  color: #563f6b;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hoa-dash-link:hover {
+  text-decoration: underline;
 }
 
 
 /* =========================================================
-   CONTENT
+   TOP ROW: NEEDS ATTENTION + ESTATE AT A GLANCE
 ========================================================= */
 
-.hoa-admin-dashboard-content {
+.hoa-dash-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.hoa-dash-attention {
+  position: relative;
+  overflow: hidden;
+  padding: 24px 26px;
+  border: 1px solid #d9cbe5;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #e4d9ed 0%, #ece4f3 100%);
+}
+
+.hoa-dash-attention::before {
+  position: absolute;
+  top: -70px;
+  right: -50px;
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  content: "";
+  pointer-events: none;
+}
+
+.hoa-dash-attention-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.hoa-dash-attention-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #563f6b;
+}
+
+.hoa-dash-attention-label {
+  margin: 0;
+  color: #6f5b82;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.hoa-dash-attention-number {
+  margin: 2px 0 0;
+  color: #563f6b;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.hoa-dash-attention-clear {
+  position: relative;
+  margin: 0;
+  color: #5f536c;
+  font-size: 13px;
+}
+
+.hoa-dash-attention-list {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hoa-dash-attention-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #6f6577;
+  font-size: 12.5px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.hoa-dash-attention-item:hover {
+  background: #ffffff;
+}
+
+.hoa-dash-attention-item > svg {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: #a597b2;
+}
+
+.hoa-dash-attention-item.has-items {
+  background: #ffffff;
+  color: #3a3040;
+}
+
+.hoa-dash-attention-item.has-items > svg {
+  color: #563f6b;
+}
+
+.hoa-dash-attention-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #e4d9ed;
+  color: #563f6b;
+}
+
+.hoa-dash-attention-item-text {
+  min-width: 0;
+}
+
+.hoa-dash-attention-item-text strong {
+  color: #29242d;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.hoa-dash-glance {
+  display: flex;
+  flex-direction: column;
+  padding: 22px 24px;
+  border: 1px solid #e8e3eb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.hoa-dash-glance h2 {
+  margin: 0 0 12px;
+  color: #29242d;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.hoa-dash-glance-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hoa-dash-glance-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.hoa-dash-glance-list li + li {
+  border-top: 1px solid #f0ecf2;
+}
+
+.hoa-dash-glance-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e4d9ed;
+  color: #563f6b;
+}
+
+.hoa-dash-glance-label {
+  color: #5f536c;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.hoa-dash-glance-list strong {
+  margin-left: auto;
+  color: #29242d;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.hoa-dash-occupancy {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid #f0ecf2;
+}
+
+.hoa-dash-occupancy-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: #5f536c;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.hoa-dash-occupancy-top strong {
+  color: #29242d;
+  font-size: 12.5px;
+}
+
+.hoa-dash-occupancy-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #f1edf4;
+}
+
+.hoa-dash-occupancy-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 5px 5px 0;
+  background: #563f6b;
+  transition: width 0.4s ease;
+}
+
+.hoa-dash-occupancy-percent {
+  display: block;
+  margin-top: 6px;
+  color: #938a99;
+  font-size: 11px;
 }
 
 
@@ -146,155 +394,244 @@
    CARDS
 ========================================================= */
 
-.hoa-admin-dashboard-card {
+.hoa-dash-middle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: stretch;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.hoa-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.hoa-dash-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  min-height: 240px;
-  padding: 22px;
+  padding: 22px 24px;
+  border: 1px solid #e8e3eb;
+  border-radius: 16px;
   background: #ffffff;
-  border: 1px solid #e5e0e9;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+  box-shadow: 0 2px 10px rgba(40, 30, 50, 0.03);
 }
 
-.hoa-admin-dashboard-wide-card {
-  grid-column: 1 / -1;
-  min-height: auto;
-}
-
-
-/* =========================================================
-   CARD HEADER
-========================================================= */
-
-.hoa-admin-dashboard-card-header {
+.hoa-dash-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
-.hoa-admin-dashboard-card-header h2 {
-  margin: 0 0 5px;
-  color: #302837;
-  font-size: 14px;
+.hoa-dash-card-header h2 {
+  margin: 0 0 4px;
+  color: #29242d;
+  font-size: 15px;
   font-weight: 750;
 }
 
-.hoa-admin-dashboard-card-header p {
+.hoa-dash-card-header p {
   margin: 0;
-  color: #938a99;
-  font-size: 9px;
+  color: #8f8698;
+  font-size: 12px;
   line-height: 1.5;
 }
 
-.hoa-admin-dashboard-card-link {
-  flex-shrink: 0;
-  color: #563f6b;
-  font-size: 9px;
-  font-weight: 750;
-  text-decoration: none;
-}
-
-.hoa-admin-dashboard-card-link:hover {
-  color: #463256;
-  text-decoration: underline;
+.hoa-dash-ring-card .complaint-ring {
+  padding-top: 0;
 }
 
 
 /* =========================================================
-   EMPTY STATE
+   LIST ROWS
 ========================================================= */
 
-.hoa-admin-dashboard-empty-state {
-  min-height: 145px;
+.hoa-dash-list {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hoa-dash-row {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
-  text-align: center;
-  border: 1px dashed #ddd5e2;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid #eeeaf1;
+  border-left: 3px solid #e4d9ed;
+  border-radius: 10px;
   background: #faf9fb;
 }
 
-.hoa-admin-dashboard-empty-icon {
-  width: 36px;
-  height: 36px;
+.hoa-dash-row-copy {
   display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hoa-dash-row-copy strong {
+  overflow: hidden;
+  color: #3a3040;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hoa-dash-row-copy span {
+  overflow: hidden;
+  color: #938a99;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hoa-dash-registration {
+  border-left-color: #563f6b;
+  background: #ffffff;
+}
+
+.hoa-dash-avatar {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 9px;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: #eee8f2;
+  background: #e4d9ed;
+  color: #563f6b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hoa-dash-row-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.hoa-dash-pill {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #e4d9ed;
+  color: #563f6b;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hoa-dash-pill.is-open {
+  background: #fdf3d8;
+  color: #8a6212;
+}
+
+.hoa-dash-pill.is-active {
+  background: #e6eefb;
+  color: #2f548f;
+}
+
+.hoa-dash-pill.is-done {
+  background: #e5f5ea;
+  color: #23683a;
+}
+
+.hoa-dash-pill.is-closed {
+  background: #f1eef3;
+  color: #7a7080;
+}
+
+.hoa-dash-note {
+  margin: 10px 0 0;
+  color: #938a99;
+  font-size: 11px;
+}
+
+.hoa-dash-note-error {
+  color: #a33a3a;
+}
+
+
+/* =========================================================
+   EMPTY & LOADING
+========================================================= */
+
+.hoa-dash-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  padding: 18px;
+  border: 1px dashed #ddd5e2;
+  border-radius: 12px;
+  background: #faf9fb;
+  text-align: center;
+}
+
+.hoa-dash-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: #e4d9ed;
   color: #563f6b;
 }
 
-.hoa-admin-dashboard-empty-state h3 {
-  margin: 0 0 5px;
+.hoa-dash-empty h3 {
+  margin: 0 0 4px;
   color: #4b4052;
-  font-size: 10px;
-  line-height: 1.5;
+  font-size: 13px;
 }
 
-.hoa-admin-dashboard-empty-state p {
-  max-width: 420px;
+.hoa-dash-empty p {
   margin: 0;
   color: #968d9d;
-  font-size: 8px;
-  line-height: 1.6;
+  font-size: 11.5px;
 }
 
-
-/* =========================================================
-   COMMUNITY ACTIONS
-========================================================= */
-
-.hoa-admin-dashboard-actions {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
+.hoa-dash-skeleton {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ece7f0 0%, #f6f3f8 40%, #ece7f0 80%);
+  background-size: 220% 100%;
+  animation: hoa-dash-shimmer 1.4s ease-in-out infinite;
 }
 
-.hoa-admin-dashboard-action {
-  min-width: 0;
-  min-height: 70px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid #e9e4ed;
-  border-radius: 8px;
-  background: #faf9fb;
-  color: #504558;
-  font-size: 8px;
-  font-weight: 650;
-  text-align: center;
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
+@keyframes hoa-dash-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -120% 0; }
 }
 
-.hoa-admin-dashboard-action:hover {
-  background: #f4f0f6;
-  border-color: #dcd2e2;
-  transform: translateY(-1px);
+.hoa-dash-skeleton-line {
+  flex: 1;
+  height: 13px;
 }
 
-.hoa-admin-dashboard-action-icon {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  background: #eee8f2;
-  color: #563f6b;
+.hoa-dash-skeleton-pill {
+  width: 70px;
+  height: 20px;
+  border-radius: 20px;
+}
+
+.hoa-dash-skeleton-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
 }
 
 
@@ -302,241 +639,75 @@
    RESPONSIVE
 ========================================================= */
 
-@media (max-width: 1100px) {
+@media (max-width: 1250px) {
+  .hoa-dash-middle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 
+@media (max-width: 1100px) {
   .hoa-admin-dashboard-main {
     width: calc(100% - 200px);
     margin-left: 200px;
   }
 
-  .hoa-admin-dashboard-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .hoa-dash-top {
+    grid-template-columns: minmax(0, 1fr);
   }
-
-  .hoa-admin-dashboard-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
 }
 
-
 @media (max-width: 800px) {
-
   .hoa-admin-dashboard-main {
     width: calc(100% - 170px);
     margin-left: 170px;
     padding: 25px 22px 40px;
   }
 
-  .hoa-admin-dashboard-header {
-    align-items: flex-start;
+  .hoa-dash-grid,
+  .hoa-dash-attention-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .hoa-admin-dashboard-avatar {
-    display: none;
+  .hoa-dash-registration {
+    flex-wrap: wrap;
   }
 
-  .hoa-admin-dashboard-content {
-    grid-template-columns: 1fr;
+  .hoa-dash-registration .hoa-dash-row-actions {
+    width: 100%;
   }
 
-  .hoa-admin-dashboard-wide-card {
-    grid-column: auto;
+  .hoa-dash-registration .hoa-dash-row-actions .hoa-dash-button {
+    flex: 1;
   }
-
 }
 
-
 @media (max-width: 600px) {
-
-  .hoa-admin-dashboard-layout {
-    display: block;
-  }
-
   .hoa-admin-dashboard-main {
     width: 100%;
     margin-left: 0;
     padding: 22px 14px 35px;
   }
 
-  .hoa-admin-dashboard-header h1 {
-    font-size: 21px;
+  .hoa-dash-header h1 {
+    font-size: 23px;
   }
 
-  .hoa-admin-dashboard-stats {
-    grid-template-columns: 1fr;
+  .hoa-dash-attention,
+  .hoa-dash-glance,
+  .hoa-dash-card {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoa-dash-button,
+  .hoa-dash-attention-item,
+  .hoa-dash-occupancy-fill {
+    transition: none;
   }
 
-  .hoa-admin-dashboard-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .hoa-dash-skeleton {
+    animation: none;
+    background: #ece7f0;
   }
-
-}
-
-
-@media (max-width: 430px) {
-
-  .hoa-admin-dashboard-main {
-    padding: 18px 11px 30px;
-  }
-
-  .hoa-admin-dashboard-card {
-    padding: 17px;
-  }
-
-  .hoa-admin-dashboard-stat-card {
-    padding: 16px;
-  }
-
-  .hoa-admin-dashboard-actions {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-.hoa-admin-dashboard-list-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.hoa-admin-dashboard-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
-}
-
-.hoa-admin-dashboard-btn-approve {
-    background-color: #563f6b; 
-    color: white;
-}
-
-.hoa-admin-dashboard-btn-approve:hover {
-    background-color: #463256;
-}
-
-.hoa-admin-dashboard-btn-reject {
-    background-color: #f5f3f7;
-    color: #563f6b;
-    border: 1px solid #e8e3eb;
-}
-
-.hoa-admin-dashboard-btn-reject:hover {
-    background-color: #e8e3eb;
-}
-
-/* =========================================================
-   REFRESH BUTTON
-========================================================= */
-
-.hoa-admin-dashboard-btn-refresh {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 16px;
-    background-color: #ffffff;
-    color: #563f6b;
-    border: 1px solid #563f6b;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.hoa-admin-dashboard-btn-refresh:hover {
-    background-color: #563f6b;
-    color: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(86, 63, 107, 0.15);
-}
-
-.hoa-admin-dashboard-btn-refresh:active {
-    transform: translateY(0);
-}
-
-/* =========================================================
-   CUSTOM MODAL (Replaces window.confirm/alert)
-========================================================= */
-
-.valora-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(30, 20, 40, 0.5); /* Dark transparent backdrop */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.valora-modal {
-  background: #ffffff;
-  width: 100%;
-  max-width: 400px;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  animation: slideUp 0.2s ease-out;
-}
-
-.valora-modal h3 {
-  margin: 0 0 10px;
-  color: #29242d;
-  font-size: 18px;
-}
-
-.valora-modal p {
-  margin: 0 0 24px;
-  color: #77717d;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.valora-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.valora-modal-btn {
-  padding: 10px 18px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-.valora-modal-btn-cancel {
-  background: #f5f3f7;
-  color: #563f6b;
-}
-
-.valora-modal-btn-cancel:hover {
-  background: #e8e3eb;
-}
-
-.valora-modal-btn-confirm {
-  background: #563f6b;
-  color: #ffffff;
-}
-
-.valora-modal-btn-confirm:hover {
-  background: #463256;
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
 }

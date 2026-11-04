@@ -3,6 +3,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.community.models.maintenance_work_order import MaintenanceworkOrder
 from app.providers.models.review import Review
 
 
@@ -34,13 +35,36 @@ class ReviewRepository:
         return review
 
     async def rating_summary(self, provider_id: int) -> tuple[Decimal | None, int]:
-        result = await self._db.execute(
-            select(func.avg(Review.rating), func.count(Review.review_id)).where(
+        """Average rating and rating count for a provider.
+
+        Two sources feed a provider's rating: reviews residents leave in the
+        directory, and the 1-5 rating a resident gives a completed work order.
+        Every individual rating counts once, so the provider's cached
+        `avg_rating` / `total_reviews` always reflect both.
+        """
+        reviews = await self._db.execute(
+            select(func.coalesce(func.sum(Review.rating), 0), func.count(Review.review_id)).where(
                 Review.provider_id == provider_id
             )
         )
-        avg, count = result.one()
-        return (Decimal(str(avg)) if avg is not None else None, int(count))
+        review_sum, review_count = reviews.one()
+
+        jobs = await self._db.execute(
+            select(
+                func.coalesce(func.sum(MaintenanceworkOrder.resident_rating), 0),
+                func.count(MaintenanceworkOrder.work_order_id),
+            ).where(
+                MaintenanceworkOrder.provider_id == provider_id,
+                MaintenanceworkOrder.resident_rating.is_not(None),
+            )
+        )
+        job_sum, job_count = jobs.one()
+
+        count = int(review_count) + int(job_count)
+        if count == 0:
+            return None, 0
+        average = (Decimal(str(review_sum)) + Decimal(str(job_sum))) / Decimal(count)
+        return average, count
 
     async def get_by_id(self, review_id: int):
         result = await self._db.execute(

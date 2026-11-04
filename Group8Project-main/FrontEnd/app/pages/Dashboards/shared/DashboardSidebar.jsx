@@ -1,6 +1,9 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { PROPERTY_TAB_PATHS } from "./PropertyTabs";
 import "./DashboardSidebar.css";
+import { readStoredItem, writeStoredItem } from "../../../services/browserStorage";
+import { getStoredUser, logout } from "../../../services/session";
 
 /* =========================================================
    GET CURRENT USER
@@ -36,10 +39,6 @@ function normalizeRole(value) {
         return "Resident";
     }
 
-    if (["buyer", "investor"].includes(role)) {
-        return "Investor";
-    }
-
     if (role === "estate agent" || role === "estate_agent") {
         return "Estate Agent";
     }
@@ -49,11 +48,7 @@ function normalizeRole(value) {
 
 function getCurrentUser() {
     try {
-        const storedUser = localStorage.getItem("valoraUser");
-
-        if (!storedUser) return null;
-
-        const user = JSON.parse(storedUser);
+        const user = getStoredUser();
 
         if (!user || typeof user !== "object") return null;
 
@@ -224,6 +219,18 @@ function Icon({ type }) {
             </>
         ),
 
+        collapse: (
+            <>
+                <path d="M15 6l-6 6 6 6" />
+            </>
+        ),
+
+        expand: (
+            <>
+                <path d="M9 6l6 6-6 6" />
+            </>
+        ),
+
         logout: (
             <>
                 <path d="M10 17l5-5-5-5M15 12H3M14 4h5v16h-5" />
@@ -257,20 +264,9 @@ function Icon({ type }) {
 const navigation = {
     Resident: [
         { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
-        { label: "My Property", path: "/property", icon: "property" },
-        { label: "AI Valuation", path: "/valuation", icon: "valuation" },
         { label: "Request to Sell/Rent", path: "/request-to-sell", icon: "request" },
         { label: "My Complaints", path: "/complaints", icon: "complaint" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
-        { label: "Service Provider Directory", path: "/providers", icon: "providers" },
-        { label: "Community Announcements", path: "/announcements", icon: "announcement" },
-    ],
-
-    Investor: [
-        { label: "Dashboard", path: "/investor-dashboard", icon: "dashboard" },
-        { label: "My Property", path: "/property", icon: "property" },
-        { label: "AI Valuation", path: "/valuation", icon: "valuation" },
-        { label: "ROI Analysis", path: "/roi", icon: "roi" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
     ],
@@ -280,25 +276,18 @@ const navigation = {
         { label: "My Listings", path: "/agent-listings", icon: "property" },
         { label: "Edit Listings", path: "/agent-edit-listings", icon: "request" },
         { label: "Inquiries", path: "/agent-inquiries", icon: "complaint" },
-        { label: "AI Valuation", path: "/valuation", icon: "valuation" },
-        { label: "Service Provider Directory", path: "/providers", icon: "providers" },
-        { label: "Community Announcements", path: "/announcements", icon: "announcement" },
     ],
 
     "HOA Admin": [
         { label: "Dashboard", path: "/hoa-admin", icon: "dashboard" },
         { label: "Registration Requests", path: "/registration-requests", icon: "registration" },
-        { label: "Properties", path: "/property-management", icon: "property" },
-        { label: "Property Requests", path: "/property-requests", icon: "property" },
-        { label: "Property Approvals", path: "/property-approvals", icon: "property" },
+        { label: "Create Agent Account", path: "/create-agent", icon: "registration" },
+        { label: "Properties", path: "/property-management", icon: "property", activePaths: PROPERTY_TAB_PATHS },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
         { label: "Resident Complaints", path: "/resident-complaints", icon: "complaint" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
-        { label: "Community Analytics", path: "/community-analytics", icon: "analytics" },
-        { label: "AI Training Data", path: "/ai-training-data", icon: "ai" },
-        { label: "Landing Page Settings", path: "/landing-page-settings", icon: "settings" },
     ],
 
     /* =====================================================
@@ -309,20 +298,27 @@ const navigation = {
     "Head Admin": [
         { label: "Head Admin Dashboard", path: "/head-admin", icon: "dashboard" },
         { label: "Registration Requests", path: "/registration-requests", icon: "registration" },
+        { label: "Create Agent Account", path: "/create-agent", icon: "registration" },
         { label: "User Management", path: "/user-management", icon: "users" },
-        { label: "Property Requests", path: "/property-requests", icon: "property" },
-        { label: "Property Approvals", path: "/property-approvals", icon: "property" },
-        { label: "Properties", path: "/property-management", icon: "property" },
+        { label: "Properties", path: "/property-management", icon: "property", activePaths: PROPERTY_TAB_PATHS },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
         { label: "Resident Complaints", path: "/resident-complaints", icon: "complaint" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
-        { label: "Community Analytics", path: "/community-analytics", icon: "analytics" },
-        { label: "AI Training Data", path: "/ai-training-data", icon: "ai" },
-        { label: "Landing Page Settings", path: "/landing-page-settings", icon: "settings" },
     ],
 };
+
+/* =========================================================
+   COLLAPSED STATE
+   Remembered across pages, since each page mounts its own sidebar.
+========================================================= */
+
+const COLLAPSED_STORAGE_KEY = "valoraSidebarCollapsed";
+
+function getStoredCollapsed() {
+    return readStoredItem(COLLAPSED_STORAGE_KEY) === "true";
+}
 
 /* =========================================================
    SIDEBAR COMPONENT
@@ -330,7 +326,17 @@ const navigation = {
 
 function DashboardSidebar({ suppliedUser = null }) {
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const currentUser = suppliedUser || getCurrentUser();
+    const [collapsed, setCollapsed] = useState(getStoredCollapsed);
+
+    function toggleCollapsed() {
+        const next = !collapsed;
+        setCollapsed(next);
+
+        // If storage is unavailable the toggle still works for this page.
+        writeStoredItem(COLLAPSED_STORAGE_KEY, String(next));
+    }
 
     if (!currentUser) return null;
 
@@ -357,19 +363,39 @@ function DashboardSidebar({ suppliedUser = null }) {
             .toUpperCase();
 
     function handleLogout() {
-        localStorage.removeItem("valoraUser");
-        localStorage.removeItem("valoraLoggedIn");
+        logout();
         navigate("/login", { replace: true });
     }
 
     return (
-        <aside className="dashboard-sidebar">
+        <aside
+            className={`dashboard-sidebar ${
+                collapsed ? "is-collapsed" : ""
+            }`}
+        >
             <div className="dashboard-sidebar-brand">
-                <img
-                    src="/ValoraLogo.jpeg"
-                    alt="VALORA"
-                    className="dashboard-logo"
-                />
+                <Link
+                    to="/"
+                    className="dashboard-logo-link"
+                    title="Go to home page"
+                >
+                    <img
+                        src="/assets/valora-logo.jpg"
+                        alt="VALORA - go to home page"
+                        className="dashboard-logo"
+                    />
+                </Link>
+
+                <button
+                    type="button"
+                    className="dashboard-collapse-button"
+                    onClick={toggleCollapsed}
+                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    aria-expanded={!collapsed}
+                    title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    <Icon type={collapsed ? "expand" : "collapse"} />
+                </button>
             </div>
 
             <div className="dashboard-sidebar-profile">
@@ -395,13 +421,16 @@ function DashboardSidebar({ suppliedUser = null }) {
                     <NavLink
                         key={link.path}
                         to={link.path}
+                        title={collapsed ? link.label : undefined}
                         end={
                             link.path === "/dashboard" ||
                             link.path === "/head-admin"
                         }
                         className={({ isActive }) =>
                             `dashboard-sidebar-link ${
-                                isActive ? "active" : ""
+                                isActive || link.activePaths?.includes(pathname)
+                                    ? "active"
+                                    : ""
                             }`
                         }
                     >
@@ -421,6 +450,7 @@ function DashboardSidebar({ suppliedUser = null }) {
 
                 <NavLink
                     to="/profile"
+                    title={collapsed ? "My Profile" : undefined}
                     className={({ isActive }) =>
                         `dashboard-sidebar-link ${
                             isActive ? "active" : ""
@@ -442,6 +472,7 @@ function DashboardSidebar({ suppliedUser = null }) {
                     type="button"
                     className="dashboard-logout-button"
                     onClick={handleLogout}
+                    title={collapsed ? "Logout" : undefined}
                 >
                     <span className="dashboard-logout-icon">
                         <Icon type="logout" />

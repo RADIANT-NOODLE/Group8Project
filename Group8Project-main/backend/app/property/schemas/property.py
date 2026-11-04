@@ -1,6 +1,15 @@
+from typing import List
 from decimal import Decimal
 
 from pydantic import BaseModel, Field
+
+
+class PropertyPhotoResponse(BaseModel):
+    id: int
+    url: str
+    # False when the image is missing (uploaded on another computer before
+    # photos were stored in the database); such photos can only be removed.
+    available: bool = True
 
 
 class PropertyResponse(BaseModel):
@@ -12,6 +21,9 @@ class PropertyResponse(BaseModel):
     size_m2: Decimal | None
     bedrooms: int | None
     bathrooms: int | None
+    # filled in by PropertyService; the first photo is the cover image
+    image_url: str | None = None
+    photos: list[PropertyPhotoResponse] = []
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
@@ -31,6 +43,7 @@ class PropertyCreate(BaseModel):
     size_m2: Decimal | None = Field(default=None, gt=0, max_digits=8, decimal_places=2)
     bedrooms: int | None = Field(default=None, ge=0)
     bathrooms: int | None = Field(default=None, ge=0)
+    photos: List[str] = Field(default=[], max_items=50)
 
 class PropertyUpdate(BaseModel):
     unit_no: str | None = Field(default=None, max_length=10)
@@ -40,3 +53,4 @@ class PropertyUpdate(BaseModel):
     size_m2: Decimal | None = Field(default=None, gt=0, max_digits=8, decimal_places=2)
     bedrooms: int | None = Field(default=None, ge=0)
     bathrooms: int | None = Field(default=None, ge=0)
+    photos: List[str] = Field(default=[], max_items=50)

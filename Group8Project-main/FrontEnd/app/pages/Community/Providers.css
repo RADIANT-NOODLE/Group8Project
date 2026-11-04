@@ -1,7 +1,7 @@
 
 /* =========================================================
    VALORA — SHARED SERVICE PROVIDER DIRECTORY
-   One directory for Residents, Investors, Estate Agents,
+   One directory for Residents, Estate Agents,
    HOA Admins and Head Admins.
    Sidebar appearance is owned by DashboardSidebar.css.
 ========================================================= */
@@ -59,7 +59,7 @@
     height: 7px;
     flex-shrink: 0;
     border-radius: 50%;
-    background: #806b96;
+    background: var(--valora-purple);
 }
 
 .providers-topbar h1 {
@@ -228,10 +228,10 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border: 1px solid #e9e2ef;
+    border: 1px solid var(--valora-purple-light);
     border-radius: 10px;
-    background: #f3eff7;
-    color: #563f6b;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
 }
 
 .providers-section-heading h2,
@@ -449,7 +449,7 @@
 
 .provider-card:hover {
     transform: translateY(-2px);
-    border-color: #d5c9df;
+    border-color: var(--valora-purple-light);
     box-shadow: 0 7px 18px rgba(35, 25, 45, 0.06);
 }
 
@@ -468,10 +468,10 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border: 1px solid #e8e0ef;
+    border: 1px solid var(--valora-purple-light);
     border-radius: 10px;
-    background: #f3eff7;
-    color: #563f6b;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
 }
 
 .provider-status {
@@ -479,10 +479,10 @@
     align-items: center;
     gap: 6px;
     padding: 6px 9px;
-    border: 1px solid #e7e0ed;
+    border: 1px solid var(--valora-purple-light);
     border-radius: 20px;
-    background: #f7f4f9;
-    color: #563f6b;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
     font-size: 10px;
     font-weight: 600;
 }
@@ -498,7 +498,7 @@
     height: 6px;
     flex-shrink: 0;
     border-radius: 50%;
-    background: #806b96;
+    background: var(--valora-purple);
 }
 
 .provider-status.pending .provider-status-dot {
@@ -518,7 +518,10 @@
     display: inline-block;
     align-self: flex-start;
     margin-top: 6px;
-    color: #6b5480;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
     font-size: 11px;
     font-weight: 700;
 }
@@ -544,7 +547,7 @@
 }
 
 .rating-stars {
-    color: #806b96;
+    color: var(--valora-purple);
     font-size: 13px;
     letter-spacing: 1px;
 }
@@ -558,19 +561,21 @@
     gap: 8px;
     margin-top: auto;
     padding: 10px 12px;
-    border: 1px solid #563f6b;
+    border: 1px solid var(--valora-purple-light);
     border-radius: 8px;
-    background: #563f6b;
-    color: #fff;
+    background: var(--valora-purple-light);
+    color: var(--valora-purple);
     font-family: inherit;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s ease, box-shadow 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .provider-contact-button:hover:not(:disabled) {
-    background: #463256;
+    border-color: var(--valora-purple);
+    background: var(--valora-purple);
+    color: #fff;
     box-shadow: 0 3px 8px rgba(86, 63, 107, 0.15);
 }
 

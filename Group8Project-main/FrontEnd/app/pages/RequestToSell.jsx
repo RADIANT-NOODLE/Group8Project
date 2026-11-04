@@ -1,8 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../services/session"; // <-- IMPORT SESSION
+import { apiRequest } from "../services/apiClient";
+import { getProperty } from "../services/propertyApi";
+import { createPropertyRequest, listPropertyRequests, parsePrice } from "../services/propertyRequestApi";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import "./RequestToSell.css";
+
+/* =========================================================
+   REQUEST PROGRESS
+   The stages a sale/rent request moves through, in order.
+========================================================= */
+
+const OPEN_STATUSES = ["pending_review", "approved", "assigned", "listed"];
+const COMPLETE_STATUSES = ["sold", "rented"];
+
+// how far each backend status has got (index into the steps below)
+const STATUS_STEP = { pending_review: 0, approved: 1, assigned: 2, listed: 3, sold: 4, rented: 4, rejected: 1 };
+
+function requestSteps(request) {
+    const isRent = String(request.requestType).toLowerCase() === "rent";
+    return [
+        { label: "Submitted", hint: "Sent to the HOA" },
+        { label: "Approved by the HOA", hint: "Cleared to go to market" },
+        { label: "Estate agent assigned", hint: request.assignedAgentName || "An agent will handle the listing" },
+        { label: "Listed", hint: isRent ? "Advertised for rent" : "Advertised for sale" },
+        { label: isRent ? "Rented" : "Sold", hint: isRent ? "A tenant has been found" : "The sale has gone through" },
+    ];
+}
+
+function formatRequestDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? ""
+        : date.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+}
 
 /* =========================================================
    ICON
@@ -24,38 +57,71 @@ function RequestToSell() {
 
     // Safely get role (lowercase from API) and user info
     const userRole = String(user?.role || "").toLowerCase();
-    const userName = user?.fullName || "";
-    const userEmail = user?.email || "";
-
     // check for lowercase matches
-    const isAllowed = ["resident", "investor"].includes(userRole);
+    const isAllowed = userRole === "resident";
 
 
     /* =====================================================
        PROPERTY DATA (Fetch from API)
     ===================================================== */
-    const [properties, setProperties] = useState([]);
     const [selectedProperty, setSelectedProperty] = useState(null);
+    // the resident's own sale/rent requests, newest first
+    const [myRequests, setMyRequests] = useState([]);
+    const [requestsLoading, setRequestsLoading] = useState(true);
+    const [startNewRequest, setStartNewRequest] = useState(false);
 
-        useEffect(() => {
-        const fetchProperties = async () => {
+    async function loadMyRequests() {
+        try {
+            const { items } = await listPropertyRequests();
+            setMyRequests([...items].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))));
+        } catch (err) {
+            console.error("Failed to load your requests:", err);
+        } finally {
+            setRequestsLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        loadMyRequests();
+    }, []);
+    const [propertiesLoading, setPropertiesLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        // A resident may only request a sale or rental of their own unit: the one the
+        // HOA linked to their account in the resident directory. It is selected for them.
+        async function fetchProperties() {
             try {
-                const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-                const response = await fetch("http://127.0.0.1:8000/api/v1/properties", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    const list = data.properties || data.items || data || [];
-                    setProperties(list);
-                }
-            } catch (err) {
-                console.error("Failed to load properties:", err);
-            }
-        };
-        fetchProperties();
-        }, []);
+                const records = await apiRequest("/api/v1/resident-directory");
+                const ownRecord = (Array.isArray(records) ? records : records?.items || [])[0];
 
+                if (!ownRecord?.property_id) return;
+
+                const ownUnit = await getProperty(ownRecord.property_id);
+                if (cancelled) return;
+
+                setSelectedProperty(ownUnit);
+                setForm((previous) => ({ ...previous, propertyId: String(ownUnit.id) }));
+            } catch (err) {
+                console.error("Failed to load your property:", err);
+                if (!cancelled) setLoadError("Unable to load your property. Please refresh and try again.");
+            } finally {
+                if (!cancelled) setPropertiesLoading(false);
+            }
+        }
+
+        fetchProperties();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const propertyLabel = (property) =>
+        [property.unitNo && `Unit ${property.unitNo}`, property.complexName].filter(Boolean).join(" — ") ||
+        `Property ${property.id}`;
 
     /* =====================================================
        FORM
@@ -65,17 +131,17 @@ function RequestToSell() {
         requestType: "Sell",
         askingPrice: "",
         rentalPeriod: "",
-        financialInformation: "",
         additionalDetails: "",
     });
 
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     /* =====================================================
        ACCESS CONTROL (FIXED FOR API ROLES)
     ===================================================== */
-    // Check for lowercase "resident" and "investor"
+    // Only residents may request a sale or rental
     if (!isAllowed) {
         return (
             <div className="request-page">
@@ -91,7 +157,7 @@ function RequestToSell() {
                                 </svg>
                             </div>
                             <h1>Access Restricted</h1>
-                            <p>Only residents and investors can submit property sale or rental requests.</p>
+                            <p>Only residents can submit property sale or rental requests.</p>
                             <button type="button" onClick={() => navigate("/dashboard")}>
                                 Return to Dashboard
                             </button>
@@ -101,17 +167,6 @@ function RequestToSell() {
             </div>
         );
     }
-
-    /* =====================================================
-       PROPERTY SELECTION
-    ===================================================== */
-    const handlePropertyChange = (event) => {
-        const propertyId = event.target.value;
-        const property = properties.find((item) => String(item.id) === String(propertyId) || String(item.property_id) === String(propertyId)) || null;
-        setSelectedProperty(property);
-        setForm((previous) => ({ ...previous, propertyId }));
-        setError("");
-    };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -130,81 +185,120 @@ function RequestToSell() {
         event.preventDefault();
         setError("");
 
-        if (!form.propertyId) return setError("Please select the property or unit you are requesting to sell or rent.");
+        if (!form.propertyId) return setError("Your account is not linked to a property yet. Ask the HOA to assign your unit first.");
         if (!selectedProperty) return setError("The selected property could not be found.");
         if (!form.askingPrice.trim()) {
             return setError(form.requestType === "Sell" ? "Please enter your asking sale price." : "Please enter your monthly rental price.");
         }
+        if (parsePrice(form.askingPrice) <= 0) {
+            return setError("Please enter a price greater than zero, for example R1,250,000.");
+        }
+
+        setIsSubmitting(true);
 
         try {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("valora_token");
-            
-            // (PropertyRequestCreate)
-            const payload = {
-                property_id: selectedProperty.id || selectedProperty.property_id,
-                request_type: form.requestType,
-                asking_price: parseFloat(form.askingPrice.replace(/[^0-9.]/g, '')) || 0,
-                rental_period: form.rentalPeriod || null,
-                financial_information: form.financialInformation,
-                additional_details: form.additionalDetails,
-            };
-
-            const response = await fetch("http://127.0.0.1:8000/api/v1/property-requests", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
+            await createPropertyRequest({
+                unitId: selectedProperty.id,
+                requestType: form.requestType,
+                askingPrice: form.askingPrice,
+                rentalPeriod: form.requestType === "Rent" ? form.rentalPeriod : null,
+                additionalDetails: form.additionalDetails,
             });
 
-            if (!response.ok) {
-                const errData = await response.json();
-                console.log("BACKEND ERROR:", errData);
-                let msg = "Failed to submit request";
-                if (Array.isArray(errData.detail)) {
-                    msg = errData.detail.map(e => `${e.loc.join('.')}: ${e.msg}`).join(", ");
-                } else if (typeof errData.detail === 'string') {
-                    msg = errData.detail;
-                }
-                throw new Error(msg);
-            }
-
             setSubmitted(true);
+            setStartNewRequest(false);
+            await loadMyRequests();
         } catch (err) {
-            setError(err.message);
+            // 409: an open request for this unit already exists; 422: a field was invalid
+            setError(
+                (err?.message || "").replace(/Value error,\s*/gi, "") ||
+                    "Unable to submit your request. Please try again."
+            );
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     /* =====================================================
-       SUCCESS
+       REQUEST STATUS
+       An open (or finished) request is shown as a tracker;
+       the form only appears when there is nothing open.
     ===================================================== */
-    if (submitted) {
+    const latest = myRequests[0] || null;
+    const latestStatus = latest?.rawStatus || "";
+    const hasOpenRequest = OPEN_STATUSES.includes(latestStatus);
+    const showTracker = Boolean(latest) && (hasOpenRequest || COMPLETE_STATUSES.includes(latestStatus) || latestStatus === "rejected");
+    const showForm = !requestsLoading && (!latest || (!hasOpenRequest && startNewRequest) || latestStatus === "rejected");
+
+    const tracker = showTracker && (() => {
+        const steps = requestSteps(latest);
+        const reached = STATUS_STEP[latestStatus] ?? 0;
+        const rejected = latestStatus === "rejected";
+        const complete = COMPLETE_STATUSES.includes(latestStatus);
+
         return (
-            <div className="request-page">
-                <DashboardSidebar />
-                <main className="request-main">
-                    <div className="request-card request-success">
-                        <div className="success-icon"><CheckIcon /></div>
-                        <h1>Request Submitted</h1>
-                        <p>Your property request has been submitted to the HOA Administrator for review.</p>
-                        <p>The HOA will review the property and financial information before deciding whether the request can proceed.</p>
-                        <div className="success-status">
-                            <span>Status</span>
-                            <strong>Pending HOA Review</strong>
-                        </div>
-                        {selectedProperty && (
-                            <div className="success-property">
-                                <span>Property</span>
-                                <strong>{selectedProperty.unit || selectedProperty.name || selectedProperty.id}</strong>
-                            </div>
-                        )}
-                        <button type="button" onClick={() => navigate("/dashboard")}>Return to Dashboard</button>
+            <section className="request-card request-tracker" aria-labelledby="request-tracker-title">
+                {submitted && (
+                    <p className="request-tracker-notice" role="status">
+                        <CheckIcon /> Your request has been sent to the HOA.
+                    </p>
+                )}
+
+                <div className="request-tracker-head">
+                    <div>
+                        <span className="request-eyebrow">YOUR REQUEST</span>
+                        <h2 id="request-tracker-title">
+                            {latest.requestType ? `${latest.requestType} request` : "Property request"}
+                            {latest.unitNo ? ` · Unit ${latest.unitNo}` : ""}
+                        </h2>
+                        <p>
+                            Submitted {formatRequestDate(latest.createdAt)}
+                            {latest.askingPrice ? ` · R ${Number(latest.askingPrice).toLocaleString("en-ZA")}` : ""}
+                            {String(latest.requestType).toLowerCase() === "rent" && latest.askingPrice ? " / month" : ""}
+                        </p>
                     </div>
-                </main>
-            </div>
+                    <span className={`request-tracker-status status-${latestStatus}`}>{latest.status}</span>
+                </div>
+
+                <ol className="request-tracker-steps">
+                    {steps.map((step, index) => {
+                        const isRejectedStep = rejected && index === 1;
+                        const state = isRejectedStep
+                            ? "is-rejected"
+                            : index < reached || (complete && index === reached)
+                                ? "is-done"
+                                : index === reached && !rejected
+                                    ? "is-current"
+                                    : "";
+
+                        return (
+                            <li key={step.label} className={state}>
+                                <span className="request-tracker-dot" aria-hidden="true">
+                                    {isRejectedStep ? "✕" : state === "is-done" ? "✓" : index + 1}
+                                </span>
+                                <div>
+                                    <strong>{isRejectedStep ? "Not approved by the HOA" : step.label}</strong>
+                                    <small>{isRejectedStep ? latest.rejectionReason || "The HOA did not approve this request." : step.hint}</small>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ol>
+
+                {complete && !startNewRequest && (
+                    <div className="request-tracker-footer">
+                        <p>This request is complete. You can submit a new one if you need to.</p>
+                        <button type="button" onClick={() => setStartNewRequest(true)}>Start a new request</button>
+                    </div>
+                )}
+                {rejected && (
+                    <div className="request-tracker-footer">
+                        <p>You can correct the details below and submit a new request.</p>
+                    </div>
+                )}
+            </section>
         );
-    }
+    })();
 
     /* =====================================================
        FORM UI 
@@ -218,10 +312,19 @@ function RequestToSell() {
                         <div>
                             <span className="request-eyebrow">PROPERTY SERVICES</span>
                             <h1>Request to Sell or Rent</h1>
-                            <p>Submit an existing VALORA property for HOA review before an estate agent can be assigned.</p>
+                            <p>Track your sale or rental request, or submit a new one for HOA review.</p>
                         </div>
                     </div>
 
+                    {requestsLoading && (
+                        <section className="request-card request-tracker" aria-busy="true">
+                            <p className="request-tracker-loading">Loading your requests…</p>
+                        </section>
+                    )}
+
+                    {tracker}
+
+                    {showForm && (
                     <form className="request-card" onSubmit={handleSubmit}>
                         {/* REQUEST TYPE */}
                         <section className="form-section">
@@ -241,42 +344,36 @@ function RequestToSell() {
                             </div>
                         </section>
 
-                        {/* PROPERTY SELECTION */}
+                        {/* YOUR PROPERTY */}
                         <section className="form-section">
                             <div className="section-heading">
-                                <h2>Select Property</h2>
-                                <p>Select the existing VALORA unit you are requesting to sell or rent.</p>
+                                <h2>Your Property</h2>
+                                <p>The VALORA unit linked to your account. This request will be made for this property.</p>
                             </div>
-                            <div className="form-grid">
-                                <div className="form-field full">
-                                    <label htmlFor="propertyId">Property / Unit <span>*</span></label>
-                                    <select id="propertyId" name="propertyId" value={form.propertyId} onChange={handlePropertyChange}>
-                                        <option value="">Select a property or unit</option>
-                                        {properties.map((property) => (
-                                            <option key={property.id || property.property_id} value={property.id || property.property_id}>
-                                                {property.unit_id || property.name || property.id} — {property.property.type || "Property"}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+                            {propertiesLoading && <p className="form-hint">Loading your property…</p>}
+                            {loadError && <p className="form-error" role="alert">{loadError}</p>}
+                            {!propertiesLoading && !loadError && !selectedProperty && (
+                                <p className="form-hint">
+                                    Your account is not linked to a property yet. Ask the HOA to assign your unit before submitting a request.
+                                </p>
+                            )}
 
                             {selectedProperty && (
                                 <div className="selected-property">
                                     <div className="selected-property-header">
                                         <div>
-                                            <span>SELECTED PROPERTY</span>
-                                            <h3>{selectedProperty.unit || selectedProperty.name || selectedProperty.id}</h3>
+                                            <span>YOUR PROPERTY</span>
+                                            <h3>{propertyLabel(selectedProperty)}</h3>
                                         </div>
-                                        <strong>{selectedProperty.id || selectedProperty.property_id}</strong>
+                                        <strong>#{selectedProperty.id}</strong>
                                     </div>
                                     <div className="selected-property-details">
-                                        <div><span>Property Type</span><strong>{selectedProperty.type || "Not specified"}</strong></div>
+                                        <div><span>Complex</span><strong>{selectedProperty.complexName || "Not specified"}</strong></div>
+                                        <div><span>Address</span><strong>{selectedProperty.streetAddress || "Not specified"}</strong></div>
+                                        <div><span>Suburb</span><strong>{selectedProperty.suburb || "Not specified"}</strong></div>
                                         <div><span>Bedrooms</span><strong>{selectedProperty.bedrooms ?? "Not specified"}</strong></div>
                                         <div><span>Bathrooms</span><strong>{selectedProperty.bathrooms ?? "Not specified"}</strong></div>
-                                        <div><span>Property Size</span><strong>{selectedProperty.size || selectedProperty.area || "Not specified"}</strong></div>
-                                        <div><span>Floor</span><strong>{selectedProperty.floor || "Not specified"}</strong></div>
-                                        <div><span>Unit Status</span><strong>{selectedProperty.status || "Available"}</strong></div>
+                                        <div><span>Property Size</span><strong>{selectedProperty.sizeM2 != null ? `${selectedProperty.sizeM2} m²` : "Not specified"}</strong></div>
                                     </div>
                                 </div>
                             )}
@@ -303,10 +400,6 @@ function RequestToSell() {
                                         </select>
                                     </div>
                                 )}
-                                <div className="form-field full">
-                                    <label>Financial Information</label>
-                                    <textarea name="financialInformation" value={form.financialInformation} onChange={handleChange} rows="4" placeholder="Provide any relevant financial information the HOA should consider." />
-                                </div>
                             </div>
                         </section>
 
@@ -326,9 +419,10 @@ function RequestToSell() {
 
                         <div className="form-actions">
                             <button type="button" className="secondary-button" onClick={() => navigate("/dashboard")}>Cancel</button>
-                            <button type="submit" className="primary-button">Submit for HOA Review</button>
+                            <button type="submit" className="primary-button" disabled={isSubmitting || propertiesLoading}>{isSubmitting ? "Submitting…" : "Submit for HOA Review"}</button>
                         </div>
                     </form>
+                    )}
                 </div>
             </main>
         </div>

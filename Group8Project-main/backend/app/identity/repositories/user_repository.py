@@ -26,6 +26,7 @@ class UserRepository:
         role: str,
         phoneno: str | None = None,
         unit_no: str | None = None,
+        hoa_approved: bool = False,
     ) -> User:
         user = User(
             full_name=full_name,
@@ -34,6 +35,7 @@ class UserRepository:
             role=role,
             phoneno=phoneno,
             unit_no=unit_no,
+            hoa_approved=hoa_approved,
         )
         self._db.add(user)
         await self._db.commit()
@@ -52,6 +54,21 @@ class UserRepository:
     async def set_approval(self, user: User, approved: bool) -> User:
         """Set the hoa_approved flag and persist it."""
         user.hoa_approved = approved
+        await self._db.commit()
+        await self._db.refresh(user)
+        return user
+
+    async def update_profile(self, user: User, *, full_name: str, phoneno: str | None) -> User:
+        """Change the user's own display name and phone number."""
+        user.full_name = full_name
+        user.phoneno = phoneno or None
+        await self._db.commit()
+        await self._db.refresh(user)
+        return user
+
+    async def set_password_hash(self, user: User, password_hash: str) -> User:
+        """Replace the user's password hash and persist it."""
+        user.password_hash = password_hash
         await self._db.commit()
         await self._db.refresh(user)
         return user

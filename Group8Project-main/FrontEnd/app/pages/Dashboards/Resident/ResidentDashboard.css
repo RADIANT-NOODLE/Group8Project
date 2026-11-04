@@ -80,46 +80,13 @@
   line-height: 1.6;
 }
 
-.resident-dashboard-header-user {
-  display: flex;
-  align-items: center;
 
-  gap: 10px;
-
-  flex-shrink: 0;
-}
-
-.resident-dashboard-header-avatar {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #563f6b;
-  color: #ffffff;
-
-  font-size: 11px;
-  font-weight: 800;
-}
 
 
 /* =========================================================
    STATS
 ========================================================= */
 
-.resident-dashboard-stats-grid {
-  display: grid;
-
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-
-  gap: 16px;
-
-  margin-bottom: 20px;
-}
 
 .resident-dashboard-stat-card {
   min-width: 0;
@@ -171,17 +138,49 @@
   text-transform: uppercase;
 }
 
-.resident-dashboard-stat-number {
-  display: block;
 
-  margin-bottom: 5px;
 
-  color: #2d2633;
 
-  font-size: 25px;
-  font-weight: 750;
+/* =========================================================
+   COMPLAINTS OVERVIEW (status ring)
+========================================================= */
 
-  line-height: 1;
+/* Property card on the left, the complaints column on the right. */
+.resident-dashboard-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: stretch;
+
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+.resident-dashboard-top-grid .my-property-card,
+.resident-dashboard-top-grid .my-property-empty-card {
+  margin: 0;
+}
+
+.resident-dashboard-complaints-card {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 0;
+}
+
+.resident-dashboard-complaints-card .resident-dashboard-card-header {
+  margin-bottom: 6px;
+}
+
+.resident-dashboard-complaints-card .resident-dashboard-stat-top {
+  margin-bottom: 0;
+}
+
+/* Narrower screens: the complaints card drops under the property card. */
+@media (max-width: 1250px) {
+  .resident-dashboard-top-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -192,7 +191,7 @@
 .resident-dashboard-content-grid {
   display: grid;
 
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 
   gap: 18px;
 
@@ -216,6 +215,8 @@
   border-radius: 10px;
 
   box-shadow: 0 2px 10px rgba(40, 30, 50, 0.025);
+
+  position: relative;
 }
 
 
@@ -268,76 +269,49 @@
   text-decoration: underline;
 }
 
-
-/* =========================================================
-   PROPERTY SUMMARY
-========================================================= */
-
-.resident-dashboard-property-summary {
-  display: flex;
-  align-items: center;
-
-  gap: 14px;
-
-  padding: 15px;
-
-  border: 1px solid #eeeaf1;
-  border-radius: 8px;
-
-  background: #faf9fb;
+/* Stretch the corner link over its card so the whole card is clickable.
+   The card must be the positioned box, or the link covers the whole page. */
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all) {
+  position: relative;
 }
 
-.resident-dashboard-property-summary-icon {
-  width: 40px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 8px;
-
-  background: #eee8f2;
-  color: #563f6b;
+.resident-dashboard-view-all::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
 }
 
-.resident-dashboard-property-summary-content {
-  min-width: 0;
-
-  flex: 1;
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all) {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-.resident-dashboard-property-summary-content strong {
-  display: block;
-
-  margin-bottom: 4px;
-
-  color: #3a3040;
-
-  font-size: 11px;
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all:hover) {
+  border-color: #d9cbe5;
+  box-shadow: 0 6px 18px rgba(40, 30, 50, 0.08);
+  transform: translateY(-2px);
 }
 
-.resident-dashboard-property-summary-content span {
-  display: block;
-
-  color: #928998;
-
-  font-size: 9px;
-  line-height: 1.5;
+.resident-dashboard-view-all:focus-visible {
+  outline: none;
 }
 
-.resident-dashboard-property-status {
-  padding: 5px 9px;
+:is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all:focus-visible) {
+  outline: 2px solid #563f6b;
+  outline-offset: 2px;
+}
 
-  border-radius: 20px;
+@media (prefers-reduced-motion: reduce) {
+  :is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all) {
+    transition: none;
+  }
 
-  background: #eee8f2;
-  color: #563f6b;
-
-  font-size: 8px;
-  font-weight: 800;
+  :is(.resident-dashboard-card, .resident-dashboard-stat-card):has(.resident-dashboard-view-all:hover) {
+    transform: none;
+  }
 }
 
 
@@ -346,6 +320,8 @@
 ========================================================= */
 
 .resident-dashboard-request-card {
+  min-height: 0;
+
   margin-bottom: 0;
 }
 
@@ -423,80 +399,6 @@
 
 
 /* =========================================================
-   QUICK ACTIONS
-========================================================= */
-
-.resident-dashboard-quick-actions-card {
-  margin-bottom: 0;
-}
-
-.resident-dashboard-quick-actions {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-.resident-dashboard-quick-action {
-  min-width: 0;
-  min-height: 52px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 10px 12px;
-
-  border: 1px solid #e9e4ed;
-  border-radius: 8px;
-
-  background: #faf9fb;
-
-  color: #504558;
-
-  font-size: 9px;
-  font-weight: 650;
-
-  text-decoration: none;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.resident-dashboard-quick-action:hover {
-  background: #f4f0f6;
-
-  border-color: #dcd2e2;
-
-  transform: translateY(-1px);
-}
-
-.resident-dashboard-quick-action-icon {
-  width: 29px;
-  height: 29px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 6px;
-
-  background: #eee8f2;
-  color: #563f6b;
-}
-
-.resident-dashboard-quick-action > span:last-child {
-  flex: 1;
-}
-
-
-/* =========================================================
    EMPTY STATE
 ========================================================= */
 
@@ -558,6 +460,169 @@
 
 
 /* =========================================================
+   COMMUNITY ANNOUNCEMENTS
+========================================================= */
+
+.resident-dashboard-announcements-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.resident-dashboard-announcement-item {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 13px;
+
+  padding: 14px 15px;
+
+  border: 1px solid #eeeaf1;
+  border-left: 3px solid #563f6b;
+  border-radius: 8px;
+
+  background: #faf9fb;
+
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.resident-dashboard-announcement-item:hover {
+  border-color: #ddd2e5;
+  border-left-color: #563f6b;
+
+  background: #f6f2f9;
+}
+
+.resident-dashboard-announcement-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 8px;
+
+  background: #eee8f2;
+  color: #563f6b;
+}
+
+.resident-dashboard-announcement-copy {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.resident-dashboard-announcement-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 6px;
+}
+
+.resident-dashboard-announcement-category {
+  padding: 3px 8px;
+
+  border-radius: 20px;
+
+  background: #eee8f2;
+  color: #563f6b;
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.resident-dashboard-announcement-meta time {
+  color: #a39aa9;
+
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.resident-dashboard-announcement-copy h3 {
+  margin: 0 0 4px;
+
+  color: #3a3040;
+
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+/* Long messages are cut to two lines; the full text is on the announcements page. */
+.resident-dashboard-announcement-copy p {
+  margin: 0;
+
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+
+  color: #8f8696;
+
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.resident-dashboard-announcements-empty {
+  min-height: 145px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  padding: 20px;
+
+  text-align: center;
+
+  border: 1px dashed #ddd5e2;
+  border-radius: 8px;
+
+  background: #faf9fb;
+}
+
+.resident-dashboard-announcements-empty .resident-dashboard-announcement-icon {
+  margin-bottom: 6px;
+
+  border-radius: 50%;
+}
+
+.resident-dashboard-announcements-empty h3 {
+  margin: 0;
+
+  color: #4b4052;
+
+  font-size: 10px;
+}
+
+.resident-dashboard-announcements-empty p {
+  margin: 0;
+
+  color: #968d9d;
+
+  font-size: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resident-dashboard-announcement-item {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
    RESPONSIVE
 ========================================================= */
 
@@ -568,9 +633,6 @@
     margin-left: 200px;
   }
 
-  .resident-dashboard-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
 }
 
@@ -588,9 +650,6 @@
     align-items: flex-start;
   }
 
-  .resident-dashboard-header-user {
-    display: none;
-  }
 
   .resident-dashboard-content-grid {
     grid-template-columns: 1fr;
@@ -629,17 +688,6 @@
     font-size: 13px;
   }
 
-  .resident-dashboard-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .resident-dashboard-quick-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .resident-dashboard-property-summary {
-    align-items: flex-start;
-  }
 
   .resident-dashboard-request-content {
     flex-direction: column;

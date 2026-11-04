@@ -5,11 +5,6 @@ export const VALORA_ROLE_OPTIONS = Object.freeze([
     description: 'Follow the context and updates that matter around your home.',
   }),
   Object.freeze({
-    value: 'investor',
-    label: 'Investor',
-    description: 'Prepare for clearer property and growth insights over time.',
-  }),
-  Object.freeze({
     value: 'estate_agent',
     label: 'Estate Agent',
     description: 'Explore the future listing and local-market perspective.',
