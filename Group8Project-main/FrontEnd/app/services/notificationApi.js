@@ -1,31 +1,31 @@
 /**
  * notificationApi.js — Valora notification inbox API client.
  */
-import { apiClient } from "./apiClient.js";
+import { apiRequest } from "./apiClient.js";
 
-const BASE = "/notifications";
+const BASE = "/api/v1/notifications";
 
 /** Fetch the authenticated user's notification inbox. */
 export async function listNotifications(limit = 50) {
-  return apiClient.get(`${BASE}?limit=${limit}`);
+  return apiRequest(`${BASE}?limit=${limit}`);
 }
 
 /** Mark specific notifications as read. */
 export async function markRead(notificationIds) {
-  return apiClient.post(`${BASE}/mark-read`, { notification_ids: notificationIds });
+  return apiRequest(`${BASE}/mark-read`, { method: "POST", body: { notification_ids: notificationIds } });
 }
 
 /** Mark all notifications as read. */
 export async function markAllRead() {
-  return apiClient.post(`${BASE}/mark-all-read`, {});
+  return apiRequest(`${BASE}/mark-all-read`, { method: "POST", body: {} });
 }
 
 /** Get the user's notification preferences. */
 export async function getPreferences() {
-  return apiClient.get(`${BASE}/preferences`);
+  return apiRequest(`${BASE}/preferences`);
 }
 
 /** Update one or more notification preference toggles. */
 export async function updatePreferences(prefs) {
-  return apiClient.patch(`${BASE}/preferences`, prefs);
+  return apiRequest(`${BASE}/preferences`, { method: "PATCH", body: prefs });
 }
