@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.datetime_utils import utcnow
 from app.common.enums import ADMIN_ROLES, ComplaintStatus, UserRole
-from app.community.models.complaint import Complaint
+from app.community.models.complaint import Complaint, ComplaintPhoto
 from app.community.repositories.complaint_repository import ComplaintRepository
 from app.community.schemas.complaint import (
     ComplaintCreate,
@@ -14,8 +14,9 @@ from app.community.schemas.complaint import (
     ComplaintStatusUpdate,
     PaginatedComplaintsResponse,
 )
-from app.core.exceptions import ForbiddenException, NotFoundException
+from app.core.exceptions import ForbiddenException, NotFoundException, ValidationException
 from app.identity.models.user import User
+from app.property import storage
 from app.property.repositories.property_repository import PropertyRepository
 
 _RESOLVED_STATUSES = (ComplaintStatus.resolved.value, ComplaintStatus.closed.value)
@@ -84,6 +85,35 @@ class ComplaintService:
             page_size=page_size,
             complaints=[self._to_response(c, user) for c in complaints],
         )
+
+    async def add_photo(self, complaint_id: int, data: bytes, user: User) -> ComplaintResponse:
+        """Attach a photo (the author or an admin). A second photo replaces the first."""
+        complaint = await self._get_or_404(complaint_id)
+        if not self._is_admin(user) and complaint.user_id != user.user_id:
+            raise ForbiddenException("You can only add a photo to your own complaints.")
+        if len(data) > storage.MAX_PHOTO_BYTES:
+            raise ValidationException("Photos can be at most 5 MB.")
+        extension = storage.detect_image_extension(data)
+        if extension is None:
+            raise ValidationException("Only JPEG, PNG or WebP images are allowed.")
+
+        complaint = await self._repo.save_photo(
+            complaint,
+            data,
+            storage.CONTENT_TYPES[extension],
+            f"/api/v1/complaints/{complaint.complaint_id}/photo",
+        )
+        return self._to_response(complaint, user)
+
+    async def get_photo(self, complaint_id: int, user: User) -> ComplaintPhoto:
+        """The same people who can view a complaint can view its photo."""
+        complaint = await self._get_or_404(complaint_id)
+        if not self._is_admin(user) and complaint.user_id != user.user_id:
+            raise ForbiddenException("You can only view your own complaints.")
+        photo = await self._repo.get_photo(complaint_id)
+        if photo is None:
+            raise NotFoundException(f"Complaint {complaint_id} has no photo.")
+        return photo
 
     async def get_complaint(self, complaint_id: int, user: User) -> ComplaintResponse:
         complaint = await self._get_or_404(complaint_id)

@@ -383,14 +383,14 @@
 .property-requests-panel-heading h2 {
     margin: 0;
     color: #342c38;
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 750;
 }
 
 .property-requests-panel-heading p {
     margin: 5px 0 0;
     color: #918895;
-    font-size: 9px;
+    font-size: 12px;
     line-height: 1.5;
 }
 
@@ -399,7 +399,7 @@
     border-radius: 6px;
     background: #f1edf3;
     color: #563f6b;
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 800;
 }
 
@@ -415,7 +415,7 @@
 
 .property-requests-table {
     width: 100%;
-    min-width: 900px;
+    min-width: 960px;
     border-collapse: collapse;
 }
 
@@ -424,7 +424,7 @@
     background: #faf9fb;
     border-bottom: 1px solid #ebe7ee;
     color: #877d8d;
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.55px;
     text-align: left;
@@ -436,7 +436,7 @@
     padding: 14px 16px;
     border-bottom: 1px solid #f0edf2;
     color: #625968;
-    font-size: 9px;
+    font-size: 12px;
     vertical-align: middle;
 }
 
@@ -454,14 +454,14 @@
 
 .property-requests-id {
     color: #563f6b;
-    font-size: 9px;
+    font-size: 12px;
 }
 
 .property-requests-owner strong,
 .property-requests-unit strong {
     display: block;
     color: #3d3442;
-    font-size: 9px;
+    font-size: 12px;
 }
 
 .property-requests-owner small,
@@ -469,7 +469,7 @@
     display: block;
     margin-top: 4px;
     color: #9a919f;
-    font-size: 8px;
+    font-size: 11px;
 }
 
 .property-requests-type {
@@ -491,9 +491,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 5px 8px;
-    border-radius: 5px;
-    font-size: 7px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 800;
     line-height: 1.2;
     white-space: nowrap;
@@ -526,11 +526,11 @@
 
 .property-requests-primary-btn,
 .property-requests-secondary-btn {
-    min-height: 32px;
-    padding: 8px 12px;
-    border-radius: 6px;
+    min-height: 36px;
+    padding: 8px 15px;
+    border-radius: 7px;
     font-family: inherit;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 750;
     cursor: pointer;
     transition:
@@ -673,7 +673,7 @@
 .property-requests-modal-eyebrow {
     margin: 0 0 5px;
     color: #806b8f;
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 1.2px;
 }
@@ -681,13 +681,13 @@
 .property-requests-modal-header h2 {
     margin: 0;
     color: #302733;
-    font-size: 17px;
+    font-size: 24px;
 }
 
 .property-requests-modal-header p:last-child {
     margin: 5px 0 0;
     color: #958b9a;
-    font-size: 8px;
+    font-size: 14px;
 }
 
 .property-requests-modal-body {
@@ -739,13 +739,13 @@
 .property-requests-section-heading h3 {
     margin: 1px 0 0;
     color: #3b3241;
-    font-size: 11px;
+    font-size: 17px;
 }
 
 .property-requests-section-heading p {
     margin: 4px 0 0;
     color: #918795;
-    font-size: 8px;
+    font-size: 14px;
     line-height: 1.45;
 }
 
@@ -768,7 +768,7 @@
     display: block;
     margin-bottom: 5px;
     color: #968d9b;
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -779,7 +779,7 @@
 .property-requests-assignment-card strong {
     display: block;
     color: #403743;
-    font-size: 9px;
+    font-size: 15px;
     line-height: 1.45;
     word-break: break-word;
 }
@@ -799,7 +799,7 @@
 .property-requests-text-box p {
     margin: 0;
     color: #6d6372;
-    font-size: 9px;
+    font-size: 15px;
     line-height: 1.65;
     white-space: pre-wrap;
 }
@@ -850,7 +850,7 @@
     display: block;
     margin-bottom: 6px;
     color: #4b414f;
-    font-size: 8px;
+    font-size: 14px;
     font-weight: 750;
 }
 
@@ -864,7 +864,7 @@
     background: #ffffff;
     color: #403743;
     font-family: inherit;
-    font-size: 9px;
+    font-size: 15px;
     outline: none;
     transition:
         border-color 0.2s ease,
@@ -905,7 +905,7 @@
 
 .property-requests-no-agents p {
     margin: 0;
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -936,6 +936,59 @@
     border-top: 1px solid #ebe7ee;
     display: flex;
     justify-content: flex-end;
+}
+
+
+/* Opening animation: the backdrop fades in while the window rises into place. */
+.property-requests-modal-overlay {
+    animation: property-requests-modal-fade 0.2s ease-out;
+}
+
+.property-requests-modal {
+    animation: property-requests-modal-rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes property-requests-modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes property-requests-modal-rise {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+/* For people who have asked their device to reduce motion. */
+@media (prefers-reduced-motion: reduce) {
+    .property-requests-modal-overlay,
+    .property-requests-modal {
+        animation: none;
+    }
+}
+
+/* The review window's buttons, status badge and icons, sized to match its text
+   (the same classes are smaller in the page's table). */
+.property-requests-modal .property-requests-primary-btn,
+.property-requests-modal .property-requests-secondary-btn {
+    min-height: 40px;
+    padding: 9px 18px;
+    font-size: 14px;
+}
+
+.property-requests-modal .property-requests-status {
+    padding: 6px 11px;
+    font-size: 13px;
+}
+
+.property-requests-modal .property-requests-section-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+}
+
+.property-requests-modal .property-requests-section-icon svg {
+    width: 19px;
+    height: 19px;
 }
 
 

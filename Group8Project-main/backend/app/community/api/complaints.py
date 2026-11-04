@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.enums import ComplaintStatus, UserRole
@@ -15,6 +15,7 @@ from app.community.services.complaint_service import ComplaintService
 from app.db.session import get_db
 from app.identity.api.dependencies import CurrentUser, require_roles
 from app.identity.models.user import User
+from app.property.storage import MAX_PHOTO_BYTES
 
 router = APIRouter(prefix="/complaints", tags=["complaints"])
 
@@ -71,6 +72,35 @@ async def create_complaint(
 ) -> ComplaintResponse:
     """File a complaint. The author is taken from the logged-in user."""
     return await ComplaintService(db).create_complaint(payload, current_user)
+
+
+@router.post("/{complaint_id}/photo", response_model=ComplaintResponse, status_code=201)
+async def upload_complaint_photo(
+    complaint_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: CurrentUser,
+    file: Annotated[UploadFile, File(description="JPEG, PNG or WebP, up to 5 MB")],
+) -> ComplaintResponse:
+    """Attach a photo to a complaint (its author or an admin)."""
+    # read one byte past the limit so an oversized file is detected without loading all of it
+    data = await file.read(MAX_PHOTO_BYTES + 1)
+    return await ComplaintService(db).add_photo(complaint_id, data, current_user)
+
+
+@router.get("/{complaint_id}/photo")
+async def get_complaint_photo(
+    complaint_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: CurrentUser,
+) -> Response:
+    """The complaint's photo, for the same people who can view the complaint."""
+    photo = await ComplaintService(db).get_photo(complaint_id, current_user)
+    # "private": may be kept by this browser, never by a shared cache
+    return Response(
+        content=photo.data,
+        media_type=photo.content_type,
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
 
 
 @router.patch("/{complaint_id}/status", response_model=ComplaintResponse)

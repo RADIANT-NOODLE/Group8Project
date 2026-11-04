@@ -100,6 +100,26 @@ export async function apiRequest(pathname, options = {}) {
   return data;
 }
 
+/** A file from the API (e.g. a photo that needs the user's login), as a Blob. */
+export async function apiBlobRequest(pathname) {
+  const headers = new Headers();
+  const authToken = getStoredToken();
+  if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
+
+  let response;
+  try {
+    response = await fetch(buildUrl(pathname), { headers });
+  } catch (error) {
+    throw new ApiError('Unable to connect to the VALORA API.', { cause: error });
+  }
+
+  if (!response.ok) {
+    throw new ApiError(`Request failed with status ${response.status}.`, { status: response.status });
+  }
+
+  return response.blob();
+}
+
 export function getApiBaseUrl() {
   return environment.apiBaseUrl;
 }

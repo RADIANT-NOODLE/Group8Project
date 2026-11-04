@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
-import { createComplaint, listComplaints, updateComplaintStatus } from "../services/complaintApi";
+import { createComplaint, listComplaints, updateComplaintStatus, uploadComplaintPhoto } from "../services/complaintApi";
 import { apiRequest } from "../services/apiClient";
 import { listProperties } from "../services/propertyApi";
 import { listWorkOrders } from "../services/workOrderApi";
@@ -8,6 +8,8 @@ import { COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap"
 import ComplaintStatusRing from "../components/ComplaintStatusRing";
 import DateRangeFilter, { ALL_DATES, inDateRange, isDateFilterActive } from "../components/DateRangeFilter";
 import "./Complaints.css";
+import { IMAGE_ACCEPT, imageFileProblem } from "../services/imageFiles";
+import ComplaintPhoto from "../components/ComplaintPhoto";
 import { getStoredUser } from "../services/session";
 
 const COMPLAINT_CATEGORIES = [
@@ -93,7 +95,8 @@ export default function Complaints() {
     const [unitId, setUnitId] = useState("");
     const [unitLoaded, setUnitLoaded] = useState(false);
 
-    const [complaintImage, setComplaintImage] = useState("");
+    const [complaintImage, setComplaintImage] = useState(""); // preview
+    const [complaintFile, setComplaintFile] = useState(null); // what gets uploaded
     const [imageName, setImageName] = useState("");
 
     const [search, setSearch] = useState("");
@@ -180,13 +183,14 @@ export default function Complaints() {
     // 4. Handle Image
     async function handleImageUpload(event) {
         const file = event.target.files?.[0];
+        event.target.value = ""; // so the same file can be picked again after a refusal
         if (!file) return;
-        if (!file.type.startsWith("image/")) {
-            setError("Please choose a valid image file.");
-            return;
-        }
-        if (file.size > 2 * 1024 * 1024) {
-            setError("Please choose an image smaller than 2 MB.");
+        const problem = await imageFileProblem(file);
+        if (problem) {
+            setError(problem);
+            setComplaintImage("");
+            setComplaintFile(null);
+            setImageName("");
             return;
         }
         try {
@@ -196,7 +200,9 @@ export default function Complaints() {
                 reader.onerror = () => reject(new Error("Image could not be read."));
                 reader.readAsDataURL(file);
             });
+            setError("");
             setComplaintImage(String(dataUrl));
+            setComplaintFile(file);
             setImageName(file.name);
         } catch {
             setError("The image could not be loaded.");
@@ -222,26 +228,33 @@ export default function Complaints() {
         setIsSubmitting(true);
 
         try {
-            // `photo_url` is a 500 character column, so an inline photo cannot be stored yet.
-            // There is no photo upload endpoint; send the complaint without it rather than failing.
-            const photoUrl = complaintImage && complaintImage.length <= 500 ? complaintImage : null;
-
-            await createComplaint({
+            const created = await createComplaint({
                 unitId,
                 category,
                 description,
                 isAnonymous,
-                photoUrl,
             });
+
+            // the complaint is safely filed first: a failed photo must not lose it
+            let photoProblem = "";
+            if (complaintFile) {
+                try {
+                    await uploadComplaintPhoto(created.id, complaintFile);
+                } catch (photoError) {
+                    console.error("Could not upload the complaint photo:", photoError);
+                    photoProblem = photoError?.message || "Please try again later.";
+                }
+            }
 
             setDescription("");
             setCategory("Security");
             setIsAnonymous(false);
             setComplaintImage("");
+            setComplaintFile(null);
             setImageName("");
             setNotice(
-                complaintImage && !photoUrl
-                    ? "Complaint submitted. The photo could not be saved yet (photo uploads are not available), so it was left out."
+                photoProblem
+                    ? `Complaint submitted, but the photo could not be saved: ${photoProblem}`
                     : "Complaint submitted successfully."
             );
 
@@ -376,7 +389,7 @@ export default function Complaints() {
                                                 <input
                                                     id="complaint-image"
                                                     type="file"
-                                                    accept="image/*"
+                                                    accept={IMAGE_ACCEPT}
                                                     onChange={handleImageUpload}
                                                     className="complaints-file-input"
                                                 />
@@ -388,7 +401,7 @@ export default function Complaints() {
                                                     <button
                                                         type="button"
                                                         className="complaints-text-button"
-                                                        onClick={() => { setComplaintImage(""); setImageName(""); }}
+                                                        onClick={() => { setComplaintImage(""); setComplaintFile(null); setImageName(""); }}
                                                     >
                                                         Remove photo
                                                     </button>
@@ -544,6 +557,12 @@ export default function Complaints() {
                                 <dt>Description</dt>
                                 <dd>{selectedComplaint.description}</dd>
                             </div>
+                            {selectedComplaint.photoUrl && (
+                                <div className="complaints-detail-description">
+                                    <dt>Photo</dt>
+                                    <dd><ComplaintPhoto complaint={selectedComplaint} /></dd>
+                                </div>
+                            )}
                             {workOrdersFor(selectedComplaint.id).length > 0 && (
                                 <div className="complaints-detail-description">
                                     <dt>Maintenance work</dt>

@@ -10,6 +10,7 @@ import { showAlert, showConfirm } from "../../components/AppDialog";
 import { getSessionToken } from "../../services/session";
 import StageSummary from "../../components/StageSummary";
 import { getApiBaseUrl } from "../../services/apiClient";
+import { IMAGE_ACCEPT, imageFileProblem } from "../../services/imageFiles";
 
 /*
 =========================================================
@@ -40,16 +41,6 @@ function getPropertyType(property) {
 
 function getPropertyImage(property) {
     return photoSrc(property.image_url);
-}
-
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-/** Returns a message when the file can't be uploaded, otherwise "". */
-function photoProblem(file) {
-    if (!PHOTO_TYPES.includes(file.type)) return `${file.name}: use a JPEG, PNG or WebP image.`;
-    if (file.size > MAX_PHOTO_BYTES) return `${file.name}: photos can be at most 5 MB.`;
-    return "";
 }
 
 function getStatusClass(status) {
@@ -213,7 +204,7 @@ function PropertyManagement() {
 
         const problems = [];
         for (const file of files) {
-            const problem = photoProblem(file);
+            const problem = await imageFileProblem(file);
             if (problem) {
                 problems.push(problem);
                 continue;
@@ -248,13 +239,13 @@ function PropertyManagement() {
         }
     };
 
-    const handlePickNewPhotos = (event) => {
+    const handlePickNewPhotos = async (event) => {
         const files = Array.from(event.target.files || []);
         event.target.value = "";
 
-        const problems = files.map(photoProblem).filter(Boolean);
-        setPhotoError(problems.join(" "));
-        setNewPhotos(previous => [...previous, ...files.filter(file => !photoProblem(file))]);
+        const problems = await Promise.all(files.map(file => imageFileProblem(file)));
+        setPhotoError(problems.filter(Boolean).join(" "));
+        setNewPhotos(previous => [...previous, ...files.filter((_, index) => !problems[index])]);
     };
 
     const handleAddProperty = async (e) => {
@@ -610,7 +601,7 @@ function PropertyManagement() {
                                     </div>
                                     <input
                                         type="file"
-                                        accept="image/jpeg,image/png,image/webp"
+                                        accept={IMAGE_ACCEPT}
                                         multiple
                                         disabled={photoBusy}
                                         onChange={handleUploadPhotos}
@@ -658,7 +649,7 @@ function PropertyManagement() {
                                     <label>Photos (optional)</label>
                                     <input
                                         type="file"
-                                        accept="image/jpeg,image/png,image/webp"
+                                        accept={IMAGE_ACCEPT}
                                         multiple
                                         onChange={handlePickNewPhotos}
                                         style={{ display: "block", marginTop: "10px" }}

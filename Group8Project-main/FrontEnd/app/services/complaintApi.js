@@ -9,7 +9,7 @@
  * `unit_id` is the integer id from `properties`, and the author always comes
  * from the access token, never from the request body.
  */
-import { apiRequest } from './apiClient.js';
+import { apiBlobRequest, apiRequest } from './apiClient.js';
 import {
   buildQuery,
   readPage,
@@ -75,6 +75,24 @@ export async function createComplaint({ unitId, category, description, isAnonymo
   });
 
   return toComplaint(payload);
+}
+
+/** Attach a photo to a complaint (its author or an admin). Returns the updated complaint. */
+export async function uploadComplaintPhoto(complaintId, file) {
+  const form = new FormData();
+  form.append('file', file);
+
+  return toComplaint(
+    await apiRequest(`${BASE_PATH}/${encodeURIComponent(complaintId)}/photo`, {
+      method: 'POST',
+      body: form,
+    }),
+  );
+}
+
+/** A complaint's photo as a Blob; only its author and admins may read it. */
+export function fetchComplaintPhoto(complaintId) {
+  return apiBlobRequest(`${BASE_PATH}/${encodeURIComponent(complaintId)}/photo`);
 }
 
 /** HOA administrators move a complaint along, optionally naming an assignee. */

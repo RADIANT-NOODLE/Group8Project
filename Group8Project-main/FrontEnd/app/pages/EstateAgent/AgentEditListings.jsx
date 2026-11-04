@@ -14,6 +14,7 @@ import {
 import { updateRequestProgress } from "../../services/propertyRequestApi";
 import { createListing, listMyListings, updateListing } from "../../services/listingApi";
 import { syncListingPhotos, syncPublishedListingPhotos } from "../../services/listingPhotoSync";
+import { IMAGE_ACCEPT, imageFileProblem } from "../../services/imageFiles";
 
 import "./AgentEditListings.css";
 import { showConfirm } from "../../components/AppDialog";
@@ -370,20 +371,15 @@ function AgentEditListings() {
             return;
         }
 
-        const imageFiles = files.filter((file) =>
-            file.type.startsWith("image/")
-        );
+        const problems = await Promise.all(files.map((file) => imageFileProblem(file)));
+        const imageFiles = files.filter((_, index) => !problems[index]);
+        const refused = problems.filter(Boolean).join(" ");
+
+        event.target.value = "";
 
         if (imageFiles.length === 0) {
-            setMessage("Please select image files only.");
-            event.target.value = "";
+            setMessage(refused);
             return;
-        }
-
-        if (imageFiles.length !== files.length) {
-            setMessage(
-                "Only image files were accepted. Any non-image files were ignored."
-            );
         }
 
         try {
@@ -411,7 +407,9 @@ function AgentEditListings() {
             setMessage(
                 `${convertedImages.length} photo${
                     convertedImages.length === 1 ? "" : "s"
-                } selected. They will go live when you publish the listing.`
+                } selected. They will go live when you publish the listing.${
+                    refused ? ` ${refused}` : ""
+                }`
             );
         } catch (error) {
             console.error(error);
@@ -1622,7 +1620,7 @@ function AgentEditListings() {
                                     <label className="agent-edit-upload-box">
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept={IMAGE_ACCEPT}
                                             multiple
                                             onChange={handlePhotoSelect}
                                         />
@@ -1636,8 +1634,7 @@ function AgentEditListings() {
                                         </strong>
 
                                         <span>
-                                            PNG, JPG, JPEG and other image
-                                            formats
+                                            JPEG, PNG or WebP images, up to 5 MB each
                                         </span>
                                     </label>
 

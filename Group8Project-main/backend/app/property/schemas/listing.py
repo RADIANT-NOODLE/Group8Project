@@ -2,9 +2,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.common.enums import ListingStatus
+from app.common.validators import validate_image_reference
 
 
 class ListingCreate(BaseModel):
@@ -14,6 +15,8 @@ class ListingCreate(BaseModel):
     description: str | None = Field(default=None, max_length=5000)
     photo_url: str | None = None
 
+    _image_only = field_validator("photo_url")(validate_image_reference)
+
 
 class ListingUpdate(BaseModel):
     price: Decimal | None = Field(default=None, gt=0, max_digits=12, decimal_places=2)
@@ -21,6 +24,8 @@ class ListingUpdate(BaseModel):
     description: str | None = Field(default=None, max_length=5000)
     photo_url: str | None = None
     status: ListingStatus | None = None
+
+    _image_only = field_validator("photo_url")(validate_image_reference)
 
 
 class ListingResponse(BaseModel):

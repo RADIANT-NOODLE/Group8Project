@@ -36,7 +36,8 @@ function propertyAddress(record) {
 }
 
 export function toPropertyRequest(record) {
-  const status = toStringOrNull(record?.status);
+  // older requests were saved as 'Assigned' / 'Rejected'; every status value is lowercase
+  const status = String(toStringOrNull(record?.status) ?? '').toLowerCase();
   const askingPrice = toDecimal(record?.asking_price);
   const sizeM2 = toDecimal(record?.size_m2);
 

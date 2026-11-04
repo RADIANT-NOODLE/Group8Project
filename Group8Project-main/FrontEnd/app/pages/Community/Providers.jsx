@@ -14,8 +14,24 @@ const SERVICE_CATEGORIES = [
     { value: "other", label: "Other Services", icon: "tools" },
 ];
 
-function getCategoryLabel(category) {
-    return SERVICE_CATEGORIES.find(item => item.value === category)?.label || "Other Services";
+function findCategory(trade) {
+    return SERVICE_CATEGORIES.find(item => item.value === trade);
+}
+
+/* A provider's trade is a listed category, or the service typed in under "Other Services". */
+function getCategoryLabel(trade) {
+    return findCategory(trade)?.label || trade || "Other Services";
+}
+
+/* What to save as the trade. A typed name that matches a listed category uses that category. */
+function tradeFromForm(form) {
+    if (form.category !== "other") return form.category;
+
+    const typed = form.customService.trim();
+    const match = SERVICE_CATEGORIES.find(item =>
+        [item.value, item.label.toLowerCase()].includes(typed.toLowerCase())
+    );
+    return match ? match.value : typed;
 }
 
 function Icon({ type, size = 20 }) {
@@ -45,6 +61,7 @@ const EMPTY_FORM = {
     full_name: "",
     email: "",
     category: "plumbing",
+    customService: "",
     description: "",
     number: "",
     status: "Verified",
@@ -112,7 +129,13 @@ function Providers() {
                 provider.trade?.toLowerCase().includes(query) ||
                 provider.email?.toLowerCase().includes(query);
 
-            return matchesSearch && (category === "all" || provider.trade === category);
+            // "Other Services" also covers every service typed in by hand
+            const matchesCategory =
+                category === "all" ||
+                provider.trade === category ||
+                (category === "other" && !findCategory(provider.trade));
+
+            return matchesSearch && matchesCategory;
         });
     }, [providers, search, category]);
 
@@ -130,7 +153,8 @@ function Providers() {
         setForm({
             full_name: provider.full_name || "",
             email: provider.email || "",
-            category: provider.trade || "other",
+            category: findCategory(provider.trade) ? provider.trade : "other",
+            customService: findCategory(provider.trade) ? "" : provider.trade || "",
             description: provider.description || "",
             number: provider.phone || "",
             status: provider.verified ? "Verified" : "Pending Verification",
@@ -150,6 +174,11 @@ function Providers() {
         // Fixed validation to use full_name
         if (!form.full_name.trim() || !form.email.trim() || !form.number.trim()) {
             setError("Please enter the provider name, email, and contact number.");
+            return;
+        }
+
+        if (form.category === "other" && form.customService.trim().length < 2) {
+            setError("Please type the service this provider offers.");
             return;
         }
 
@@ -173,7 +202,7 @@ function Providers() {
             const payload = {
                 full_name: form.full_name.trim(), 
                 email: form.email.trim(),
-                trade: form.category,
+                trade: tradeFromForm(form),
                 phone: form.number.trim(),
                 verified: form.status === "Verified",
                 emergency_available: false, 
@@ -428,6 +457,19 @@ function Providers() {
                                         ))}
                                     </select>
                                 </label>
+                                {form.category === "other" && (
+                                    <label>
+                                        What service do they offer? *
+                                        <input
+                                            value={form.customService}
+                                            onChange={event => setForm({ ...form, customService: event.target.value })}
+                                            placeholder="For example: Pool cleaning"
+                                            minLength={2}
+                                            maxLength={50}
+                                            required
+                                        />
+                                    </label>
+                                )}
                                 <label>
                                     Contact Number *
                                     <input type="tel" value={form.number} onChange={event => setForm({ ...form, number: event.target.value })} required />

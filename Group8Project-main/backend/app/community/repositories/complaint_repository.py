@@ -1,7 +1,7 @@
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.community.models.complaint import Complaint
+from app.community.models.complaint import Complaint, ComplaintPhoto
 
 
 class ComplaintRepository:
@@ -92,6 +92,22 @@ class ComplaintRepository:
         await self._db.commit()
         await self._db.refresh(complaint)
         return complaint
+
+    async def get_photo(self, complaint_id: int) -> ComplaintPhoto | None:
+        return await self._db.get(ComplaintPhoto, complaint_id)
+
+    async def save_photo(
+        self, complaint: Complaint, data: bytes, content_type: str, photo_url: str
+    ) -> Complaint:
+        """Add the complaint's photo, or replace the one it has."""
+        photo = await self.get_photo(complaint.complaint_id)
+        if photo is None:
+            photo = ComplaintPhoto(complaint_id=complaint.complaint_id)
+            self._db.add(photo)
+        photo.data = data
+        photo.content_type = content_type
+        complaint.photo_url = photo_url
+        return await self.save(complaint)
 
     async def save(self, complaint: Complaint) -> Complaint:
         await self._db.commit()

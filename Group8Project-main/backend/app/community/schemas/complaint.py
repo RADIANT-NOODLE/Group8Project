@@ -2,9 +2,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.common.enums import ComplaintStatus
+from app.common.validators import validate_image_reference
 
 
 class ComplaintStatsResponse(BaseModel):
@@ -21,6 +22,8 @@ class ComplaintCreate(BaseModel):
     description: str = Field(..., min_length=5, max_length=5000)
     is_anonymous: bool = False
     photo_url: Optional[str] = None
+
+    _image_only = field_validator("photo_url")(validate_image_reference)
 
 
 class ComplaintStatusUpdate(BaseModel):

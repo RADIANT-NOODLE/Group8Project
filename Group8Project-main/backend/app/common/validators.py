@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlsplit
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
@@ -74,6 +75,38 @@ def reject_control_characters(value: str | None) -> str | None:
     """Raise ValueError if text contains NUL or other control characters."""
     if value is not None and _CONTROL_CHARS.search(value):
         raise ValueError("Text contains characters that are not allowed.")
+    return value
+
+
+# --- Image references ------------------------------------------------------
+_IMAGE_DATA_URL = re.compile(r"^data:image/(jpeg|png|webp);base64,", re.IGNORECASE)
+_MEDIA_EXTENSION = re.compile(
+    r"\.(mp4|m4v|mov|avi|mkv|webm|wmv|flv|mpe?g|3gp|ogv|mp3|wav|ogg|oga|m4a|aac|flac|wma|opus)$",
+    re.IGNORECASE,
+)
+IMAGE_REFERENCE_MESSAGE = "Only JPEG, PNG or WebP images are allowed."
+
+
+def validate_image_reference(value: str | None) -> str | None:
+    """A `photo_url` must point at an image: never a video, audio file or other content.
+
+    Accepts a relative path, an http(s) link, or an inline JPEG/PNG/WebP. Uploaded
+    files are checked by their contents in app/property/storage.py instead.
+    """
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    if value.lower().startswith("data:"):
+        if not _IMAGE_DATA_URL.match(value):
+            raise ValueError(IMAGE_REFERENCE_MESSAGE)
+        return value
+    parts = urlsplit(value)
+    if parts.scheme and parts.scheme.lower() not in ("http", "https"):
+        raise ValueError(IMAGE_REFERENCE_MESSAGE)
+    if _MEDIA_EXTENSION.search(parts.path):
+        raise ValueError(IMAGE_REFERENCE_MESSAGE)
     return value
 
 

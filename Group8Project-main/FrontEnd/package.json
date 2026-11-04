@@ -7,12 +7,13 @@
     "dev": "node scripts/dev-server.mjs",
     "build": "node scripts/build.mjs",
     "preview": "node scripts/dev-server.mjs --preview",
-    "test": "npm run test:phase2 && npm run test:phase3 && npm run test:phase3-api && npm run test:phase5 && npm run test:phase6",
+    "test": "npm run test:phase2 && npm run test:phase3 && npm run test:phase3-api && npm run test:phase5 && npm run test:phase6 && npm run test:images",
     "test:phase2": "node --test tests/phase2-roles.test.mjs",
     "test:phase3": "node --test tests/phase3-auth.test.mjs",
     "test:phase3-api": "node --test tests/phase3-api-modules.test.mjs",
     "test:phase5": "node --test tests/phase5-hardening.test.mjs",
-    "test:phase6": "node --test tests/phase6-api.test.mjs"
+    "test:phase6": "node --test tests/phase6-api.test.mjs",
+    "test:images": "node --test tests/image-files.test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

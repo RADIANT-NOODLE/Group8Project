@@ -12,6 +12,8 @@ import {
 } from "../../services/statusMap";
 import ComplaintStatusRing from "../../components/ComplaintStatusRing";
 import DateRangeFilter, { ALL_DATES, inDateRange, isDateFilterActive } from "../../components/DateRangeFilter";
+import ComplaintPhoto from "../../components/ComplaintPhoto";
+import "../../components/ValoraModal.css";
 import "./ResidentComplaints.css";
 import { roleLabel } from "../../services/roleMap";
 import { getStoredUser } from "../../services/session";
@@ -146,6 +148,7 @@ export default function ResidentComplaints() {
 
     // work order dialog
     const [orderTarget, setOrderTarget] = useState(null);
+    const [photoTarget, setPhotoTarget] = useState(null);
     const [orderForm, setOrderForm] = useState({ providerId: "", jobCost: "", estimatedCompletionDate: "" });
     const [orderError, setOrderError] = useState("");
     const [isSavingOrder, setIsSavingOrder] = useState(false);
@@ -491,7 +494,20 @@ export default function ResidentComplaints() {
                                                 </td>
 
                                                 <td>{complaint.unitId ? `Unit #${complaint.unitId}` : "—"}</td>
-                                                <td title={complaint.description}>{complaint.category || "Other"}</td>
+                                                <td title={complaint.description}>
+                                                    {complaint.category || "Other"}
+                                                    {complaint.photoUrl && (
+                                                        <div>
+                                                            <button
+                                                                type="button"
+                                                                className="resident-complaints-link-button"
+                                                                onClick={() => setPhotoTarget(complaint)}
+                                                            >
+                                                                View photo
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
                                                 <td>{formatDate(complaint.createdAt)}</td>
 
                                                 <td>
@@ -581,6 +597,23 @@ export default function ResidentComplaints() {
                     </div>
                 </section>
             </main>
+
+            {photoTarget && (
+                <div
+                    className="valora-modal-overlay"
+                    onMouseDown={(event) => { if (event.target === event.currentTarget) setPhotoTarget(null); }}
+                >
+                    <div className="valora-modal" role="dialog" aria-modal="true" aria-label={`Photo for complaint ${photoTarget.id}`} style={{ maxWidth: "640px" }}>
+                        <h3>Complaint #{photoTarget.id} · {photoTarget.category}</h3>
+                        <ComplaintPhoto complaint={photoTarget} />
+                        <div className="valora-modal-actions" style={{ marginTop: "16px" }}>
+                            <button type="button" className="valora-modal-btn valora-modal-btn-cancel" autoFocus onClick={() => setPhotoTarget(null)}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {orderTarget && (
                 <div

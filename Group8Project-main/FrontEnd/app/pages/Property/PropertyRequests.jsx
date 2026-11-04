@@ -845,9 +845,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                     <div className="property-requests-detail-item">
                                         <span>Property Size</span>
                                         <strong>
-                                            {selectedRequest.propertySize
-                                                ? `${selectedRequest.propertySize} m²`
-                                                : "—"}
+                                            {selectedRequest.propertySize || "—"}
                                         </strong>
                                     </div>
                                 </div>
