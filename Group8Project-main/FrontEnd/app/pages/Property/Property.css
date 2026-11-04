@@ -150,10 +150,29 @@
 }
 
 .pd-gallery-main {
-    display: block;
+    position: relative;
     width: 100%;
     height: 440px;
+}
+
+.pd-gallery-main img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.pd-gallery-main img.is-active {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pd-gallery-main img {
+        transition: none;
+    }
 }
 
 .pd-gallery-empty {

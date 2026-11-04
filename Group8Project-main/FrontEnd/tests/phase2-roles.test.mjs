@@ -79,8 +79,9 @@ test('route access follows the matrix', () => {
     }
   }
 
-  /* maintenance is run by the administrators; residents log and rate their own requests */
-  assert.equal(roles.canAccessRoute('resident', '/maintenance'), true);
+  /* maintenance is run by the administrators; residents follow their requests on /complaints */
+  assert.equal(roles.canAccessRoute('resident', '/maintenance'), false);
+  assert.equal(roles.canAccessRoute('resident', '/complaints'), true);
   assert.equal(roles.canAccessRoute('hoa_admin', '/maintenance'), true);
   assert.equal(roles.canAccessRoute('estate_agent', '/maintenance'), false);
 

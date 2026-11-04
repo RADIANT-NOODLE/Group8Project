@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
+import { showConfirm } from "../../components/AppDialog";
 import {
     createComplaint,
+    deleteComplaint,
     listComplaints,
     updateComplaintStatus,
 } from "../../services/complaintApi";
@@ -19,6 +21,7 @@ import {
     complaintStatusLabel,
     workOrderStatusLabel,
 } from "../../services/statusMap";
+import DenyComplaintDialog from "../../components/DenyComplaintDialog";
 import "./Maintenance.css";
 import { getStoredUser } from "../../services/session";
 
@@ -47,10 +50,10 @@ const STATUS_CLASS = {
     under_review: "acknowledged",
     in_progress: "in-progress",
     resolved: "resolved",
-    closed: "cancelled",
+    denied: "cancelled",
 };
 
-const ACTIVE_EXCLUDED = ["resolved", "closed"];
+const ACTIVE_EXCLUDED = ["resolved", "denied"];
 
 function readUser() {
     try {
@@ -195,6 +198,7 @@ function Maintenance() {
     const [categoryFilter, setCategoryFilter] = useState("All");
     const [showAddRequest, setShowAddRequest] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
+    const [denyTarget, setDenyTarget] = useState(null);
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [submitting, setSubmitting] = useState(false);
     const [ratingValue, setRatingValue] = useState("5");
@@ -246,7 +250,9 @@ function Maintenance() {
     const requests = useMemo(() => {
         const byComplaint = new Map();
         workOrders.forEach((workOrder) => {
-            if (!byComplaint.has(workOrder.complaintId)) {
+            // a cancelled order only shows if there is nothing more current
+            const shown = byComplaint.get(workOrder.complaintId);
+            if (!shown || shown.status === WORK_ORDER_STATUS.cancelled) {
                 byComplaint.set(workOrder.complaintId, workOrder);
             }
         });
@@ -268,16 +274,19 @@ function Maintenance() {
     const totalRequests = requests.length;
     const activeRequests = requests.filter((r) => !ACTIVE_EXCLUDED.includes(r.status)).length;
     const inProgressRequests = requests.filter((r) => r.status === COMPLAINT_STATUS.in_progress).length;
-    const resolvedRequests = requests.filter((r) => ACTIVE_EXCLUDED.includes(r.status)).length;
+    const resolvedRequests = requests.filter((r) => r.status === COMPLAINT_STATUS.resolved).length;
+    const deniedRequests = requests.filter((r) => r.status === COMPLAINT_STATUS.denied).length;
+    // a denied request was never going to be resolved, so it does not lower the rate
+    const resolvableRequests = totalRequests - deniedRequests;
 
     // the stages a request moves through, left to right
     const pipeline = [
         { key: "new", label: "Submitted", hint: "Waiting to be picked up", count: requests.filter((r) => r.status === COMPLAINT_STATUS.submitted).length },
         { key: "review", label: "Under review", hint: "Being assessed", count: requests.filter((r) => r.status === COMPLAINT_STATUS.under_review).length },
         { key: "progress", label: "In progress", hint: "Being worked on", count: inProgressRequests },
-        { key: "done", label: "Resolved", hint: "Completed or closed", count: resolvedRequests },
+        { key: "done", label: "Resolved", hint: "Completed", count: resolvedRequests },
     ];
-    const resolutionRate = totalRequests > 0 ? Math.round((resolvedRequests / totalRequests) * 100) : 0;
+    const resolutionRate = resolvableRequests > 0 ? Math.round((resolvedRequests / resolvableRequests) * 100) : 0;
 
     function handleFormChange(event) {
         const { name, value } = event.target;
@@ -327,6 +336,12 @@ function Maintenance() {
     async function handleStatusChange(request, newStatus) {
         if (!isAdmin) return;
 
+        // Denying needs a reason first, so it opens the dialog instead of saving straight away.
+        if (newStatus === COMPLAINT_STATUS.denied) {
+            setDenyTarget(request);
+            return;
+        }
+
         setBusyId(request.id);
         setError("");
 
@@ -349,6 +364,44 @@ function Maintenance() {
         } finally {
             setBusyId(null);
         }
+    }
+
+    async function handleDelete(request) {
+        if (!isAdmin) return;
+
+        const orderCount = workOrders.filter((order) => order.complaintId === request.id).length;
+        const alsoRemoved = [
+            orderCount ? `${orderCount} work order${orderCount === 1 ? "" : "s"} (with any ratings)` : "",
+            request.photoUrl ? "its photo" : "",
+        ].filter(Boolean).join(" and ");
+        const label = `REQ-${String(request.id).padStart(3, "0")}`;
+
+        const confirmed = await showConfirm(
+            `Delete maintenance request ${label}?${alsoRemoved ? ` This also removes ${alsoRemoved}.` : ""} It is also the resident's complaint, so it will disappear for them too. This cannot be undone.`,
+            { title: "Delete request?", confirmLabel: "Delete", tone: "danger" }
+        );
+        if (!confirmed) return;
+
+        setBusyId(request.id);
+        setError("");
+        try {
+            await deleteComplaint(request.id);
+            await load();
+            setNotice(`Request ${label} has been deleted.`);
+        } catch (deleteError) {
+            setError(deleteError?.message || "Unable to delete the request.");
+        } finally {
+            setBusyId(null);
+        }
+    }
+
+    async function denyRequest(reason) {
+        await updateComplaintStatus(denyTarget.id, { status: COMPLAINT_STATUS.denied, denialReason: reason });
+        const deniedId = denyTarget.id;
+        setDenyTarget(null);
+        await load();
+        setError("");
+        setNotice(`Request ${deniedId} has been denied.`);
     }
 
     async function handleRate(request) {
@@ -425,7 +478,7 @@ function Maintenance() {
                             <p>
                                 {totalRequests === 0
                                     ? "No maintenance requests yet."
-                                    : `${totalRequests} ${isAdmin ? "community" : "of your"} ${totalRequests === 1 ? "request" : "requests"} · ${activeRequests} still open`}
+                                    : `${totalRequests} ${isAdmin ? "community" : "of your"} ${totalRequests === 1 ? "request" : "requests"} · ${activeRequests} still open${deniedRequests > 0 ? ` · ${deniedRequests} denied` : ""}`}
                             </p>
                         </div>
                     </div>
@@ -451,7 +504,7 @@ function Maintenance() {
                         <div className="maintenance-pipeline-rate-top">
                             <span>Resolution rate</span>
                             <strong>
-                                {resolvedRequests} of {totalRequests} resolved · {resolutionRate}%
+                                {resolvedRequests} of {resolvableRequests} resolved · {resolutionRate}%
                             </strong>
                         </div>
                         <div
@@ -691,6 +744,18 @@ function Maintenance() {
                                                                         ))}
                                                                     </select>
                                                                 )}
+
+                                                                {isAdmin && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="maintenance-delete-btn"
+                                                                        aria-label={`Delete request ${request.id}`}
+                                                                        disabled={busyId === request.id}
+                                                                        onClick={() => handleDelete(request)}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -779,6 +844,13 @@ function Maintenance() {
                                 <strong>{complaintStatusLabel(selectedRequest.status)}</strong>
                             </div>
 
+                            {selectedRequest.denialReason && (
+                                <div className="maintenance-request-detail-full">
+                                    <span>Reason for denial</span>
+                                    <p>{selectedRequest.denialReason}</p>
+                                </div>
+                            )}
+
                             <div className="maintenance-request-detail-full">
                                 <span>Description</span>
                                 <p>{selectedRequest.description}</p>
@@ -857,6 +929,14 @@ function Maintenance() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {denyTarget && (
+                <DenyComplaintDialog
+                    complaint={denyTarget}
+                    onCancel={() => setDenyTarget(null)}
+                    onDeny={denyRequest}
+                />
             )}
         </div>
     );

@@ -809,6 +809,14 @@
     background: #f6f3f8;
 }
 
+@media (max-width: 600px) {
+    .property-approvals-view-toggle {
+        flex-shrink: 1;
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+}
+
 .property-approvals-view-toggle button {
     display: inline-flex;
     align-items: center;

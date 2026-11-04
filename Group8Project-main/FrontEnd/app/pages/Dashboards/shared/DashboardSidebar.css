@@ -6,7 +6,9 @@
 :root {
     --valora-sidebar-width: 220px;
     --valora-sidebar-tablet-width: 200px;
-    --valora-sidebar-mobile-width: 68px;
+    --valora-sidebar-mobile-width: 0px;
+    --valora-sidebar-drawer-width: min(260px, 85vw);
+    --valora-sidebar-handle-width: 22px;
     --valora-sidebar-collapsed-width: 68px;
     --valora-purple: #563f6b;
     --valora-purple-dark: #463256;
@@ -84,6 +86,16 @@
     max-width: 100%;
     height: auto;
     object-fit: contain;
+}
+
+/* =========================================================
+   MOBILE DRAWER CONTROLS (shown below 600px, see MOBILE)
+========================================================= */
+
+.dashboard-mobile-handle,
+.dashboard-mobile-close-button,
+.dashboard-mobile-backdrop {
+    display: none;
 }
 
 /* =========================================================
@@ -379,11 +391,19 @@
    Every dashboard page renders <DashboardSidebar /> directly
    before its <main>, so the sibling selector below moves the
    content over without touching each page's stylesheet.
-   Below 600px the sidebar is already an icon rail, so the
-   toggle is hidden there (see MOBILE).
+   Below 600px the sidebar is a slide-out drawer with its
+   own controls instead, so this toggle is hidden (see MOBILE).
 ========================================================= */
 
 .dashboard-sidebar ~ main {
+    /* The sidebar is fixed, so its width is the only correct offset at every
+       screen size. !important stops page stylesheets' own breakpoints from
+       sliding content underneath it. */
+    box-sizing: border-box;
+    min-width: 0;
+    margin-left: var(--valora-sidebar-width) !important;
+    width: calc(100% - var(--valora-sidebar-width)) !important;
+
     transition:
         margin-left 0.2s ease,
         width 0.2s ease;
@@ -395,8 +415,8 @@
     }
 
     .dashboard-sidebar.is-collapsed ~ main {
-        margin-left: var(--valora-sidebar-collapsed-width);
-        width: calc(100% - var(--valora-sidebar-collapsed-width));
+        margin-left: var(--valora-sidebar-collapsed-width) !important;
+        width: calc(100% - var(--valora-sidebar-collapsed-width)) !important;
     }
 
     .dashboard-sidebar.is-collapsed .dashboard-sidebar-brand {
@@ -483,10 +503,72 @@
         --valora-sidebar-width: var(--valora-sidebar-mobile-width);
     }
 
-    .dashboard-sidebar-brand {
-        min-height: 68px;
+    /* Off screen until pulled out, so pages get the full width. */
+    .dashboard-sidebar {
+        width: var(--valora-sidebar-drawer-width);
+        overscroll-behavior: contain;
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition:
+            transform 0.2s ease,
+            visibility 0.2s;
+    }
+
+    .dashboard-sidebar.is-mobile-open {
+        transform: none;
+        visibility: visible;
+    }
+
+    /* A gutter for the handle, so it never covers page content. */
+    .dashboard-sidebar ~ main {
+        padding-left: calc(var(--valora-sidebar-handle-width) + 6px) !important;
+    }
+
+    .dashboard-mobile-handle {
+        position: fixed;
+        top: 50%;
+        left: 0;
+        z-index: 90; /* below page modals, which start at 500 */
+
+        width: var(--valora-sidebar-handle-width);
+        height: 64px;
+        transform: translateY(-50%);
+
+        display: flex;
+        align-items: center;
         justify-content: center;
-        padding: 10px 7px;
+
+        padding: 0;
+
+        border: 1px solid var(--valora-purple-border);
+        border-left: 0;
+        border-radius: 0 10px 10px 0;
+
+        background: #ffffff;
+        color: var(--valora-purple);
+        box-shadow: 2px 0 8px rgba(30, 20, 40, 0.12);
+
+        cursor: pointer;
+        touch-action: none; /* a sideways drag opens the drawer, not page scroll */
+    }
+
+    .dashboard-mobile-handle svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .dashboard-mobile-handle:focus-visible,
+    .dashboard-mobile-close-button:focus-visible {
+        outline: 2px solid var(--valora-purple);
+        outline-offset: 2px;
+    }
+
+    .dashboard-mobile-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 999; /* directly under the drawer */
+        background: rgba(30, 20, 40, 0.45);
     }
 
     .dashboard-collapse-button {
@@ -494,70 +576,38 @@
     }
 
     .dashboard-logo {
-        width: 45px;
-        height: 45px;
-        object-fit: contain;
+        width: 92px;
     }
 
-    .dashboard-sidebar-profile {
+    .dashboard-mobile-close-button {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        padding: 12px 6px;
+
+        padding: 0;
+
+        border: 1px solid var(--valora-purple-border);
+        border-radius: 7px;
+
+        background: #ffffff;
+        color: var(--valora-purple);
+
+        cursor: pointer;
     }
 
-    .dashboard-profile-details {
-        display: none;
+    .dashboard-mobile-close-button svg {
+        width: 18px;
+        height: 18px;
     }
 
-    .dashboard-sidebar-navigation {
-        padding: 12px 6px;
-    }
-
-    .dashboard-nav-section-title,
-    .dashboard-account-section-title {
-        display: none;
-    }
-
-    .dashboard-sidebar-link {
-        min-height: 42px;
-        justify-content: center;
-        gap: 0;
-        padding: 9px 4px;
-    }
-
-    .dashboard-nav-label {
-        display: none;
-    }
-
-    .dashboard-nav-icon {
-        width: 20px;
-        height: 20px;
-        flex-basis: 20px;
-    }
-
-    .dashboard-nav-icon svg {
-        width: 20px;
-        height: 20px;
-    }
-
-    .dashboard-sidebar-bottom {
-        padding: 10px 6px 14px;
-    }
-
+    .dashboard-sidebar-link,
     .dashboard-logout-button {
-        min-height: 42px;
-        justify-content: center;
-        gap: 0;
-        padding: 9px 4px;
-    }
-
-    .dashboard-logout-button .dashboard-nav-label {
-        display: none;
-    }
-
-    .dashboard-logout-icon {
-        width: 20px;
-        height: 20px;
-        flex-basis: 20px;
+        min-height: 44px;
+        font-size: 13px;
     }
 
     .dashboard-main-content {

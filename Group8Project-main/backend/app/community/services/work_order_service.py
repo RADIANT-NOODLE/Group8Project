@@ -118,10 +118,16 @@ class WorkOrderService:
         complaint = await self._complaint_repo.get_by_id(payload.complaint_id)
         if complaint is None:
             raise NotFoundException(f"Complaint with id {payload.complaint_id} was not found.")
+        if complaint.status == "denied":
+            raise ConflictException("This complaint was denied, so it cannot be given a work order.")
         provider = await self._provider_repo.get_by_id(payload.provider_id)
         if provider is None:
             raise NotFoundException(
                 f"Service provider with id {payload.provider_id} was not found."
+            )
+        if await self._repo.has_active_order(payload.complaint_id, payload.provider_id):
+            raise ConflictException(
+                f"{provider.full_name} already has an active work order on this complaint."
             )
         work_order = await self._repo.create(
             complaint_id=payload.complaint_id,
@@ -159,6 +165,15 @@ class WorkOrderService:
 
         new_status = changes.pop("status", None)
         if new_status is not None:
+            if new_status in (
+                WorkOrderStatus.assigned,
+                WorkOrderStatus.in_progress,
+            ) and await self._repo.has_active_order(
+                work_order.complaint_id, work_order.provider_id, excluding=work_order.work_order_id
+            ):
+                raise ConflictException(
+                    "This provider already has another active work order on this complaint."
+                )
             work_order.status = new_status.value
             complaint = await self._complaint_repo.get_by_id(work_order.complaint_id)
 
@@ -168,14 +183,14 @@ class WorkOrderService:
                     work_order.resolved_at = now
                 if work_order.actual_completion_date is None:
                     work_order.actual_completion_date = now
-                if complaint is not None and complaint.status != "closed":
+                if complaint is not None and complaint.status != "denied":
                     complaint.status = "resolved"
                     if complaint.resolved_at is None:
                         complaint.resolved_at = now
             elif new_status == WorkOrderStatus.in_progress:
                 work_order.resolved_at = None
                 work_order.actual_completion_date = None
-                if complaint is not None and complaint.status != "closed":
+                if complaint is not None and complaint.status != "denied":
                     complaint.status = "in_progress"
             elif new_status == WorkOrderStatus.assigned:
                 work_order.resolved_at = None

@@ -103,6 +103,15 @@ async def get_complaint_photo(
     )
 
 
+@router.delete("/{complaint_id}", status_code=204)
+async def delete_complaint(
+    complaint_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+) -> None:
+    await ComplaintService(db).delete_complaint(complaint_id)
+
+
 @router.patch("/{complaint_id}/status", response_model=ComplaintResponse)
 async def update_complaint_status(
     complaint_id: int,

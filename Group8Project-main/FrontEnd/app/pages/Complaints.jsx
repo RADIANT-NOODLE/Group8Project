@@ -3,9 +3,11 @@ import DashboardSidebar from "./Dashboards/shared/DashboardSidebar";
 import { createComplaint, listComplaints, updateComplaintStatus, uploadComplaintPhoto } from "../services/complaintApi";
 import { apiRequest } from "../services/apiClient";
 import { listProperties } from "../services/propertyApi";
-import { listWorkOrders } from "../services/workOrderApi";
-import { COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
+import { listWorkOrders, rateWorkOrder } from "../services/workOrderApi";
+import { COMPLAINT_STATUS, COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
+import ComplaintPipeline from "../components/ComplaintPipeline";
 import ComplaintStatusRing from "../components/ComplaintStatusRing";
+import DenyComplaintDialog from "../components/DenyComplaintDialog";
 import DateRangeFilter, { ALL_DATES, inDateRange, isDateFilterActive } from "../components/DateRangeFilter";
 import "./Complaints.css";
 import { IMAGE_ACCEPT, imageFileProblem } from "../services/imageFiles";
@@ -73,7 +75,7 @@ function statusClass(status) {
         under_review: "complaints-status-acknowledged",
         in_progress: "complaints-status-progress",
         resolved: "complaints-status-resolved",
-        closed: "complaints-status-cancelled",
+        denied: "complaints-status-cancelled",
     };
     return classes[status] || classes.submitted;
 }
@@ -102,8 +104,14 @@ export default function Complaints() {
     const [search, setSearch] = useState("");
     const [dateRange, setDateRange] = useState(ALL_DATES);
     const [selectedComplaint, setSelectedComplaint] = useState(null);
+    const [denyTarget, setDenyTarget] = useState(null);
     const [notice, setNotice] = useState("");
     const [error, setError] = useState("");
+
+    // chosen scores by work order, and the problem to show inside the popup
+    const [ratings, setRatings] = useState({});
+    const [ratingOrderId, setRatingOrderId] = useState(null);
+    const [ratingError, setRatingError] = useState("");
 
     const role = getUserRole(user);
     const userName = getUserName(user);
@@ -283,8 +291,47 @@ export default function Complaints() {
         }
     }
 
+    // Denying needs a reason first, so it opens the dialog instead of saving straight away.
+    function requestStatusChange(complaint, nextStatus) {
+        if (nextStatus === COMPLAINT_STATUS.denied) {
+            setDenyTarget(complaint);
+            return;
+        }
+        updateStatus(complaint.id, nextStatus);
+    }
+
+    async function denyComplaint(reason) {
+        const updated = await updateComplaintStatus(denyTarget.id, {
+            status: COMPLAINT_STATUS.denied,
+            denialReason: reason,
+        });
+        setDenyTarget(null);
+        setSelectedComplaint((current) => (current?.id === updated.id ? { ...current, ...updated } : current));
+        await fetchComplaints();
+        setNotice(`Complaint #${updated.id} has been denied.`);
+        setError("");
+    }
+
     const workOrdersFor = (complaintId) =>
         workOrders.filter((order) => order.complaintId === complaintId);
+
+    // The API gives an author their own id even on an anonymous complaint.
+    const isOwnComplaint = (complaint) =>
+        complaint?.userId != null && complaint.userId === Number(user?.id ?? user?.user_id);
+
+    async function submitRating(order) {
+        setRatingOrderId(order.id);
+        setRatingError("");
+
+        try {
+            await rateWorkOrder(order.id, ratings[order.id] ?? "5");
+            await fetchComplaints();
+        } catch (err) {
+            setRatingError(err?.message || "Unable to save your rating.");
+        } finally {
+            setRatingOrderId(null);
+        }
+    }
 
     return (
         <div className="complaints-layout">
@@ -492,7 +539,7 @@ export default function Complaints() {
                                                                     <select
                                                                         className="complaints-status-select"
                                                                         value={complaint.status || "submitted"}
-                                                                        onChange={(event) => updateStatus(complaint.id, event.target.value)}
+                                                                        onChange={(event) => requestStatusChange(complaint, event.target.value)}
                                                                     >
                                                                         {COMPLAINT_STATUSES.map((item) => (
                                                                             <option key={item.value} value={item.value}>{item.label}</option>
@@ -504,7 +551,10 @@ export default function Complaints() {
                                                                 <button
                                                                     type="button"
                                                                     className="complaints-view-button"
-                                                                    onClick={() => setSelectedComplaint(complaint)}
+                                                                    onClick={() => {
+                                                                        setRatingError("");
+                                                                        setSelectedComplaint(complaint);
+                                                                    }}
                                                                 >
                                                                     View
                                                                 </button>
@@ -543,6 +593,10 @@ export default function Complaints() {
                             <button type="button" className="complaints-modal-close" onClick={() => setSelectedComplaint(null)}>×</button>
                         </div>
 
+                        {isOwnComplaint(selectedComplaint) && (
+                            <ComplaintPipeline status={selectedComplaint.status} />
+                        )}
+
                         <dl className="complaints-detail-list">
                             <div><dt>Category</dt><dd>{selectedComplaint.category}</dd></div>
                             <div><dt>Date submitted</dt><dd>{formatDate(selectedComplaint.createdAt)}</dd></div>
@@ -552,6 +606,12 @@ export default function Complaints() {
                             )}
                             {selectedComplaint.assignedTo && (
                                 <div><dt>Assigned to</dt><dd>{selectedComplaint.assignedTo}</dd></div>
+                            )}
+                            {selectedComplaint.denialReason && (
+                                <div className="complaints-detail-description">
+                                    <dt>Reason for denial</dt>
+                                    <dd>{selectedComplaint.denialReason}</dd>
+                                </div>
                             )}
                             <div className="complaints-detail-description">
                                 <dt>Description</dt>
@@ -570,12 +630,50 @@ export default function Complaints() {
                                         {workOrdersFor(selectedComplaint.id).map((order) => (
                                             <div key={order.id}>
                                                 Work order #{order.id} — {order.status.replace("_", " ")}
+                                                {order.completionNotes && (
+                                                    <p className="complaints-work-notes">{order.completionNotes}</p>
+                                                )}
+                                                {order.residentRating != null && (
+                                                    <p className="complaints-work-notes">Your rating: {order.residentRating} / 5</p>
+                                                )}
                                             </div>
                                         ))}
                                     </dd>
                                 </div>
                             )}
                         </dl>
+
+                        {isOwnComplaint(selectedComplaint) &&
+                            workOrdersFor(selectedComplaint.id)
+                                .filter((order) => order.status === "completed" && order.residentRating == null)
+                                .map((order) => (
+                                    <div key={order.id} className="complaints-modal-actions">
+                                        <label htmlFor={`complaint-rating-${order.id}`}>Rate this job</label>
+                                        <select
+                                            id={`complaint-rating-${order.id}`}
+                                            value={ratings[order.id] ?? "5"}
+                                            onChange={(event) =>
+                                                setRatings((previous) => ({ ...previous, [order.id]: event.target.value }))
+                                            }
+                                        >
+                                            {[5, 4, 3, 2, 1].map((value) => (
+                                                <option key={value} value={value}>{value} / 5</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            className="complaints-submit-btn complaints-rating-submit"
+                                            disabled={ratingOrderId === order.id}
+                                            onClick={() => submitRating(order)}
+                                        >
+                                            {ratingOrderId === order.id ? "Saving..." : "Submit rating"}
+                                        </button>
+                                    </div>
+                                ))}
+
+                        {ratingError && (
+                            <p className="complaints-rating-error" role="alert">{ratingError}</p>
+                        )}
 
                         {isAdmin && (
                             <div className="complaints-modal-actions">
@@ -584,8 +682,11 @@ export default function Complaints() {
                                     id="modal-complaint-status"
                                     value={selectedComplaint.status || "submitted"}
                                     onChange={(event) => {
-                                        updateStatus(selectedComplaint.id, event.target.value);
-                                        setSelectedComplaint({ ...selectedComplaint, status: event.target.value, rawStatus: event.target.value });
+                                        const nextStatus = event.target.value;
+                                        requestStatusChange(selectedComplaint, nextStatus);
+                                        if (nextStatus !== COMPLAINT_STATUS.denied) {
+                                            setSelectedComplaint({ ...selectedComplaint, status: nextStatus, rawStatus: nextStatus, denialReason: null });
+                                        }
                                     }}
                                 >
                                     {COMPLAINT_STATUSES.map((item) => (
@@ -596,6 +697,14 @@ export default function Complaints() {
                         )}
                     </section>
                 </div>
+            )}
+
+            {denyTarget && (
+                <DenyComplaintDialog
+                    complaint={denyTarget}
+                    onCancel={() => setDenyTarget(null)}
+                    onDeny={denyComplaint}
+                />
             )}
         </div>
     );

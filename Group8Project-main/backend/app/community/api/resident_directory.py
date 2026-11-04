@@ -32,6 +32,7 @@ def format_record(record: ResidentDirectory) -> dict:
         "created_at": record.created_at,
         "name": record.user.full_name if record.user else "Unknown",
         "email": record.user.email if record.user else "Unknown",
+        "phone": record.user.phoneno if record.user else None,
         "role": record.user.role if record.user else "Unknown",
         "unit_no": record.property.unit_no if record.property else "Unassigned",
         "complex_name": record.property.complex_name if record.property else "Unknown",

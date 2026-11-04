@@ -486,9 +486,29 @@
     color: #563f6b;
 }
 
+.resident-complaints-cancelled-orders summary {
+    color: #77717d;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.resident-complaints-cancelled-orders .resident-complaints-workorder {
+    margin-top: 6px;
+}
+
 .resident-complaints-status-cancelled {
-    background: #f0f0f2;
-    color: #686570;
+    background: #fce8e6;
+    color: #b42318;
+}
+
+.resident-complaints-denial-reason {
+    display: block;
+    max-width: 220px;
+    margin-top: 6px;
+    color: #77717d;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .resident-complaints-status-submitted {
@@ -705,6 +725,23 @@
     font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
+}
+
+.resident-complaints-delete-button {
+    display: block;
+    margin-top: 8px;
+    padding: 5px 10px;
+    border: 1px solid #e3b7b2;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #b42318;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.resident-complaints-delete-button:hover {
+    background: #fce8e6;
 }
 
 .resident-complaints-link-button:hover {

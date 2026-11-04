@@ -93,12 +93,13 @@ class IntelligenceService:
         if "complaint" in normalized:
             answer = (
                 f"There are {summary.open_complaints} open complaints and "
-                f"{summary.resolved_complaints} resolved or closed complaints "
+                f"{summary.resolved_complaints} resolved complaints "
                 f"across {summary.units_count} units in {summary.scope}."
             )
             evidence.append(
                 f"Complaint records: {summary.complaints_total} total; "
-                f"{summary.open_complaints} open; {summary.resolved_complaints} resolved or closed."
+                f"{summary.open_complaints} open; {summary.resolved_complaints} resolved; "
+                f"{summary.complaints_total - summary.open_complaints - summary.resolved_complaints} denied."
             )
         elif "work order" in normalized or "maintenance" in normalized or "overdue" in normalized:
             answer = (

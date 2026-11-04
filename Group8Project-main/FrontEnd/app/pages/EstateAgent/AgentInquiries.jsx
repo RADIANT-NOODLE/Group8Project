@@ -2,11 +2,32 @@ import React, { useEffect, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { useSession, getSessionToken } from "../../services/session";
 import "./AgentInquiries.css";
-import { showAlert } from "../../components/AppDialog";
+import { showAlert, showConfirm } from "../../components/AppDialog";
 import { getApiBaseUrl } from "../../services/apiClient";
+import { ROLES } from "../../services/roleMap";
+
+const OPEN_STATUSES = ["New", "Contacted", "Viewing Scheduled"];
+
+/* Statuses that end a deal: the property comes off the market and the enquiry locks. */
+const DEAL_STATUSES = ["Sold", "Rented Out"];
+
+/** The outcome a unit can have. Older listings have no type, so both are offered. */
+function dealStatusesFor(listingType) {
+    if (listingType === "sale") return ["Sold"];
+    if (listingType === "rent") return ["Rented Out"];
+    return DEAL_STATUSES;
+}
+
+function statusOptionsFor(inquiry) {
+    const options = [...OPEN_STATUSES, ...dealStatusesFor(inquiry.listingType)];
+    // an older enquiry can hold a status no longer offered, such as Closed
+    return options.includes(inquiry.status) ? options : [...options, inquiry.status];
+}
 
 function AgentInquiries() {
     const { user } = useSession();
+    // the route only lets estate agents and administrators in
+    const isAdminView = Boolean(user) && user.role !== ROLES.estateAgent;
     const [statusFilter, setStatusFilter] = useState("All");
     const [inquiries, setInquiries] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -39,6 +60,8 @@ function AgentInquiries() {
                         buyerName: inq.buyer_name,
                         buyerEmail: inq.buyer_email,
                         buyerContact: inq.buyer_contact,
+                        agentName: inq.agent_name,
+                        listingType: inq.listing_type,
                         propertyUnit: `Unit ${inq.property_unit}`,
                         propertyType: inq.property_complex,
                         status: inq.status,
@@ -98,7 +121,19 @@ function AgentInquiries() {
     UPDATE STATUS (Now saves to API)
     =========================================================
     */
-    const handleStatusChange = async (inquiryId, newStatus) => {
+    const handleStatusChange = async (inquiry, newStatus) => {
+        const inquiryId = inquiry.id;
+        const closesDeal = DEAL_STATUSES.includes(newStatus);
+        const outcome = newStatus === "Sold" ? "sold" : "rented out";
+
+        if (closesDeal) {
+            const confirmed = await showConfirm(
+                `Mark ${inquiry.propertyUnit} as ${outcome} to ${inquiry.buyerName}? The property comes off the market and this inquiry can no longer be changed.`,
+                { title: `Mark as ${outcome}?`, confirmLabel: `Mark as ${outcome}` }
+            );
+            if (!confirmed) return;
+        }
+
         try {
             const token = getSessionToken();
             const response = await fetch(`${getApiBaseUrl()}/api/v1/inquiries/${inquiryId}`, {
@@ -111,18 +146,23 @@ function AgentInquiries() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to update status");
+                const data = await response.json().catch(() => null);
+                throw new Error(typeof data?.detail === "string" ? data.detail : "Could not update the inquiry status. Please try again.");
             }
 
             // Update the UI only after the backend confirms it was saved
             setInquiries((current) =>
-                current.map((inquiry) =>
-                    inquiry.id === inquiryId ? { ...inquiry, status: newStatus } : inquiry
+                current.map((item) =>
+                    item.id === inquiryId ? { ...item, status: newStatus } : item
                 )
             );
+
+            if (closesDeal) {
+                showAlert(`${inquiry.propertyUnit} has been marked as ${outcome} and taken off the market.`, { title: "Deal recorded" });
+            }
         } catch (err) {
             console.error(err);
-            showAlert("Could not update the inquiry status. Please try again.");
+            showAlert(err.message);
         }
     };
 
@@ -136,10 +176,12 @@ function AgentInquiries() {
             `Inquiry Details\n\n` +
             `Buyer: ${inquiry.buyerName}\n` +
             `Email: ${inquiry.buyerEmail}\n` +
+            `Phone: ${inquiry.buyerContact || "Not provided"}\n` +
             `Property: ${inquiry.propertyUnit} (${inquiry.propertyType})\n` +
+            (isAdminView ? `Agent: ${inquiry.agentName || "Unknown"}\n` : "") +
             `Date: ${formatDate(inquiry.date)}\n` +
             `Status: ${inquiry.status}\n\n` +
-            `Message:\n${inquiry.message}`
+            `Message:\n${inquiry.message || "No message"}`
         );
     };
 
@@ -156,12 +198,12 @@ function AgentInquiries() {
                     <header className="agent-inquiries-topbar">
                         <div>
                             <div className="agent-inquiries-breadcrumb">
-                                <span>Estate Agent</span>
+                                <span>{isAdminView ? "HOA Administration" : "Estate Agent"}</span>
                                 <span className="breadcrumb-separator">/</span>
                                 <span>Inquiry Log</span>
                             </div>
                             <h1>Inquiry Log</h1>
-                            <p>Manage buyer inquiries for your assigned VALORA properties.</p>
+                            <p>{isAdminView ? "Manage buyer inquiries across every VALORA property." : "Manage buyer inquiries for your assigned VALORA properties."}</p>
                         </div>
                     </header>
 
@@ -181,7 +223,7 @@ function AgentInquiries() {
                         <div className="agent-inquiries-panel-heading">
                             <div>
                                 <h2>Property Inquiries</h2>
-                                <p>Review and manage inquiries received for your listings.</p>
+                                <p>{isAdminView ? "Review and manage inquiries received for all listings." : "Review and manage inquiries received for your listings."}</p>
                             </div>
                         </div>
 
@@ -215,12 +257,12 @@ function AgentInquiries() {
                 <header className="agent-inquiries-topbar">
                     <div>
                         <div className="agent-inquiries-breadcrumb">
-                            <span>Estate Agent</span>
+                            <span>{isAdminView ? "HOA Administration" : "Estate Agent"}</span>
                             <span className="breadcrumb-separator">/</span>
                             <span>Inquiry Log</span>
                         </div>
                         <h1>Inquiry Log</h1>
-                        <p>Manage buyer inquiries for your assigned VALORA properties.</p>
+                        <p>{isAdminView ? "Manage buyer inquiries across every VALORA property." : "Manage buyer inquiries for your assigned VALORA properties."}</p>
                     </div>
                 </header>
 
@@ -257,7 +299,7 @@ function AgentInquiries() {
                     <div className="agent-inquiries-panel-heading">
                         <div>
                             <h2>Property Inquiries</h2>
-                            <p>Review and manage inquiries received for your listings.</p>
+                            <p>{isAdminView ? "Review and manage inquiries received for all listings." : "Review and manage inquiries received for your listings."}</p>
                         </div>
                         <div className="agent-inquiries-filter">
                             <label htmlFor="agent-inquiry-status-filter">Filter by status</label>
@@ -266,7 +308,9 @@ function AgentInquiries() {
                                 <option value="New">New</option>
                                 <option value="Contacted">Contacted</option>
                                 <option value="Viewing Scheduled">Viewing Scheduled</option>
-                                <option value="Closed">Closed</option>
+                                <option value="Sold">Sold</option>
+                                <option value="Rented Out">Rented Out</option>
+                                {inquiries.some((inquiry) => inquiry.status === "Closed") && <option value="Closed">Closed</option>}
                             </select>
                         </div>
                     </div>
@@ -277,6 +321,7 @@ function AgentInquiries() {
                                 <tr>
                                     <th>Buyer / Investor</th>
                                     <th>Property</th>
+                                    {isAdminView && <th>Agent</th>}
                                     <th>Date</th>
                                     <th>Status</th>
                                     <th>Action</th>
@@ -285,7 +330,7 @@ function AgentInquiries() {
                             <tbody>
                                 {filteredInquiries.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="agent-inquiries-empty">No inquiries found.</td>
+                                        <td colSpan={isAdminView ? 6 : 5} className="agent-inquiries-empty">No inquiries found.</td>
                                     </tr>
                                 ) : (
                                     filteredInquiries.map((inquiry) => {
@@ -295,6 +340,10 @@ function AgentInquiries() {
                                                 <td>
                                                     <div className="agent-inquiries-buyer">
                                                         <strong>{inquiry.buyerName}</strong>
+                                                        <small><a href={`mailto:${inquiry.buyerEmail}`}>{inquiry.buyerEmail}</a></small>
+                                                        {inquiry.buyerContact && (
+                                                            <small><a href={`tel:${inquiry.buyerContact.replace(/[^0-9+]/g, "")}`}>{inquiry.buyerContact}</a></small>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td>
@@ -302,18 +351,19 @@ function AgentInquiries() {
                                                         {inquiry.propertyUnit} - {inquiry.propertyType}
                                                     </span>
                                                 </td>
+                                                {isAdminView && <td>{inquiry.agentName || "Unknown"}</td>}
                                                 <td>{formatDate(inquiry.date)}</td>
                                                 <td>
                                                     <select
                                                         aria-label={`Update status for inquiry ${inquiry.id}`}
                                                         className={`agent-inquiries-status-select status-${statusClass}`}
                                                         value={inquiry.status}
-                                                        onChange={(e) => handleStatusChange(inquiry.id, e.target.value)}
+                                                        disabled={DEAL_STATUSES.includes(inquiry.status)}
+                                                        onChange={(e) => handleStatusChange(inquiry, e.target.value)}
                                                     >
-                                                        <option value="New">New</option>
-                                                        <option value="Contacted">Contacted</option>
-                                                        <option value="Viewing Scheduled">Viewing Scheduled</option>
-                                                        <option value="Closed">Closed</option>
+                                                        {statusOptionsFor(inquiry).map((status) => (
+                                                            <option key={status} value={status}>{status}</option>
+                                                        ))}
                                                     </select>
                                                 </td>
                                                 <td>

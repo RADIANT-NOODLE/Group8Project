@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PropertyTabs from "../Dashboards/shared/PropertyTabs";
 import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
+import { listListings } from "../../services/listingApi";
+import { listPropertyRequests } from "../../services/propertyRequestApi";
+import { formatListingPrice } from "../../services/publicListings";
 import "./PropertyManagement.css";
 import "../../components/ValoraModal.css";
 
@@ -18,8 +21,39 @@ VALORA PROPERTY MANAGEMENT
 =========================================================
 */
 
-/* Local listing labels (not backend statuses) that still count as unpublished. */
-const UNPUBLISHED_LISTING_STATUSES = ["draft", "assigned"];
+/* Labels from withListingStatus that count as "Awaiting action" in the summary. */
+const AWAITING_ACTION_STATUSES = ["pending", "assigned"];
+
+/* An open property request, by API status, as the label shown for its unit. */
+const OPEN_REQUEST_LABELS = { pending_review: "Pending", approved: "Pending", assigned: "Assigned" };
+
+const CLOSED_LISTING_LABELS = { sold: "Sold", rented: "Rented" };
+
+/**
+ * `/properties` knows nothing about the market, so each unit's status comes from
+ * its listings and requests. A live listing wins, then an open request, then a
+ * finished sale or rental. A withdrawn listing counts as not listed.
+ */
+function withListingStatus(property, listings, requests) {
+    const unitId = property.id ?? property.unit_id;
+    const own = listings
+        .filter(listing => listing.unitId === unitId)
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+
+    const active = own.find(listing => listing.status === "active");
+    const openRequest = requests.find(request => request.unitId === unitId && OPEN_REQUEST_LABELS[request.rawStatus]);
+    const closed = own.find(listing => CLOSED_LISTING_LABELS[listing.status]);
+
+    const listing_status = active
+        ? "Published"
+        : openRequest
+            ? OPEN_REQUEST_LABELS[openRequest.rawStatus]
+            : closed
+                ? CLOSED_LISTING_LABELS[closed.status]
+                : "Not Listed";
+
+    return { ...property, listing_status, listing: active || (openRequest ? null : closed) || null };
+}
 
 function getLocation(property) {
     const address = property.street_address || "";
@@ -32,7 +66,7 @@ function getListingStatus(property) {
 }
 
 function getListingPrice(property) {
-    return property.price ? `R${Number(property.price).toLocaleString()}` : null;
+    return property.listing ? formatListingPrice(property.listing) : null;
 }
 
 function getPropertyType(property) {
@@ -105,9 +139,13 @@ function PropertyManagement() {
 
         try {
             const token = getSessionToken();
-            const response = await fetch(`${getApiBaseUrl()}/api/v1/properties`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const [response, listings, requests] = await Promise.all([
+                fetch(`${getApiBaseUrl()}/api/v1/properties`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                }),
+                listListings({ pageSize: 100 }),
+                listPropertyRequests(),
+            ]);
 
             if (!response.ok) {
                 throw new Error("Failed to fetch properties from the server.");
@@ -115,7 +153,7 @@ function PropertyManagement() {
 
             const data = await response.json();
             const records = data.properties || data.items || data || [];
-            setProperties(records);
+            setProperties(records.map(record => withListingStatus(record, listings.items, requests.items)));
         } catch (err) {
             console.error("Unable to load property records:", err);
             setProperties([]);
@@ -334,10 +372,7 @@ function PropertyManagement() {
 
     const totalProperties = properties.length;
     const publishedProperties = properties.filter(p => getListingStatus(p).toLowerCase() === "published").length;
-    const pendingProperties = properties.filter(p => {
-        const status = getListingStatus(p).toLowerCase();
-        return status.includes("pending") || UNPUBLISHED_LISTING_STATUSES.includes(status);
-    }).length;
+    const pendingProperties = properties.filter(p => AWAITING_ACTION_STATUSES.includes(getListingStatus(p).toLowerCase())).length;
 
     /*
     =========================================================
@@ -400,7 +435,7 @@ function PropertyManagement() {
                     subtitle="Where every property in the estate stands."
                     stages={[
                         { key: "published", label: "Published", hint: "Approved and live", count: publishedProperties, tone: "done" },
-                        { key: "action", label: "Awaiting action", hint: "Pending, assigned or draft", count: pendingProperties, tone: "waiting" },
+                        { key: "action", label: "Awaiting action", hint: "Pending or assigned", count: pendingProperties, tone: "waiting" },
                         { key: "unlisted", label: "Not listed", hint: "Not on the market", count: Math.max(totalProperties - publishedProperties - pendingProperties, 0), tone: "neutral" },
                     ]}
                 />

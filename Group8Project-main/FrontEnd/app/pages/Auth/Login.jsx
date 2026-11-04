@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { consumeSessionExpired } from "../../services/session";
 
 import { getLoginErrorMessage } from "../../services/authErrorMessages.js";
 import { getSafeNextPath } from "../../services/navigation.js";
@@ -14,7 +15,9 @@ function Login() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [error, setError] = useState(() =>
+        consumeSessionExpired() ? "Your session has expired. Please log in again." : ""
+    );
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event) => {

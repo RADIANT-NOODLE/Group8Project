@@ -151,7 +151,7 @@ function HeadAdminDashboard() {
     const pendingUsers = users.items.filter((account) => account.hoa_approved !== true);
     const openComplaints = complaints.filter((complaint) => {
         const status = toComplaintStatus(complaint.status);
-        return status !== COMPLAINT_STATUS.resolved && status !== COMPLAINT_STATUS.closed;
+        return status !== COMPLAINT_STATUS.resolved && status !== COMPLAINT_STATUS.denied;
     }).length;
 
     const attention = [

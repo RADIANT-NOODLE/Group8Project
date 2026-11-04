@@ -44,4 +44,8 @@ class LivingScoreRepository:
 
     @staticmethod
     def resolved_statuses() -> tuple[str, ...]:
-        return (ComplaintStatus.resolved.value, ComplaintStatus.closed.value)
+        return (ComplaintStatus.resolved.value,)
+
+    @staticmethod
+    def denied_status() -> str:
+        return ComplaintStatus.denied.value

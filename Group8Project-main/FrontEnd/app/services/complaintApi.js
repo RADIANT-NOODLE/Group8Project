@@ -34,6 +34,7 @@ export function toComplaint(record) {
     status: toComplaintStatus(record?.status),
     rawStatus: toStringOrNull(record?.status),
     assignedTo: toStringOrNull(record?.assigned_to),
+    denialReason: toStringOrNull(record?.denial_reason),
     resolvedAt: toStringOrNull(record?.resolved_at),
     createdAt: toStringOrNull(record?.created_at),
     updatedAt: toStringOrNull(record?.updated_at),
@@ -95,11 +96,18 @@ export function fetchComplaintPhoto(complaintId) {
   return apiBlobRequest(`${BASE_PATH}/${encodeURIComponent(complaintId)}/photo`);
 }
 
+/** Administrators only. Its work orders and photo go with it. */
+export async function deleteComplaint(complaintId) {
+  await apiRequest(`${BASE_PATH}/${encodeURIComponent(complaintId)}`, { method: 'DELETE' });
+  return true;
+}
+
 /** HOA administrators move a complaint along, optionally naming an assignee. */
-export async function updateComplaintStatus(complaintId, { status, assignedTo }) {
+export async function updateComplaintStatus(complaintId, { status, assignedTo, denialReason }) {
   /* Accept a value or a display label; the API only takes the value. */
   const body = { status: toComplaintStatus(status) || status };
   if (assignedTo !== undefined) body.assigned_to = assignedTo || null;
+  if (denialReason !== undefined) body.denial_reason = denialReason;
 
   return toComplaint(
     await apiRequest(`${BASE_PATH}/${encodeURIComponent(complaintId)}/status`, {

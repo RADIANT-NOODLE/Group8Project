@@ -26,6 +26,7 @@ class ResidentDirectoryResponse(BaseModel):
     # These fields will be populated from the relationships
     name: str
     email: str
+    phone: Optional[str] = None
     role: str
     unit_no: str
     complex_name: str

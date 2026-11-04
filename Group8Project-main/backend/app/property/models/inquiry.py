@@ -16,7 +16,7 @@ class Inquiry(Base):
     buyer_contact = Column(String(50), nullable=True)
     
     message = Column(Text, nullable=True)
-    status = Column(String(20), default="New")  # New, Contacted, Viewing Scheduled, Closed
+    status = Column(String(20), default="New")  # New, Contacted, Viewing Scheduled, Sold, Rented Out (older rows may say Closed)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

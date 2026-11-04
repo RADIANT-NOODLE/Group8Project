@@ -29,6 +29,8 @@ class ComplaintCreate(BaseModel):
 class ComplaintStatusUpdate(BaseModel):
     status: ComplaintStatus
     assigned_to: str | None = Field(default=None, max_length=100)
+    # required when the status is denied
+    denial_reason: str | None = Field(default=None, max_length=1000)
 
 
 class ComplaintResponse(BaseModel):
@@ -42,6 +44,7 @@ class ComplaintResponse(BaseModel):
     is_anonymous: bool | None
     status: str | None
     assigned_to: str | None
+    denial_reason: str | None = None
     resolved_at: datetime | None
     created_at: datetime | None
     updated_at: datetime | None

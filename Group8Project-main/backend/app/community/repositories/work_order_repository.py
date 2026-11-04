@@ -104,6 +104,20 @@ class WorkOrderRepository:
         await self._db.refresh(work_order)
         return work_order
 
+    async def has_active_order(
+        self, complaint_id: int, provider_id: int, *, excluding: int | None = None
+    ) -> bool:
+        """Whether this provider already has an unfinished work order on this complaint."""
+        stmt = select(MaintenanceworkOrder.work_order_id).where(
+            MaintenanceworkOrder.complaint_id == complaint_id,
+            MaintenanceworkOrder.provider_id == provider_id,
+            MaintenanceworkOrder.status.in_(("assigned", "in_progress")),
+        )
+        if excluding is not None:
+            stmt = stmt.where(MaintenanceworkOrder.work_order_id != excluding)
+        result = await self._db.execute(stmt.limit(1))
+        return result.first() is not None
+
     async def save(self, work_order: MaintenanceworkOrder) -> MaintenanceworkOrder:
         await self._db.commit()
         await self._db.refresh(work_order)

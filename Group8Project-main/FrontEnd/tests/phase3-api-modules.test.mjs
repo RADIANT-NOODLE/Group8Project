@@ -106,7 +106,7 @@ test.afterEach(() => {
 test('statuses: values, legacy labels and unknown values', () => {
   assert.deepEqual(
     statusMap.COMPLAINT_STATUSES.map((status) => status.value),
-    ['submitted', 'under_review', 'in_progress', 'resolved', 'closed'],
+    ['submitted', 'under_review', 'in_progress', 'resolved', 'denied'],
   );
 
   assert.equal(statusMap.toComplaintStatus('under_review'), 'under_review');

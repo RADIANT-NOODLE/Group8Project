@@ -52,7 +52,7 @@ class IntelligenceRepository:
             counts["total"] += count
             if status in {"submitted", "under_review", "in_progress"}:
                 counts["open"] += count
-            elif status in {"resolved", "closed"}:
+            elif status == "resolved":
                 counts["resolved"] += count
         return counts
 

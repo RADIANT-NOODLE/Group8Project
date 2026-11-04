@@ -496,7 +496,8 @@
     color: #A93636;
 }
 
-.property-status-badge.status-sold {
+.property-status-badge.status-sold,
+.property-status-badge.status-rented {
     background: #E7EDFF;
     color: #3B57A4;
 }

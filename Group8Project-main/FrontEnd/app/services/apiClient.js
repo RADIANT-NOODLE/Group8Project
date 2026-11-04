@@ -2,6 +2,19 @@ import { environment } from './environment.js';
 
 const TOKEN_KEY = 'valora_token';
 
+export const SESSION_EXPIRED_EVENT = 'valora:session-expired';
+
+/* A wrong current password also answers 401, but the login itself is still fine. */
+const WRONG_PASSWORD_PATHS = ['/api/v1/auth/change-password'];
+
+/** Tell the app the stored login was refused. The session module decides what to do. */
+function reportRefusedLogin(pathname, usedToken) {
+  if (!usedToken || typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  if (WRONG_PASSWORD_PATHS.some((path) => String(pathname).startsWith(path))) return;
+
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { token: usedToken } }));
+}
+
 export class ApiError extends Error {
   constructor(message, { status = 0, data = null, cause } = {}) {
     super(message, cause ? { cause } : undefined);
@@ -89,6 +102,9 @@ export async function apiRequest(pathname, options = {}) {
     throw new ApiError('Unable to connect to the VALORA API.', { cause: error });
   }
 
+  // a token passed in by the caller (login, register) is not the stored login
+  if (response.status === 401 && token === undefined) reportRefusedLogin(pathname, authToken);
+
   const data = await parseResponse(response);
   if (!response.ok) {
     throw new ApiError(
@@ -112,6 +128,8 @@ export async function apiBlobRequest(pathname) {
   } catch (error) {
     throw new ApiError('Unable to connect to the VALORA API.', { cause: error });
   }
+
+  if (response.status === 401) reportRefusedLogin(pathname, authToken);
 
   if (!response.ok) {
     throw new ApiError(`Request failed with status ${response.status}.`, { status: response.status });

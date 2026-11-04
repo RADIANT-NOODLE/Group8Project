@@ -128,6 +128,12 @@ function ResidentDirectory() {
         );
     }, [residents]);
 
+    // Only residents without a directory record can be assigned: the API allows one per person.
+    const unassignedUsers = useMemo(() => {
+        const assignedUserIds = new Set(residents.map(r => String(r.user_id)));
+        return users.filter(u => !assignedUserIds.has(String(u.id)));
+    }, [users, residents]);
+
     const filteredResidents = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
         return residents.filter((resident) => {
@@ -446,13 +452,17 @@ function ResidentDirectory() {
                                     <label>Approved Resident Account *</label>
                                     <select value={form.userId} onChange={(e) => handleUserChange(e.target.value)} required>
                                         <option value="">Select an approved account</option>
-                                        {users.map((user) => (
+                                        {unassignedUsers.map((user) => (
                                             <option key={user.id} value={user.id}>
                                                 {user.full_name || user.email} ({user.role})
                                             </option>
                                         ))}
                                     </select>
-                                    {users.length === 0 && <small style={{ color: "red" }}>No approved residents found.</small>}
+                                    {unassignedUsers.length === 0 && (
+                                        <small style={{ color: "red" }}>
+                                            {users.length === 0 ? "No approved residents found." : "Every approved resident is already assigned to a property."}
+                                        </small>
+                                    )}
                                 </div>
                             )}
 

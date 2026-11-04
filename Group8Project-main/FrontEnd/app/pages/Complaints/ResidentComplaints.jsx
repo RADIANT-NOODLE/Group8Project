@@ -1,24 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
-import { getComplaintStats, listComplaints, updateComplaintStatus } from "../../services/complaintApi";
+import { deleteComplaint, getComplaintStats, listComplaints, updateComplaintStatus } from "../../services/complaintApi";
 import { listProviders } from "../../services/providerApi";
 import { createWorkOrder, listWorkOrders, updateWorkOrder } from "../../services/workOrderApi";
 import {
+    COMPLAINT_STATUS,
     COMPLAINT_STATUSES,
     WORK_ORDER_STATUSES,
+    WORK_ORDER_STATUS,
     complaintStatusLabel,
     complaintStatusTone,
     workOrderStatusLabel,
 } from "../../services/statusMap";
 import ComplaintStatusRing from "../../components/ComplaintStatusRing";
+import { showConfirm } from "../../components/AppDialog";
 import DateRangeFilter, { ALL_DATES, inDateRange, isDateFilterActive } from "../../components/DateRangeFilter";
 import ComplaintPhoto from "../../components/ComplaintPhoto";
+import DenyComplaintDialog from "../../components/DenyComplaintDialog";
 import "../../components/ValoraModal.css";
 import "./ResidentComplaints.css";
 import { roleLabel } from "../../services/roleMap";
 import { getStoredUser } from "../../services/session";
 
-const RESOLVED_STATUSES = ["resolved", "closed"];
+/* Nothing further happens to these: no new work, and they are not open. */
+const FINISHED_STATUSES = [COMPLAINT_STATUS.resolved, COMPLAINT_STATUS.denied];
 
 // Helper to read the logged-in user from local storage
 function readUser() {
@@ -77,7 +82,7 @@ function getStatusClass(status) {
         under_review: "resident-complaints-status-acknowledged",
         in_progress: "resident-complaints-status-progress",
         resolved: "resident-complaints-status-resolved",
-        closed: "resident-complaints-status-cancelled",
+        denied: "resident-complaints-status-cancelled",
     };
     return classes[status] || classes.submitted;
 }
@@ -149,7 +154,8 @@ export default function ResidentComplaints() {
     // work order dialog
     const [orderTarget, setOrderTarget] = useState(null);
     const [photoTarget, setPhotoTarget] = useState(null);
-    const [orderForm, setOrderForm] = useState({ providerId: "", jobCost: "", estimatedCompletionDate: "" });
+    const [denyTarget, setDenyTarget] = useState(null);
+    const [orderForm, setOrderForm] = useState({ providerId: "", estimatedCompletionDate: "" });
     const [orderError, setOrderError] = useState("");
     const [isSavingOrder, setIsSavingOrder] = useState(false);
 
@@ -218,6 +224,7 @@ export default function ResidentComplaints() {
                 complaint.unitId,
                 complaint.category,
                 complaint.description,
+                complaint.denialReason,
                 complaintStatusLabel(complaint.status),
             ]
                 .filter((value) => value !== null && value !== undefined && value !== "")
@@ -228,9 +235,12 @@ export default function ResidentComplaints() {
     // 4. Stats Calculation
     const stats = useMemo(() => ({
         total: complaints.length,
-        active: complaints.filter((item) => !RESOLVED_STATUSES.includes(item.status)).length,
-        resolved: complaints.filter((item) => RESOLVED_STATUSES.includes(item.status)).length,
-        withWorkOrder: complaints.filter((item) => ordersByComplaint.has(item.id)).length,
+        active: complaints.filter((item) => !FINISHED_STATUSES.includes(item.status)).length,
+        resolved: complaints.filter((item) => item.status === COMPLAINT_STATUS.resolved).length,
+        // a cancelled order means nobody is assigned any more
+        withWorkOrder: complaints.filter((item) =>
+            (ordersByComplaint.get(item.id) || []).some((order) => order.status !== WORK_ORDER_STATUS.cancelled)
+        ).length,
     }), [complaints, ordersByComplaint]);
 
     // 5. Update status via API
@@ -253,10 +263,28 @@ export default function ResidentComplaints() {
         }
     }
 
+    // Denying needs a reason first, so it opens the dialog instead of saving straight away.
+    function requestStatusChange(complaint, nextStatus) {
+        if (nextStatus === COMPLAINT_STATUS.denied) {
+            setDenyTarget(complaint);
+            return;
+        }
+        updateStatus(complaint.id, nextStatus);
+    }
+
+    async function denyComplaint(reason) {
+        await updateComplaintStatus(denyTarget.id, { status: COMPLAINT_STATUS.denied, denialReason: reason });
+        const deniedId = denyTarget.id;
+        setDenyTarget(null);
+        await fetchComplaints();
+        setError("");
+        setNotice(`Complaint #${deniedId} has been denied.`);
+    }
+
     // 6. Work orders: assign a provider to a complaint
     function openWorkOrderDialog(complaint) {
         setOrderTarget(complaint);
-        setOrderForm({ providerId: "", jobCost: "", estimatedCompletionDate: "" });
+        setOrderForm({ providerId: "", estimatedCompletionDate: "" });
         setOrderError("");
     }
 
@@ -274,19 +302,12 @@ export default function ResidentComplaints() {
             return;
         }
 
-        const cost = orderForm.jobCost.trim();
-        if (cost && (!Number.isFinite(Number(cost)) || Number(cost) < 0)) {
-            setOrderError("The estimated cost must be a positive number.");
-            return;
-        }
-
         setIsSavingOrder(true);
 
         try {
             await createWorkOrder({
                 complaintId: orderTarget.id,
                 providerId: orderForm.providerId,
-                jobCost: cost ? Number(cost) : null,
                 estimatedCompletionDate: orderForm.estimatedCompletionDate
                     ? new Date(`${orderForm.estimatedCompletionDate}T17:00:00`).toISOString()
                     : null,
@@ -315,7 +336,7 @@ export default function ResidentComplaints() {
             // finished work resolves the complaint it came from
             if (nextStatus === "completed") {
                 const complaint = complaints.find((item) => item.id === order.complaintId);
-                if (complaint && !RESOLVED_STATUSES.includes(complaint.status)) {
+                if (complaint && !FINISHED_STATUSES.includes(complaint.status)) {
                     await updateComplaintStatus(complaint.id, { status: "resolved" });
                 }
             }
@@ -327,6 +348,48 @@ export default function ResidentComplaints() {
             setError(err?.message || "Unable to update the work order.");
         }
     }
+
+    async function removeComplaint(complaint) {
+        const orderCount = (ordersByComplaint.get(complaint.id) || []).length;
+        const alsoRemoved = [
+            orderCount ? `${orderCount} work order${orderCount === 1 ? "" : "s"} (with any ratings)` : "",
+            complaint.photoUrl ? "its photo" : "",
+        ].filter(Boolean).join(" and ");
+
+        const confirmed = await showConfirm(
+            `Delete complaint #${complaint.id}?${alsoRemoved ? ` This also removes ${alsoRemoved}.` : ""} This cannot be undone.`,
+            { title: "Delete complaint?", confirmLabel: "Delete", tone: "danger" }
+        );
+        if (!confirmed) return;
+
+        try {
+            await deleteComplaint(complaint.id);
+            await fetchComplaints();
+            setError("");
+            setNotice(`Complaint #${complaint.id} has been deleted.`);
+        } catch (err) {
+            setError(err?.message || "Unable to delete the complaint.");
+        }
+    }
+
+    const renderWorkOrder = (order) => (
+        <div key={order.id} className="resident-complaints-workorder">
+            <span>
+                Order #{order.id} · {providerName(order.providerId)}
+                {order.residentRating ? ` · ★ ${order.residentRating}` : ""}
+            </span>
+            <select
+                className="resident-complaints-status-select"
+                aria-label={`Work order ${order.id} status`}
+                value={order.status}
+                onChange={(event) => changeWorkOrderStatus(order, event.target.value)}
+            >
+                {WORK_ORDER_STATUSES.map((status) => (
+                    <option key={status.value} value={status.value}>{status.label}</option>
+                ))}
+            </select>
+        </div>
+    );
 
     if (!user) {
         return (
@@ -479,6 +542,8 @@ export default function ResidentComplaints() {
                                 ) : (
                                     filteredComplaints.map((complaint) => {
                                         const orders = ordersByComplaint.get(complaint.id) || [];
+                                        const currentOrders = orders.filter((order) => order.status !== WORK_ORDER_STATUS.cancelled);
+                                        const cancelledOrders = orders.filter((order) => order.status === WORK_ORDER_STATUS.cancelled);
 
                                         return (
                                             <tr key={complaint.id}>
@@ -514,35 +579,29 @@ export default function ResidentComplaints() {
                                                     <span className={getStatusClass(complaint.status)}>
                                                         {complaintStatusLabel(complaint.rawStatus)}
                                                     </span>
+                                                    {complaint.denialReason && (
+                                                        <small className="resident-complaints-denial-reason">
+                                                            Reason: {complaint.denialReason}
+                                                        </small>
+                                                    )}
                                                 </td>
 
                                                 <td>
                                                     <div className="resident-complaints-workorders">
-                                                        {orders.map((order) => (
-                                                            <div key={order.id} className="resident-complaints-workorder">
-                                                                <span>
-                                                                    {providerName(order.providerId)}
-                                                                    {order.residentRating ? ` · ★ ${order.residentRating}` : ""}
-                                                                </span>
-                                                                <select
-                                                                    className="resident-complaints-status-select"
-                                                                    aria-label={`Work order ${order.id} status`}
-                                                                    value={order.status}
-                                                                    onChange={(event) => changeWorkOrderStatus(order, event.target.value)}
-                                                                >
-                                                                    {WORK_ORDER_STATUSES.map((status) => (
-                                                                        <option key={status.value} value={status.value}>{status.label}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        ))}
-                                                        {!RESOLVED_STATUSES.includes(complaint.status) && (
+                                                        {currentOrders.map(renderWorkOrder)}
+                                                        {cancelledOrders.length > 0 && (
+                                                            <details className="resident-complaints-cancelled-orders">
+                                                                <summary>{cancelledOrders.length} cancelled</summary>
+                                                                {cancelledOrders.map(renderWorkOrder)}
+                                                            </details>
+                                                        )}
+                                                        {!FINISHED_STATUSES.includes(complaint.status) && (
                                                             <button
                                                                 type="button"
                                                                 className="resident-complaints-link-button"
                                                                 onClick={() => openWorkOrderDialog(complaint)}
                                                             >
-                                                                {orders.length ? "Add work order" : "Create work order"}
+                                                                {currentOrders.length ? "Add work order" : "Create work order"}
                                                             </button>
                                                         )}
                                                     </div>
@@ -554,12 +613,20 @@ export default function ResidentComplaints() {
                                                         aria-label={`Update status for complaint ${complaint.id}`}
                                                         data-tone={complaintStatusTone(complaint.status)}
                                                         value={complaint.status || "submitted"}
-                                                        onChange={(event) => updateStatus(complaint.id, event.target.value)}
+                                                        onChange={(event) => requestStatusChange(complaint, event.target.value)}
                                                     >
                                                         {COMPLAINT_STATUSES.map((status) => (
                                                             <option key={status.value} value={status.value}>{status.label}</option>
                                                         ))}
                                                     </select>
+                                                    <button
+                                                        type="button"
+                                                        className="resident-complaints-delete-button"
+                                                        aria-label={`Delete complaint ${complaint.id}`}
+                                                        onClick={() => removeComplaint(complaint)}
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </td>
                                             </tr>
                                         );
@@ -615,6 +682,14 @@ export default function ResidentComplaints() {
                 </div>
             )}
 
+            {denyTarget && (
+                <DenyComplaintDialog
+                    complaint={denyTarget}
+                    onCancel={() => setDenyTarget(null)}
+                    onDeny={denyComplaint}
+                />
+            )}
+
             {orderTarget && (
                 <div
                     className="resident-complaints-modal-backdrop"
@@ -639,23 +714,20 @@ export default function ResidentComplaints() {
                             <option value="">
                                 {providers.length ? "Select a provider" : "No service providers yet"}
                             </option>
-                            {providers.map((provider) => (
-                                <option key={provider.id} value={provider.id}>
-                                    {provider.fullName} — {provider.trade}
-                                    {provider.avgRating != null ? ` (★ ${provider.avgRating.toFixed(1)})` : ""}
-                                </option>
-                            ))}
+                            {providers.map((provider) => {
+                                const alreadyActive = (ordersByComplaint.get(orderTarget.id) || []).some((order) =>
+                                    order.providerId === provider.id &&
+                                    [WORK_ORDER_STATUS.assigned, WORK_ORDER_STATUS.in_progress].includes(order.status)
+                                );
+                                return (
+                                    <option key={provider.id} value={provider.id} disabled={alreadyActive}>
+                                        {provider.fullName} — {provider.trade}
+                                        {provider.avgRating != null ? ` (★ ${provider.avgRating.toFixed(1)})` : ""}
+                                        {alreadyActive ? " — already assigned" : ""}
+                                    </option>
+                                );
+                            })}
                         </select>
-
-                        <label htmlFor="work-order-cost">Estimated cost (R, optional)</label>
-                        <input
-                            id="work-order-cost"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={orderForm.jobCost}
-                            onChange={(event) => setOrderForm({ ...orderForm, jobCost: event.target.value })}
-                        />
 
                         <label htmlFor="work-order-date">Expected completion (optional)</label>
                         <input

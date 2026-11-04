@@ -400,6 +400,13 @@
     background: #f6f3f8;
 }
 
+@media (max-width: 600px) {
+    .um-tabs {
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+}
+
 .um-tabs button {
     display: inline-flex;
     align-items: center;

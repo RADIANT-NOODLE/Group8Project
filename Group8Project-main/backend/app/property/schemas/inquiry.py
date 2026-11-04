@@ -1,16 +1,30 @@
-from pydantic import BaseModel, Field, field_validator
+import re
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional
 from datetime import datetime
 
 class InquiryCreate(BaseModel):
+    """A public enquiry. The agent is worked out by the server, never sent by the browser."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     property_id: int = Field(..., ge=1)
-    agent_id: int = Field(..., ge=1)
     buyer_name: str = Field(..., min_length=2, max_length=100)
     buyer_email: str = Field(..., min_length=5, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-    buyer_contact: Optional[str] = Field(default=None, max_length=50)
+    buyer_contact: str = Field(..., max_length=50)
     message: Optional[str] = Field(default=None, max_length=5000)
 
-INQUIRY_STATUSES = ("New", "Contacted", "Viewing Scheduled", "Closed")
+    @field_validator("buyer_contact")
+    @classmethod
+    def _looks_like_a_phone_number(cls, value: str) -> str:
+        digits = sum(character.isdigit() for character in value)
+        if not re.fullmatch(r"[0-9+()\-.\s]+", value) or not 7 <= digits <= 15:
+            raise ValueError("Enter a valid phone number.")
+        return value
+
+
+INQUIRY_STATUSES = ("New", "Contacted", "Viewing Scheduled", "Sold", "Rented Out")
 
 
 class InquiryUpdate(BaseModel):
@@ -37,6 +51,9 @@ class InquiryResponse(BaseModel):
     # Joined fields for display
     property_unit: Optional[str] = None
     property_complex: Optional[str] = None
+    agent_name: Optional[str] = None
+    # "sale" or "rent": decides whether this enquiry can end as Sold or Rented Out
+    listing_type: Optional[str] = None
     
     class Config:
         from_attributes = True

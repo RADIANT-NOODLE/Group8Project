@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { PROPERTY_TAB_PATHS } from "./PropertyTabs";
 import "./DashboardSidebar.css";
@@ -266,7 +266,6 @@ const navigation = {
         { label: "Dashboard", path: "/dashboard", icon: "dashboard" },
         { label: "Request to Sell/Rent", path: "/request-to-sell", icon: "request" },
         { label: "My Complaints", path: "/complaints", icon: "complaint" },
-        { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
     ],
@@ -285,6 +284,7 @@ const navigation = {
         { label: "Properties", path: "/property-management", icon: "property", activePaths: PROPERTY_TAB_PATHS },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
         { label: "Resident Complaints", path: "/resident-complaints", icon: "complaint" },
+        { label: "Inquiries", path: "/agent-inquiries", icon: "request" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
@@ -304,6 +304,7 @@ const navigation = {
         { label: "Properties", path: "/property-management", icon: "property", activePaths: PROPERTY_TAB_PATHS },
         { label: "Resident Directory", path: "/resident-directory", icon: "users" },
         { label: "Resident Complaints", path: "/resident-complaints", icon: "complaint" },
+        { label: "Inquiries", path: "/agent-inquiries", icon: "request" },
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
@@ -321,6 +322,9 @@ function getStoredCollapsed() {
     return readStoredItem(COLLAPSED_STORAGE_KEY) === "true";
 }
 
+/* How far a finger must travel to count as pulling the drawer out or pushing it back. */
+const SWIPE_DISTANCE = 30;
+
 /* =========================================================
    SIDEBAR COMPONENT
 ========================================================= */
@@ -330,6 +334,29 @@ function DashboardSidebar({ suppliedUser = null }) {
     const { pathname } = useLocation();
     const currentUser = suppliedUser || getCurrentUser();
     const [collapsed, setCollapsed] = useState(getStoredCollapsed);
+
+    // Phones only (see MOBILE in the stylesheet). Starts closed on every page.
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const touchStartX = useRef(null);
+
+    useEffect(() => {
+        if (!mobileOpen) return undefined;
+
+        function closeOnEscape(event) {
+            if (event.key === "Escape") setMobileOpen(false);
+        }
+
+        window.addEventListener("keydown", closeOnEscape);
+        return () => window.removeEventListener("keydown", closeOnEscape);
+    }, [mobileOpen]);
+
+    function rememberTouch(event) {
+        touchStartX.current = event.touches[0].clientX;
+    }
+
+    function swipeDistance(event) {
+        return event.changedTouches[0].clientX - (touchStartX.current ?? 0);
+    }
 
     function toggleCollapsed() {
         const next = !collapsed;
@@ -369,10 +396,16 @@ function DashboardSidebar({ suppliedUser = null }) {
     }
 
     return (
+        <>
         <aside
+            id="dashboard-sidebar"
             className={`dashboard-sidebar ${
                 collapsed ? "is-collapsed" : ""
-            }`}
+            } ${mobileOpen ? "is-mobile-open" : ""}`}
+            onTouchStart={rememberTouch}
+            onTouchEnd={(event) => {
+                if (swipeDistance(event) < -SWIPE_DISTANCE) setMobileOpen(false);
+            }}
         >
             <div className="dashboard-sidebar-brand">
                 <Link
@@ -397,6 +430,16 @@ function DashboardSidebar({ suppliedUser = null }) {
                 >
                     <Icon type={collapsed ? "expand" : "collapse"} />
                 </button>
+
+                <button
+                    type="button"
+                    className="dashboard-mobile-close-button"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close menu"
+                    title="Close menu"
+                >
+                    <Icon type="collapse" />
+                </button>
             </div>
 
             <div className="dashboard-sidebar-profile">
@@ -413,6 +456,9 @@ function DashboardSidebar({ suppliedUser = null }) {
             <nav
                 className="dashboard-sidebar-navigation"
                 aria-label="Main navigation"
+                onClick={(event) => {
+                    if (event.target.closest("a")) setMobileOpen(false);
+                }}
             >
                 <span className="dashboard-nav-section-title">
                     Main Menu
@@ -485,6 +531,31 @@ function DashboardSidebar({ suppliedUser = null }) {
                 </button>
             </div>
         </aside>
+
+        <button
+            type="button"
+            className="dashboard-mobile-handle"
+            onClick={() => setMobileOpen(true)}
+            onTouchStart={rememberTouch}
+            onTouchEnd={(event) => {
+                if (swipeDistance(event) > SWIPE_DISTANCE) setMobileOpen(true);
+            }}
+            aria-label="Open menu"
+            aria-controls="dashboard-sidebar"
+            aria-expanded={mobileOpen}
+            title="Open menu"
+        >
+            <Icon type="expand" />
+        </button>
+
+        {mobileOpen && (
+            <div
+                className="dashboard-mobile-backdrop"
+                onClick={() => setMobileOpen(false)}
+                aria-hidden="true"
+            />
+        )}
+        </>
     );
 }
 

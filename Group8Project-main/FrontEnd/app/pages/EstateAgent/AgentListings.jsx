@@ -93,8 +93,12 @@ function AgentListings() {
         ) || null,
     }));
 
-    const getListingStatus = ({ property }) =>
-        property?.listing?.listingStatus || "Not Listed";
+    // the request is the record; the local listing label can be behind it
+    const getListingStatus = ({ request, property }) => {
+        if (request?.rawStatus === "sold") return "Sold";
+        if (request?.rawStatus === "rented") return "Rented";
+        return property?.listing?.listingStatus || "Not Listed";
+    };
 
     const getListingPrice = ({ request, property }) => {
         const listing = property?.listing || {};
@@ -412,7 +416,7 @@ function AgentListings() {
                                     </tr>
                                 ) : (
                                     assignedListings.map(({ request, property }) => {
-                                        const listingStatus = getListingStatus({ property });
+                                        const listingStatus = getListingStatus({ request, property });
                                         const requestStatus = getRequestStatus({ request });
 
                                         return (
@@ -585,7 +589,7 @@ function AgentListings() {
                 const address = request.propertyAddress || property?.location || property?.development || "";
                 const firstImage = (property?.images || [])[0];
                 const photo = typeof firstImage === "string" ? firstImage : firstImage?.data || "";
-                const listingStatus = getListingStatus({ property });
+                const listingStatus = getListingStatus({ request, property });
                 const hoaStatus = listing.hoaApprovalStatus || "Not Submitted";
 
                 const facts = [

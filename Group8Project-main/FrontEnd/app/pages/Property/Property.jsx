@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { apiRequest } from "../../services/apiClient";
@@ -8,6 +8,7 @@ import { getStoredUser, updateSessionUser, useSession } from "../../services/ses
 import { LISTING_STATUSES, listingStatusLabel, toStatus } from "../../services/statusMap";
 import { PublicFooter, PublicHeader } from "../../components/PublicSite";
 import "./Property.css";
+import "../../components/ValoraModal.css";
 
 /*
 =========================================================
@@ -19,6 +20,8 @@ API knows about the unit (details + photos) and its listing
 extra to look complete.
 =========================================================
 */
+
+const EMPTY_ENQUIRY = { name: "", email: "", phone: "", message: "" };
 
 const ICONS = {
     bed: (
@@ -121,8 +124,24 @@ export default function Property() {
     const [brokenPhotos, setBrokenPhotos] = useState([]);
     const [isSaved, setIsSaved] = useState(false);
 
-    const [enquiry, setEnquiry] = useState({ contact: "", message: "" });
+    const [enquiry, setEnquiry] = useState(EMPTY_ENQUIRY);
+    const [enquiryOpen, setEnquiryOpen] = useState(false);
     const [enquiryState, setEnquiryState] = useState({ sending: false, sent: false, error: "" });
+    const enquiryNameRef = useRef(null);
+
+    /* ----- enquiry popup: focus its first field, and Escape closes it ----- */
+    useEffect(() => {
+        if (!enquiryOpen) return undefined;
+
+        enquiryNameRef.current?.focus();
+
+        function closeOnEscape(event) {
+            if (event.key === "Escape") setEnquiryOpen(false);
+        }
+
+        window.addEventListener("keydown", closeOnEscape);
+        return () => window.removeEventListener("keydown", closeOnEscape);
+    }, [enquiryOpen]);
 
     /* ----- load the unit and its listing ----- */
     useEffect(() => {
@@ -184,10 +203,28 @@ export default function Property() {
         setIsSaved(!isSaved);
     }
 
+    /* Anything typed earlier is kept; otherwise a signed-in person's details are filled in. */
+    function openEnquiry() {
+        const stored = getStoredUser();
+        setEnquiry((current) => ({
+            ...current,
+            name: current.name || stored?.full_name || stored?.fullName || "",
+            email: current.email || stored?.email || "",
+            phone: current.phone || stored?.phoneno || "",
+        }));
+        setEnquiryState({ sending: false, sent: false, error: "" });
+        setEnquiryOpen(true);
+    }
+
     async function sendEnquiry(event) {
         event.preventDefault();
-        const stored = getStoredUser();
-        if (!stored || !listing) return;
+        if (enquiryState.sending || !listing) return;
+
+        const phoneDigits = enquiry.phone.replace(/\D/g, "").length;
+        if (phoneDigits < 7 || phoneDigits > 15) {
+            setEnquiryState({ sending: false, sent: false, error: "Enter a valid phone number." });
+            return;
+        }
 
         setEnquiryState({ sending: true, sent: false, error: "" });
         try {
@@ -195,14 +232,14 @@ export default function Property() {
                 method: "POST",
                 body: {
                     property_id: property.id,
-                    agent_id: listing.agentId,
-                    buyer_name: stored.full_name || stored.fullName || "VALORA user",
-                    buyer_email: stored.email,
-                    buyer_contact: enquiry.contact.trim() || stored.phoneno || null,
+                    buyer_name: enquiry.name.trim(),
+                    buyer_email: enquiry.email.trim(),
+                    buyer_contact: enquiry.phone.trim(),
                     message: enquiry.message.trim() || null,
                 },
             });
-            setEnquiry({ contact: "", message: "" });
+            setEnquiry(EMPTY_ENQUIRY);
+            setEnquiryOpen(false);
             setEnquiryState({ sending: false, sent: true, error: "" });
         } catch (err) {
             setEnquiryState({
@@ -298,7 +335,6 @@ export default function Property() {
         ["Bathrooms", property.bathrooms],
     ];
 
-    const signedIn = Boolean(user);
 
     return (
         <div className="pd-page">
@@ -312,12 +348,18 @@ export default function Property() {
                 {/* GALLERY */}
                 <section className={`pd-gallery${photos.length > 1 ? " has-thumbs" : ""}`} aria-label="Property photos">
                     {mainPhoto ? (
-                        <img
-                            className="pd-gallery-main"
-                            src={mainPhoto}
-                            alt={`${property.complexName}, unit ${property.unitNo}`}
-                            onError={() => markBroken(mainPhoto)}
-                        />
+                        <div className="pd-gallery-main">
+                            {/* every photo stays stacked here, so changing photo is a crossfade */}
+                            {photos.map((src) => (
+                                <img
+                                    key={src}
+                                    className={src === mainPhoto ? "is-active" : undefined}
+                                    src={src}
+                                    alt={src === mainPhoto ? `${property.complexName}, unit ${property.unitNo}` : ""}
+                                    onError={() => markBroken(src)}
+                                />
+                            ))}
+                        </div>
                     ) : (
                         <div className="pd-gallery-empty">
                             <span><Icon name="home" size={36} /></span>
@@ -422,51 +464,90 @@ export default function Property() {
                                 <p className="pd-contact-note">
                                     Enquiries open when this unit is listed. Save it to find it again quickly.
                                 </p>
-                            ) : !signedIn ? (
-                                <>
-                                    <p className="pd-contact-note">Log in or register to send the estate agent an enquiry.</p>
-                                    <div className="pd-contact-actions">
-                                        <Link to="/login" className="pd-button is-solid">Log in</Link>
-                                        <Link to="/register" className="pd-button is-ghost">Register</Link>
-                                    </div>
-                                </>
                             ) : enquiryState.sent ? (
                                 <p className="pd-contact-success" role="status">
                                     Your enquiry has been sent. The estate agent will be in touch.
                                 </p>
                             ) : (
-                                <form className="pd-enquiry" onSubmit={sendEnquiry}>
-                                    <p className="pd-contact-note">Send the listing agent a message about this unit.</p>
-                                    <label htmlFor="pd-enquiry-contact">Phone number (optional)</label>
-                                    <input
-                                        id="pd-enquiry-contact"
-                                        type="tel"
-                                        inputMode="tel"
-                                        value={enquiry.contact}
-                                        maxLength={50}
-                                        placeholder="e.g. 082 123 4567"
-                                        onChange={(event) => setEnquiry({ ...enquiry, contact: event.target.value })}
-                                    />
-                                    <label htmlFor="pd-enquiry-message">Message</label>
-                                    <textarea
-                                        id="pd-enquiry-message"
-                                        rows={4}
-                                        maxLength={5000}
-                                        value={enquiry.message}
-                                        placeholder="I'd like to arrange a viewing…"
-                                        onChange={(event) => setEnquiry({ ...enquiry, message: event.target.value })}
-                                    />
-                                    {enquiryState.error && <p className="pd-contact-error" role="alert">{enquiryState.error}</p>}
-                                    <button type="submit" className="pd-button is-solid" disabled={enquiryState.sending}>
-                                        <Icon name="send" size={16} />
-                                        {enquiryState.sending ? "Sending…" : "Send enquiry"}
-                                    </button>
-                                </form>
+                                <>
+                                    <p className="pd-contact-note">Send the estate agent your details and they will get back to you.</p>
+                                    <div className="pd-contact-actions">
+                                        <button type="button" className="pd-button is-solid" onClick={openEnquiry}>
+                                            <Icon name="send" size={16} />
+                                            Send enquiry
+                                        </button>
+                                    </div>
+                                </>
                             )}
                         </section>
                     </aside>
                 </div>
             </main>
+
+            {enquiryOpen && (
+                <div className="valora-modal-overlay">
+                    <div className="valora-modal" role="dialog" aria-modal="true" aria-labelledby="pd-enquiry-title">
+                        <h3 id="pd-enquiry-title">Send an enquiry</h3>
+                        <p>Your details go to the estate agent for {property.unitNo ? `unit ${property.unitNo}` : "this unit"}.</p>
+
+                        <form className="pd-enquiry" onSubmit={sendEnquiry}>
+                            <label htmlFor="pd-enquiry-name">Name</label>
+                            <input
+                                id="pd-enquiry-name"
+                                ref={enquiryNameRef}
+                                type="text"
+                                autoComplete="name"
+                                required
+                                minLength={2}
+                                maxLength={100}
+                                value={enquiry.name}
+                                onChange={(event) => setEnquiry({ ...enquiry, name: event.target.value })}
+                            />
+                            <label htmlFor="pd-enquiry-email">Email</label>
+                            <input
+                                id="pd-enquiry-email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                maxLength={255}
+                                value={enquiry.email}
+                                onChange={(event) => setEnquiry({ ...enquiry, email: event.target.value })}
+                            />
+                            <label htmlFor="pd-enquiry-phone">Phone number</label>
+                            <input
+                                id="pd-enquiry-phone"
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                required
+                                maxLength={50}
+                                placeholder="e.g. 082 123 4567"
+                                value={enquiry.phone}
+                                onChange={(event) => setEnquiry({ ...enquiry, phone: event.target.value })}
+                            />
+                            <label htmlFor="pd-enquiry-message">Message (optional)</label>
+                            <textarea
+                                id="pd-enquiry-message"
+                                rows={3}
+                                maxLength={5000}
+                                placeholder="I'd like to arrange a viewing…"
+                                value={enquiry.message}
+                                onChange={(event) => setEnquiry({ ...enquiry, message: event.target.value })}
+                            />
+                            {enquiryState.error && <p className="pd-contact-error" role="alert">{enquiryState.error}</p>}
+                            <div className="pd-contact-actions">
+                                <button type="button" className="pd-button is-ghost" onClick={() => setEnquiryOpen(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="pd-button is-solid" disabled={enquiryState.sending}>
+                                    <Icon name="send" size={16} />
+                                    {enquiryState.sending ? "Sending…" : "Send enquiry"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div className="lp pd-site-chrome"><PublicFooter /></div>
         </div>

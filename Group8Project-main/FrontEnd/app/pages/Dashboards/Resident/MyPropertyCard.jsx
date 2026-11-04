@@ -119,7 +119,8 @@ export default function MyPropertyCard({ record, loading: recordLoading }) {
     const location = property
         ? [property.streetAddress, property.suburb].filter(Boolean).join(", ")
         : record.street_address;
-    const photo = photoSrc(property?.photos?.[0]?.url || property?.imageUrl);
+    // imageUrl is the first available photo; photos[0] may be a missing file.
+    const photo = photoSrc(property?.imageUrl || property?.photos?.find((p) => p.available)?.url);
 
     return (
         <section className="my-property-card">
@@ -167,9 +168,6 @@ export default function MyPropertyCard({ record, loading: recordLoading }) {
                 <div className="my-property-actions">
                     <Link to={`/property/${propertyId}`} className="my-property-primary-button">
                         View Property <ArrowIcon />
-                    </Link>
-                    <Link to="/valuation" className="my-property-secondary-button">
-                        View Valuation
                     </Link>
                 </div>
             </div>

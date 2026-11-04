@@ -7,6 +7,7 @@
  */
 import { useSyncExternalStore } from 'react';
 
+import { SESSION_EXPIRED_EVENT } from './apiClient.js';
 import * as authService from './authService.js';
 import { isAdministrator, roleLabel, toRole } from './roleMap.js';
 
@@ -170,6 +171,34 @@ export function useSession() {
     logout,
     refresh: refreshSession,
   };
+}
+
+const SESSION_EXPIRED_FLAG = 'valora_session_expired';
+
+/** True once after a login expired, so the login page can say why it appeared. */
+export function consumeSessionExpired() {
+  try {
+    const expired = window.sessionStorage.getItem(SESSION_EXPIRED_FLAG) === 'true';
+    window.sessionStorage.removeItem(SESSION_EXPIRED_FLAG);
+    return expired;
+  } catch {
+    return false;
+  }
+}
+
+/* The API refused the stored login. Ignored if that login has already been replaced,
+   so a slow reply to an old request cannot sign out someone who just logged back in. */
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener(SESSION_EXPIRED_EVENT, (event) => {
+    if (authService.isMockAuth || event.detail?.token !== readStorage().token) return;
+
+    try {
+      window.sessionStorage.setItem(SESSION_EXPIRED_FLAG, 'true');
+    } catch {
+      /* the sign-out below still happens, only the explanation is lost */
+    }
+    logout();
+  });
 }
 
 /* Keep other browser tabs in step: signing out in one tab signs out everywhere. */

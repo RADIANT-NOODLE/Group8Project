@@ -62,6 +62,8 @@ class LivingScoreService:
         )
 
     def _score_community_health(self, complaints: list) -> Decimal:
+        # a complaint the HOA denied says nothing about how well the estate is run
+        complaints = [c for c in complaints if c.status != self._repo.denied_status()]
         total = len(complaints)
         if total == 0:
             return Decimal("100")

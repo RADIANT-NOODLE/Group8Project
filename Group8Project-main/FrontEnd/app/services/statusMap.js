@@ -18,7 +18,7 @@ export const COMPLAINT_STATUSES = freezeOptions([
   { value: 'under_review', label: 'Under review', tone: 'active' },
   { value: 'in_progress', label: 'In progress', tone: 'active' },
   { value: 'resolved', label: 'Resolved', tone: 'done' },
-  { value: 'closed', label: 'Closed', tone: 'done' },
+  { value: 'denied', label: 'Denied', tone: 'closed' },
 ]);
 
 export const WORK_ORDER_STATUSES = freezeOptions([

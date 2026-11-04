@@ -30,7 +30,13 @@ const GROUPS = [
         key: "resolved",
         label: "Resolved",
         color: "#0ca30c",
-        statuses: [COMPLAINT_STATUS.resolved, COMPLAINT_STATUS.closed],
+        statuses: [COMPLAINT_STATUS.resolved],
+    },
+    {
+        key: "denied",
+        label: "Denied",
+        color: "#8a8390",
+        statuses: [COMPLAINT_STATUS.denied],
     },
 ];
 

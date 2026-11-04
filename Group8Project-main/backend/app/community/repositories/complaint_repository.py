@@ -2,6 +2,7 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.community.models.complaint import Complaint, ComplaintPhoto
+from app.community.models.maintenance_work_order import MaintenanceworkOrder
 
 
 class ComplaintRepository:
@@ -108,6 +109,26 @@ class ComplaintRepository:
         photo.content_type = content_type
         complaint.photo_url = photo_url
         return await self.save(complaint)
+
+    async def rated_provider_ids(self, complaint_id: int) -> list[int]:
+        """Providers whose rating includes a job done on this complaint."""
+        result = await self._db.execute(
+            select(MaintenanceworkOrder.provider_id)
+            .where(
+                MaintenanceworkOrder.complaint_id == complaint_id,
+                MaintenanceworkOrder.resident_rating.is_not(None),
+            )
+            .distinct()
+        )
+        return list(result.scalars().all())
+
+    async def delete(self, complaint: Complaint) -> None:
+        """Not committed yet. The database removes its work orders and photo with it."""
+        await self._db.delete(complaint)
+        await self._db.flush()
+
+    async def commit(self) -> None:
+        await self._db.commit()
 
     async def save(self, complaint: Complaint) -> Complaint:
         await self._db.commit()

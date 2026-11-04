@@ -226,9 +226,9 @@ function App() {
                 <Route
                     path="/maintenance"
                     element={
-                        <ProtectedRoute>
+                        <RoleRoute path="/maintenance">
                             <Maintenance />
-                        </ProtectedRoute>
+                        </RoleRoute>
                     }
                 />
 
@@ -323,9 +323,9 @@ function App() {
                 <Route
                     path="/agent-inquiries"
                     element={
-                        <ProtectedRoute>
+                        <RoleRoute path="/agent-inquiries">
                             <AgentInquiries />
-                        </ProtectedRoute>
+                        </RoleRoute>
                     }
                 />
 

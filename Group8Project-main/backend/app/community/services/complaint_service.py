@@ -1,11 +1,13 @@
 from collections import Counter
 from decimal import ROUND_HALF_UP, Decimal
 
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.datetime_utils import utcnow
-from app.common.enums import ADMIN_ROLES, ComplaintStatus, UserRole
+from app.common.enums import ADMIN_ROLES, ComplaintStatus, UserRole, WorkOrderStatus
 from app.community.models.complaint import Complaint, ComplaintPhoto
+from app.community.models.maintenance_work_order import MaintenanceworkOrder
 from app.community.repositories.complaint_repository import ComplaintRepository
 from app.community.schemas.complaint import (
     ComplaintCreate,
@@ -18,14 +20,20 @@ from app.core.exceptions import ForbiddenException, NotFoundException, Validatio
 from app.identity.models.user import User
 from app.property import storage
 from app.property.repositories.property_repository import PropertyRepository
+from app.providers.repositories.review_repository import ReviewRepository
+from app.providers.repositories.service_provider_repository import ServiceProviderRepository
 
-_RESOLVED_STATUSES = (ComplaintStatus.resolved.value, ComplaintStatus.closed.value)
+_RESOLVED_STATUSES = (ComplaintStatus.resolved.value,)
+_ACTIVE_WORK_ORDERS = (WorkOrderStatus.assigned.value, WorkOrderStatus.in_progress.value)
 
 
 class ComplaintService:
     def __init__(self, db: AsyncSession) -> None:
+        self._db = db
         self._repo = ComplaintRepository(db)
         self._property_repo = PropertyRepository(db)
+        self._review_repo = ReviewRepository(db)
+        self._provider_repo = ServiceProviderRepository(db)
 
     # ---- helpers -------------------------------------------------------
 
@@ -126,6 +134,25 @@ class ComplaintService:
     ) -> ComplaintResponse:
         complaint = await self._get_or_404(complaint_id)
         new_status = payload.status.value
+
+        if new_status == ComplaintStatus.denied.value:
+            reason = (payload.denial_reason or "").strip()
+            if not reason:
+                raise ValidationException("Give a reason for denying this complaint.")
+            complaint.denial_reason = reason
+            complaint.assigned_to = None
+            # nobody should keep working on a denied complaint (saved in the same commit)
+            await self._db.execute(
+                update(MaintenanceworkOrder)
+                .where(
+                    MaintenanceworkOrder.complaint_id == complaint_id,
+                    MaintenanceworkOrder.status.in_(_ACTIVE_WORK_ORDERS),
+                )
+                .values(status=WorkOrderStatus.cancelled.value)
+            )
+        else:
+            complaint.denial_reason = None
+
         complaint.status = new_status
         if payload.assigned_to is not None:
             complaint.assigned_to = payload.assigned_to
@@ -137,6 +164,24 @@ class ComplaintService:
         complaint = await self._repo.save(complaint)
         return self._to_response(complaint, admin)
 
+    async def delete_complaint(self, complaint_id: int) -> None:
+        complaint = await self._get_or_404(complaint_id)
+        rated_provider_ids = await self._repo.rated_provider_ids(complaint_id)
+        await self._repo.delete(complaint)
+
+        # those ratings went with the work orders, so the cached averages follow (same commit)
+        for provider_id in rated_provider_ids:
+            provider = await self._provider_repo.get_by_id(provider_id)
+            if provider is None:
+                continue
+            avg, count = await self._review_repo.rating_summary(provider_id)
+            provider.total_reviews = count
+            provider.avg_rating = (
+                avg.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) if avg is not None else None
+            )
+
+        await self._repo.commit()
+
     async def get_stats(self) -> ComplaintStatsResponse:
         complaints = await self._repo.get_all()
         total = len(complaints)
@@ -145,11 +190,13 @@ class ComplaintService:
         by_category = Counter(c.category for c in complaints)
 
         resolved = [c for c in complaints if c.status in _RESOLVED_STATUSES]
+        # a denied complaint was never going to be resolved, so it does not lower the rate
+        resolvable = total - by_status[ComplaintStatus.denied.value]
         resolution_rate_pct = (
-            (Decimal(len(resolved)) / Decimal(total) * Decimal("100")).quantize(
+            (Decimal(len(resolved)) / Decimal(resolvable) * Decimal("100")).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
             )
-            if total > 0
+            if resolvable > 0
             else Decimal("0.00")
         )
 

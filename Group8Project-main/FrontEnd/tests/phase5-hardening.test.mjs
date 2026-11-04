@@ -425,7 +425,7 @@ test('every page that shows a status uses the shared vocabulary', async () => {
     const source = await readSource(normalised);
 
     /* A page spelling out a backend status value means it guessed the vocabulary. */
-    if (/(===|!==)\s*"(submitted|under_review|in_progress|resolved|closed|assigned|cancelled)"/.test(source)) {
+    if (/(===|!==)\s*"(submitted|under_review|in_progress|resolved|denied|assigned|cancelled)"/.test(source)) {
       offenders.push(normalised);
     }
   }
@@ -437,7 +437,7 @@ test('every page that shows a status uses the shared vocabulary', async () => {
   );
 
   /* the shared helpers answer in both directions */
-  assert.equal(statusMap.toComplaintStatus('Closed'), 'closed');
-  assert.equal(statusMap.complaintStatusLabel('closed'), 'Closed');
+  assert.equal(statusMap.toComplaintStatus('Denied'), 'denied');
+  assert.equal(statusMap.complaintStatusLabel('denied'), 'Denied');
   assert.equal(statusMap.toStatus(statusMap.WORK_ORDER_STATUSES, 'cancelled'), 'cancelled');
 });

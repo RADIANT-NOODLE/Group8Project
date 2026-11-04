@@ -170,6 +170,7 @@ const ESTATE_ADMIN_PATHS = Object.freeze([
   '/maintenance',
   '/resident-directory',
   '/resident-complaints',
+  '/agent-inquiries',
   '/property-requests',
   '/property-approvals',
   '/registration-requests',
@@ -177,8 +178,8 @@ const ESTATE_ADMIN_PATHS = Object.freeze([
 ]);
 
 export const ROLE_PATHS = Object.freeze({
-  /* Residents log and rate their own maintenance requests on /maintenance. */
-  [ROLES.resident]: Object.freeze(['/valuation', '/request-to-sell', '/complaints', '/maintenance']),
+  /* Residents follow and rate their own requests from /complaints. */
+  [ROLES.resident]: Object.freeze(['/valuation', '/request-to-sell', '/complaints']),
   [ROLES.estateAgent]: Object.freeze([
     '/agent-dashboard',
     '/agent-listings',
