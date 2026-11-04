@@ -50,6 +50,7 @@ import Announcements from "./pages/Announcements/Announcements";
 
 /* AI */
 import Intelligence from "./pages/AI/Intelligence";
+import Notifications from "./pages/Notifications/Notifications";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
@@ -370,6 +371,15 @@ function App() {
                 />
 
                 {/* VALORA INTELLIGENCE */}
+                {/* NOTIFICATION INBOX */}
+                <Route
+                  path="/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <Notifications />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                     path="/intelligence"
                     element={

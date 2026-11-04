@@ -1,4 +1,4 @@
-"""Identity API router — auth + user administration.
+﻿"""Identity API router — auth + user administration.
 
 Provides:
   POST /api/v1/auth/register     — user registration
@@ -227,6 +227,9 @@ async def reject_user(
 # COMBINED ROUTER — exported as `router`
 # =============================================
 
+from app.identity.api.notifications import router as notifications_router
+
 router = APIRouter()
 router.include_router(auth_router)
 router.include_router(users_router)
+router.include_router(notifications_router)
