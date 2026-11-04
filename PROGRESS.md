@@ -14,8 +14,8 @@ The following functionality is fully wired, tested, and integrated on the `main`
 
 ### 1.1 Resident Directory & Occupancy Linking
 * **Backend Models & Schemas:**
-  * Added `ResidentDirectory` database model (`Group8Project-main/backend/app/community/models/resident_directory.py`) establishing relationships between registered users and physical property units.
-  * Added schemas for directory record creation, updates, and responses (`Group8Project-main/backend/app/community/schemas/resident_directory.py`).
+  * Added `ResidentDirectory` database model (`backend/app/community/models/resident_directory.py`) establishing relationships between registered users and physical property units.
+  * Added schemas for directory record creation, updates, and responses (`backend/app/community/schemas/resident_directory.py`).
 * **Backend API Endpoints (`/api/v1/resident-directory`):**
   * `GET /`: Lists all directory assignments with joined user details (name, email, role) and property details (unit number, complex, address).
   * `POST /`: Assigns an approved resident to a property unit (restricts admins from improper unit assignment).
