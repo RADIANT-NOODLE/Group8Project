@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
     BrowserRouter,
     Routes,
@@ -51,6 +51,7 @@ import Announcements from "./pages/Announcements/Announcements";
 /* AI */
 import Intelligence from "./pages/AI/Intelligence";
 import Notifications from "./pages/Notifications/Notifications";
+import EstateHealth from "./pages/Analytics/EstateHealth";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
@@ -372,6 +373,15 @@ function App() {
 
                 {/* VALORA INTELLIGENCE */}
                 {/* NOTIFICATION INBOX */}
+                {/* ESTATE HEALTH */}
+                <Route
+                  path="/estate-health"
+                  element={
+                    <ProtectedRoute>
+                      <EstateHealth />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/notifications"
                   element={
