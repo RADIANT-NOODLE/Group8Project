@@ -31,6 +31,9 @@ import HeadAdminDashboard from "./pages/Dashboards/HeadAdmin/HeadAdminDashboard"
 import HOAAdminDashboard from "./pages/Dashboards/HOAAdmin/HOAAdminDashboard";
 import EstateAgentDashboard from "./pages/Dashboards/EstateAgent/EstateAgentDashboard";
 
+/* CONTRACTOR / SERVICE PROVIDER */
+import ProviderWork from "./pages/Provider/ProviderWork";
+
 /* HOA ADMIN */
 
 /* RESIDENT */
@@ -113,7 +116,10 @@ function AgentDashboardWrapper() {
 }
 
 function ResidentDashboardWrapper() {
-    // The dashboard already uses useSession internally, so we just render it
+    const { user } = useSession();
+    if (user?.role === "service_provider") {
+        return <ProviderWork />;
+    }
     return <ResidentDashboard />;
 }
 
@@ -142,13 +148,23 @@ function App() {
                 <Route path="/properties" element={<Properties />} />
                 <Route path="/property/:propertyId" element={<Property />} />
 
-                {/* MAIN DASHBOARD (Resident) */}
+                {/* MAIN DASHBOARD */}
                 <Route
                     path="/dashboard"
                     element={
                         <ProtectedRoute>
-                            <ResidentDashboard/>
+                            <ResidentDashboardWrapper />
                         </ProtectedRoute>
+                    }
+                />
+
+                {/* CONTRACTOR WORK ORDERS */}
+                <Route
+                    path="/provider-work"
+                    element={
+                        <RoleRoute path="/provider-work">
+                            <ProviderWork />
+                        </RoleRoute>
                     }
                 />
 
@@ -202,16 +218,17 @@ function App() {
                     }
                 />
 
-                {/* COMPLAINTS */}
+                {/* COMPLAINTS (Resident) */}
                 <Route
                     path="/complaints"
                     element={
-                        <ProtectedRoute>
+                        <RoleRoute path="/complaints">
                             <Complaints />
-                        </ProtectedRoute>
+                        </RoleRoute>
                     }
                 />
 
+                {/* RESIDENT COMPLAINTS (Admin View) */}
                 <Route
                     path="/resident-complaints"
                     element={

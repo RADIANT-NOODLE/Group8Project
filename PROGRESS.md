@@ -8,9 +8,9 @@ This document tracks all features, APIs, and architectural improvements brought 
 
 ---
 
-## 1. What We Took from radiant_noodle (Integrated into `main`)
+## 1. What We Took from radiant_noodle & Implemented into `main`
 
-The following functionality was merged from the `valora_new` branch into `main`. It successfully transitions the application from browser `localStorage` prototypes into an integrated, database-backed system with complete API contracts:
+The following functionality is fully wired, tested, and integrated on the `main` branch:
 
 ### 1.1 Resident Directory & Occupancy Linking
 * **Backend Models & Schemas:**
@@ -110,48 +110,56 @@ The following functionality was merged from the `valora_new` branch into `main`.
 * Added `DateRangeFilter.jsx`, `ComplaintStatusRing.jsx`, `StageSummary.jsx`, and `PropertyTabs.jsx`.
 * Retired obsolete prototype screens: eliminated stale `Investor` role pages, old `AITrainingData.jsx`, duplicate dashboards, and standalone `MyProperty.jsx` in favor of modular dashboard cards.
 
-### 1.12 Database Pooling, Security, & Testing
+### 1.12 Dedicated Service Provider Portal & Contractor Work Orders
+* **Backend RBAC & API (`/api/v1/work-orders` & `/api/v1/providers/me`):**
+  * Permitted `service_provider` role access in `work_orders.py` and `work_order_service.py` with email-scoped provider lookup.
+  * Added contractor self-service status transition (`in_progress`, `completed`), job quote/cost updates, and completion notes.
+  * Linked status transitions automatically update parent complaint status (`in_progress` -> complaint `in_progress`, `completed` -> complaint `resolved`).
+  * Added `GET /api/v1/providers/me` endpoint in `providers/api/router.py`.
+  * Added unit test suite in `tests/test_work_orders.py` (31/31 backend tests passing).
+* **Frontend Integration:**
+  * Added `ProviderWork.jsx` and `ProviderWork.css` dedicated contractor workspace with KPI summary cards, filter tabs, job search, and interactive in-page update modal.
+  * Added `roleMap.js` and `navigation.js` mapping for `service_provider` role with dedicated route `/provider-work` and dynamic `/dashboard` routing.
+  * Added `getMyProviderProfile()` in `providerApi.js` and populated complaint metadata in `workOrderApi.js`.
+  * Fully compliant with all 52 frontend tests (`phase2-roles`, `phase3-auth`, `phase3-api`, `phase5-hardening`, `phase6-api`).
+
+### 1.13 Database Pooling, Security, & Testing
 * **Database Pooling:** Configured `pool_pre_ping=True`, `pool_recycle=300`, `pool_size=5`, `max_overflow=10` in `session.py`.
 * **CORS Settings:** Explicitly whitelisted local Vite development ports (`5173` and `4173`).
 * **Automated Test Suite:**
   * Frontend: 52/52 tests passing (`phase2-roles`, `phase3-auth`, `phase3-api`, `phase5-hardening`, `phase6-api`).
-  * Backend: 26/26 security tests passing in `tests/test_security.py`.
+  * Backend: 31/31 tests passing (`test_security.py` + `test_work_orders.py`).
 
 ---
 
 ## 2. What's Left to Get Fully Working on the Actual Live System
 
-With user management, property requests, photos, inquiries, and password reset fully wired into `main`, the remaining tasks focus on live production deployment and remaining operational features:
+With user administration, property requests, photos, inquiries, password reset, and the service provider portal completely wired and tested, the remaining items are:
 
-### 2.1 Service Provider Dedicated Portal & Work Orders (Priority 1)
-* **Current State:** Service providers are listed in `Providers.jsx` and HOA Admins can manage work orders via `/api/v1/work-orders`.
-* **What's Left:**
-  * Provide a dedicated interface or token-based dispatch view (`ProviderWork.jsx`) for contractors to view assigned jobs.
-  * Enable contractors to update job status (`In Progress`, `Completed`, `Blocked`) and submit completion notes or invoices.
-
-### 2.2 Operational Analytics Aggregation (Priority 2)
+### 2.1 Operational Analytics Aggregation (Priority 2)
 * **Current State:** Living score endpoints exist. Secondary charts on `CommunityAnalytics.jsx` were deprecated in favor of streamlined metrics.
 * **What's Left:**
   * Implement aggregated summary endpoints for HOA Admin dashboard: complaint resolution turnaround time, active occupancy percentage, and maintenance spend.
   * Bind remaining dashboard KPI metric widgets to live aggregates.
 
-### 2.3 Live Database Migration & Seeding Verification (Priority 3)
+### 2.2 Live Database Migration & Seeding Verification (Priority 3)
 * **Current State:** Alembic migration scripts exist for all models (`7a1d4c2b9e10`, `8b2e5d3c0f21`, `9c3f6e4d1a32`, `ad4f7b5e2c43`, `c3e8a1f5b7d9`, `d4f9b2a6c8e1`, `e5a0c3b7d9f2`).
 * **What's Left:**
   * Run `alembic upgrade head` against the live PostgreSQL database.
   * Verify initial seed script creates default HOA Head Admin account and baseline estate/property seed data for demo testing.
 
-### 2.4 End-to-End Smoke Test & Browser Verification (Priority 4)
-* **Current State:** Unit and integration tests pass (52 frontend + 26 backend).
+### 2.3 End-to-End Smoke Test & Browser Verification (Priority 4)
+* **Current State:** Unit and integration tests pass (52 frontend + 31 backend).
 * **What's Left:**
   * Start live FastAPI server (`uvicorn app.main:app`) and frontend dev server (`npm run dev`).
   * Perform end-to-end user journeys:
     1. Resident registration -> HOA Admin approval -> Resident login -> Submit Request to Sell.
     2. HOA Admin approves request & assigns Estate Agent.
     3. Estate Agent lists property with photos -> Public visitor submits inquiry.
-    4. Estate Agent reviews inquiry.
+    4. Contractor login -> view assigned work order -> transition to `in_progress` -> complete job with notes.
+    5. Resident rates completed job.
 
-### 2.5 Production Deployment Configuration (Priority 5)
+### 2.4 Production Deployment Configuration (Priority 5)
 * **Current State:** Project runs in local dev environment.
 * **What's Left:**
   * Finalize Dockerfile or cloud deployment configurations (e.g., Render, Railway, AWS, or Azure).
@@ -166,11 +174,12 @@ With user management, property requests, photos, inquiries, and password reset f
 | **Frontend Production Build** | **PASSING** | Built cleanly via `npm run build` (`dist/`) |
 | **Frontend Test Suite** | **PASSING** | **52/52** tests passing across phases 2, 3, 5, 6 |
 | **Backend Python Compilation** | **PASSING** | Compiled with 0 syntax or import errors via `compileall` |
-| **Backend Security Tests** | **PASSING** | **26/26** tests passing in `tests/test_security.py` |
+| **Backend Automated Tests** | **PASSING** | **31/31** tests passing (`test_security.py` + `test_work_orders.py`) |
 | **Authentication & Password Reset** | **LIVE** | JWT login, registration, password change & reset flow |
 | **User Administration** | **LIVE** | User approvals, role filtering, revocation active |
 | **Resident Directory** | **LIVE** | Unit assignments, occupancy tracking connected to DB |
 | **Property Management** | **LIVE** | Create, view, edit properties live via API |
 | **Property Requests (Sale/Rent)** | **LIVE** | Resident submission and HOA approval workflow live |
+| **Service Provider Portal** | **LIVE** | Contractor workspace, work order status transitions & notes live |
 | **Photo Storage & Serving** | **LIVE** | Database storage with immutable HTTP cache headers |
 | **Inquiries** | **LIVE** | Buyer inquiries and agent response endpoints live |

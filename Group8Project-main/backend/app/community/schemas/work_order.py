@@ -49,6 +49,9 @@ class WorkOrderResponse(BaseModel):
     actual_completion_date: datetime | None
     created_at: datetime | None
     updated_at: datetime | None
+    complaint_category: str | None = None
+    complaint_description: str | None = None
+    unit_id: int | None = None
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

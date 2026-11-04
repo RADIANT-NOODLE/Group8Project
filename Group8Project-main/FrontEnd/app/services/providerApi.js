@@ -49,6 +49,10 @@ export async function listProviders(filters = {}) {
   return readCollection(payload, 'providers', toProvider);
 }
 
+export async function getMyProviderProfile() {
+  return toProvider(await apiRequest(`${BASE_PATH}/me`));
+}
+
 export async function getProvider(providerId) {
   return toProvider(await apiRequest(`${BASE_PATH}/${encodeURIComponent(providerId)}`));
 }

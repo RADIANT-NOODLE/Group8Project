@@ -20,13 +20,21 @@ router = APIRouter(prefix="/work-orders", tags=["work orders"])
 
 AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]
 ResidentOnly = Annotated[User, require_roles(UserRole.resident.value)]
+AdminOrProvider = Annotated[
+    User, require_roles(UserRole.hoa_admin.value, UserRole.service_provider.value)
+]
 
 
 @router.get("", response_model=PaginatedWorkOrdersResponse)
 async def list_work_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[
-        User, require_roles(UserRole.hoa_admin.value, UserRole.resident.value)
+        User,
+        require_roles(
+            UserRole.hoa_admin.value,
+            UserRole.resident.value,
+            UserRole.service_provider.value,
+        ),
     ],
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -50,7 +58,7 @@ async def get_work_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
 ) -> WorkOrderResponse:
-    """HOA admins, or the resident who raised the linked complaint."""
+    """HOA admins, the assigned contractor, or the resident who raised the linked complaint."""
     return await WorkOrderService(db).get_work_order(work_order_id, current_user)
 
 
@@ -69,10 +77,10 @@ async def update_work_order(
     work_order_id: int,
     payload: WorkOrderUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _admin: AdminOnly,
+    current_user: AdminOrProvider,
 ) -> WorkOrderResponse:
     """Update status, cost, completion notes or estimated date."""
-    return await WorkOrderService(db).update_work_order(work_order_id, payload)
+    return await WorkOrderService(db).update_work_order(work_order_id, payload, current_user)
 
 
 @router.post("/{work_order_id}/rating", response_model=WorkOrderResponse)

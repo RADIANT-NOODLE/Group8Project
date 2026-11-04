@@ -46,6 +46,12 @@ export const ROLE_DEFINITIONS = Object.freeze([
     dashboardPath: HOA_ADMIN_PATH,
   }),
   Object.freeze({
+    value: ROLES.serviceProvider,
+    label: 'Service Provider',
+    description: 'View assigned jobs and track maintenance work orders.',
+    dashboardPath: DASHBOARD_PATH,
+  }),
+  Object.freeze({
     value: ROLES.headAdmin || 'head_admin',
     label: 'Head Administrator',
     description: 'System administration.',
@@ -189,7 +195,7 @@ export const ROLE_PATHS = Object.freeze({
   [ROLES.hoaAdmin]: ESTATE_ADMIN_PATHS,
   /* The head administrator runs everything the HOA does, plus user management. */
   head_admin: Object.freeze([...ESTATE_ADMIN_PATHS, '/head-admin', '/user-management']),
-  [ROLES.serviceProvider]: Object.freeze([]),
+  [ROLES.serviceProvider]: Object.freeze(['/provider-work']),
   [ROLES.casualVisitor]: Object.freeze([]),
 });
 

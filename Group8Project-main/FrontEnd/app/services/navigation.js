@@ -39,8 +39,9 @@ export const NAVIGATION_BY_ROLE = Object.freeze({
     Object.freeze({ label: 'Community Announcements', path: '/community-announcements', icon: 'announcement' }),
   ]),
 
-  /* A provider has no workspace yet (connection plan, Phase 4 item 6). */
+  /* Dedicated Contractor / Service Provider Workspace */
   [ROLES.serviceProvider]: Object.freeze([
+    Object.freeze({ label: 'My Work Orders', path: '/provider-work', icon: 'maintenance' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
     Object.freeze({ label: 'Community Announcements', path: '/announcements', icon: 'announcement' }),
   ]),
@@ -81,14 +82,7 @@ export function getSafeNextPath(search = '', fallback = DASHBOARD_PATH) {
   return nextPath;
 }
 
-export function getLoginPath(nextPath = DASHBOARD_PATH) {
-  const safeNextPath = getSafeNextPath(`?next=${encodeURIComponent(nextPath)}`);
-  return `/login?next=${encodeURIComponent(safeNextPath)}`;
-}
-
-export function getLoginNotice(search = '') {
-  const notice = readSearchParams(search).get('notice');
-  if (notice === 'signed-out') return 'You have signed out safely.';
-  if (notice === 'session-ended') return 'Your session ended. Please sign in again.';
-  return '';
+/** Which screen to land on after sign-in. */
+export function redirectAfterSignIn({ role, search = '' }) {
+  return getSafeNextPath(search, dashboardPathForRole(role));
 }

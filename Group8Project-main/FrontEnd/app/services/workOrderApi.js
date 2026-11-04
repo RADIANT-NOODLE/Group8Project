@@ -29,6 +29,9 @@ export function toWorkOrder(record) {
     actualCompletionDate: toStringOrNull(record?.actual_completion_date),
     createdAt: toStringOrNull(record?.created_at),
     updatedAt: toStringOrNull(record?.updated_at),
+    complaintCategory: toStringOrNull(record?.complaint_category),
+    complaintDescription: toStringOrNull(record?.complaint_description),
+    unitId: toNumber(record?.unit_id),
   };
 }
 
