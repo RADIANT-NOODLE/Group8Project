@@ -32,6 +32,64 @@ function safeParse(value, fallback) {
   }
 }
 
+const DEFAULT_DEMO_USERS = Object.freeze([
+  {
+    id: 'mock-admin-01',
+    first_name: 'Valora',
+    last_name: 'HOA Admin',
+    full_name: 'Valora HOA Admin',
+    email: 'admin@valora.test',
+    role: 'hoa_admin',
+    hoa_approved: true,
+    password_salt: 'valora_salt_2026',
+    password_hash: '3603b6dc5869f82e5bd4d09f57629223ef5528f378edf883de0c49789cfd0536',
+  },
+  {
+    id: 'mock-headadmin-01',
+    first_name: 'Valora',
+    last_name: 'Head Admin',
+    full_name: 'Valora Head Admin',
+    email: 'headadmin@valora.test',
+    role: 'head_admin',
+    hoa_approved: true,
+    password_salt: 'valora_salt_2026',
+    password_hash: '3603b6dc5869f82e5bd4d09f57629223ef5528f378edf883de0c49789cfd0536',
+  },
+  {
+    id: 'mock-resident-01',
+    first_name: 'Sarah',
+    last_name: 'Resident',
+    full_name: 'Sarah Resident',
+    email: 'resident@valora.test',
+    role: 'resident',
+    hoa_approved: true,
+    password_salt: 'valora_salt_2026',
+    password_hash: '3603b6dc5869f82e5bd4d09f57629223ef5528f378edf883de0c49789cfd0536',
+  },
+  {
+    id: 'mock-agent-01',
+    first_name: 'Alex',
+    last_name: 'Estate Agent',
+    full_name: 'Alex Estate Agent',
+    email: 'agent@valora.test',
+    role: 'estate_agent',
+    hoa_approved: true,
+    password_salt: 'valora_salt_2026',
+    password_hash: '3603b6dc5869f82e5bd4d09f57629223ef5528f378edf883de0c49789cfd0536',
+  },
+  {
+    id: 'mock-provider-01',
+    first_name: 'Peter',
+    last_name: 'Service Provider',
+    full_name: 'Peter Service Provider',
+    email: 'provider@valora.test',
+    role: 'service_provider',
+    hoa_approved: true,
+    password_salt: 'valora_salt_2026',
+    password_hash: '3603b6dc5869f82e5bd4d09f57629223ef5528f378edf883de0c49789cfd0536',
+  },
+]);
+
 function readUsers() {
   const users = safeParse(getStorage().getItem(MOCK_USERS_KEY), []);
   return Array.isArray(users) ? users : [];
@@ -82,6 +140,7 @@ function toPublicUser(user) {
     full_name: user.full_name,
     email: user.email,
     role: user.role,
+    hoa_approved: user.hoa_approved ?? true,
   };
 }
 
@@ -164,7 +223,8 @@ export async function login({ email, password }) {
   await simulateRequestDelay();
   const plainPassword = String(password ?? '');
   const users = readUsers();
-  const storedUser = users.find((user) => user.email === normalizedEmail);
+  const storedUser = users.find((user) => user.email === normalizedEmail) ||
+    DEFAULT_DEMO_USERS.find((user) => normalizeEmail(user.email) === normalizedEmail);
 
   if (!storedUser) {
     throw new AuthError('Invalid email or password.', 'INVALID_CREDENTIALS');
