@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { PROPERTY_TAB_PATHS } from "./PropertyTabs";
 import "./DashboardSidebar.css";
@@ -288,6 +288,7 @@ const navigation = {
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
+        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
     ],
 
     /* =====================================================

@@ -49,6 +49,7 @@ import CommunityAnnouncements from "./pages/Announcements/CommunityAnnouncements
 import Announcements from "./pages/Announcements/Announcements";
 
 /* AI */
+import Intelligence from "./pages/AI/Intelligence";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
@@ -364,6 +365,16 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Profile />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* VALORA INTELLIGENCE */}
+                <Route
+                    path="/intelligence"
+                    element={
+                        <ProtectedRoute>
+                            <Intelligence />
                         </ProtectedRoute>
                     }
                 />

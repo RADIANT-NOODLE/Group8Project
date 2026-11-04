@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The single role vocabulary for the VALORA frontend.
  *
  * Every role value here is the backend's own role string (`app/common/enums.py`),
@@ -159,8 +159,8 @@ const SHARED_PATHS = Object.freeze([
   '/providers',
   '/announcements',
   '/community-announcements',
-  
-]);
+  '/intelligence',
+]););
 
 /** Screens that belong to one role's workspace. Keyed by role value, so the
  *  index below can be built without a second lookup. */

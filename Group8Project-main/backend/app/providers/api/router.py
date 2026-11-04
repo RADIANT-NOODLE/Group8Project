@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.enums import UserRole
+from app.core.exceptions import NotFoundException
 from app.db.session import get_db
 from app.identity.api.dependencies import CurrentUser, require_roles
 from app.identity.models.user import User
+from app.providers.repositories.service_provider_repository import ServiceProviderRepository
 from app.providers.schemas.review import PaginatedReviewsResponse, ReviewCreate, ReviewResponse
 from app.providers.schemas.service_provider import (
     PaginatedProvidersResponse,
@@ -21,6 +23,7 @@ router = APIRouter(prefix="/providers", tags=["providers"])
 
 AdminOnly = Annotated[User, require_roles(UserRole.hoa_admin.value)]
 ResidentOnly = Annotated[User, require_roles(UserRole.resident.value)]
+ProviderOnly = Annotated[User, require_roles(UserRole.service_provider.value)]
 
 
 @router.get("", response_model=PaginatedProvidersResponse)
@@ -34,6 +37,18 @@ async def list_providers(
     return await ServiceProviderService(db).list_providers(
         trade=trade, verified=verified, emergency_available=emergency_available
     )
+
+
+@router.get("/me", response_model=ServiceProviderResponse)
+async def get_my_provider_profile(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: ProviderOnly,
+) -> ServiceProviderResponse:
+    """Return the profile for the authenticated service provider."""
+    provider = await ServiceProviderRepository(db).get_by_email(current_user.email)
+    if provider is None:
+        raise NotFoundException("Service provider profile not found for this account.")
+    return ServiceProviderResponse.model_validate(provider)
 
 
 @router.get("/{provider_id}", response_model=ServiceProviderResponse)
@@ -84,6 +99,7 @@ async def create_provider_review(
     """Residents rate a provider 1-5. One review per resident per provider."""
     return await ReviewService(db).create_review(provider_id, payload, current_user)
 
+
 @router.delete("/{provider_id}", status_code=204)
 async def delete_provider(
     provider_id: int,
@@ -92,6 +108,7 @@ async def delete_provider(
 ) -> None:
     """Delete a service provider. Only HOA Admins can do this."""
     await ServiceProviderService(db).delete_provider(provider_id)
+
 
 @router.delete("/{provider_id}/reviews/{review_id}", status_code=204)
 async def delete_provider_review(
@@ -102,4 +119,3 @@ async def delete_provider_review(
 ) -> None:
     """Delete a specific review. Only HOA Admins can do this."""
     await ReviewService(db).delete_review(provider_id, review_id)
-    
