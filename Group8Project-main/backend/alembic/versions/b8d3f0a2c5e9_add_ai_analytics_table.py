@@ -15,6 +15,11 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # 5c5c0e0ef686 already creates this table on any database built from the
+    # migration history, so it is only created here if it is missing.
+    if sa.inspect(op.get_bind()).has_table("ai_analytics"):
+        return
+
     op.create_table(
         "ai_analytics",
         sa.Column("analytics_id", sa.Integer(), primary_key=True, index=True),
@@ -52,4 +57,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table("ai_analytics")
+    # The table belongs to 5c5c0e0ef686, so stepping back past this one keeps it.
+    pass
