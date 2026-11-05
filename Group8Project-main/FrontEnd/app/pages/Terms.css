@@ -1,0 +1,79 @@
+.terms-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #f5f3f7;
+}
+
+.terms-page-main {
+    flex: 1;
+    box-sizing: border-box;
+    width: min(860px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0 60px;
+}
+
+.terms-page-card {
+    box-sizing: border-box;
+    padding: 36px 40px;
+    border: 1px solid #e8e3eb;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #4b4052;
+    font-size: 15px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+
+.terms-page-card h1 {
+    margin: 0 0 18px;
+    color: #29242d;
+    font-size: 28px;
+    line-height: 1.25;
+}
+
+.terms-page-card h4 {
+    margin: 26px 0 10px;
+    color: #29242d;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.terms-page-card p {
+    margin: 0 0 12px;
+}
+
+.terms-page-card ul {
+    margin: 0 0 12px;
+    padding-left: 22px;
+    list-style: disc;
+}
+
+.terms-page-card li {
+    margin-bottom: 5px;
+}
+
+.terms-page-card strong {
+    color: #29242d;
+}
+
+.terms-page-card .auth-terms-brand {
+    margin-bottom: 4px;
+    color: #563f6b;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 600px) {
+    .terms-page-main {
+        padding-top: 16px;
+    }
+
+    .terms-page-card {
+        padding: 22px 18px;
+    }
+
+    .terms-page-card h1 {
+        font-size: 23px;
+    }
+}

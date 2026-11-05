@@ -8,7 +8,7 @@ from app.common.enums import UserRole
 from app.common.validators import normalise_email
 from app.core.config import get_settings
 from app.core.email import send_password_reset_email
-from app.core.exceptions import ConflictException, CredentialsException
+from app.core.exceptions import ConflictException, CredentialsException, TooManyAttemptsException
 from app.core.security import (
     create_access_token,
     create_password_reset_token,
@@ -17,7 +17,9 @@ from app.core.security import (
     read_password_reset_token,
     verify_password,
 )
+from app.identity.models.terms_acceptance import CURRENT_TERMS_VERSION
 from app.identity.models.user import User
+from app.identity.repositories.login_attempt_repository import LoginAttemptRepository
 from app.identity.repositories.user_repository import UserRepository
 from app.identity.schemas.auth import (
     AuthResponse,
@@ -43,8 +45,9 @@ _FORGOT_PASSWORD_MESSAGE = (
 class AuthService:
     def __init__(self, db: AsyncSession) -> None:
         self._repo = UserRepository(db)
+        self._attempts = LoginAttemptRepository(db)
 
-    async def register(self, payload: RegisterRequest) -> AuthResponse:
+    async def register(self, payload: RegisterRequest, address: str = "unknown") -> AuthResponse:
         email = normalise_email(payload.email)
 
         existing = await self._repo.get_by_email(email)
@@ -59,6 +62,8 @@ class AuthService:
             role=payload.role.value,
             phoneno=payload.phoneno,
             unit_no=payload.unit_no,
+            accepted_terms_version=CURRENT_TERMS_VERSION,
+            accepted_from=address,
         )
 
         return self._build_auth_response(user)
@@ -79,13 +84,21 @@ class AuthService:
         )
         return UserSummary.model_validate(user)
 
-    async def login(self, payload: LoginRequest) -> AuthResponse:
+    async def login(self, payload: LoginRequest, address: str = "unknown") -> AuthResponse:
         email = normalise_email(payload.email)
+
+        # Checked first, and the same for unknown emails, so being blocked reveals
+        # neither whether the password was right nor whether the account exists.
+        if await self._attempts.is_blocked(email, address):
+            raise TooManyAttemptsException("Too many failed login attempts. Please try again in 15 minutes.")
+
         user = await self._repo.get_by_email(email)
 
         if user is None or not verify_password(payload.password, user.password_hash):
+            await self._attempts.record_failure(email, address)
             raise CredentialsException("Invalid email or password.")
 
+        await self._attempts.clear(email, address)
         return self._build_auth_response(user)
 
     async def change_password(self, user: User, payload: ChangePasswordRequest) -> MessageResponse:
@@ -123,6 +136,7 @@ class AuthService:
             raise invalid
 
         await self._repo.set_password_hash(user, hash_password(payload.new_password))
+        await self._attempts.clear(normalise_email(user.email))
         return MessageResponse(message="Your password has been reset. You can now sign in.")
 
     async def update_profile(self, user: User, payload: UpdateProfileRequest) -> UserResponse:

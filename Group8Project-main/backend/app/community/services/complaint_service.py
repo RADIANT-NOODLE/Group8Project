@@ -100,7 +100,7 @@ class ComplaintService:
         if not self._is_admin(user) and complaint.user_id != user.user_id:
             raise ForbiddenException("You can only add a photo to your own complaints.")
         if len(data) > storage.MAX_PHOTO_BYTES:
-            raise ValidationException("Photos can be at most 5 MB.")
+            raise ValidationException("Photos can be at most 4 MB.")
         extension = storage.detect_image_extension(data)
         if extension is None:
             raise ValidationException("Only JPEG, PNG or WebP images are allowed.")

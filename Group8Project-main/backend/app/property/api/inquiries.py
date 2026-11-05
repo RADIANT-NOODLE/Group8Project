@@ -11,6 +11,7 @@ from datetime import datetime
 
 from app.common.enums import ADMIN_ROLES
 from app.core.security import decode_access_token
+from app.core.client_address import client_address
 from app.db.session import get_db
 from app.identity.api.dependencies import CurrentUser
 from app.identity.models.user import User
@@ -180,7 +181,7 @@ async def create_inquiry(
     token: Annotated[str | None, Depends(optional_oauth2_scheme)] = None,
 ):
     """Send an enquiry to the estate agent responsible for a listed property."""
-    _check_enquiry_limit(request.client.host if request.client else "unknown")
+    _check_enquiry_limit(client_address(request))
     agent_id = await _agent_for_unit(db, payload.property_id)
 
     new_inquiry = Inquiry(

@@ -33,6 +33,17 @@ class ConflictException(HTTPException):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
+class TooManyAttemptsException(HTTPException):
+    """Raised when someone has failed too often and must wait before trying again."""
+
+    def __init__(self, detail: str = "Too many attempts. Please try again later.", retry_after_seconds: int = 900) -> None:
+        super().__init__(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=detail,
+            headers={"Retry-After": str(retry_after_seconds)},
+        )
+
+
 class ValidationException(HTTPException):
     """Raised when a request is well-formed but its content is not acceptable."""
 

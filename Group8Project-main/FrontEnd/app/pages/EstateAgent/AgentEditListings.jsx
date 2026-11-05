@@ -1634,7 +1634,7 @@ function AgentEditListings() {
                                         </strong>
 
                                         <span>
-                                            JPEG, PNG or WebP images, up to 5 MB each
+                                            JPEG, PNG or WebP images, up to 4 MB each
                                         </span>
                                     </label>
 

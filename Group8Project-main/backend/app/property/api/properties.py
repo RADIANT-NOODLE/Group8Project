@@ -107,7 +107,7 @@ async def upload_property_photo(
     property_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: CurrentUser,
-    file: Annotated[UploadFile, File(description="JPEG, PNG or WebP, up to 5 MB")],
+    file: Annotated[UploadFile, File(description="JPEG, PNG or WebP, up to 4 MB")],
 ) -> PropertyResponse:
     """Add a photo to a property (HOA and head admins, or the unit's assigned estate agent).
     The first photo is the cover image."""

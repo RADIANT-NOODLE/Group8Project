@@ -352,7 +352,12 @@ function HOAAdminDashboard({ user }) {
   const attentionTotal = attention.reduce((sum, item) => sum + item.count, 0);
 
   /* ----- estate at a glance ----- */
-  const occupiedUnits = residentsPreview.items.filter((record) => record.occupancy === "Occupied").length;
+  // counted per unit, since a unit can have several residents
+  const occupiedUnits = new Set(
+    residentsPreview.items
+      .filter((record) => record.occupancy === "Occupied")
+      .map((record) => record.property_id)
+  ).size;
   const occupancy =
     propertiesCount > 0 ? Math.min(Math.round((occupiedUnits / propertiesCount) * 100), 100) : 0;
 

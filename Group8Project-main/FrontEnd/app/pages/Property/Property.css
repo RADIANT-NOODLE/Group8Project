@@ -594,7 +594,32 @@
     margin-top: 4px;
 }
 
-.pd-contact-error {
+.pd-enquiry-terms {
+    margin: 0 0 10px;
+    color: #563f6b;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+/* The popup shares ValoraModal.css, whose input and paragraph rules would otherwise win. */
+.valora-modal .pd-enquiry input[aria-invalid="true"] {
+    border-color: #a33a3a !important;
+}
+
+.valora-modal .pd-enquiry input[aria-invalid="true"]:focus {
+    outline: 2px solid rgba(163, 58, 58, 0.2);
+    box-shadow: none;
+}
+
+.valora-modal .pd-enquiry .pd-enquiry-field-error {
+    margin: -6px 0 10px;
+    color: #a33a3a;
+    font-size: 12.5px;
+}
+
+.pd-contact-error,
+.valora-modal .pd-enquiry .pd-contact-error {
     margin: 0 0 10px;
     color: #a33a3a;
     font-size: 12.5px;

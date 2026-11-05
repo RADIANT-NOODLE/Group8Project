@@ -89,7 +89,7 @@ export function createProperty({ unitNo, complexName, streetAddress, suburb, siz
 }
 
 
-/** HOA and head admins: add a photo (JPEG, PNG or WebP, up to 5 MB). Returns the updated property. */
+/** HOA and head admins: add a photo (JPEG, PNG or WebP, up to 4 MB). Returns the updated property. */
 export async function uploadPropertyPhoto(propertyId, file) {
   const form = new FormData();
   form.append('file', file);

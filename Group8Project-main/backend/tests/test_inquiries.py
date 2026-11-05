@@ -73,7 +73,7 @@ def test_guest_can_send_and_it_goes_to_the_listing_agent():
     assert send(db).status_code == 201
     saved = db.saved[0]
     assert (saved.agent_id, saved.buyer_id, saved.status) == (10, None, "New")
-    assert (saved.buyer_name, saved.buyer_email, saved.buyer_contact) == ("Sam Buyer", "sam@example.com", "082 123 4567")
+    assert (saved.buyer_name, saved.buyer_email, saved.buyer_contact) == ("Sam Buyer", "sam@example.com", "+27821234567")
 
 
 def test_the_assigned_agent_takes_priority_over_the_listing_agent():
@@ -98,7 +98,21 @@ def test_unlisted_property_is_refused():
     "change",
     [
         {"buyer_name": " "},
+        {"buyer_name": "A"},
+        {"buyer_name": "12345"},
+        {"buyer_name": "Sam 2"},
+        {"buyer_name": "!!!"},
+        {"buyer_email": ""},
         {"buyer_email": "not-an-email"},
+        {"buyer_email": "sam@example"},
+        {"buyer_email": "sam@example.c"},
+        {"buyer_email": "sam@@example.com"},
+        {"buyer_email": "sam@example..com"},
+        {"buyer_email": "sam smith@example.com"},
+        {"buyer_contact": "1234567"},
+        {"buyer_contact": "082 123 456"},
+        {"buyer_contact": "082 123 45678"},
+        {"buyer_contact": "0021234567"},
         {"buyer_contact": ""},
         {"buyer_contact": "123"},
         {"buyer_contact": "call me maybe"},
@@ -109,6 +123,28 @@ def test_name_email_and_phone_are_required_and_checked(change):
     db = FakeDb()
     assert send(db, {**VALID, **change}).status_code == 422
     assert db.saved == []
+
+
+@pytest.mark.parametrize(
+    "name", ["Sam", "Sam Smith", "Mary-Jane O'Neil", "Thandi’s Sister", "Zoë Müller", "Dr. Sam"]
+)
+def test_real_names_are_accepted(name):
+    db = FakeDb()
+    assert send(db, {**VALID, "buyer_name": name}).status_code == 201
+    assert db.saved
+
+
+@pytest.mark.parametrize("phone", ["082 123 4567", "0821234567", "+27 82 123 4567", "(082) 123-4567"])
+def test_every_way_of_writing_a_number_is_stored_the_same(phone):
+    db = FakeDb()
+    assert send(db, {**VALID, "buyer_contact": phone}).status_code == 201
+    assert db.saved[-1].buyer_contact == "+27821234567"
+
+
+def test_extra_spaces_in_a_name_are_tidied():
+    db = FakeDb()
+    assert send(db, {**VALID, "buyer_name": "  Sam    Smith "}).status_code == 201
+    assert db.saved[-1].buyer_name == "Sam Smith"
 
 
 @pytest.mark.parametrize("field", ["buyer_name", "buyer_email", "buyer_contact"])

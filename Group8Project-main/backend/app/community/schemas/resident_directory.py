@@ -10,6 +10,7 @@ class ResidentDirectoryCreate(BaseModel):
     notes: Optional[str] = None
 
 class ResidentDirectoryUpdate(BaseModel):
+    property_id: Optional[int] = Field(default=None, ge=1)
     occupancy: Optional[str] = None
     status: Optional[str] = None
     notes: Optional[str] = None

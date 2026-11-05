@@ -89,6 +89,18 @@ class PropertyRequestRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_active_for_unit(self, unit_id: int) -> PropertyRequest | None:
+        """An open request on this unit, from any of its residents."""
+        result = await self._db.execute(
+            select(PropertyRequest)
+            .where(
+                PropertyRequest.unit_id == unit_id,
+                PropertyRequest.status.in_(_ACTIVE_STATUSES),
+            )
+            .limit(1)
+        )
+        return result.scalars().first()
+
     async def create(self, **fields) -> PropertyRequest:
         request = PropertyRequest(**fields)
         self._db.add(request)

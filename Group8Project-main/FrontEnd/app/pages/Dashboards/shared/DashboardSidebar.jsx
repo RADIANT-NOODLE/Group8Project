@@ -268,6 +268,7 @@ const navigation = {
         { label: "My Complaints", path: "/complaints", icon: "complaint" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
+        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
     "Estate Agent": [
@@ -275,6 +276,7 @@ const navigation = {
         { label: "My Listings", path: "/agent-listings", icon: "property" },
         { label: "Edit Listings", path: "/agent-edit-listings", icon: "request" },
         { label: "Inquiries", path: "/agent-inquiries", icon: "complaint" },
+        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
     "HOA Admin": [
@@ -289,6 +291,7 @@ const navigation = {
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
         { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
+        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
     /* =====================================================
@@ -308,6 +311,7 @@ const navigation = {
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
+        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 };
 

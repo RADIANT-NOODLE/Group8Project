@@ -169,6 +169,7 @@ export function useSession() {
     login,
     register,
     logout,
+    updateSessionUser,
     refresh: refreshSession,
   };
 }

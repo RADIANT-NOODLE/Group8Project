@@ -89,10 +89,12 @@ class EstateHealthRepository:
         return min(WINDOW_DAYS, (as_of - oldest).days)
 
     async def _complaints_created(self, window_start: datetime, as_of: datetime) -> int:
+        """Complaints logged in the window. One the HOA denied says nothing about the estate."""
         result = await self._db.execute(
             select(func.count()).where(
                 Complaint.created_at >= window_start,
                 Complaint.created_at <= as_of,
+                Complaint.status.is_distinct_from("denied"),
             )
         )
         return result.scalar_one() or 0
@@ -114,7 +116,7 @@ class EstateHealthRepository:
                 Complaint.created_at >= window_start,
                 Complaint.created_at <= as_of,
                 Complaint.resolved_at.isnot(None),
-                Complaint.status.in_(["resolved", "closed"]),
+                Complaint.status == "resolved",
             )
         )
         row = result.one()
@@ -123,12 +125,16 @@ class EstateHealthRepository:
         return count, avg_days
 
     async def _security_incidents(self, window_start: datetime, as_of: datetime) -> int:
-        """Security-category complaints count as incidents (D6)."""
+        """Security-category complaints count as incidents (D6), unless the HOA denied them.
+
+        The complaint form saves "Security", so the case must not matter.
+        """
         result = await self._db.execute(
             select(func.count()).where(
                 Complaint.created_at >= window_start,
                 Complaint.created_at <= as_of,
-                Complaint.category == "security",
+                func.lower(Complaint.category) == "security",
+                Complaint.status.is_distinct_from("denied"),
             )
         )
         return result.scalar_one() or 0

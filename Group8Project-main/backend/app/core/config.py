@@ -1,9 +1,14 @@
+import os
 from functools import lru_cache
 
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# AWS sets this on every Lambda function; it is never set on a laptop.
+RUNNING_ON_LAMBDA = bool(os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
 
 
 class Settings(BaseSettings):
@@ -51,6 +56,20 @@ class Settings(BaseSettings):
 
         self.DATABASE_URL = urlunsplit(parts._replace(query=urlencode(keep)))
         return self
+
+    @model_validator(mode="after")
+    def _refuse_unsafe_production(self) -> "Settings":
+        """Stop at start-up rather than run a public site with development settings."""
+        if self.is_production:
+            if self.EXPOSE_RESET_LINK:
+                raise ValueError("EXPOSE_RESET_LINK must be false in production: it lets anyone reset any account.")
+            if len(self.SECRET_KEY) < 32 or "change" in self.SECRET_KEY.lower():
+                raise ValueError("SECRET_KEY must be a long random value in production.")
+        return self
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT.strip().lower() == "production"
 
     model_config = SettingsConfigDict(
         env_file=".env",

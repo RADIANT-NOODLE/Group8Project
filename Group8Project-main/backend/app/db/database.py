@@ -11,6 +11,7 @@ from app.db.base import Base  # noqa: F401 — ensures metadata is available
 from app.identity.models.user import User  # noqa: F401
 from app.identity.models.session import Session  # noqa: F401
 from app.identity.models.login_attempt import LoginAttempts  # noqa: F401
+from app.identity.models.terms_acceptance import TermsAcceptance  # noqa: F401
 
 # Property domain
 from app.property.models.property import Property  # noqa: F401

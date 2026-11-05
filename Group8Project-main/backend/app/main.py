@@ -19,18 +19,23 @@ settings = get_settings()
 app = FastAPI(
     title="VALORA API",
     description="Property Health Intelligence Platform",
-    version="1.0.0"
+    version="1.0.0",
+    # no public map of every route on the live site
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
 )
 
 # add CORS middelware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[ "http://localhost:4173", 
+    # On AWS the website and API share one address, so browsers need no exception.
+    allow_origins=[] if settings.is_production else [ "http://localhost:4173",
         "http://127.0.0.1:4173",
-        "http://localhost:5173", 
+        "http://localhost:5173",
         "http://127.0.0.1:5173"],
     # the frontend opened from another device on the same home network (e.g. a phone at http://10.0.0.9:4173)
-    allow_origin_regex=r"http://(10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}):(4173|5173)",
+    allow_origin_regex=None if settings.is_production else r"http://(10(\.\d{1,3}){3}|192\.168(\.\d{1,3}){2}|172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}):(4173|5173)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

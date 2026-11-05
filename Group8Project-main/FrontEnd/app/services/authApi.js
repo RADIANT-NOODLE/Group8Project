@@ -16,6 +16,9 @@ function registrationPayload(payload) {
   const phone = String(payload.phone ?? '').trim();
   if (phone) body.phoneno = phone;
 
+  // Only sent when the person ticked the box; the API refuses a registration without it.
+  if (payload.terms_accepted === true) body.terms_accepted = true;
+
   return body;
 }
 

@@ -1,0 +1,294 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  VALORA on pay-per-use AWS: the website on S3 behind CloudFront, the API on
+  Lambda. The database stays on Neon. Deploy with deploy/deploy.py.
+
+Parameters:
+  ArtifactBucket:
+    Type: String
+    Description: Bucket holding the API package. deploy.py creates it.
+  ArtifactKey:
+    Type: String
+    Description: Name of the API package in that bucket. Changes on every deploy.
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+  SecretKey:
+    Type: String
+    NoEcho: true
+  FrontendUrl:
+    Type: String
+    Default: ""
+    Description: The site's address, used in password reset links. deploy.py fills it in.
+  AccessTokenExpireMinutes:
+    Type: Number
+    Default: 30
+  SmtpHost:
+    Type: String
+    Default: ""
+  SmtpPort:
+    Type: Number
+    Default: 587
+  SmtpUser:
+    Type: String
+    Default: ""
+  SmtpPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  SmtpFrom:
+    Type: String
+    Default: no-reply@valora.local
+  BudgetEmail:
+    Type: String
+    Description: Who is warned when the monthly bill nears the limit.
+  MonthlyBudgetUsd:
+    Type: Number
+    Default: 3
+
+Resources:
+  # ---------------------------------------------------------------- website
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: OnlyThisCloudFrontDistribution
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${WebsiteBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}"
+
+  WebsiteAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-website"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # ---------------------------------------------------------------- API
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: VALORA API
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Handler: app.lambda_handler.handler
+      Role: !GetAtt ApiRole.Arn
+      MemorySize: 512
+      # CloudFront stops waiting at 30 seconds. Neon can take a few seconds to wake up.
+      Timeout: 29
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactKey
+      Environment:
+        Variables:
+          ENVIRONMENT: production
+          DATABASE_URL: !Ref DatabaseUrl
+          DATABASE_SSL: "true"
+          SECRET_KEY: !Ref SecretKey
+          ACCESS_TOKEN_EXPIRE_MINUTES: !Ref AccessTokenExpireMinutes
+          EXPOSE_RESET_LINK: "false"
+          FRONTEND_URL: !Ref FrontendUrl
+          SMTP_HOST: !Ref SmtpHost
+          SMTP_PORT: !Ref SmtpPort
+          SMTP_USER: !Ref SmtpUser
+          SMTP_PASSWORD: !Ref SmtpPassword
+          SMTP_FROM: !Ref SmtpFrom
+
+  ApiLogs:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ApiFunction}"
+      RetentionInDays: 14
+
+  ApiUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt ApiFunction.Arn
+      AuthType: NONE
+
+  # Function URLs created since October 2025 need both of these.
+  ApiUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: "*"
+      InvokedViaFunctionUrl: true
+
+  # ---------------------------------------------------------------- CloudFront
+  # Pages like /property/4 only exist in the browser's router, so S3 must serve
+  # index.html for them. This is not done with CloudFront error pages, which would
+  # also turn the API's real 403 and 404 replies into the website's home page.
+  PageRewriteFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-page-rewrite"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Serves index.html for browser routes
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var lastPart = request.uri.split('/').pop();
+          if (lastPart.indexOf('.') === -1) {
+            request.uri = '/index.html';
+          }
+          return request;
+        }
+
+  # Tells the API who is really calling, replacing anything the caller claimed.
+  ViewerAddressFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-viewer-address"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Passes the visitor's address to the API
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          request.headers['x-valora-viewer-ip'] = { value: event.viewer.ip };
+          return request;
+        }
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: VALORA
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        # Includes South Africa, without the most expensive locations.
+        PriceClass: PriceClass_200
+        Origins:
+          - Id: website
+            DomainName: !GetAtt WebsiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt WebsiteAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+          - Id: api
+            DomainName: !Select [2, !Split ["/", !GetAtt ApiUrl.FunctionUrl]]
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+              OriginReadTimeout: 30
+        DefaultCacheBehavior:
+          TargetOriginId: website
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          AllowedMethods: [GET, HEAD]
+          # Managed-CachingOptimized
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt PageRewriteFunction.FunctionARN
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            # Managed-CachingDisabled
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            # Managed-AllViewerExceptHostHeader: a function URL refuses any other Host
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt ViewerAddressFunction.FunctionARN
+          # Property photos never change, so CloudFront keeps them and the
+          # database and API are only asked once per photo.
+          - PathPattern: /uploads/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            AllowedMethods: [GET, HEAD]
+            # Managed-CachingOptimized
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+            # Managed-AllViewerExceptHostHeader
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+
+  # ---------------------------------------------------------------- bill warning
+  # A warning only: AWS budgets do not stop anything or cap the bill.
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: !Sub "${AWS::StackName}-monthly"
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: !Ref MonthlyBudgetUsd
+          Unit: USD
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref BudgetEmail
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref BudgetEmail
+
+Outputs:
+  WebsiteUrl:
+    Value: !Sub "https://${Distribution.DomainName}"
+  WebsiteBucketName:
+    Value: !Ref WebsiteBucket
+  DistributionId:
+    Value: !Ref Distribution

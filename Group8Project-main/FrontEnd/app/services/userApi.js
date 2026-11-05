@@ -24,6 +24,11 @@ export async function createEstateAgent({ fullName, email, password, phone }) {
   });
 }
 
+/** Delete an estate agent. The API refuses if they still have listings, enquiries or open requests. */
+export function deleteEstateAgent(userId) {
+  return apiRequest(`/api/v1/users/estate-agents/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+}
+
 /** Approve a pending account so the person can sign in. */
 export function approveUser(userId) {
   return apiRequest(`/api/v1/users/${encodeURIComponent(userId)}/approve`, { method: 'POST' });

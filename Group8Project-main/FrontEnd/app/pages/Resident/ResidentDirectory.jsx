@@ -137,7 +137,7 @@ function ResidentDirectory() {
     const filteredResidents = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
         return residents.filter((resident) => {
-            const property = propertyById.get(String(resident.propertyId));
+            const property = propertyById.get(String(resident.property_id));
             const searchValues = [
                 resident.name, resident.id, resident.email, resident.phone, resident.role,
                 property?.unit_no, property?.complex_name, property?.street_address
@@ -149,20 +149,23 @@ function ResidentDirectory() {
         });
     }, [residents, searchTerm, statusFilter, roleFilter, propertyById]);
 
-    const occupiedUnits = residents.filter(r => r.occupancy === "Occupied").length;
+    // counted per unit, since a unit can have several residents
+    const occupiedUnits = usedPropertyIds.size;
     const vacantUnits = Math.max(0, properties.length - occupiedUnits);
     const activeResidents = residents.filter(r => r.status === "Active").length;
 
     // one tile per unit for the occupancy map, in unit-number order
-    const holderByProperty = new Map(
-        residents
-            .filter(r => r.occupancy === "Occupied")
-            .map(r => [String(r.property_id ?? r.propertyId), r.name])
-    );
+    const holderByProperty = new Map();
+    residents
+        .filter(r => r.occupancy === "Occupied")
+        .forEach((r) => {
+            const id = String(r.property_id ?? r.propertyId);
+            holderByProperty.set(id, [...(holderByProperty.get(id) || []), r.name]);
+        });
     const unitTiles = [...properties]
         .map((property) => {
             const id = String(property.id ?? property.unit_id);
-            return { id, unitNo: property.unit_no || id, holder: holderByProperty.get(id) || "" };
+            return { id, unitNo: property.unit_no || id, holder: (holderByProperty.get(id) || []).join(", ") };
         })
         .sort((a, b) => String(a.unitNo).localeCompare(String(b.unitNo), undefined, { numeric: true }));
     const occupancyShare = properties.length > 0 ? Math.round((occupiedUnits / properties.length) * 100) : 0;
@@ -178,8 +181,8 @@ function ResidentDirectory() {
     function openEditModal(resident) {
         setSelectedResident(resident);
         setForm({
-            userId: String(resident.userId || resident.id || ""),
-            propertyId: String(resident.propertyId || ""),
+            userId: String(resident.user_id || ""),
+            propertyId: String(resident.property_id || ""),
             name: resident.name || "", email: resident.email || "", phone: resident.phone || "",
             role: resident.role || "Resident", occupancy: resident.occupancy || "Occupied",
             status: resident.status || "Active", notes: resident.notes || "",
@@ -217,11 +220,13 @@ function ResidentDirectory() {
         try {
             const token = getSessionToken();
             
-            const response = await fetch(`${getApiBaseUrl()}/api/v1/resident-directory`, {
-                method: "POST",
+            const isEdit = modalMode === "edit";
+            const response = await fetch(`${getApiBaseUrl()}/api/v1/resident-directory${isEdit ? `/${selectedResident.id}` : ""}`, {
+                method: isEdit ? "PATCH" : "POST",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    user_id: Number(form.userId),
+                    // the person on a record never changes; adding a new one names them
+                    ...(isEdit ? {} : { user_id: Number(form.userId) }),
                     property_id: Number(form.propertyId),
                     occupancy: form.occupancy,
                     status: form.status,
@@ -235,7 +240,7 @@ function ResidentDirectory() {
             }
 
             closeModal();
-            setFeedback({ type: "success", text: "Property holder successfully assigned to the property." });
+            setFeedback({ type: "success", text: isEdit ? "Directory record updated." : "Property holder successfully assigned to the property." });
             await loadData(); // Refresh the table
 
         } catch (err) {
@@ -400,7 +405,7 @@ function ResidentDirectory() {
                                 </thead>
                                 <tbody>
                                     {filteredResidents.map((resident) => {
-                                        const property = propertyById.get(String(resident.propertyId));
+                                        const property = propertyById.get(String(resident.property_id));
                                         return (
                                             <tr key={resident.id}>
                                                 <td><div className="resident-directory-resident-cell"><strong>{resident.name}</strong><small>{resident.id}</small></div></td>
@@ -467,8 +472,8 @@ function ResidentDirectory() {
                             )}
 
                             <div className="resident-directory-form-grid">
-                                <div className="resident-directory-form-group"><label>Full Name *</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required readOnly={modalMode === "add"} /></div>
-                                <div className="resident-directory-form-group"><label>Email Address *</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required readOnly={modalMode === "add"} /></div>
+                                <div className="resident-directory-form-group"><label>Full Name *</label><input value={form.name} required readOnly /></div>
+                                <div className="resident-directory-form-group"><label>Email Address *</label><input type="email" value={form.email} required readOnly /></div>
                                 
                                 <div className="resident-directory-form-group">
                                     <label>Verified Property *</label>
@@ -476,8 +481,8 @@ function ResidentDirectory() {
                                         <option value="">Select a property</option>
                                         {properties.map((property) => {
                                             const propertyId = String(property.id || property.unit_id);
-                                            const assignedToAnother = residents.some(r => String(r.propertyId) === propertyId && r.occupancy === "Occupied" && r.id !== selectedResident?.id);
-                                            return <option key={propertyId} value={propertyId} disabled={assignedToAnother}>{getPropertyLabel(property)} {assignedToAnother ? "— Already assigned" : ""}</option>;
+                                            const others = residents.filter(r => String(r.property_id) === propertyId && r.id !== selectedResident?.id).length;
+                                            return <option key={propertyId} value={propertyId}>{getPropertyLabel(property)}{others ? ` — ${others} ${others === 1 ? "resident" : "residents"} already` : ""}</option>;
                                         })}
                                     </select>
                                 </div>

@@ -50,6 +50,7 @@ import Announcements from "./pages/Announcements/Announcements";
 
 /* AI */
 import Intelligence from "./pages/AI/Intelligence";
+import Terms from "./pages/Terms";
 import Notifications from "./pages/Notifications/Notifications";
 import EstateHealth from "./pages/Analytics/EstateHealth";
 
@@ -144,6 +145,7 @@ function App() {
                 {/* PUBLIC PROPERTY BROWSING */}
                 <Route path="/properties" element={<Properties />} />
                 <Route path="/property/:propertyId" element={<Property />} />
+                <Route path="/terms" element={<Terms />} />
 
                 {/* MAIN DASHBOARD (Resident) */}
                 <Route

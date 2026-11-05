@@ -896,7 +896,6 @@ function CommunityAnnouncements() {
 
                                     <input
                                         type="text"
-                                        list="announcement-categories"
                                         value={form.category}
                                         onChange={event =>
                                             setForm({
@@ -904,15 +903,9 @@ function CommunityAnnouncements() {
                                                 category: event.target.value,
                                             })
                                         }
-                                        placeholder="Enter or select a category"
+                                        placeholder="Enter a category"
                                         required
                                     />
-
-                                    <datalist id="announcement-categories">
-                                        {categories.map(item => (
-                                            <option key={item} value={item} />
-                                        ))}
-                                    </datalist>
                                 </label>
 
                                 <label>

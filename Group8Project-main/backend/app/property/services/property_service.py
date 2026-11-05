@@ -88,7 +88,7 @@ class PropertyService:
         property_ = await self._get_or_404(unit_id)
 
         if len(data) > storage.MAX_PHOTO_BYTES:
-            raise ValidationException("Photos can be at most 5 MB.")
+            raise ValidationException("Photos can be at most 4 MB.")
         extension = storage.detect_image_extension(data)
         if extension is None:
             raise ValidationException("Upload a JPEG, PNG or WebP image.")

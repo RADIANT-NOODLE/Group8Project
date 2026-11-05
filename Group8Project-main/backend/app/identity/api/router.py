@@ -14,11 +14,12 @@ Provides:
 """
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.exceptions import ForbiddenException, NotFoundException
+from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException
+from app.core.client_address import client_address
 from app.db.session import get_db
 from app.identity.api.dependencies import CurrentUser
 from app.identity.models.user import User
@@ -49,23 +50,26 @@ auth_router = APIRouter(prefix="/auth", tags=["identity"])
 @auth_router.post("/register", response_model=AuthResponse, status_code=201)
 async def register(
     payload: RegisterRequest,
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AuthResponse:
     """Register a new user and return a JWT."""
-    return await AuthService(db).register(payload)
+    return await AuthService(db).register(payload, client_address(request))
 
 
 @auth_router.post("/login", response_model=AuthResponse)
 async def login(
     payload: LoginRequest,
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AuthResponse:
     """Authenticate with JSON credentials and return a JWT."""
-    return await AuthService(db).login(payload)
+    return await AuthService(db).login(payload, client_address(request))
 
 @auth_router.post("/token", response_model=AuthResponse)
 async def login_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AuthResponse:
     """OAuth2 password flow — used by Swagger UI's Authorize button."""
@@ -73,7 +77,7 @@ async def login_token(
         email=form_data.username,
         password=form_data.password,
     )
-    return await AuthService(db).login(payload)
+    return await AuthService(db).login(payload, client_address(request))
 
 @auth_router.get("/me", response_model=UserResponse)
 async def me(current_user: CurrentUser) -> UserResponse:
@@ -149,6 +153,34 @@ async def create_estate_agent(
     """Create an estate agent account. The agent is approved immediately (HOA admin only)."""
     _require_admin(current_user)
     return await AuthService(db).create_estate_agent(payload)
+
+
+@users_router.delete("/estate-agents/{user_id}", status_code=204)
+async def delete_estate_agent(
+    user_id: int,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Delete an estate agent (HOA admin only).
+
+    The database removes an agent's listings and enquiries along with the account,
+    so an agent who still has any must be refused rather than silently wiped.
+    """
+    _require_admin(current_user)
+    repo = UserRepository(db)
+    user = await repo.get_by_id(user_id)
+    if user is None or user.role != "estate_agent":
+        raise NotFoundException(f"Estate agent with id {user_id} was not found.")
+
+    workload = await repo.agent_workload(user_id)
+    plural = {"listing": "listings", "enquiry": "enquiries", "open request": "open requests"}
+    held = [f"{count} {word if count == 1 else plural[word]}" for word, count in workload.items() if count]
+    if held:
+        raise ConflictException(
+            f"{user.full_name} cannot be deleted because they still have {', '.join(held)}."
+        )
+
+    await repo.delete(user)
 
 
 @users_router.get("/pending", response_model=list[UserSummary])

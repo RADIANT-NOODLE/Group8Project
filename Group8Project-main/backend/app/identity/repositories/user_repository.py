@@ -1,7 +1,8 @@
 """User repository — mediates all persistence access for the identity domain."""
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.identity.models.terms_acceptance import TermsAcceptance
 from app.identity.models.user import User
 
 
@@ -27,6 +28,8 @@ class UserRepository:
         phoneno: str | None = None,
         unit_no: str | None = None,
         hoa_approved: bool = False,
+        accepted_terms_version: str | None = None,
+        accepted_from: str | None = None,
     ) -> User:
         user = User(
             full_name=full_name,
@@ -38,6 +41,16 @@ class UserRepository:
             hoa_approved=hoa_approved,
         )
         self._db.add(user)
+        if accepted_terms_version is not None:
+            # same commit: an account never exists without its record of agreement
+            await self._db.flush()
+            self._db.add(
+                TermsAcceptance(
+                    user_id=user.user_id,
+                    terms_version=accepted_terms_version,
+                    ip_address=accepted_from[:45] if accepted_from else None,
+                )
+            )
         await self._db.commit()
         await self._db.refresh(user)
         return user
@@ -72,6 +85,27 @@ class UserRepository:
         await self._db.commit()
         await self._db.refresh(user)
         return user
+
+    async def agent_workload(self, agent_id: int) -> dict[str, int]:
+        """What would be lost or orphaned if this agent's account were deleted."""
+        # imported here because the property models are not needed by the rest of this class
+        from app.property.models.inquiry import Inquiry
+        from app.property.models.listing import Listing
+        from app.property.models.property_request import PropertyRequest
+
+        async def count(model, *conditions) -> int:
+            return (await self._db.execute(select(func.count()).select_from(model).where(*conditions))).scalar_one()
+
+        return {
+            "listing": await count(Listing, Listing.agent_id == agent_id),
+            "enquiry": await count(Inquiry, Inquiry.agent_id == agent_id),
+            "open request": await count(
+                PropertyRequest,
+                PropertyRequest.assigned_agent_id == agent_id,
+                # older rows spell these with a capital letter
+                func.lower(PropertyRequest.status).in_(("pending_review", "approved", "assigned", "listed")),
+            ),
+        }
 
     async def delete(self, user: User) -> None:
         """Delete a user from the database."""

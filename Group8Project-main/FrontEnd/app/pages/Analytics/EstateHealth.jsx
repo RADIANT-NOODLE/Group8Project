@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import { getEstateHealth } from "../../services/analyticsApi.js";
 import "./EstateHealth.css";
 
@@ -7,11 +8,11 @@ import "./EstateHealth.css";
 /** Published model parameters — the backend sends these inside each component,
  *  but we also show them before the first score exists. */
 const PILLARS_META = [
-  { key: "resolution",      label: "Resolution speed",         weight: 0.30, signal: "How fast complaints reach resolved / closed" },
+  { key: "resolution",      label: "Resolution speed",         weight: 0.30, signal: "How quickly complaints are resolved" },
   { key: "frequency",       label: "Complaint frequency",      weight: 0.25, signal: "Issues logged per property unit" },
-  { key: "security",        label: "Security",                 weight: 0.20, signal: "Security-category complaints in the window" },
+  { key: "security",        label: "Security",                 weight: 0.20, signal: "Security complaints in the last 90 days" },
   { key: "satisfaction",    label: "Resident satisfaction",    weight: 0.15, signal: "Ratings on completed work orders" },
-  { key: "infrastructure",  label: "Maintenance completion",   weight: 0.10, signal: "Completed vs open work orders, blended with provider rating" },
+  { key: "infrastructure",  label: "Maintenance completion",   weight: 0.10, signal: "Work orders completed, and how service providers are rated" },
 ];
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -162,15 +163,17 @@ export default function EstateHealth() {
   const scored = data?.status === "scored" && data?.overallScore !== null;
 
   return (
+    <div className="eh-layout">
+    <DashboardSidebar />
+    <main>
     <div className="eh-page">
       {/* ── header ── */}
       <div className="eh-page-header">
         <div>
-          <p className="eh-eyebrow">Analytics · v{data?.engineVersion ?? "1.0.0"}</p>
+          <p className="eh-eyebrow">Analytics</p>
           <h1 className="eh-title">Estate Health</h1>
           <p className="eh-desc">
-            The 5-pillar Living Score for all Valora properties, over the last 90-day rolling window.
-            Every figure comes from the engine — React never derives, re-weights or interpolates.
+            How well all VALORA properties are being looked after, based on the last 90 days.
           </p>
         </div>
         <button className="eh-refresh-btn" onClick={load} disabled={loading} type="button">
@@ -203,11 +206,11 @@ export default function EstateHealth() {
                 <ScoreDial score={data.overallScore} />
                 <dl className="eh-score-meta">
                   <div>
-                    <dt>Window</dt>
+                    <dt>Period</dt>
                     <dd>{shortDate(data.windowStart)} – {shortDate(data.windowEnd)}</dd>
                   </div>
                   <div>
-                    <dt>Engine</dt>
+                    <dt>Score version</dt>
                     <dd>v{data.engineVersion}</dd>
                   </div>
                   <div>
@@ -215,7 +218,7 @@ export default function EstateHealth() {
                     <dd>{data.unitCount}</dd>
                   </div>
                   <div>
-                    <dt>Measured weight</dt>
+                    <dt>Measured so far</dt>
                     <dd>{Math.round(data.measuredWeight * 100)}%</dd>
                   </div>
                 </dl>
@@ -225,9 +228,8 @@ export default function EstateHealth() {
                   <span className="eh-warn-icon">⚡</span>
                   <p>
                     {data.measuredWeight < 0.5
-                      ? `Only ${Math.round(data.measuredWeight * 100)}% of the score's weight is measurable.
-                         The engine will not publish a composite from a sliver of the platform's operations.`
-                      : "No score yet — operational data is still building up."}
+                      ? `Only ${Math.round(data.measuredWeight * 100)}% of the score can be measured so far, so no overall score is shown until there is more activity.`
+                      : "No score yet. It will appear once there is more activity to measure."}
                   </p>
                 </div>
               )}
@@ -235,8 +237,8 @@ export default function EstateHealth() {
 
             {/* Five pillars */}
             <div className="eh-card">
-              <p className="eh-card-eyebrow">The five pillars</p>
-              <p className="eh-card-hint">The engine's own components, scores and published weights</p>
+              <p className="eh-card-eyebrow">The five areas</p>
+              <p className="eh-card-hint">What makes up the score, and how each area is doing</p>
               <div className="eh-pillars">
                 {data.components.map(c => <PillarBar key={c.key} component={c} />)}
               </div>
@@ -248,7 +250,7 @@ export default function EstateHealth() {
             {/* Drivers */}
             <div className="eh-card">
               <p className="eh-card-eyebrow">Where to focus</p>
-              <p className="eh-card-hint">Measured pillars ranked by their drag on the composite score</p>
+              <p className="eh-card-hint">The areas holding the score back most are listed first</p>
               {data.drivers.length > 0 ? (
                 <ul className="eh-drivers-list">
                   {data.drivers.map(d => (
@@ -265,8 +267,7 @@ export default function EstateHealth() {
                 </ul>
               ) : (
                 <p className="eh-empty-note">
-                  Drivers appear once at least one pillar is measured. Keep logging
-                  complaints and completing work orders to build the 90-day window.
+                  This fills in as complaints are logged and work orders are completed.
                 </p>
               )}
             </div>
@@ -274,18 +275,19 @@ export default function EstateHealth() {
             {/* Published weights */}
             <div className="eh-card">
               <p className="eh-card-eyebrow">What the score weighs</p>
-              <p className="eh-card-hint">Published model parameters — not a calculation made here</p>
+              <p className="eh-card-hint">How much each area counts towards the overall score</p>
               <FactorsList />
             </div>
           </div>
 
           {/* ── footnote ── */}
           <p className="eh-footnote">
-            Calculated at {shortDate(data.asOf)}. The score is never recalculated on read —
-            refresh to get the latest 90-day window computed fresh from the database.
+            Calculated on {shortDate(data.asOf)}. Select Refresh for the latest figures.
           </p>
         </>
       )}
+    </div>
+    </main>
     </div>
   );
 }

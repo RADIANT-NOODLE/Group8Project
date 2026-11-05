@@ -1,7 +1,7 @@
 """Identity Pydantic schemas — request and response models."""
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, StrictBool
 
 from app.common.enums import UserRole
 from app.common.validators import (
@@ -21,6 +21,14 @@ class RegisterRequest(BaseModel):
     role: UserRole = UserRole.resident
     phoneno: str = Field(..., max_length=20)
     unit_no: str | None = Field(default=None, max_length=10)
+    terms_accepted: StrictBool
+
+    @field_validator("terms_accepted")
+    @classmethod
+    def _must_accept_terms(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("You must accept the Terms and Conditions and Privacy Policy to register.")
+        return value
 
     @field_validator("password")
     @classmethod

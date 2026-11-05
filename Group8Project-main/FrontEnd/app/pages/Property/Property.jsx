@@ -6,6 +6,7 @@ import { listListings } from "../../services/listingApi";
 import { getProperty, photoSrc } from "../../services/propertyApi";
 import { getStoredUser, updateSessionUser, useSession } from "../../services/session";
 import { LISTING_STATUSES, listingStatusLabel, toStatus } from "../../services/statusMap";
+import { validateContactEmail, validateContactName, validateRequiredPhone } from "../../services/validation";
 import { PublicFooter, PublicHeader } from "../../components/PublicSite";
 import "./Property.css";
 import "../../components/ValoraModal.css";
@@ -127,6 +128,7 @@ export default function Property() {
     const [enquiry, setEnquiry] = useState(EMPTY_ENQUIRY);
     const [enquiryOpen, setEnquiryOpen] = useState(false);
     const [enquiryState, setEnquiryState] = useState({ sending: false, sent: false, error: "" });
+    const [enquiryErrors, setEnquiryErrors] = useState({});
     const enquiryNameRef = useRef(null);
 
     /* ----- enquiry popup: focus its first field, and Escape closes it ----- */
@@ -213,16 +215,30 @@ export default function Property() {
             phone: current.phone || stored?.phoneno || "",
         }));
         setEnquiryState({ sending: false, sent: false, error: "" });
+        setEnquiryErrors({});
         setEnquiryOpen(true);
+    }
+
+    /* Typing in a field clears its message; the next send checks it again. */
+    function changeEnquiry(field, value) {
+        setEnquiry((current) => ({ ...current, [field]: value }));
+        setEnquiryErrors((current) => ({ ...current, [field]: "" }));
     }
 
     async function sendEnquiry(event) {
         event.preventDefault();
         if (enquiryState.sending || !listing) return;
 
-        const phoneDigits = enquiry.phone.replace(/\D/g, "").length;
-        if (phoneDigits < 7 || phoneDigits > 15) {
-            setEnquiryState({ sending: false, sent: false, error: "Enter a valid phone number." });
+        const errors = {
+            name: validateContactName(enquiry.name),
+            email: validateContactEmail(enquiry.email),
+            phone: validateRequiredPhone(enquiry.phone),
+        };
+        setEnquiryErrors(errors);
+        const firstProblem = ["name", "email", "phone"].find((field) => errors[field]);
+        if (firstProblem) {
+            setEnquiryState({ sending: false, sent: false, error: "" });
+            document.getElementById(`pd-enquiry-${firstProblem}`)?.focus();
             return;
         }
 
@@ -245,7 +261,7 @@ export default function Property() {
             setEnquiryState({
                 sending: false,
                 sent: false,
-                error: err?.message || "Your enquiry could not be sent. Please try again.",
+                error: (err?.message || "Your enquiry could not be sent. Please try again.").replace(/Value error,\s*/gi, ""),
             });
         }
     }
@@ -490,7 +506,7 @@ export default function Property() {
                         <h3 id="pd-enquiry-title">Send an enquiry</h3>
                         <p>Your details go to the estate agent for {property.unitNo ? `unit ${property.unitNo}` : "this unit"}.</p>
 
-                        <form className="pd-enquiry" onSubmit={sendEnquiry}>
+                        <form className="pd-enquiry" onSubmit={sendEnquiry} noValidate>
                             <label htmlFor="pd-enquiry-name">Name</label>
                             <input
                                 id="pd-enquiry-name"
@@ -498,11 +514,13 @@ export default function Property() {
                                 type="text"
                                 autoComplete="name"
                                 required
-                                minLength={2}
                                 maxLength={100}
+                                aria-invalid={Boolean(enquiryErrors.name)}
+                                aria-describedby={enquiryErrors.name ? "pd-enquiry-name-error" : undefined}
                                 value={enquiry.name}
-                                onChange={(event) => setEnquiry({ ...enquiry, name: event.target.value })}
+                                onChange={(event) => changeEnquiry("name", event.target.value)}
                             />
+                            {enquiryErrors.name && <p id="pd-enquiry-name-error" className="pd-enquiry-field-error" role="alert">{enquiryErrors.name}</p>}
                             <label htmlFor="pd-enquiry-email">Email</label>
                             <input
                                 id="pd-enquiry-email"
@@ -510,9 +528,12 @@ export default function Property() {
                                 autoComplete="email"
                                 required
                                 maxLength={255}
+                                aria-invalid={Boolean(enquiryErrors.email)}
+                                aria-describedby={enquiryErrors.email ? "pd-enquiry-email-error" : undefined}
                                 value={enquiry.email}
-                                onChange={(event) => setEnquiry({ ...enquiry, email: event.target.value })}
+                                onChange={(event) => changeEnquiry("email", event.target.value)}
                             />
+                            {enquiryErrors.email && <p id="pd-enquiry-email-error" className="pd-enquiry-field-error" role="alert">{enquiryErrors.email}</p>}
                             <label htmlFor="pd-enquiry-phone">Phone number</label>
                             <input
                                 id="pd-enquiry-phone"
@@ -522,9 +543,12 @@ export default function Property() {
                                 required
                                 maxLength={50}
                                 placeholder="e.g. 082 123 4567"
+                                aria-invalid={Boolean(enquiryErrors.phone)}
+                                aria-describedby={enquiryErrors.phone ? "pd-enquiry-phone-error" : undefined}
                                 value={enquiry.phone}
-                                onChange={(event) => setEnquiry({ ...enquiry, phone: event.target.value })}
+                                onChange={(event) => changeEnquiry("phone", event.target.value)}
                             />
+                            {enquiryErrors.phone && <p id="pd-enquiry-phone-error" className="pd-enquiry-field-error" role="alert">{enquiryErrors.phone}</p>}
                             <label htmlFor="pd-enquiry-message">Message (optional)</label>
                             <textarea
                                 id="pd-enquiry-message"
@@ -534,6 +558,10 @@ export default function Property() {
                                 value={enquiry.message}
                                 onChange={(event) => setEnquiry({ ...enquiry, message: event.target.value })}
                             />
+                            {/* a new tab, so whatever has been typed here is not lost */}
+                            <a className="pd-enquiry-terms" href="/terms" target="_blank" rel="noopener noreferrer">
+                                Read our Terms and Conditions &amp; Privacy Policy
+                            </a>
                             {enquiryState.error && <p className="pd-contact-error" role="alert">{enquiryState.error}</p>}
                             <div className="pd-contact-actions">
                                 <button type="button" className="pd-button is-ghost" onClick={() => setEnquiryOpen(false)}>

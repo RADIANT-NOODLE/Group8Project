@@ -72,12 +72,7 @@ async def create_directory_record(
     if existing_user.scalars().first():
         raise HTTPException(status_code=400, detail="This user is already assigned to a property.")
 
-    # 2. Check if property is already assigned
-    existing_prop = await db.execute(select(ResidentDirectory).where(ResidentDirectory.property_id == payload.property_id))
-    if existing_prop.scalars().first():
-        raise HTTPException(status_code=400, detail="This property already has an assigned holder.")
-
-    # 3. Verify the user and property exist
+    # 2. Verify the user and property exist (a unit may have several residents)
     user_check = await db.execute(select(User).where(User.user_id == payload.user_id))
     target_user = user_check.scalars().first()
 
@@ -91,7 +86,7 @@ async def create_directory_record(
     if not prop_check.scalars().first():
         raise HTTPException(status_code=404, detail="Property not found.")
 
-    # 4. Create the record
+    # 3. Create the record
     new_record = ResidentDirectory(
         user_id=payload.user_id,
         property_id=payload.property_id,
@@ -120,7 +115,7 @@ async def update_directory_record(
     db: Annotated[AsyncSession, Depends(get_db)],
     _admin: AdminOnly,
 ):
-    """Update occupancy, status or notes for an existing record."""
+    """Update the unit, occupancy, status or notes of an existing record."""
     stmt = select(ResidentDirectory).options(
         selectinload(ResidentDirectory.user),
         selectinload(ResidentDirectory.property)
@@ -133,13 +128,22 @@ async def update_directory_record(
         raise HTTPException(status_code=404, detail="Directory record not found.")
 
     changes = payload.model_dump(exclude_unset=True)
+
+    if changes.get("property_id") is None:
+        changes.pop("property_id", None)
+    elif changes["property_id"] != record.property_id:
+        prop_check = await db.execute(select(Property).where(Property.unit_id == changes["property_id"]))
+        if not prop_check.scalars().first():
+            raise HTTPException(status_code=404, detail="Property not found.")
+
     for key, value in changes.items():
         setattr(record, key, value)
-        
+
     await db.commit()
-    await db.refresh(record)
-    
-    return format_record(record)
+
+    # read it back so the response shows the unit it now belongs to
+    result = await db.execute(stmt.execution_options(populate_existing=True))
+    return format_record(result.scalars().first())
 
 
 @router.delete("/{record_id}", status_code=204)

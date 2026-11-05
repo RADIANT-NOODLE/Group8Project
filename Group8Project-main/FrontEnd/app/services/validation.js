@@ -8,6 +8,32 @@ export function validateEmail(value) {
   return '';
 }
 
+/* Keep these two in step with `schemas/inquiry.py` on the backend. */
+const CONTACT_NAME_PATTERN = /^\p{L}+(?:[ '’.-]+\p{L}+)*\.?$/u;
+const CONTACT_EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)*\.[A-Za-z]{2,}$/;
+
+/** Someone's name on a public form: letters, with spaces, hyphens and apostrophes between them. */
+export function validateContactName(value) {
+  const name = String(value ?? '').trim().replace(/\s+/g, ' ');
+
+  if (!name) return 'Please enter your name.';
+  if (!CONTACT_NAME_PATTERN.test(name) || (name.match(/\p{L}/gu) || []).length < 2) {
+    return 'Enter your name using letters only.';
+  }
+  return '';
+}
+
+/** An email on a public form: unlike validateEmail, `name@example.c` does not pass. */
+export function validateContactEmail(value) {
+  const email = String(value ?? '').trim();
+
+  if (!email) return 'Please enter your email address.';
+  if (!CONTACT_EMAIL_PATTERN.test(email)) {
+    return 'Enter a valid email address, for example name@example.com.';
+  }
+  return '';
+}
+
 export function validateRequired(value, label) {
   return value.trim() ? '' : `${label} is required.`;
 }

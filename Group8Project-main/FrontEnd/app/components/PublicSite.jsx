@@ -99,6 +99,7 @@ export function PublicFooter() {
                 <a href="/#how-it-works">How it works</a>
                 <Link to="/login">Log in</Link>
                 <Link to="/register">Register</Link>
+                <Link to="/terms">Terms &amp; Privacy</Link>
             </nav>
             <p>© {new Date().getFullYear()} VALORA — Property Intelligence</p>
         </footer>

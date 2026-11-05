@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { showConfirm } from "../../components/AppDialog";
+import { showAlert, showConfirm } from "../../components/AppDialog";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PasswordRequirements from "../Auth/PasswordRequirements.jsx";
-import { createEstateAgent, listUsers } from "../../services/userApi";
+import { createEstateAgent, deleteEstateAgent, listUsers } from "../../services/userApi";
 import { validateEmail, validateRequired, checkPasswordRules, validateNewPassword } from "../../services/validation.js";
 import "../Maintenance/Maintenance.css";
 
@@ -19,7 +19,7 @@ function CreateAgentAccount() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
-    const [notice, setNotice] = useState("");
+    const [deletingId, setDeletingId] = useState(null);
 
     const loadAgents = useCallback(async () => {
         try {
@@ -37,6 +37,26 @@ function CreateAgentAccount() {
         loadAgents();
     }, [loadAgents]);
 
+    async function handleDelete(agent) {
+        const confirmed = await showConfirm(
+            `Delete the estate agent account for ${agent.full_name} (${agent.email})? They will no longer be able to log in. This cannot be undone.`,
+            { title: "Delete estate agent?", confirmLabel: "Delete", tone: "danger" }
+        );
+        if (!confirmed) return;
+
+        setDeletingId(agent.id);
+        try {
+            await deleteEstateAgent(agent.id);
+            await loadAgents();
+            showAlert(`${agent.full_name} has been deleted.`, { title: "Agent deleted" });
+        } catch (deleteError) {
+            // the table is far from the page's message area, so this needs to be seen here
+            showAlert(deleteError?.message || "Unable to delete this estate agent.", { title: "Agent not deleted" });
+        } finally {
+            setDeletingId(null);
+        }
+    }
+
     function handleChange(event) {
         const { name, value } = event.target;
         setForm((previous) => ({ ...previous, [name]: value }));
@@ -45,7 +65,6 @@ function CreateAgentAccount() {
     async function handleSubmit(event) {
         event.preventDefault();
         setError("");
-        setNotice("");
 
         const problem =
             validateRequired(form.fullName, "Full name") ||
@@ -63,11 +82,12 @@ function CreateAgentAccount() {
 
         try {
             await createEstateAgent(form);
-            setNotice(
-                `Account created for ${form.email.trim()}. Share the temporary password with the agent securely; they should change it after signing in.`
-            );
             setForm(EMPTY_FORM);
             await loadAgents();
+            showAlert(
+                `Account created for ${form.email.trim()}. Share the temporary password with the agent securely; they should change it after signing in.`,
+                { title: "Agent account created" }
+            );
         } catch (submitError) {
             setError(submitError?.message || "Unable to create the account. Please try again.");
         } finally {
@@ -91,12 +111,6 @@ function CreateAgentAccount() {
                 {error && (
                     <div className="maintenance-panel maintenance-access-message" role="alert">
                         {error}
-                    </div>
-                )}
-
-                {notice && (
-                    <div className="maintenance-panel maintenance-access-message" role="status">
-                        {notice}
                     </div>
                 )}
 
@@ -193,12 +207,13 @@ function CreateAgentAccount() {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Approved</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="3" className="maintenance-empty">Loading...</td>
+                                        <td colSpan="4" className="maintenance-empty">Loading...</td>
                                     </tr>
                                 ) : agents.length > 0 ? (
                                     agents.map((agent) => (
@@ -206,11 +221,22 @@ function CreateAgentAccount() {
                                             <td>{agent.full_name}</td>
                                             <td>{agent.email}</td>
                                             <td>{agent.hoa_approved ? "Yes" : "Pending"}</td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    className="maintenance-delete-btn"
+                                                    aria-label={`Delete ${agent.full_name}`}
+                                                    disabled={deletingId === agent.id}
+                                                    onClick={() => handleDelete(agent)}
+                                                >
+                                                    {deletingId === agent.id ? "Deleting..." : "Delete"}
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="3" className="maintenance-empty">
+                                        <td colSpan="4" className="maintenance-empty">
                                             No estate agent accounts yet.
                                         </td>
                                     </tr>

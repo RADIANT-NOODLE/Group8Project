@@ -10,7 +10,7 @@
 /** For `<input type="file" accept=...>`: narrows what the picker offers. */
 export const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp';
 
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 function matches(bytes, signature, offset = 0) {
   return signature.every((byte, index) => bytes[offset + index] === byte);

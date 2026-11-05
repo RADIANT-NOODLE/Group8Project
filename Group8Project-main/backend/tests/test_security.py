@@ -48,7 +48,8 @@ def test_privileged_roles_cannot_self_register():
     from app.identity.schemas.auth import RegisterRequest
 
     base = dict(
-        full_name="Test User", email="t@example.com", password="Str0ng!Pass", phoneno="082 123 4567"
+        full_name="Test User", email="t@example.com", password="Str0ng!Pass", phoneno="082 123 4567",
+        terms_accepted=True,
     )
     assert RegisterRequest(**base, role="resident").role.value == "resident"
     for role in ("estate_agent", "hoa_admin", "head_admin"):
@@ -89,7 +90,7 @@ def test_registration_requires_a_south_african_phone():
 
     from app.identity.schemas.auth import RegisterRequest
 
-    base = dict(full_name="Test User", email="t@example.com", password="Str0ng!Pass")
+    base = dict(full_name="Test User", email="t@example.com", password="Str0ng!Pass", terms_accepted=True)
     for phone in (None, "", "+1 202 555 0143"):
         with pytest.raises(ValidationError):
             RegisterRequest(**base, phoneno=phone)

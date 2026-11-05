@@ -75,6 +75,9 @@ class PropertyRequestService:
             raise ForbiddenException("You can only request a sale or rental of your own property.")
         if await self._repo.get_active_for_unit_and_user(user.user_id, payload.unit_id) is not None:
             raise ConflictException("You already have an open request for this property.")
+        # a unit shared by several residents can only be on the market once
+        if await self._repo.get_active_for_unit(payload.unit_id) is not None:
+            raise ConflictException("Another resident of this unit already has an open request for it.")
 
         request = await self._repo.create(
             requester_id=user.user_id,

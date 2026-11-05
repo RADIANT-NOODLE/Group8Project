@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { getRegistrationErrorMessage } from "../../services/authErrorMessages.js";
@@ -10,7 +10,9 @@ import {
     validateRegistrationPassword,
 } from "../../services/validation.js";
 import PasswordRequirements from "./PasswordRequirements.jsx";
+import { FullTerms, TermsSummary } from "./TermsContent.jsx";
 
+import "../../components/ValoraModal.css";
 import "./Auth.css";
 
 function Register() {
@@ -26,10 +28,35 @@ function Register() {
 
     const passwordsMatch = confirmPassword.length > 0 && confirmPassword === password;
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [termsOpen, setTermsOpen] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
+    const [termsError, setTermsError] = useState("");
+    const termsCheckboxRef = useRef(null);
+    const termsButtonRef = useRef(null);
+    const termsCloseRef = useRef(null);
+
+    /* While the popup is open: focus its button, and Escape closes it. Focus then returns to the link. */
+    useEffect(() => {
+        if (!termsOpen) return undefined;
+
+        const opener = termsButtonRef.current;
+        termsCloseRef.current?.focus();
+
+        function closeOnEscape(event) {
+            if (event.key === "Escape") setTermsOpen(false);
+        }
+
+        document.addEventListener("keydown", closeOnEscape);
+        return () => {
+            document.removeEventListener("keydown", closeOnEscape);
+            opener?.focus();
+        };
+    }, [termsOpen]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError("");
+        setTermsError("");
 
         if (
             !firstName.trim() ||
@@ -60,6 +87,12 @@ function Register() {
             return;
         }
 
+        if (!termsAccepted) {
+            setTermsError("Please tick the box to agree before creating your account.");
+            termsCheckboxRef.current?.focus();
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -70,6 +103,7 @@ function Register() {
                 phone: phone.trim(),
                 password,
                 role: ROLES.resident,
+                terms_accepted: termsAccepted,
             });
 
             if (result?.user?.hoa_approved === false) {
@@ -250,6 +284,40 @@ function Register() {
                                 are issued by a VALORA administrator.
                             </div>
 
+                            {/* PRIVACY AGREEMENT */}
+                            <section className="auth-terms" aria-label="Privacy and data protection agreement">
+                                <TermsSummary />
+                                <button
+                                    type="button"
+                                    ref={termsButtonRef}
+                                    className="auth-terms-link"
+                                    onClick={() => setTermsOpen(true)}
+                                >
+                                    Read the full Terms and Conditions and Privacy Policy
+                                </button>
+                                <label className="auth-terms-agree" htmlFor="terms-accepted">
+                                    <input
+                                        id="terms-accepted"
+                                        ref={termsCheckboxRef}
+                                        type="checkbox"
+                                        autoComplete="off"
+                                        checked={termsAccepted}
+                                        onChange={(event) => {
+                                            setTermsAccepted(event.target.checked);
+                                            setTermsError("");
+                                        }}
+                                        aria-invalid={Boolean(termsError)}
+                                        aria-describedby={termsError ? "terms-accepted-error" : undefined}
+                                    />
+                                    <span>I agree to the Terms and Conditions and acknowledge the Privacy Policy.</span>
+                                </label>
+                                {termsError && (
+                                    <p id="terms-accepted-error" className="auth-terms-error" role="alert">
+                                        {termsError}
+                                    </p>
+                                )}
+                            </section>
+
                             {/* REGISTER BUTTON */}
                             <button
                                 type="submit"
@@ -275,6 +343,37 @@ function Register() {
                     </div>
                 </div>
             </div>
+
+            {termsOpen && (
+                <div
+                    className="valora-modal-overlay"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) setTermsOpen(false);
+                    }}
+                >
+                    <div
+                        className="valora-modal auth-terms-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="auth-terms-title"
+                    >
+                        <h3 id="auth-terms-title">Terms and Conditions &amp; Privacy Policy</h3>
+                        <div className="auth-terms-modal-body" tabIndex={0}>
+                            <FullTerms />
+                        </div>
+                        <div className="valora-modal-actions">
+                            <button
+                                type="button"
+                                ref={termsCloseRef}
+                                className="valora-modal-btn valora-modal-btn-confirm"
+                                onClick={() => setTermsOpen(false)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

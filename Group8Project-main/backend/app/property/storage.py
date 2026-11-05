@@ -12,7 +12,7 @@ from pathlib import Path
 UPLOAD_ROOT = Path(__file__).resolve().parents[2] / "uploads"
 PROPERTY_PHOTO_DIR = UPLOAD_ROOT / "properties"
 
-MAX_PHOTO_BYTES = 5 * 1024 * 1024
+MAX_PHOTO_BYTES = 4 * 1024 * 1024
 MAX_PHOTOS_PER_PROPERTY = 8
 
 CONTENT_TYPES = {

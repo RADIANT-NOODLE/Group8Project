@@ -643,7 +643,7 @@ function PropertyManagement() {
                                         style={{ marginTop: "10px" }}
                                     />
                                     <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
-                                        {photoBusy ? "Uploading..." : "JPEG, PNG or WebP, up to 5 MB each. The first photo is the cover image."}
+                                        {photoBusy ? "Uploading..." : "JPEG, PNG or WebP, up to 4 MB each. The first photo is the cover image."}
                                     </p>
                                     {photoError && <p role="alert" style={{ fontSize: "12px", color: "#8a3b3b", margin: "6px 0 0" }}>{photoError}</p>}
                                 </div>

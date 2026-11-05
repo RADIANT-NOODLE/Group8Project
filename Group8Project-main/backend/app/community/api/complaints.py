@@ -79,7 +79,7 @@ async def upload_complaint_photo(
     complaint_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
-    file: Annotated[UploadFile, File(description="JPEG, PNG or WebP, up to 5 MB")],
+    file: Annotated[UploadFile, File(description="JPEG, PNG or WebP, up to 4 MB")],
 ) -> ComplaintResponse:
     """Attach a photo to a complaint (its author or an admin)."""
     # read one byte past the limit so an oversized file is detected without loading all of it
