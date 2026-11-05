@@ -4,7 +4,7 @@ import { createComplaint, listComplaints, updateComplaintStatus, uploadComplaint
 import { apiRequest } from "../services/apiClient";
 import { listProperties } from "../services/propertyApi";
 import { listWorkOrders, rateWorkOrder } from "../services/workOrderApi";
-import { COMPLAINT_STATUS, COMPLAINT_STATUSES, complaintStatusLabel } from "../services/statusMap";
+import { COMPLAINT_CATEGORIES, COMPLAINT_STATUS, COMPLAINT_STATUSES, OTHER_DETAIL_MAX_LENGTH, complaintStatusLabel, otherCategory } from "../services/statusMap";
 import ComplaintPipeline from "../components/ComplaintPipeline";
 import ComplaintStatusRing from "../components/ComplaintStatusRing";
 import DenyComplaintDialog from "../components/DenyComplaintDialog";
@@ -13,16 +13,6 @@ import "./Complaints.css";
 import { IMAGE_ACCEPT, imageFileProblem } from "../services/imageFiles";
 import ComplaintPhoto from "../components/ComplaintPhoto";
 import { getStoredUser } from "../services/session";
-
-const COMPLAINT_CATEGORIES = [
-    "Security",
-    "Maintenance",
-    "Water Leakage",
-    "Noise",
-    "Cleaning",
-    "Parking",
-    "Other",
-];
 
 // Helper to read the logged-in user from local storage
 function readUser() {
@@ -88,6 +78,7 @@ export default function Complaints() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [category, setCategory] = useState("Security");
+    const [otherDetail, setOtherDetail] = useState("");
     const [description, setDescription] = useState("");
     const [isAnonymous, setIsAnonymous] = useState(false);
 
@@ -231,6 +222,7 @@ export default function Complaints() {
                     : "Your account is not linked to a unit yet. Ask the HOA to assign your unit first."
             );
         }
+        if (category === "Other" && otherDetail.trim().length < 2) return setError("Please enter what the complaint is about.");
         if (description.trim().length < 5) return setError("Please describe the complaint (at least 5 characters).");
 
         setIsSubmitting(true);
@@ -238,7 +230,7 @@ export default function Complaints() {
         try {
             const created = await createComplaint({
                 unitId,
-                category,
+                category: category === "Other" ? otherCategory(otherDetail) : category,
                 description,
                 isAnonymous,
             });
@@ -256,6 +248,7 @@ export default function Complaints() {
 
             setDescription("");
             setCategory("Security");
+            setOtherDetail("");
             setIsAnonymous(false);
             setComplaintImage("");
             setComplaintFile(null);
@@ -414,6 +407,22 @@ export default function Complaints() {
                                                     <option key={item} value={item}>{item}</option>
                                                 ))}
                                             </select>
+
+                                            {category === "Other" && (
+                                                <>
+                                                    <label htmlFor="complaint-other-category">What is it about?</label>
+                                                    <input
+                                                        id="complaint-other-category"
+                                                        className="complaints-other-category"
+                                                        type="text"
+                                                        value={otherDetail}
+                                                        onChange={(event) => setOtherDetail(event.target.value)}
+                                                        placeholder="For example, a broken gate"
+                                                        maxLength={OTHER_DETAIL_MAX_LENGTH}
+                                                        required
+                                                    />
+                                                </>
+                                            )}
 
                                             <label htmlFor="complaint-description">Complaint Description</label>
                                             <textarea

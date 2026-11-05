@@ -194,7 +194,7 @@ async def list_pending_users(
     users = await repo.list_pending()
     return [UserSummary.model_validate(u) for u in users]
 
-@users_router.get("/", response_model=list[UserSummary])
+@users_router.get("", response_model=list[UserSummary])
 async def get_all_users(
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],

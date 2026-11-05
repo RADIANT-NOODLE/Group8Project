@@ -39,12 +39,6 @@ Parameters:
   SmtpFrom:
     Type: String
     Default: no-reply@valora.local
-  BudgetEmail:
-    Type: String
-    Description: Who is warned when the monthly bill nears the limit.
-  MonthlyBudgetUsd:
-    Type: Number
-    Default: 3
 
 Resources:
   # ---------------------------------------------------------------- website
@@ -254,36 +248,6 @@ Resources:
             CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
             # Managed-AllViewerExceptHostHeader
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-
-  # ---------------------------------------------------------------- bill warning
-  # A warning only: AWS budgets do not stop anything or cap the bill.
-  MonthlyBudget:
-    Type: AWS::Budgets::Budget
-    Properties:
-      Budget:
-        BudgetName: !Sub "${AWS::StackName}-monthly"
-        BudgetType: COST
-        TimeUnit: MONTHLY
-        BudgetLimit:
-          Amount: !Ref MonthlyBudgetUsd
-          Unit: USD
-      NotificationsWithSubscribers:
-        - Notification:
-            NotificationType: ACTUAL
-            ComparisonOperator: GREATER_THAN
-            Threshold: 80
-            ThresholdType: PERCENTAGE
-          Subscribers:
-            - SubscriptionType: EMAIL
-              Address: !Ref BudgetEmail
-        - Notification:
-            NotificationType: FORECASTED
-            ComparisonOperator: GREATER_THAN
-            Threshold: 100
-            ThresholdType: PERCENTAGE
-          Subscribers:
-            - SubscriptionType: EMAIL
-              Address: !Ref BudgetEmail
 
 Outputs:
   WebsiteUrl:

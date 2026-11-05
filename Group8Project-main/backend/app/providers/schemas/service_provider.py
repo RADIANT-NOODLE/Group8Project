@@ -1,6 +1,8 @@
 from decimal import Decimal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.common.validators import validate_ten_digit_phone
 
 
 class ServiceProviderCreate(BaseModel):
@@ -12,6 +14,11 @@ class ServiceProviderCreate(BaseModel):
     emergency_available: bool = False
     description: str | None = Field(default=None, max_length=1000)
 
+    @field_validator("phone")
+    @classmethod
+    def _ten_digits(cls, value: str) -> str:
+        return validate_ten_digit_phone(value)
+
 
 class ServiceProviderUpdate(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=100)
@@ -21,6 +28,11 @@ class ServiceProviderUpdate(BaseModel):
     verified: bool | None = None
     emergency_available: bool | None = None
     description: str | None = Field(default=None, max_length=1000)
+
+    @field_validator("phone")
+    @classmethod
+    def _ten_digits(cls, value: str | None) -> str | None:
+        return None if value is None else validate_ten_digit_phone(value)
 
 
 class ServiceProviderResponse(BaseModel):

@@ -120,6 +120,8 @@ class WorkOrderService:
             raise NotFoundException(f"Complaint with id {payload.complaint_id} was not found.")
         if complaint.status == "denied":
             raise ConflictException("This complaint was denied, so it cannot be given a work order.")
+        if complaint.category.strip().lower() == "noise":
+            raise ConflictException("Noise complaints cannot be given a service provider.")
         provider = await self._provider_repo.get_by_id(payload.provider_id)
         if provider is None:
             raise NotFoundException(

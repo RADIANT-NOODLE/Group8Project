@@ -247,6 +247,64 @@
     box-shadow: 0 3px 12px rgba(35, 25, 45, 0.04);
 }
 
+/* a message at the top of the page: neutral, a problem (alert) or a result (status) */
+.maintenance-panel.maintenance-access-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border-color: #d8cfe0;
+    border-left: 4px solid #563f6b;
+    background: #f8f6fa;
+    color: #4b3a5c;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    box-shadow: none;
+}
+
+.maintenance-panel.maintenance-access-message::before {
+    content: "i";
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #563f6b;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.maintenance-panel.maintenance-access-message[role="alert"] {
+    border-color: #f0c2c2;
+    border-left-color: #b23b3b;
+    background: #fdf2f2;
+    color: #8a2b2b;
+}
+
+.maintenance-panel.maintenance-access-message[role="alert"]::before {
+    content: "!";
+    background: #b23b3b;
+}
+
+.maintenance-panel.maintenance-access-message[role="status"] {
+    border-color: #bfe0c8;
+    border-left-color: #2c6b45;
+    background: #f1f8f3;
+    color: #2c6b45;
+}
+
+.maintenance-panel.maintenance-access-message[role="status"]::before {
+    content: "\2713";
+    background: #2c6b45;
+}
+
 .maintenance-large-panel {
     margin-bottom: 24px;
     padding: 24px;

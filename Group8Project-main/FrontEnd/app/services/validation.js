@@ -23,6 +23,27 @@ export function validateContactName(value) {
   return '';
 }
 
+/* Keep in step with `validate_person_name` in `common/validators.py` on the backend. */
+const PERSON_NAME_PATTERN = /^\p{L}+(?:[ '’-]+\p{L}+)*$/u;
+
+/** A first name or surname: letters, with spaces, hyphens or apostrophes between them. */
+export function validatePersonName(value, label) {
+  const name = String(value ?? '').trim().replace(/\s+/g, ' ');
+
+  if (!PERSON_NAME_PATTERN.test(name)) {
+    return `${label} can only contain letters, spaces, hyphens and apostrophes.`;
+  }
+  return '';
+}
+
+/** Registration only: capitals are refused after the @, as in name@GMAIL.COM. */
+export function validateEmailDomainCase(value) {
+  const domain = String(value ?? '').trim().split('@').pop();
+  return domain === domain.toLowerCase()
+    ? ''
+    : 'Use lowercase letters after the @ in your email address, for example name@gmail.com.';
+}
+
 /** An email on a public form: unlike validateEmail, `name@example.c` does not pass. */
 export function validateContactEmail(value) {
   const email = String(value ?? '').trim();
@@ -115,6 +136,25 @@ const SA_PHONE_PATTERN = /^(?:\+27|0)[1-9][0-9]{8}$/;
 
 export const PHONE_FORMAT_MESSAGE =
   'Enter a South African phone number, for example 082 123 4567 or +27 82 123 4567.';
+
+const TEN_DIGIT_PHONE_LENGTH = 10;
+const TEN_DIGIT_PHONE_PATTERN = /^0[1-9][0-9]{8}$/;
+
+/** For a phone field limited to 10 numbers: drops everything else as it's typed or pasted.
+ * A pasted +27 number becomes its 0 form. */
+export function cleanTenDigitPhone(value) {
+  const text = String(value ?? '').trim();
+  const digits = text.replace(/\D/g, '');
+  const local = text.startsWith('+27') ? `0${digits.slice(2)}` : digits;
+  return local.slice(0, TEN_DIGIT_PHONE_LENGTH);
+}
+
+/** Keep in step with `validate_ten_digit_phone` in `common/validators.py` on the backend. */
+export function validateTenDigitPhone(value) {
+  return TEN_DIGIT_PHONE_PATTERN.test(value)
+    ? ''
+    : 'Enter a 10-digit phone number starting with 0, for example 0821234567.';
+}
 
 /** Optional phone number (profile edits): empty is allowed, anything else must match. */
 export function validatePhone(value) {

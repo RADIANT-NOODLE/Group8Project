@@ -6,6 +6,7 @@ server log instead so the flow can still be exercised in development.
 import asyncio
 import logging
 import smtplib
+import ssl
 from email.message import EmailMessage
 
 from app.core.config import get_settings
@@ -23,7 +24,8 @@ def _send_sync(to_address: str, subject: str, body: str) -> None:
 
     with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as smtp:
         if settings.SMTP_USE_TLS:
-            smtp.starttls()
+            # the default here doesn't check who the server is, which would expose the password
+            smtp.starttls(context=ssl.create_default_context())
         if settings.SMTP_USER:
             smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
         smtp.send_message(message)

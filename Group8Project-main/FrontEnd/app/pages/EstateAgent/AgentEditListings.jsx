@@ -14,6 +14,7 @@ import {
 import { updateRequestProgress } from "../../services/propertyRequestApi";
 import { createListing, listMyListings, updateListing } from "../../services/listingApi";
 import { syncListingPhotos, syncPublishedListingPhotos } from "../../services/listingPhotoSync";
+import { photoSrc } from "../../services/propertyApi";
 import { IMAGE_ACCEPT, imageFileProblem } from "../../services/imageFiles";
 
 import "./AgentEditListings.css";
@@ -1416,7 +1417,7 @@ function AgentEditListings() {
                                                     const imageSrc =
                                                         typeof image === "string"
                                                             ? image
-                                                            : image.data;
+                                                            : image.data || photoSrc(image.url);
 
                                                     const imageId =
                                                         typeof image === "string"
@@ -1527,7 +1528,7 @@ function AgentEditListings() {
                                                 const imageSrc =
                                                     typeof image === "string"
                                                         ? image
-                                                        : image.data;
+                                                        : image.data || photoSrc(image.url);
 
                                                 return (
                                                     <div
@@ -1578,7 +1579,7 @@ function AgentEditListings() {
                                                 const imageSrc =
                                                     typeof image === "string"
                                                         ? image
-                                                        : image.data;
+                                                        : image.data || photoSrc(image.url);
 
                                                 return (
                                                     <div

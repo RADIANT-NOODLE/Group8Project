@@ -11,6 +11,7 @@ import {
     complaintStatusLabel,
     complaintStatusTone,
     workOrderStatusLabel,
+    allowsServiceProvider,
 } from "../../services/statusMap";
 import ComplaintStatusRing from "../../components/ComplaintStatusRing";
 import { showConfirm } from "../../components/AppDialog";
@@ -595,7 +596,7 @@ export default function ResidentComplaints() {
                                                                 {cancelledOrders.map(renderWorkOrder)}
                                                             </details>
                                                         )}
-                                                        {!FINISHED_STATUSES.includes(complaint.status) && (
+                                                        {!FINISHED_STATUSES.includes(complaint.status) && allowsServiceProvider(complaint.category) && (
                                                             <button
                                                                 type="button"
                                                                 className="resident-complaints-link-button"

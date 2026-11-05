@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getProperties, updateProperty } from "../../data/propertyStorage";
 import { updateRequestProgress } from "../../services/propertyRequestApi";
 import { listMyListings, updateListing } from "../../services/listingApi";
+import { photoSrc } from "../../services/propertyApi";
 import { syncPublishedListingPhotos } from "../../services/listingPhotoSync";
 import {
     ensureLocalPropertyForRequest,
@@ -588,7 +589,7 @@ function AgentListings() {
                 const title = property?.unitNumber || request.propertyAddress || `Property ${request.propertyId}`;
                 const address = request.propertyAddress || property?.location || property?.development || "";
                 const firstImage = (property?.images || [])[0];
-                const photo = typeof firstImage === "string" ? firstImage : firstImage?.data || "";
+                const photo = typeof firstImage === "string" ? firstImage : firstImage?.data || photoSrc(firstImage?.url) || "";
                 const listingStatus = getListingStatus({ request, property });
                 const hoaStatus = listing.hoaApprovalStatus || "Not Submitted";
 

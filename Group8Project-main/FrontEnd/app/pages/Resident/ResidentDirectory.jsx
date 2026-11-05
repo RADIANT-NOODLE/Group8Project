@@ -45,7 +45,6 @@ function ResidentDirectory() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
-    const [roleFilter, setRoleFilter] = useState("All");
     
     const [modalMode, setModalMode] = useState("");
     const [selectedResident, setSelectedResident] = useState(null);
@@ -64,7 +63,7 @@ function ResidentDirectory() {
 
             // the three lists are independent, so fetch them together
             const [usersRes, propRes, dirRes] = await Promise.all([
-                fetch(`${getApiBaseUrl()}/api/v1/users/`, { headers }),
+                fetch(`${getApiBaseUrl()}/api/v1/users`, { headers }),
                 fetch(`${getApiBaseUrl()}/api/v1/properties`, { headers }),
                 fetch(`${getApiBaseUrl()}/api/v1/resident-directory`, { headers }),
             ]);
@@ -144,10 +143,9 @@ function ResidentDirectory() {
             ];
             const matchesSearch = !query || searchValues.some((value) => String(value || "").toLowerCase().includes(query));
             const matchesStatus = statusFilter === "All" || resident.status === statusFilter;
-            const matchesRole = roleFilter === "All" || resident.role === roleFilter;
-            return matchesSearch && matchesStatus && matchesRole;
+            return matchesSearch && matchesStatus;
         });
-    }, [residents, searchTerm, statusFilter, roleFilter, propertyById]);
+    }, [residents, searchTerm, statusFilter, propertyById]);
 
     // counted per unit, since a unit can have several residents
     const occupiedUnits = usedPropertyIds.size;
@@ -383,9 +381,6 @@ function ResidentDirectory() {
                         </div>
                         <select className="resident-directory-filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                             <option value="All">All Statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option>
-                        </select>
-                        <select className="resident-directory-filter-select resident-directory-role-filter" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                            <option value="All">All Account Types</option><option value="resident">Residents</option>
                         </select>
                     </div>
 

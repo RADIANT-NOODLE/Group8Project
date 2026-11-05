@@ -99,6 +99,16 @@ async def assign_estate_agent(
     return await PropertyRequestService(db).assign_agent(request_id, payload, admin)
 
 
+@router.delete("/{request_id}", status_code=204)
+async def delete_property_request(
+    request_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+) -> None:
+    """Delete a request (HOA and head admins). Refused while it is live on the market."""
+    await PropertyRequestService(db).delete_request(request_id)
+
+
 @router.post("/{request_id}/progress", response_model=PropertyRequestResponse)
 async def update_request_progress(
     request_id: int,

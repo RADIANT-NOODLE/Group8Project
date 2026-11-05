@@ -128,7 +128,7 @@ def test_listing_without_a_type_can_end_either_way(sessions):
 def test_a_finished_deal_is_locked(sessions):
     assert patch(AGENT, 1, "Sold").status_code == 200
     assert patch(AGENT, 1, "New").status_code == 409
-    assert patch(HOA, 1, "Contacted").status_code == 409
+    assert patch(OTHER_AGENT, 1, "Contacted").status_code == 403
     assert rows(sessions, Inquiry, "inquiry_id")[1] == "Sold"
     assert patch(AGENT, 1, "Sold").status_code == 200  # repeating it changes nothing
 
@@ -154,8 +154,10 @@ def test_an_older_closed_enquiry_can_still_move_on(sessions):
 
 
 @pytest.mark.parametrize("actor", [HOA, HEAD])
-def test_administrators_can_close_any_deal(sessions, actor):
-    assert patch(actor, 2, "Rented Out").status_code == 200
+def test_administrators_cannot_change_an_inquiry(sessions, actor):
+    assert patch(actor, 2, "Rented Out").status_code == 403
+    assert patch(actor, 2, "Contacted").status_code == 403
+    assert rows(sessions, Inquiry, "inquiry_id")[2] != "Rented Out"
 
 
 def test_another_agent_cannot_close_a_deal(sessions):

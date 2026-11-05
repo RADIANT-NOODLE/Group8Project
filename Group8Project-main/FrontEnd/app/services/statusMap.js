@@ -51,11 +51,25 @@ export const WORK_ORDER_STATUS = valuesByName(WORK_ORDER_STATUSES);
 export const COMPLAINT_CATEGORIES = Object.freeze([
   'Security',
   'Maintenance',
+  'Water Leakage',
   'Noise',
   'Cleaning',
   'Parking',
   'Other',
 ]);
+
+/** Noise complaints are handled by the HOA itself, so they never get a service provider. */
+export function allowsServiceProvider(category) {
+  return String(category ?? '').trim().toLowerCase() !== 'noise';
+}
+
+/* "Other" complaints are saved as "Other: what the person typed". The column holds 50 characters. */
+const OTHER_PREFIX = 'Other: ';
+export const OTHER_DETAIL_MAX_LENGTH = 50 - OTHER_PREFIX.length;
+
+export function otherCategory(detail) {
+  return `${OTHER_PREFIX}${String(detail ?? '').trim()}`;
+}
 
 const COMPLAINT_STATUS_ALIASES = Object.freeze({
   new: 'submitted',

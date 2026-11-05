@@ -15,6 +15,7 @@ import {
     updateWorkOrder,
 } from "../../services/workOrderApi";
 import {
+    COMPLAINT_CATEGORIES,
     COMPLAINT_STATUS,
     COMPLAINT_STATUSES,
     WORK_ORDER_STATUS,
@@ -33,17 +34,6 @@ import { getStoredUser } from "../../services/session";
  * administrators see every request, residents see their own and can rate a
  * finished job. The backend enforces who may see and change what.
  */
-
-const CATEGORY_OPTIONS = [
-    "General",
-    "Plumbing",
-    "Electrical",
-    "Security",
-    "Landscaping",
-    "Cleaning",
-    "Structural",
-    "Other",
-];
 
 const STATUS_CLASS = {
     submitted: "submitted",
@@ -175,7 +165,7 @@ function Icon({ name, size = 19 }) {
    MAINTENANCE PAGE
 ========================================================= */
 
-const EMPTY_FORM = { category: "General", unitId: "", description: "" };
+const EMPTY_FORM = { category: COMPLAINT_CATEGORIES[0], unitId: "", description: "" };
 
 function Maintenance() {
     const [currentUser] = useState(readUser);
@@ -265,7 +255,10 @@ function Maintenance() {
 
     const filteredRequests = requests.filter((request) => {
         const matchesStatus = statusFilter === "All" || request.status === statusFilter;
-        const matchesCategory = categoryFilter === "All" || request.category === categoryFilter;
+        const matchesCategory =
+            categoryFilter === "All" ||
+            request.category === categoryFilter ||
+            (categoryFilter === "Other" && String(request.category).startsWith("Other:"));
         return matchesStatus && matchesCategory;
     });
 
@@ -570,7 +563,7 @@ function Maintenance() {
                                                 value={formData.category}
                                                 onChange={handleFormChange}
                                             >
-                                                {CATEGORY_OPTIONS.map((category) => (
+                                                {COMPLAINT_CATEGORIES.map((category) => (
                                                     <option key={category} value={category}>
                                                         {category}
                                                     </option>
@@ -661,7 +654,7 @@ function Maintenance() {
                                             onChange={(event) => setCategoryFilter(event.target.value)}
                                         >
                                             <option value="All">All Categories</option>
-                                            {CATEGORY_OPTIONS.map((category) => (
+                                            {COMPLAINT_CATEGORIES.map((category) => (
                                                 <option key={category} value={category}>
                                                     {category}
                                                 </option>

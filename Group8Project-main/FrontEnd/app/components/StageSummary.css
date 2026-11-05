@@ -136,6 +136,8 @@
 /* stage colours: VALORA purples for progress, status hues for decisions */
 .stage-summary .tone-waiting { background: #fab219; }
 .stage-summary .tone-progress { background: #b49ccb; }
+.stage-summary .tone-early { background: #c4afd8; }
+.stage-summary .tone-middle { background: #8a6cab; }
 .stage-summary .tone-done { background: #563f6b; }
 .stage-summary .tone-changes { background: #ec835a; }
 .stage-summary .tone-rejected { background: #d03b3b; }

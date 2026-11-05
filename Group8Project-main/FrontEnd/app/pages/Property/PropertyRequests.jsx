@@ -9,9 +9,10 @@ import {
     rejectPropertyRequest,
     assignEstateAgent,
 } from "../../data/propertyRequests";
+import { deletePropertyRequest } from "../../services/propertyRequestApi";
 import { listUsers } from "../../services/userApi";
 import "./PropertyRequests.css";
-import { showConfirm } from "../../components/AppDialog";
+import { showAlert, showConfirm } from "../../components/AppDialog";
 import { roleLabel } from "../../services/roleMap";
 import { getStoredUser } from "../../services/session";
 import StageSummary from "../../components/StageSummary";
@@ -190,6 +191,7 @@ function PropertyRequests() {
     const [agents, setAgents] = useState([]);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [rejectionReason, setRejectionReason] = useState("");
+    const [deletingId, setDeletingId] = useState(null);
     const [selectedAgentId, setSelectedAgentId] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
@@ -291,7 +293,7 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
     function openReview(request) {
         setSelectedRequest(request);
         setRejectionReason("");
-        setSelectedAgentId(request.assignedAgentId || "");
+        setSelectedAgentId("");
         setMessage("");
         setError("");
     }
@@ -307,6 +309,27 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
     /* =====================================================
        APPROVE REQUEST
     ===================================================== */
+
+    async function handleDelete(request) {
+        const unit = request.unitNo ? `Unit ${request.unitNo}` : "this property";
+        const confirmed = await showConfirm(
+            `Delete the ${request.requestType || "property"} request for ${unit}? This can't be undone. The resident can submit a new one.`,
+            { title: "Delete request?", confirmLabel: "Delete", tone: "danger" }
+        );
+        if (!confirmed) return;
+
+        setDeletingId(request.id);
+        try {
+            await deletePropertyRequest(request.id);
+            await loadData();
+            setMessage(`The request for ${unit} has been deleted.`);
+        } catch (deleteError) {
+            console.error("Unable to delete property request:", deleteError);
+            showAlert(deleteError?.message || "This request could not be deleted.", { title: "Request not deleted" });
+        } finally {
+            setDeletingId(null);
+        }
+    }
 
     async function handleApprove() {
         if (!selectedRequest) return;
@@ -393,11 +416,14 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             selectedAgent.email ||
             "Estate Agent";
 
-        if (
-            !await showConfirm(
-                `Assign ${agentName} to this property request?`
+        const changing = Boolean(selectedRequest.assignedAgentId);
+        const confirmed = changing
+            ? await showConfirm(
+                `Change the estate agent from ${selectedRequest.assignedAgentName || "the current agent"} to ${agentName}? Any live listing and open inquiries for this property will move to ${agentName}.`,
+                { title: "Change estate agent?", confirmLabel: "Change agent" }
             )
-        ) {
+            : await showConfirm(`Assign ${agentName} to this property request?`);
+        if (!confirmed) {
             return;
         }
 
@@ -410,7 +436,8 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             await loadData();
         } catch (assignError) {
             console.error("Unable to assign Estate Agent:", assignError);
-            setError(assignError?.message || "Unable to assign the Estate Agent.");
+            // the popup is covering the page's message area
+            showAlert(assignError?.message || "Unable to assign the Estate Agent.", { title: "Agent not changed" });
         }
     }
 
@@ -480,6 +507,10 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
         }
     }
 
+    const otherAgents = agents.filter(
+        (agent) => String(agent.id) !== String(selectedRequest?.assignedAgentId)
+    );
+
     function getRequestAction(request) {
         if (request.status === "Pending HOA Review") return "Review";
 
@@ -487,6 +518,10 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
             request.status === "Approved - Awaiting Agent Assignment"
         ) {
             return "Assign Agent";
+        }
+
+        if (["Assigned to Estate Agent", "Listed on the Market"].includes(request.status)) {
+            return "Manage";
         }
 
         return "View";
@@ -715,6 +750,15 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                                         }
                                                     >
                                                         {getRequestAction(request)}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="property-requests-delete-btn"
+                                                        aria-label={`Delete request ${request.id}`}
+                                                        disabled={deletingId === request.id}
+                                                        onClick={() => handleDelete(request)}
+                                                    >
+                                                        {deletingId === request.id ? "Deleting..." : "Delete"}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -1129,6 +1173,44 @@ const roleCheck = String(currentUser.role || "").toLowerCase();
                                             </strong>
                                         </div>
                                     </div>
+
+                                    {["Assigned to Estate Agent", "Listed on the Market"].includes(selectedRequest.status) && (
+                                        otherAgents.length === 0 ? (
+                                            <p className="property-requests-change-agent-note">
+                                                There are no other approved estate agents to change to.
+                                            </p>
+                                        ) : (
+                                            <>
+                                                <div className="property-requests-form-group property-requests-change-agent">
+                                                    <label htmlFor="changeEstateAgent">Change Estate Agent</label>
+                                                    <select
+                                                        id="changeEstateAgent"
+                                                        value={selectedAgentId}
+                                                        onChange={(event) => setSelectedAgentId(event.target.value)}
+                                                    >
+                                                        <option value="">Select a different agent</option>
+                                                        {otherAgents.map((agent) => (
+                                                            <option key={agent.id} value={agent.id}>
+                                                                {agent.full_name || agent.name || agent.email || "Estate Agent"}
+                                                                {" — "}
+                                                                {agent.email || ""}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="property-requests-action-buttons">
+                                                    <button
+                                                        type="button"
+                                                        className="property-requests-primary-btn"
+                                                        disabled={!selectedAgentId}
+                                                        onClick={handleAssignAgent}
+                                                    >
+                                                        Change Agent
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )
+                                    )}
                                 </section>
                             )}
 

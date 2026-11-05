@@ -102,6 +102,11 @@ export async function uploadPropertyPhoto(propertyId, file) {
   );
 }
 
+/** HOA and head admins: delete a property. The API refuses one that is still in use. */
+export function deleteProperty(propertyId) {
+  return apiRequest(`${BASE_PATH}/${encodeURIComponent(propertyId)}`, { method: 'DELETE' });
+}
+
 /** HOA and head admins: remove one photo. Returns the updated property. */
 export async function deletePropertyPhoto(propertyId, photoId) {
   return toProperty(

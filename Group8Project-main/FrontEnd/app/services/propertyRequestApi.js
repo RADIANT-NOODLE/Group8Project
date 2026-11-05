@@ -146,6 +146,11 @@ export async function assignEstateAgent(requestId, agentId) {
 }
 
 /** The assigned estate agent records progress: `listed`, `sold`, `rented` (or `assigned` to withdraw). */
+/** HOA and head admins: delete a request. The API refuses one that is live on the market. */
+export function deletePropertyRequest(requestId) {
+  return apiRequest(`${BASE_PATH}/${encodeURIComponent(requestId)}`, { method: 'DELETE' });
+}
+
 export async function updateRequestProgress(requestId, status) {
   return toPropertyRequest(
     await apiRequest(`${BASE_PATH}/${encodeURIComponent(requestId)}/progress`, {

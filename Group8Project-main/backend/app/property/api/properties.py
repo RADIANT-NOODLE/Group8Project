@@ -83,6 +83,17 @@ async def update_property(
     return await PropertyService(db).update_property(property_id, payload)
 
 
+@router.delete("/{property_id}", status_code=204)
+async def delete_property(
+    property_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: AdminOnly,
+) -> None:
+    """Delete a property and its history (HOA and head admins). Refused while it has
+    residents, a live listing, complaints or sale records."""
+    await PropertyService(db).delete_property(property_id)
+
+
 async def _ensure_can_add_photos(db: AsyncSession, user: User, property_id: int) -> None:
     """Admins, or the estate agent currently handling this unit's sale/rental request."""
     if user.role in (UserRole.hoa_admin.value, UserRole.head_admin.value):

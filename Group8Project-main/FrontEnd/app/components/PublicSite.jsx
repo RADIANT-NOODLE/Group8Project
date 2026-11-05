@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import ValoraLogo from "./ValoraLogo";
 
 import { formatListingPrice, isRental } from "../services/publicListings";
-import { dashboardPathForRole } from "../services/roleMap";
-import { useSession } from "../services/session";
+import { me as fetchCurrentUser } from "../services/authApi";
+import { dashboardPathForRole, ROLES } from "../services/roleMap";
+import { updateSessionUser, useSession } from "../services/session";
 import "../pages/Landing.css";
 
 /*
@@ -55,15 +57,31 @@ export function SiteIcon({ name, size = 20 }) {
 }
 
 /* On the home page the section links scroll; elsewhere they go back to the home page section.
-   A signed-in visitor sees a way back to their dashboard instead of Log in / Register. */
+   A signed-in visitor sees a way back to their dashboard instead of Log in / Register.
+   A resident still waiting for approval has no dashboard yet, so they only get Log out. */
 export function PublicHeader({ current = "home" }) {
     const section = (hash) => (current === "home" ? `#${hash}` : `/#${hash}`);
-    const { user } = useSession();
+    const { user, token, logout } = useSession();
+    const awaitingApproval = user?.role === ROLES.resident && user.hoa_approved !== true;
+
+    // the HOA may have approved them since they signed in, so ask rather than trust the stored copy
+    useEffect(() => {
+        if (!awaitingApproval || !token) return undefined;
+        let cancelled = false;
+        fetchCurrentUser(token)
+            .then((latest) => {
+                if (!cancelled && latest?.hoa_approved === true) updateSessionUser({ hoa_approved: true });
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, [awaitingApproval, token]);
 
     return (
         <header className="lp-header">
             <Link to="/" className="lp-logo" aria-label="VALORA home">
-                <img src="/assets/valora-logo.jpg" alt="VALORA" />
+                <ValoraLogo alt="VALORA" />
             </Link>
 
             <nav className="lp-nav" aria-label="Main">
@@ -76,7 +94,9 @@ export function PublicHeader({ current = "home" }) {
             </nav>
 
             <div className="lp-header-actions">
-                {user ? (
+                {awaitingApproval ? (
+                    <button type="button" className="lp-button lp-button-ghost" onClick={logout}>Log out</button>
+                ) : user ? (
                     <Link to={dashboardPathForRole(user.role)} className="lp-button lp-button-solid">My dashboard</Link>
                 ) : (
                     <>

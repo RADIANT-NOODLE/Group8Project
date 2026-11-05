@@ -4,6 +4,7 @@ import { useSession, getSessionToken } from "../../services/session";
 import "./Providers.css";
 import { showConfirm, showAlert } from "../../components/AppDialog";
 import { getApiBaseUrl } from "../../services/apiClient";
+import { cleanTenDigitPhone, validateTenDigitPhone } from "../../services/validation";
 
 const SERVICE_CATEGORIES = [
     { value: "plumbing", label: "Plumbing", icon: "tools" },
@@ -156,7 +157,7 @@ function Providers() {
             category: findCategory(provider.trade) ? provider.trade : "other",
             customService: findCategory(provider.trade) ? "" : provider.trade || "",
             description: provider.description || "",
-            number: provider.phone || "",
+            number: cleanTenDigitPhone(provider.phone),
             status: provider.verified ? "Verified" : "Pending Verification",
             rating: provider.avg_rating ?? "",
         });
@@ -174,6 +175,12 @@ function Providers() {
         // Fixed validation to use full_name
         if (!form.full_name.trim() || !form.email.trim() || !form.number.trim()) {
             setError("Please enter the provider name, email, and contact number.");
+            return;
+        }
+
+        const phoneProblem = validateTenDigitPhone(form.number);
+        if (phoneProblem) {
+            setError(phoneProblem);
             return;
         }
 
@@ -472,7 +479,7 @@ function Providers() {
                                 )}
                                 <label>
                                     Contact Number *
-                                    <input type="tel" value={form.number} onChange={event => setForm({ ...form, number: event.target.value })} required />
+                                    <input type="tel" inputMode="numeric" placeholder="0821234567" value={form.number} onChange={event => setForm({ ...form, number: cleanTenDigitPhone(event.target.value) })} required />
                                 </label>
                                 <label>
                                     Directory Status

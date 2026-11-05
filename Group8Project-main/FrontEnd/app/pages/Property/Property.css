@@ -493,26 +493,6 @@
     border-color: #e4d9ed;
 }
 
-.pd-save {
-    width: 100%;
-    border-color: #e4d9ed;
-    background: #e4d9ed;
-}
-
-.pd-save:hover:not(:disabled) {
-    background: #d9cbe5;
-}
-
-.pd-save.is-saved {
-    border-color: #563f6b;
-    background: #563f6b;
-    color: #ffffff;
-}
-
-.pd-save.is-saved svg {
-    fill: currentColor;
-}
-
 .pd-views {
     display: flex;
     align-items: center;

@@ -15,6 +15,8 @@ import "./RequestToSell.css";
 const OPEN_STATUSES = ["pending_review", "approved", "assigned", "listed"];
 const COMPLETE_STATUSES = ["sold", "rented"];
 
+const TRACKER_REFRESH_SECONDS = 30;
+
 // how far each backend status has got (index into the steps below)
 const STATUS_STEP = { pending_review: 0, approved: 1, assigned: 2, listed: 3, sold: 4, rented: 4, rejected: 1 };
 
@@ -83,6 +85,21 @@ function RequestToSell() {
 
     useEffect(() => {
         loadMyRequests();
+
+        // the HOA and the agent move the request on from their own screens, so look for changes
+        function refreshIfVisible() {
+            if (document.visibilityState === "visible") loadMyRequests();
+        }
+
+        const timer = window.setInterval(refreshIfVisible, TRACKER_REFRESH_SECONDS * 1000);
+        document.addEventListener("visibilitychange", refreshIfVisible);
+        window.addEventListener("focus", refreshIfVisible);
+
+        return () => {
+            window.clearInterval(timer);
+            document.removeEventListener("visibilitychange", refreshIfVisible);
+            window.removeEventListener("focus", refreshIfVisible);
+        };
     }, []);
     const [propertiesLoading, setPropertiesLoading] = useState(true);
     const [loadError, setLoadError] = useState("");

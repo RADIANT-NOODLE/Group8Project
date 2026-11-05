@@ -49,7 +49,6 @@ import CommunityAnnouncements from "./pages/Announcements/CommunityAnnouncements
 import Announcements from "./pages/Announcements/Announcements";
 
 /* AI */
-import Intelligence from "./pages/AI/Intelligence";
 import Terms from "./pages/Terms";
 import Notifications from "./pages/Notifications/Notifications";
 import EstateHealth from "./pages/Analytics/EstateHealth";
@@ -373,7 +372,6 @@ function App() {
                     }
                 />
 
-                {/* VALORA INTELLIGENCE */}
                 {/* NOTIFICATION INBOX */}
                 {/* ESTATE HEALTH */}
                 <Route
@@ -391,14 +389,6 @@ function App() {
                       <Notifications />
                     </ProtectedRoute>
                   }
-                />
-                <Route
-                    path="/intelligence"
-                    element={
-                        <ProtectedRoute>
-                            <Intelligence />
-                        </ProtectedRoute>
-                    }
                 />
 
                 {/* FALLBACK */}

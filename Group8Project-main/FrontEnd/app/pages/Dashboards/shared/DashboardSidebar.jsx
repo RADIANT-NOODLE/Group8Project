@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { PROPERTY_TAB_PATHS } from "./PropertyTabs";
+import ValoraLogo from "../../../components/ValoraLogo";
 import "./DashboardSidebar.css";
 import { readStoredItem, writeStoredItem } from "../../../services/browserStorage";
 import { getStoredUser, logout } from "../../../services/session";
@@ -245,13 +246,6 @@ function Icon({ type }) {
                 <path d="M17 15c2.5 0 4 1.7 4 4" />
             </>
         ),
-
-        ai: (
-            <>
-                <rect x="4" y="4" width="16" height="16" rx="3" />
-                <path d="M9 9h.01M15 9h.01M8 14c2.5 2 5.5 2 8 0M12 1v3M12 20v3" />
-            </>
-        ),
     };
 
     return <svg {...props}>{icons[type] || icons.request}</svg>;
@@ -290,7 +284,6 @@ const navigation = {
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
-        { label: "VALORA Intelligence", path: "/intelligence", icon: "ai" },
         { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
@@ -417,11 +410,7 @@ function DashboardSidebar({ suppliedUser = null }) {
                     className="dashboard-logo-link"
                     title="Go to home page"
                 >
-                    <img
-                        src="/assets/valora-logo.jpg"
-                        alt="VALORA - go to home page"
-                        className="dashboard-logo"
-                    />
+                    <ValoraLogo alt="VALORA - go to home page" className="dashboard-logo" />
                 </Link>
 
                 <button

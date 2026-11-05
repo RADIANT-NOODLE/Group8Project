@@ -108,8 +108,8 @@ const FEATURES = [
     },
     {
         icon: "chart",
-        title: "Valuation insights",
-        text: "See what a unit is worth with AI-assisted valuations, so every decision starts from good information.",
+        title: "Estate health",
+        text: "Follow your estate's Living Score, see how each area is doing, and know where to focus first.",
     },
     {
         icon: "people",
@@ -122,7 +122,7 @@ const ROLES = [
     {
         icon: "key",
         title: "Residents",
-        points: ["See your unit and its value", "Request to sell or rent, and track progress", "Log complaints and maintenance"],
+        points: ["See how your estate is doing", "Request to sell or rent, and track progress", "Log complaints and maintenance"],
     },
     {
         icon: "briefcase",
@@ -183,7 +183,7 @@ function Home() {
                             <span> Stronger communities.</span>
                         </h1>
                         <p>
-                            VALORA brings property listings, valuation insights and
+                            VALORA brings property listings, estate health insights and
                             community management together for residents, estate agents
                             and HOA administrators.
                         </p>

@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { showAlert, showConfirm } from "../../components/AppDialog";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PasswordRequirements from "../Auth/PasswordRequirements.jsx";
 import { createEstateAgent, deleteEstateAgent, listUsers } from "../../services/userApi";
-import { validateEmail, validateRequired, checkPasswordRules, validateNewPassword } from "../../services/validation.js";
+import { cleanTenDigitPhone, validateEmail, validateRequired, validateTenDigitPhone, checkPasswordRules, validateNewPassword } from "../../services/validation.js";
 import "../Maintenance/Maintenance.css";
+import "./CreateAgentAccount.css";
 
 const EMPTY_FORM = { fullName: "", email: "", phone: "", password: "" };
 
@@ -13,6 +15,73 @@ const EMPTY_FORM = { fullName: "", email: "", phone: "", password: "" };
  * register themselves. The account is approved straight away and the agent
  * signs in with the temporary password, then changes it from their profile.
  */
+function initialsOf(name) {
+    return name.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("") || "?";
+}
+
+function AgentCreatedPopup({ agent, onClose }) {
+    const closeRef = useRef(null);
+    const signInAddress = `${window.location.origin}/login`;
+
+    useEffect(() => {
+        const openedFrom = document.activeElement;
+        closeRef.current?.focus();
+
+        function closeOnEscape(event) {
+            if (event.key === "Escape") onClose();
+        }
+
+        window.addEventListener("keydown", closeOnEscape);
+        return () => {
+            window.removeEventListener("keydown", closeOnEscape);
+            openedFrom?.focus?.();
+        };
+    }, [onClose]);
+
+    return createPortal(
+        <div
+            className="agent-created-overlay"
+            onMouseDown={(event) => {
+                if (event.target === event.currentTarget) onClose();
+            }}
+        >
+            <div className="agent-created" role="dialog" aria-modal="true" aria-labelledby="agent-created-title">
+                <header className="agent-created-header">
+                    <span className="agent-created-tick" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m5 12.5 4.5 4.5L19 7.5" />
+                        </svg>
+                    </span>
+                    <h2 id="agent-created-title">Agent account created</h2>
+                    <p>They can sign in straight away.</p>
+                </header>
+
+                <div className="agent-created-body">
+                    <div className="agent-created-person">
+                        <span className="agent-created-avatar" aria-hidden="true">{initialsOf(agent.fullName)}</span>
+                        <div>
+                            <strong>{agent.fullName}</strong>
+                            <span>{agent.email}</span>
+                        </div>
+                    </div>
+
+                    <h3>What to do next</h3>
+                    <ol className="agent-created-steps">
+                        <li>Share the temporary password with them privately.</li>
+                        <li>They sign in at <span className="agent-created-address">{signInAddress}</span></li>
+                        <li>They change the password from My Profile.</li>
+                    </ol>
+                </div>
+
+                <footer className="agent-created-footer">
+                    <button type="button" ref={closeRef} onClick={onClose}>Done</button>
+                </footer>
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 function CreateAgentAccount() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [agents, setAgents] = useState([]);
@@ -20,6 +89,8 @@ function CreateAgentAccount() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState(null);
+    const [createdAgent, setCreatedAgent] = useState(null);
+    const closeCreatedPopup = useCallback(() => setCreatedAgent(null), []);
 
     const loadAgents = useCallback(async () => {
         try {
@@ -59,7 +130,7 @@ function CreateAgentAccount() {
 
     function handleChange(event) {
         const { name, value } = event.target;
-        setForm((previous) => ({ ...previous, [name]: value }));
+        setForm((previous) => ({ ...previous, [name]: name === "phone" ? cleanTenDigitPhone(value) : value }));
     }
 
     async function handleSubmit(event) {
@@ -69,6 +140,7 @@ function CreateAgentAccount() {
         const problem =
             validateRequired(form.fullName, "Full name") ||
             validateEmail(form.email) ||
+            (form.phone ? validateTenDigitPhone(form.phone) : "") ||
             validateNewPassword(form.password);
 
         if (problem) {
@@ -84,10 +156,7 @@ function CreateAgentAccount() {
             await createEstateAgent(form);
             setForm(EMPTY_FORM);
             await loadAgents();
-            showAlert(
-                `Account created for ${form.email.trim()}. Share the temporary password with the agent securely; they should change it after signing in.`,
-                { title: "Agent account created" }
-            );
+            setCreatedAgent({ fullName: form.fullName.trim(), email: form.email.trim() });
         } catch (submitError) {
             setError(submitError?.message || "Unable to create the account. Please try again.");
         } finally {
@@ -157,9 +226,10 @@ function CreateAgentAccount() {
                                     id="agent-phone"
                                     name="phone"
                                     type="tel"
+                                    inputMode="numeric"
+                                    placeholder="0821234567"
                                     value={form.phone}
                                     onChange={handleChange}
-                                    maxLength={20}
                                     autoComplete="off"
                                 />
                             </div>
@@ -246,6 +316,8 @@ function CreateAgentAccount() {
                     </div>
                 </section>
             </main>
+
+            {createdAgent && <AgentCreatedPopup agent={createdAgent} onClose={closeCreatedPopup} />}
         </div>
     );
 }

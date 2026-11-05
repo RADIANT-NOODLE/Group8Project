@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiRequest } from "../../services/apiClient";
 import { listListings } from "../../services/listingApi";
 import { getProperty, photoSrc } from "../../services/propertyApi";
-import { getStoredUser, updateSessionUser, useSession } from "../../services/session";
+import { getStoredUser } from "../../services/session";
 import { LISTING_STATUSES, listingStatusLabel, toStatus } from "../../services/statusMap";
 import { validateContactEmail, validateContactName, validateRequiredPhone } from "../../services/validation";
 import { PublicFooter, PublicHeader } from "../../components/PublicSite";
@@ -54,7 +54,6 @@ const ICONS = {
             <path d="M9 21v-6h6v6" />
         </>
     ),
-    heart: <path d="M12 20s-7-4.4-9-9.2C1.7 7.6 3.7 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.3 0 5.3 3.1 4 6.3-2 4.8-9 9.2-9 9.2Z" />,
     eye: (
         <>
             <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
@@ -111,10 +110,12 @@ function describe(property) {
     }${where ? `, ${where}` : ""}.`;
 }
 
+// how long each photo shows before the gallery fades to the next one
+const PHOTO_SECONDS = 5;
+
 export default function Property() {
     const { propertyId } = useParams();
     const navigate = useNavigate();
-    const { user } = useSession();
 
     const [property, setProperty] = useState(null);
     const [listing, setListing] = useState(null);
@@ -123,13 +124,43 @@ export default function Property() {
     const [activePhoto, setActivePhoto] = useState(0);
     // photos whose file could not be loaded (e.g. uploaded on another machine)
     const [brokenPhotos, setBrokenPhotos] = useState([]);
-    const [isSaved, setIsSaved] = useState(false);
 
     const [enquiry, setEnquiry] = useState(EMPTY_ENQUIRY);
     const [enquiryOpen, setEnquiryOpen] = useState(false);
     const [enquiryState, setEnquiryState] = useState({ sending: false, sent: false, error: "" });
     const [enquiryErrors, setEnquiryErrors] = useState({});
     const enquiryNameRef = useRef(null);
+    const [galleryHovered, setGalleryHovered] = useState(false);
+    const thumbsRef = useRef(null);
+
+    const allPhotos = (property?.photos || [])
+        .filter((photo) => photo.available !== false) // skip images that are missing
+        .map((photo) => photoSrc(photo.url))
+        .filter(Boolean);
+    if (!allPhotos.length && property?.imageUrl) allPhotos.push(photoSrc(property.imageUrl));
+    const photos = allPhotos.filter((src) => !brokenPhotos.includes(src));
+    const photoCount = photos.length;
+
+    /* ----- gallery: move to the next photo by itself. Choosing a photo restarts the wait ----- */
+    useEffect(() => {
+        if (photoCount < 2 || galleryHovered || enquiryOpen) return undefined;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+        const timer = window.setTimeout(() => {
+            setActivePhoto((current) => (current + 1) % photoCount);
+        }, PHOTO_SECONDS * 1000);
+
+        return () => window.clearTimeout(timer);
+    }, [activePhoto, photoCount, galleryHovered, enquiryOpen]);
+
+    /* ----- gallery: on narrow screens, keep the current thumbnail in view without moving the page ----- */
+    useEffect(() => {
+        const strip = thumbsRef.current;
+        const thumb = strip?.children[activePhoto];
+        if (!thumb) return;
+        const distance = thumb.getBoundingClientRect().left - strip.getBoundingClientRect().left;
+        strip.scrollTo({ left: strip.scrollLeft + distance - 10, behavior: "smooth" });
+    }, [activePhoto]);
 
     /* ----- enquiry popup: focus its first field, and Escape closes it ----- */
     useEffect(() => {
@@ -183,27 +214,6 @@ export default function Property() {
             cancelled = true;
         };
     }, [propertyId]);
-
-    /* ----- saved properties live on the signed-in profile ----- */
-    useEffect(() => {
-        const stored = getStoredUser();
-        const saved = Array.isArray(stored?.savedProperties) ? stored.savedProperties : [];
-        setIsSaved(Boolean(property) && saved.some((id) => String(id) === String(property.id)));
-    }, [property, user]);
-
-    function toggleSave() {
-        const stored = getStoredUser();
-        if (!stored?.hoa_approved) {
-            navigate("/login");
-            return;
-        }
-        const saved = Array.isArray(stored.savedProperties) ? stored.savedProperties : [];
-        const next = isSaved
-            ? saved.filter((id) => String(id) !== String(property.id))
-            : [...saved, property.id];
-        updateSessionUser({ savedProperties: next });
-        setIsSaved(!isSaved);
-    }
 
     /* Anything typed earlier is kept; otherwise a signed-in person's details are filled in. */
     function openEnquiry() {
@@ -315,12 +325,6 @@ export default function Property() {
     }
 
     /* ----- page ----- */
-    const allPhotos = property.photos
-        .filter((photo) => photo.available !== false) // skip images that are missing
-        .map((photo) => photoSrc(photo.url))
-        .filter(Boolean);
-    if (!allPhotos.length && property.imageUrl) allPhotos.push(photoSrc(property.imageUrl));
-    const photos = allPhotos.filter((src) => !brokenPhotos.includes(src));
     const markBroken = (src) => setBrokenPhotos((previous) => (previous.includes(src) ? previous : [...previous, src]));
     const mainPhoto = photos[Math.min(activePhoto, photos.length - 1)];
 
@@ -362,7 +366,12 @@ export default function Property() {
                 </button>
 
                 {/* GALLERY */}
-                <section className={`pd-gallery${photos.length > 1 ? " has-thumbs" : ""}`} aria-label="Property photos">
+                <section
+                    className={`pd-gallery${photos.length > 1 ? " has-thumbs" : ""}`}
+                    aria-label="Property photos"
+                    onPointerEnter={(event) => { if (event.pointerType === "mouse") setGalleryHovered(true); }}
+                    onPointerLeave={() => setGalleryHovered(false)}
+                >
                     {mainPhoto ? (
                         <div className="pd-gallery-main">
                             {/* every photo stays stacked here, so changing photo is a crossfade */}
@@ -385,7 +394,7 @@ export default function Property() {
                     )}
 
                     {photos.length > 1 && (
-                        <ul className="pd-gallery-thumbs">
+                        <ul className="pd-gallery-thumbs" ref={thumbsRef}>
                             {photos.map((src, index) => (
                                 <li key={src}>
                                     <button
@@ -457,16 +466,6 @@ export default function Property() {
                                         ? "This listing is no longer active."
                                         : "This unit is not on the market right now."}
                             </p>
-
-                            <button
-                                type="button"
-                                className={`pd-button pd-save${isSaved ? " is-saved" : ""}`}
-                                onClick={toggleSave}
-                                aria-pressed={isSaved}
-                            >
-                                <Icon name="heart" size={17} />
-                                {isSaved ? "Saved" : "Save property"}
-                            </button>
 
                             {listing?.views != null && (
                                 <p className="pd-views"><Icon name="eye" size={15} /> {listing.views} {listing.views === 1 ? "view" : "views"}</p>

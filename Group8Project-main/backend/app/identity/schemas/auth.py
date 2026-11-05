@@ -7,8 +7,10 @@ from app.common.enums import UserRole
 from app.common.validators import (
     reject_control_characters,
     validate_password_strength,
+    validate_person_name,
     validate_phone,
     validate_required_phone,
+    validate_ten_digit_phone,
 )
 
 
@@ -22,6 +24,21 @@ class RegisterRequest(BaseModel):
     phoneno: str = Field(..., max_length=20)
     unit_no: str | None = Field(default=None, max_length=10)
     terms_accepted: StrictBool
+
+    @field_validator("full_name")
+    @classmethod
+    def _looks_like_a_name(cls, value: str) -> str:
+        return validate_person_name(value)
+
+    # before EmailStr, which would quietly lowercase the part after the @
+    @field_validator("email", mode="before")
+    @classmethod
+    def _lowercase_domain(cls, value: object) -> object:
+        if isinstance(value, str):
+            domain = value.strip().rsplit("@", 1)[-1]
+            if domain != domain.lower():
+                raise ValueError("Use lowercase letters after the @ in your email address, for example name@gmail.com.")
+        return value
 
     @field_validator("terms_accepted")
     @classmethod
@@ -65,6 +82,14 @@ class CreateEstateAgentRequest(BaseModel):
     # temporary password: the agent changes it after first sign-in
     password: str = Field(..., min_length=8, max_length=128)
     phoneno: str | None = Field(default=None, max_length=20)
+
+    @field_validator("phoneno")
+    @classmethod
+    def _ten_digits(cls, value: str | None) -> str | None:
+        """Exactly 10 digits on this form; stored as +27XXXXXXXXX like every other number."""
+        if value is None or not value.strip():
+            return None
+        return validate_phone(validate_ten_digit_phone(value))
 
     @field_validator("password")
     @classmethod

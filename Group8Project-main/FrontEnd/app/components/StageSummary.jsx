@@ -9,8 +9,8 @@ headline, a single bar split by stage, and a tile per stage
 (colour dot + name + count + short note, so colour is never
 the only cue). Used by the three Properties tabs.
 
-tone: "waiting" (needs you), "progress", "done", "changes",
-      "rejected" or "neutral".
+tone: "waiting" (needs you), "early", "progress", "middle", "done",
+      "changes", "rejected" or "neutral".
 =========================================================
 */
 

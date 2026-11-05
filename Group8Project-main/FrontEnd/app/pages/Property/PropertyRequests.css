@@ -642,7 +642,7 @@
 .property-requests-modal-overlay {
     position: fixed;
     inset: 0;
-    z-index: 500;
+    z-index: 9999;
     padding: 25px;
     background: rgba(38, 29, 43, 0.58);
     display: flex;
@@ -832,6 +832,49 @@
 
 .property-requests-action-section {
     background: #f8f6fa;
+}
+
+.property-requests-change-agent {
+    margin: 18px 0 14px;
+}
+
+.property-requests-change-agent-note {
+    margin: 14px 0 0;
+    color: #6f6579;
+    font-size: 13px;
+}
+
+.property-requests-primary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.property-requests-delete-btn {
+    display: block;
+    margin-top: 8px;
+    padding: 7px 12px;
+    border: 1px solid #edd0d0;
+    border-radius: 8px;
+    background: #fbeeee;
+    color: #8a3b3b;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.property-requests-delete-btn:hover:not(:disabled) {
+    background: #f6e0e0;
+}
+
+.property-requests-delete-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.property-requests-delete-btn:focus-visible {
+    outline: 2px solid #8a3b3b;
+    outline-offset: 2px;
 }
 
 .property-requests-action-buttons {

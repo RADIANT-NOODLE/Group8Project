@@ -38,6 +38,7 @@ function sameSession(current, next) {
     current.user?.email === next.user?.email &&
     current.user?.phoneno === next.user?.phoneno &&
     current.user?.role === next.user?.role &&
+    current.user?.hoa_approved === next.user?.hoa_approved &&
     current.user?.full_name === next.user?.full_name
   );
 }
@@ -100,6 +101,7 @@ export function getSessionUser(rawUser = getSessionSnapshot().user) {
     role,
     roleLabel: roleLabel(role),
     isAdministrator: isAdministrator(role),
+    hoa_approved: rawUser.hoa_approved,
   };
 
   return cachedUser;

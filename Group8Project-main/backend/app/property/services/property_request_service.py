@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.datetime_utils import utcnow
@@ -7,6 +7,8 @@ from app.community.models.resident_directory import ResidentDirectory
 from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException
 from app.identity.models.user import User
 from app.identity.repositories.user_repository import UserRepository
+from app.property.models.inquiry import Inquiry
+from app.property.models.listing import Listing
 from app.property.models.property_request import PropertyRequest
 from app.property.repositories.property_repository import PropertyRepository
 from app.property.repositories.property_request_repository import PropertyRequestRepository
@@ -153,6 +155,14 @@ class PropertyRequestService:
         request.decided_at = utcnow()
         return to_response(await self._repo.save(request))
 
+    async def delete_request(self, request_id: int) -> None:
+        request = await self._get_or_404(request_id)
+        if request.status.lower() == PropertyRequestStatus.listed.value:
+            raise ConflictException(
+                "This request is live on the market. The estate agent must remove the listing first."
+            )
+        await self._repo.delete(request)
+
     async def update_progress(
         self, request_id: int, payload: PropertyRequestProgress, user: User
     ) -> PropertyRequestResponse:
@@ -161,7 +171,8 @@ class PropertyRequestService:
         if not (self._is_admin(user) or request.assigned_agent_id == user.user_id):
             raise ForbiddenException("Only the estate agent assigned to this request can update it.")
 
-        current = request.status
+        # older requests were saved with capitals, such as 'Assigned' and 'Sell'
+        current = request.status.lower()
         target = payload.status
         S = PropertyRequestStatus
 
@@ -173,9 +184,9 @@ class PropertyRequestService:
         }
         if current not in allowed_from[target]:
             raise ConflictException(f"A request that is '{current}' cannot be marked '{target}'.")
-        if target == S.sold.value and request.request_type != "sell":
+        if target == S.sold.value and request.request_type.lower() != "sell":
             raise ConflictException("Only a sale request can be marked as sold.")
-        if target == S.rented.value and request.request_type != "rent":
+        if target == S.rented.value and request.request_type.lower() != "rent":
             raise ConflictException("Only a rental request can be marked as rented.")
 
         request.status = target
@@ -185,9 +196,11 @@ class PropertyRequestService:
         self, request_id: int, payload: PropertyRequestAssign, admin: User
     ) -> PropertyRequestResponse:
         request = await self._get_or_404(request_id)
-        if request.status not in (
+        status = request.status.lower()
+        if status not in (
             PropertyRequestStatus.approved.value,
             PropertyRequestStatus.assigned.value,
+            PropertyRequestStatus.listed.value,
         ):
             raise ConflictException("An estate agent can only be assigned to an approved request.")
 
@@ -199,5 +212,22 @@ class PropertyRequestService:
 
         request.assigned_agent_id = agent.user_id
         request.assigned_at = utcnow()
-        request.status = PropertyRequestStatus.assigned.value
+        # a live listing stays live under its new agent
+        if status != PropertyRequestStatus.listed.value:
+            request.status = PropertyRequestStatus.assigned.value
+
+        # the unit's live listing and unfinished inquiries go with it; finished ones stay as a record
+        await self._db.execute(
+            update(Listing)
+            .where(Listing.unit_id == request.unit_id, func.lower(Listing.status) == "active")
+            .values(agent_id=agent.user_id)
+        )
+        await self._db.execute(
+            update(Inquiry)
+            .where(
+                Inquiry.property_id == request.unit_id,
+                func.lower(Inquiry.status).in_(("new", "contacted", "viewing scheduled")),
+            )
+            .values(agent_id=agent.user_id)
+        )
         return to_response(await self._repo.save(request))

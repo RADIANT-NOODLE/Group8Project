@@ -115,13 +115,42 @@ export function updateProperty(propertyId, updates = {}) {
         };
     });
 
-    saveProperties(updatedProperties);
+    try {
+        saveProperties(updatedProperties);
+    } catch (error) {
+        if (error?.name !== "QuotaExceededError") throw error;
+
+        // The browser's storage is small. This property's photos are still held
+        // in the returned copy, ready to upload, so the stored copy can go without.
+        saveProperties(
+            updatedProperties.map(property =>
+                withoutPhotoData(property, property.id === propertyId)
+            )
+        );
+    }
 
     return (
         updatedProperties.find(
             property => property.id === propertyId
         ) || null
     );
+}
+
+function withoutPhotoData(property, includeUnsent) {
+    const lighten = (images) =>
+        Array.isArray(images)
+            ? images.map(image => {
+                if (!image?.data || !(includeUnsent || image.uploaded)) return image;
+                const { data, ...rest } = image;
+                return rest;
+            })
+            : images;
+
+    return {
+        ...property,
+        images: lighten(property.images),
+        pendingImages: lighten(property.pendingImages),
+    };
 }
 
 export function resetProperties() {

@@ -6,6 +6,8 @@ import { dashboardPathForRole, ROLES } from "../../services/roleMap.js";
 import { register } from "../../services/session.js";
 import {
     checkPasswordRules,
+    validateEmailDomainCase,
+    validatePersonName,
     validateRequiredPhone,
     validateRegistrationPassword,
 } from "../../services/validation.js";
@@ -67,6 +69,20 @@ function Register() {
             !confirmPassword
         ) {
             setError("Please complete all registration fields.");
+            return;
+        }
+
+        const nameProblem =
+            validatePersonName(firstName, "First name") ||
+            validatePersonName(lastName, "Last name");
+        if (nameProblem) {
+            setError(nameProblem);
+            return;
+        }
+
+        const emailProblem = validateEmailDomainCase(email);
+        if (emailProblem) {
+            setError(emailProblem);
             return;
         }
 

@@ -1,4 +1,5 @@
 
+import { photoSrc } from "../../services/propertyApi";
 import React, { useEffect, useState } from "react";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PropertyTabs from "../Dashboards/shared/PropertyTabs";
@@ -381,7 +382,7 @@ function PropertyApprovals() {
     };
 
     const getImageSource = (image) =>
-        typeof image === "string" ? image : image?.data || "";
+        typeof image === "string" ? image : image?.data || photoSrc(image?.url) || "";
 
     const approvedProperties = properties.filter(
         (property) =>

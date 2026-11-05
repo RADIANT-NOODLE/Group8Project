@@ -32,7 +32,7 @@ export async function syncListingPhotos(property) {
   if (pending.length === 0) return { property, uploaded: 0, failed: 0, error: '' };
 
   const unitId = Number(property.id);
-  const uploadedIds = [];
+  const uploadedUrls = new Map();
   let error = '';
 
   pending.forEach((image) => inFlight.add(image.id));
@@ -41,8 +41,8 @@ export async function syncListingPhotos(property) {
       try {
         const blob = await (await fetch(image.data)).blob();
         const file = new File([blob], image.name || 'photo.jpg', { type: image.type || blob.type });
-        await uploadPropertyPhoto(unitId, file);
-        uploadedIds.push(image.id);
+        const saved = await uploadPropertyPhoto(unitId, file);
+        uploadedUrls.set(image.id, saved.photos[saved.photos.length - 1]?.url);
       } catch (uploadError) {
         console.error('Could not upload a listing photo:', uploadError);
         error = uploadError?.message || '';
@@ -53,21 +53,31 @@ export async function syncListingPhotos(property) {
   }
 
   let updated = property;
-  if (uploadedIds.length > 0) {
+  if (uploadedUrls.size > 0) {
     // re-read: the stored copy may have changed while uploading
     const latest = (getProperties() || []).find((item) => item.id === property.id) || property;
+    const held = new Map((property.images || []).map((image) => [image?.id, image]));
     updated =
       updateProperty(property.id, {
-        images: (latest.images || []).map((image) =>
-          image && uploadedIds.includes(image.id) ? { ...image, uploaded: true } : image,
-        ),
+        images: (latest.images || []).map((image) => {
+          if (!image || typeof image !== 'object') return image;
+          // uploaded: the address replaces the image, which frees the browser's storage
+          const url = uploadedUrls.get(image.id);
+          if (url) {
+            const { data, ...rest } = image;
+            return { ...rest, uploaded: true, url };
+          }
+          if (uploadedUrls.has(image.id)) return { ...image, uploaded: true };
+          // not uploaded: keep the image so publishing again can retry
+          return image.data ? image : { ...image, data: held.get(image.id)?.data };
+        }),
       }) || property;
   }
 
   return {
     property: updated,
-    uploaded: uploadedIds.length,
-    failed: pending.length - uploadedIds.length,
+    uploaded: uploadedUrls.size,
+    failed: pending.length - uploadedUrls.size,
     error,
   };
 }

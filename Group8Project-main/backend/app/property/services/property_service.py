@@ -127,6 +127,19 @@ class PropertyService:
         storage.delete_file(file_name)
         return (await self._with_photos([property_]))[0]
 
+    async def delete_property(self, unit_id: int) -> None:
+        property_ = await self._get_or_404(unit_id)
+
+        blockers = await self._repo.delete_blockers(unit_id)
+        held = [f"{count} {word}{'' if count == 1 else 's'}" for word, count in blockers.items() if count]
+        if held:
+            raise ConflictException(
+                f"Unit {property_.unit_no} cannot be deleted because it still has {', '.join(held)}."
+            )
+
+        for file_name in await self._repo.delete_with_history(property_):
+            storage.delete_file(file_name)
+
     async def _get_or_404(self, unit_id: int) -> Property:
         property_ = await self._repo.get_by_id(unit_id)
         if property_ is None:

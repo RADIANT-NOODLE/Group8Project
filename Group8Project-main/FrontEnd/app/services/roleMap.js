@@ -160,7 +160,6 @@ const SHARED_PATHS = Object.freeze([
   '/providers',
   '/announcements',
   '/community-announcements',
-  '/intelligence',
   '/notifications',
   '/estate-health',
 ]);

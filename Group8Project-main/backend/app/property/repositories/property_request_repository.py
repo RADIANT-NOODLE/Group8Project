@@ -83,7 +83,7 @@ class PropertyRequestRepository:
             .where(
                 PropertyRequest.requester_id == user_id,
                 PropertyRequest.unit_id == unit_id,
-                PropertyRequest.status.in_(_ACTIVE_STATUSES),
+                func.lower(PropertyRequest.status).in_(_ACTIVE_STATUSES),
             )
             .limit(1)
         )
@@ -95,7 +95,7 @@ class PropertyRequestRepository:
             select(PropertyRequest)
             .where(
                 PropertyRequest.unit_id == unit_id,
-                PropertyRequest.status.in_(_ACTIVE_STATUSES),
+                func.lower(PropertyRequest.status).in_(_ACTIVE_STATUSES),
             )
             .limit(1)
         )
@@ -106,6 +106,10 @@ class PropertyRequestRepository:
         self._db.add(request)
         await self._db.commit()
         return await self._reload(request.request_id)
+
+    async def delete(self, request: PropertyRequest) -> None:
+        await self._db.delete(request)
+        await self._db.commit()
 
     async def save(self, request: PropertyRequest) -> PropertyRequest:
         await self._db.commit()

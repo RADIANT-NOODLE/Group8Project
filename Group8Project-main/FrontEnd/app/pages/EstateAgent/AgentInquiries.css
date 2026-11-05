@@ -68,68 +68,6 @@
 }
 
 /* =========================================================
-   STAT CARDS
-========================================================= */
-
-.agent-inquiries-stat-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 25px;
-}
-
-.agent-inquiries-stat-card {
-    min-height: 108px;
-    padding: 20px;
-    background: #ffffff;
-    border: 1px solid #e8e8eb;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.025);
-    box-sizing: border-box;
-}
-
-.agent-inquiries-stat-icon {
-    width: 43px;
-    height: 43px;
-    border-radius: 9px;
-    background: #f0ebf4;
-    color: #563f6b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.agent-inquiries-stat-icon svg {
-    width: 21px;
-    height: 21px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.agent-inquiries-stat-card span {
-    display: block;
-    color: #77777e;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.agent-inquiries-stat-card strong {
-    display: block;
-    margin-top: 5px;
-    color: #28272d;
-    font-size: 25px;
-    line-height: 1;
-    font-weight: 700;
-}
-
-/* =========================================================
    MAIN PANEL
 ========================================================= */
 
@@ -363,12 +301,6 @@
    Matches DashboardSidebar.css breakpoints
 ========================================================= */
 
-@media (max-width: 1100px) {
-    .agent-inquiries-stat-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 @media (max-width: 900px) {
     .agent-inquiries-main {
         margin-left: 200px;
@@ -387,10 +319,6 @@
     .agent-inquiries-topbar {
         align-items: flex-start;
         flex-direction: column;
-    }
-
-    .agent-inquiries-stat-cards {
-        grid-template-columns: 1fr;
     }
 
     .agent-inquiries-panel-heading {
@@ -451,23 +379,6 @@
     min-width: 0;
 }
 
-.agent-inquiries-skeleton-icon {
-    flex-shrink: 0;
-    width: 42px;
-    height: 42px;
-    border-radius: 11px;
-}
-
-.agent-inquiries-skeleton-label {
-    width: 90px;
-    height: 12px;
-}
-
-.agent-inquiries-skeleton-number {
-    width: 44px;
-    height: 24px;
-}
-
 .agent-inquiries-skeleton-table {
     display: flex;
     flex-direction: column;
@@ -506,6 +417,12 @@
     height: 14px;
 }
 
+.agent-inquiries-skeleton-summary {
+    height: 210px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+}
+
 .agent-inquiries-skeleton-pill {
     width: 80px;
     height: 24px;
@@ -533,5 +450,279 @@
     .agent-inquiries-skeleton {
         animation: none;
         background: #ece7f0;
+    }
+}
+
+/* =========================================================
+   INQUIRY DETAILS POPUP
+========================================================= */
+
+.inquiry-view-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(30, 20, 40, 0.5);
+    font-family: Arial, Helvetica, sans-serif;
+    animation: inquiry-view-fade 0.2s ease-out;
+}
+
+.inquiry-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #29242d;
+    box-shadow: 0 24px 60px rgba(30, 20, 40, 0.28);
+    animation: inquiry-view-rise 0.2s ease-out;
+}
+
+.inquiry-view-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 24px 28px;
+    border-bottom: 1px solid #eee9f2;
+    background: #f8f6fa;
+}
+
+.inquiry-view-avatar {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #563f6b;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.inquiry-view-heading {
+    flex: 1;
+    min-width: 0;
+}
+
+.inquiry-view-heading p {
+    margin: 0 0 3px;
+    color: #7a6f85;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.inquiry-view-heading h2 {
+    margin: 0;
+    color: #29242d;
+    font-size: 20px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.inquiry-view-status {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #efeaf3;
+    color: #563f6b;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.inquiry-view-status.status-contacted {
+    background: #f0f0f2;
+    color: #444444;
+}
+
+.inquiry-view-status.status-closed {
+    background: #f0f0f2;
+    color: #666666;
+}
+
+.inquiry-view-status.status-sold,
+.inquiry-view-status.status-rented-out {
+    background: #e5f5ea;
+    color: #23683a;
+}
+
+.inquiry-view-body {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 24px 28px;
+    overflow-y: auto;
+}
+
+.inquiry-view-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.inquiry-view-contact li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    color: #7a6f85;
+    font-size: 14px;
+}
+
+.inquiry-view-contact-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: #f3eff6;
+    color: #563f6b;
+}
+
+.inquiry-view-contact a {
+    min-width: 0;
+    color: #563f6b;
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.inquiry-view-contact a:hover {
+    text-decoration: underline;
+}
+
+.inquiry-view-contact a:focus-visible,
+.inquiry-view-footer button:focus-visible {
+    outline: 2px solid #563f6b;
+    outline-offset: 2px;
+}
+
+.inquiry-view-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+    margin: 0;
+    padding-top: 20px;
+    border-top: 1px solid #eee9f2;
+}
+
+.inquiry-view-facts dt {
+    margin-bottom: 4px;
+    color: #7a6f85;
+    font-size: 12px;
+}
+
+.inquiry-view-facts dd {
+    margin: 0;
+    color: #29242d;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.inquiry-view-message h3 {
+    margin: 0 0 8px;
+    color: #7a6f85;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.inquiry-view-message p {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f8f6fa;
+    color: #29242d;
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.inquiry-view-message p.is-empty {
+    color: #7a6f85;
+}
+
+.inquiry-view-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 28px;
+    border-top: 1px solid #eee9f2;
+}
+
+.inquiry-view-footer button {
+    min-width: 100px;
+    min-height: 42px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #563f6b;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.inquiry-view-footer button:hover {
+    background: #463256;
+}
+
+@keyframes inquiry-view-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes inquiry-view-rise {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .inquiry-view-overlay,
+    .inquiry-view {
+        animation: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .inquiry-view-header {
+        flex-wrap: wrap;
+        padding: 20px;
+    }
+
+    .inquiry-view-heading {
+        flex-basis: calc(100% - 62px);
+    }
+
+    .inquiry-view-body {
+        padding: 20px;
+    }
+
+    .inquiry-view-facts {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inquiry-view-footer {
+        padding: 14px 20px;
+    }
+
+    .inquiry-view-footer button {
+        width: 100%;
     }
 }

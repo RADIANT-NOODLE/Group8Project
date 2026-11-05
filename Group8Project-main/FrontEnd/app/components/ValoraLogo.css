@@ -1,0 +1,12 @@
+.valora-logo-picture {
+    display: block;
+}
+
+@media (max-width: 900px) and (prefers-color-scheme: dark) {
+    .valora-logo-image {
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: #2d2138;
+    }
+}

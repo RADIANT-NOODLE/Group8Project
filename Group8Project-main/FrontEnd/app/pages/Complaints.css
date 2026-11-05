@@ -220,6 +220,7 @@
     font-weight: 600;
 }
 
+.complaints-form .complaints-other-category,
 .complaints-form select,
 .complaints-form textarea,
 .complaints-search,
@@ -236,6 +237,7 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.complaints-form .complaints-other-category,
 .complaints-form select,
 .complaints-modal-actions select {
     min-height: 43px;
@@ -263,6 +265,7 @@
     line-height: 1.6;
 }
 
+.complaints-form .complaints-other-category:focus,
 .complaints-form select:focus,
 .complaints-form textarea:focus,
 .complaints-search:focus,

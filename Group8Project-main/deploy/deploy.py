@@ -2,6 +2,8 @@
 
     python deploy/deploy.py            build and deploy
     python deploy/deploy.py --check    only build, and check the settings
+    python deploy/deploy.py --allow-blank-terms    deploy although the terms still have blanks
+    python deploy/deploy.py --test-email you@example.com    send one test email, and nothing else
 
 Needs the AWS CLI signed in, and deploy/production.env filled in (see README.md).
 """
@@ -10,10 +12,13 @@ import json
 import os
 import re
 import shutil
+import smtplib
+import ssl
 import subprocess
 import sys
 import time
 import zipfile
+from email.message import EmailMessage
 from pathlib import Path
 
 DEPLOY = Path(__file__).resolve().parent
@@ -64,6 +69,9 @@ def read_settings() -> dict[str, str]:
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
             settings[key.strip()] = value.strip().strip("\"'")
+    # Google shows app passwords with spaces, but they aren't part of the password
+    if "gmail" in settings.get("SMTP_HOST", "").lower():
+        settings["SMTP_PASSWORD"] = settings.get("SMTP_PASSWORD", "").replace(" ", "")
     return settings
 
 
@@ -79,7 +87,46 @@ def check_settings(settings: dict[str, str]) -> None:
         fail("BUDGET_EMAIL does not look like an email address.")
     if not re.fullmatch(r"[a-z0-9-]+", settings["STACK_NAME"]):
         fail("STACK_NAME can only use lowercase letters, numbers and dashes.")
+    check_email_settings(settings)
     print("Settings look complete.")
+
+
+def check_email_settings(settings: dict[str, str]) -> None:
+    if not settings.get("SMTP_HOST"):
+        if settings.get("SMTP_USER") or settings.get("SMTP_PASSWORD"):
+            fail("production.env has an email login but no SMTP_HOST. For Gmail, use smtp.gmail.com.")
+        print("Warning: SMTP_HOST is empty, so forgot password emails will not be sent.")
+        return
+    missing = [key for key in ("SMTP_USER", "SMTP_PASSWORD") if not settings.get(key)]
+    if missing:
+        fail(f"production.env is missing these email settings: {', '.join(missing)}")
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", settings.get("SMTP_FROM", "")) or settings["SMTP_FROM"].endswith(".local"):
+        fail("SMTP_FROM must be a real address. For Gmail, use the same address as SMTP_USER.")
+
+
+def send_test_email(settings: dict[str, str], to_address: str) -> None:
+    if not settings.get("SMTP_HOST"):
+        fail("SMTP_HOST is empty in production.env. For Gmail, use smtp.gmail.com.")
+    check_email_settings(settings)
+
+    message = EmailMessage()
+    message["From"] = settings["SMTP_FROM"]
+    message["To"] = to_address
+    message["Subject"] = "VALORA test email"
+    message.set_content("Your forgot password email settings work.")
+
+    print(f"Sending a test email to {to_address}...")
+    try:
+        with smtplib.SMTP(settings["SMTP_HOST"], int(settings.get("SMTP_PORT") or 587), timeout=15) as smtp:
+            smtp.starttls(context=ssl.create_default_context())
+            smtp.login(settings["SMTP_USER"], settings["SMTP_PASSWORD"])
+            smtp.send_message(message)
+    except smtplib.SMTPAuthenticationError:
+        fail("The email login was refused. Check SMTP_USER and SMTP_PASSWORD. Gmail needs an app password, not your normal password.")
+    except (smtplib.SMTPException, OSError) as error:
+        # the error's type only: the message can repeat what was sent to the server
+        fail(f"The email could not be sent ({type(error).__name__}). Check SMTP_HOST and SMTP_PORT.")
+    print("Sent. Check that inbox, and the spam folder.")
 
 
 def build_api() -> Path:
@@ -168,8 +215,6 @@ def deploy_stack(settings: dict[str, str], bucket: str, key: str, frontend_url: 
         "DatabaseUrl": settings["DATABASE_URL"],
         "SecretKey": settings["SECRET_KEY"],
         "FrontendUrl": frontend_url,
-        "BudgetEmail": settings["BUDGET_EMAIL"],
-        "MonthlyBudgetUsd": settings.get("MONTHLY_BUDGET_USD", "3"),
         "AccessTokenExpireMinutes": settings.get("ACCESS_TOKEN_EXPIRE_MINUTES", "30"),
         "SmtpHost": settings.get("SMTP_HOST", ""),
         "SmtpPort": settings.get("SMTP_PORT", "587"),
@@ -205,21 +250,82 @@ def deploy_stack(settings: dict[str, str], bucket: str, key: str, frontend_url: 
         parameter_file.unlink(missing_ok=True)
 
 
+def ensure_budget(settings: dict[str, str], account: str) -> None:
+    """Sets up the bill warning. A warning only: AWS budgets do not stop or cap spending.
+
+    Made directly because CloudFormation has no Budget type in some regions. Failing here
+    must not fail the deployment, since the site itself is already up.
+    """
+    name = f"{settings['STACK_NAME']}-monthly"
+    # Budgets is a global AWS service, answered from us-east-1 whatever region the site is in.
+    def budgets(*arguments: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [shutil.which("aws"), "budgets", *arguments, "--account-id", account, "--region", "us-east-1"],
+            capture_output=True,
+            text=True,
+        )
+
+    if budgets("describe-budget", "--budget-name", name).returncode == 0:
+        print("The bill warning is already in place.")
+        return
+
+    budget_file = BUILD / "budget.json"
+    alerts_file = BUILD / "budget-alerts.json"
+    budget_file.write_text(json.dumps({
+        "BudgetName": name,
+        "BudgetType": "COST",
+        "TimeUnit": "MONTHLY",
+        "BudgetLimit": {"Amount": settings.get("MONTHLY_BUDGET_USD", "3"), "Unit": "USD"},
+    }), encoding="utf-8")
+    subscribers = [{"SubscriptionType": "EMAIL", "Address": settings["BUDGET_EMAIL"]}]
+    alerts_file.write_text(json.dumps([
+        {"Notification": {"NotificationType": kind, "ComparisonOperator": "GREATER_THAN", "Threshold": threshold, "ThresholdType": "PERCENTAGE"}, "Subscribers": subscribers}
+        for kind, threshold in (("ACTUAL", 80), ("FORECASTED", 100))
+    ]), encoding="utf-8")
+    try:
+        attempt = budgets(
+            "create-budget",
+            "--budget", f"file://{budget_file.as_posix()}",
+            "--notifications-with-subscribers", f"file://{alerts_file.as_posix()}",
+        )
+    finally:
+        budget_file.unlink(missing_ok=True)
+        alerts_file.unlink(missing_ok=True)
+
+    if attempt.returncode == 0:
+        print(f"Bill warning set up at ${settings.get('MONTHLY_BUDGET_USD', '3')} a month.")
+    else:
+        print(f"Warning: the bill warning could not be set up, but the site is fine.\n{attempt.stderr.strip()}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="only build, and check the settings")
+    parser.add_argument(
+        "--allow-blank-terms",
+        action="store_true",
+        help="deploy although the public terms still show unfilled blanks",
+    )
+    parser.add_argument("--test-email", metavar="ADDRESS", help="send one test email, and nothing else")
     arguments = parser.parse_args()
 
     settings = read_settings()
+    if arguments.test_email:
+        send_test_email(settings, arguments.test_email)
+        return
+
     check_settings(settings)
 
     # Public legal text must not go live with blanks in it.
     terms = (FRONTEND / "app/pages/Auth/TermsContent.jsx").read_text(encoding="utf-8")
     blanks = sorted(set(re.findall(r"\[Insert[^\]]*\]", terms)))
-    if blanks and not arguments.check:
-        fail(f"The Terms and Conditions still have blanks to fill in: {', '.join(blanks)}")
+    if blanks and not arguments.check and not arguments.allow_blank_terms:
+        fail(
+            f"The Terms and Conditions still have blanks to fill in: {', '.join(blanks)}\n"
+            "To publish them as they are, run this again with --allow-blank-terms."
+        )
     if blanks:
-        print(f"Warning: a real deployment will refuse to run until these are filled in: {', '.join(blanks)}")
+        print(f"Warning: the public Terms and Conditions still show these blanks: {', '.join(blanks)}")
 
     BUILD.mkdir(exist_ok=True)
     archive = build_api()
@@ -255,6 +361,8 @@ def main() -> None:
         "--cache-control", "public, max-age=0, must-revalidate")
     aws(settings, "cloudfront", "create-invalidation", "--distribution-id", outputs["DistributionId"],
         "--paths", "/index.html", "/assets/*", "--output", "text", "--query", "Invalidation.Id", capture=True)
+
+    ensure_budget(settings, account)
 
     print(f"\nDone. VALORA is at {outputs['WebsiteUrl']}")
     print("A brand new site can take about 10 minutes to appear everywhere.")

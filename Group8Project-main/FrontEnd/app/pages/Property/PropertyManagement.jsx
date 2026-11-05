@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardSidebar from "../Dashboards/shared/DashboardSidebar";
 import PropertyTabs from "../Dashboards/shared/PropertyTabs";
-import { deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
+import { deleteProperty, deletePropertyPhoto, photoSrc, uploadPropertyPhoto } from "../../services/propertyApi";
 import { listListings } from "../../services/listingApi";
 import { listPropertyRequests } from "../../services/propertyRequestApi";
 import { formatListingPrice } from "../../services/publicListings";
@@ -115,6 +115,7 @@ function PropertyManagement() {
     const [photoBusy, setPhotoBusy] = useState(false);
     const [photoError, setPhotoError] = useState("");
     const [newPhotos, setNewPhotos] = useState([]);
+    const [deletingId, setDeletingId] = useState(null);
 
     // ADD MODAL STATE
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -185,6 +186,27 @@ function PropertyManagement() {
         });
         setPhotoError("");
         setIsEditModalOpen(true);
+    };
+
+    const handleDeleteProperty = async (property) => {
+        const id = property.id || property.unit_id;
+        const unitLabel = property.unit_no ? `Unit ${property.unit_no}` : "this property";
+        const confirmed = await showConfirm(
+            `Delete ${unitLabel}? Its photos, old listings, requests and inquiries will be deleted too. This can't be undone.`,
+            { title: "Delete property?", confirmLabel: "Delete", tone: "danger" }
+        );
+        if (!confirmed) return;
+
+        setDeletingId(id);
+        try {
+            await deleteProperty(id);
+            await loadProperties();
+            showAlert(`${unitLabel} has been deleted.`, { title: "Property deleted" });
+        } catch (deleteError) {
+            showAlert(deleteError?.message || "This property could not be deleted.", { title: "Property not deleted" });
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     const handleUpdateProperty = async (e) => {
@@ -532,6 +554,17 @@ function PropertyManagement() {
                                                         Edit
                                                     </button>
 
+                                                    <button
+                                                        type="button"
+                                                        className="property-view-button"
+                                                        style={{ backgroundColor: "#fbeeee", color: "#8a3b3b" }}
+                                                        aria-label={`Delete unit ${property.unit_no}`}
+                                                        disabled={deletingId === (property.id || property.unit_id)}
+                                                        onClick={() => handleDeleteProperty(property)}
+                                                    >
+                                                        {deletingId === (property.id || property.unit_id) ? "Deleting..." : "Delete"}
+                                                    </button>
+
                                                     {propertyId ? (
                                                         <Link className="property-view-button" to={`/property/${encodeURIComponent(String(propertyId))}`}>
                                                             View Details <span aria-hidden="true">→</span>
@@ -643,7 +676,7 @@ function PropertyManagement() {
                                         style={{ marginTop: "10px" }}
                                     />
                                     <p style={{ fontSize: "12px", color: "#6b7280", margin: "6px 0 0" }}>
-                                        {photoBusy ? "Uploading..." : "JPEG, PNG or WebP, up to 4 MB each. The first photo is the cover image."}
+                                        {photoBusy ? "Uploading..." : "Up to 20 photos: JPEG, PNG or WebP, up to 4 MB each. The first photo is the cover image."}
                                     </p>
                                     {photoError && <p role="alert" style={{ fontSize: "12px", color: "#8a3b3b", margin: "6px 0 0" }}>{photoError}</p>}
                                 </div>

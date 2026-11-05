@@ -44,6 +44,15 @@ def password_problems(password: str) -> list[str]:
     return problems
 
 
+def validate_person_name(value: str) -> str:
+    """Letters, with spaces, hyphens or apostrophes between them. Keep in step with
+    validatePersonName in the frontend's validation.js."""
+    name = " ".join(value.split())
+    if not re.fullmatch(r"[^\W\d_]+(?:[ '’-]+[^\W\d_]+)*", name):
+        raise ValueError("Names can only contain letters, spaces, hyphens and apostrophes.")
+    return name
+
+
 def validate_password_strength(password: str) -> str:
     """Raise ValueError (so Pydantic reports a 422) when the password is too weak."""
     problems = password_problems(password)
@@ -133,6 +142,15 @@ def validate_phone(value: str | None) -> str | None:
     if not match:
         raise ValueError(PHONE_FORMAT_MESSAGE)
     return f"+27{match.group(1)}"
+
+
+def validate_ten_digit_phone(value: str) -> str:
+    """A phone number typed as exactly 10 digits, starting with 0. Keep in step with
+    validateTenDigitPhone in the frontend's validation.js."""
+    number = value.strip()
+    if not re.fullmatch(r"0[1-9][0-9]{8}", number, re.ASCII):
+        raise ValueError("Enter a 10-digit phone number starting with 0, for example 0821234567.")
+    return number
 
 
 def validate_required_phone(value: str | None) -> str:

@@ -112,7 +112,7 @@ async def _record_deal(db: AsyncSession, unit_id: int, outcome: str) -> None:
         await db.execute(
             select(PropertyRequest).where(
                 PropertyRequest.unit_id == unit_id,
-                PropertyRequest.request_type == request_type,
+                func.lower(PropertyRequest.request_type) == request_type,
                 func.lower(PropertyRequest.status).in_(("assigned", "listed")),
             )
         )
@@ -218,8 +218,9 @@ async def update_inquiry_status(
     if not inquiry:
         raise HTTPException(status_code=404, detail="Inquiry not found")
         
-    if inquiry.agent_id != current_user.user_id and current_user.role not in ("hoa_admin", "head_admin"):
-        raise HTTPException(status_code=403, detail="Not authorized to edit this inquiry")
+    # administrators can read every inquiry, but only its estate agent changes it
+    if inquiry.agent_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Only the estate agent handling this inquiry can change its status.")
         
     if inquiry.status == payload.status:
         return {"message": "Inquiry status updated"}

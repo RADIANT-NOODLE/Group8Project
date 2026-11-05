@@ -1,10 +1,17 @@
 from decimal import Decimal
-from sqlalchemy import Select, func, select, text
+from sqlalchemy import Select, delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer_group
 
+from app.analytics.models.ai_analytic import AIAnalytic
+from app.community.models.complaint import Complaint
+from app.community.models.resident_directory import ResidentDirectory
+from app.property.models.inquiry import Inquiry
+from app.property.models.listing import Listing
 from app.property.models.property import Property
 from app.property.models.property_photo import PropertyPhoto
+from app.property.models.property_request import PropertyRequest
+from app.property.models.sale import Sale
 
 # Whether the database has been upgraded with property_photos.data
 # (alembic e5a0c3b7d9f2). Once seen, it is remembered for the process.
@@ -153,6 +160,35 @@ class PropertyRepository:
         self._db.add(photo)
         await self._db.commit()
         return photo
+
+    async def delete_blockers(self, unit_id: int) -> dict[str, int]:
+        """What must be dealt with before this unit can be deleted, with how many of each."""
+        checks = {
+            "resident": select(func.count()).select_from(ResidentDirectory).where(ResidentDirectory.property_id == unit_id),
+            "live listing": select(func.count()).select_from(Listing).where(
+                Listing.unit_id == unit_id, func.lower(Listing.status) == "active"
+            ),
+            "complaint": select(func.count()).select_from(Complaint).where(Complaint.unit_id == unit_id),
+            "sale record": select(func.count()).select_from(Sale).where(Sale.unit_id == unit_id),
+        }
+        return {word: (await self._db.execute(query)).scalar_one() for word, query in checks.items()}
+
+    async def delete_with_history(self, property_: Property) -> list[str]:
+        """Delete the unit and its photos, old listings, requests and inquiries, all or nothing.
+        Returns the photos' file names. Listings have no database link to the unit, and the
+        database can't clear ai_analytics by itself, so each table is cleared here."""
+        unit_id = property_.unit_id
+        file_names = list(
+            (await self._db.execute(select(PropertyPhoto.file_name).where(PropertyPhoto.unit_id == unit_id))).scalars()
+        )
+        await self._db.execute(delete(AIAnalytic).where(AIAnalytic.property_id == unit_id))
+        await self._db.execute(delete(Inquiry).where(Inquiry.property_id == unit_id))
+        await self._db.execute(delete(Listing).where(Listing.unit_id == unit_id))
+        await self._db.execute(delete(PropertyRequest).where(PropertyRequest.unit_id == unit_id))
+        await self._db.execute(delete(PropertyPhoto).where(PropertyPhoto.unit_id == unit_id))
+        await self._db.delete(property_)
+        await self._db.commit()
+        return file_names
 
     async def delete_photo(self, photo: PropertyPhoto) -> None:
         await self._db.delete(photo)

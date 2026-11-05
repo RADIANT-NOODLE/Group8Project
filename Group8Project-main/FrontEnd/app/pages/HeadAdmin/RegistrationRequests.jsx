@@ -67,7 +67,7 @@ function isApproved(user) {
 
 async function fetchAllUsersFromApi() {
     const token = getSessionToken();
-    const response = await fetch(`${getApiBaseUrl()}/api/v1/users/`, { 
+    const response = await fetch(`${getApiBaseUrl()}/api/v1/users`, { 
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json"}
     });
     if (!response.ok) throw new Error("Failed to fetch users");

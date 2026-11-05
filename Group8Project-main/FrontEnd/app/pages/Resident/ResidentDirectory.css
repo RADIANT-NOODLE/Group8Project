@@ -37,7 +37,7 @@
     display: block;
     margin-bottom: 6px;
     color: #563f6b;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 1.3px;
 }
@@ -53,7 +53,7 @@
 .resident-directory-top-bar p {
     margin: 6px 0 0;
     color: #858087;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -67,7 +67,7 @@
     gap: 10px;
     flex-shrink: 0;
     color: #4d4650;
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -81,7 +81,7 @@
     border-radius: 50%;
     background: #ffffff;
     color: #563f6b;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 700;
 }
 
@@ -100,7 +100,7 @@
     border-radius: 7px;
     background: #f1f7f2;
     color: #42634d;
-    font-size: 10px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -161,7 +161,7 @@
 .resident-directory-panel-heading p {
     margin: 5px 0 0;
     color: #89838b;
-    font-size: 9px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -182,7 +182,7 @@
     background: #563f6b;
     color: #ffffff;
     font-family: inherit;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 650;
     cursor: pointer;
     transition:
@@ -231,7 +231,7 @@
 
 .resident-directory-notice p {
     margin: 0;
-    font-size: 9px;
+    font-size: 13px;
     line-height: 1.7;
 }
 
@@ -271,7 +271,7 @@
     background: #ffffff;
     color: #39333d;
     font-family: inherit;
-    font-size: 9px;
+    font-size: 13px;
     box-sizing: border-box;
     transition:
         border-color 0.2s ease,
@@ -302,7 +302,7 @@
     background: #ffffff;
     color: #514a55;
     font-family: inherit;
-    font-size: 9px;
+    font-size: 13px;
     cursor: pointer;
 }
 
@@ -325,7 +325,7 @@
 
 .resident-directory-results span {
     color: #969099;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 /* =========================================================
@@ -364,7 +364,7 @@
     max-width: 440px;
     margin: 9px 0 20px;
     color: #89838b;
-    font-size: 10px;
+    font-size: 13px;
     line-height: 1.8;
 }
 
@@ -388,7 +388,7 @@
 
 .resident-directory-table {
     width: 100%;
-    min-width: 1050px;
+    min-width: 960px;
     border-collapse: collapse;
 }
 
@@ -398,7 +398,7 @@
     border-bottom: 1px solid #ebe8ed;
     background: #faf9fb;
     color: #817a84;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.4px;
     text-align: left;
@@ -409,7 +409,7 @@
     padding: 14px 15px;
     border-bottom: 1px solid #f0edf1;
     color: #514b54;
-    font-size: 9px;
+    font-size: 13px;
     vertical-align: middle;
 }
 
@@ -432,7 +432,7 @@
 .resident-directory-resident-cell strong {
     display: block;
     color: #39323d;
-    font-size: 9px;
+    font-size: 13px;
     font-weight: 650;
 }
 
@@ -440,7 +440,7 @@
     display: block;
     margin-top: 4px;
     color: #9a949c;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 .resident-directory-unit-cell {
@@ -456,7 +456,7 @@
     display: block;
     margin-top: 4px;
     color: #9a949c;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 /* =========================================================
@@ -470,7 +470,7 @@
 .resident-directory-contact span {
     display: block;
     color: #514a55;
-    font-size: 9px;
+    font-size: 13px;
 }
 
 .resident-directory-contact small {
@@ -478,7 +478,7 @@
     max-width: 190px;
     margin-top: 4px;
     color: #9a949c;
-    font-size: 8px;
+    font-size: 12px;
     line-height: 1.4;
     word-break: break-word;
 }
@@ -496,7 +496,7 @@
     min-height: 23px;
     padding: 0 8px;
     border-radius: 5px;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 650;
     white-space: nowrap;
 }
@@ -526,6 +526,7 @@
 ========================================================= */
 
 .resident-directory-actions {
+    flex-wrap: wrap;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -544,7 +545,7 @@
     background: #ffffff;
     color: #625a66;
     font-family: inherit;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
@@ -618,7 +619,7 @@
 .resident-directory-modal-header p {
     margin: 7px 0 0;
     color: #858087;
-    font-size: 10px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -681,7 +682,7 @@
 
 .resident-directory-form-group label {
     color: #514957;
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 650;
 }
 
@@ -697,7 +698,7 @@
     background: #ffffff;
     color: #39333d;
     font-family: inherit;
-    font-size: 10px;
+    font-size: 13px;
     box-sizing: border-box;
     transition:
         border-color 0.2s ease,
@@ -719,7 +720,7 @@
 
 .resident-directory-form-group small {
     color: #89818d;
-    font-size: 9px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -742,7 +743,7 @@
 
 .resident-directory-linked-account p {
     margin: 0;
-    font-size: 9px;
+    font-size: 13px;
     line-height: 1.7;
     overflow-wrap: anywhere;
 }
@@ -754,7 +755,7 @@
     border-radius: 6px;
     background: #fff4f4;
     color: #9a3e3e;
-    font-size: 10px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -777,12 +778,12 @@
 
 .resident-directory-detail-grid span {
     color: #89818d;
-    font-size: 9px;
+    font-size: 13px;
 }
 
 .resident-directory-detail-grid strong {
     color: #38313e;
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 650;
     line-height: 1.6;
     overflow-wrap: anywhere;
@@ -813,9 +814,6 @@
         padding: 28px 25px 40px;
     }
 
-    .resident-directory-role-filter {
-        width: 155px;
-    }
 }
 
 /* =========================================================
@@ -841,11 +839,11 @@
         flex-basis: 100%;
     }
 
-    .resident-directory-filter-select,
-    .resident-directory-role-filter {
+    .resident-directory-filter-select {
         flex: 1;
         width: auto;
     }
+
 }
 
 /* =========================================================
@@ -889,8 +887,7 @@
         flex-direction: column;
     }
 
-    .resident-directory-filter-select,
-    .resident-directory-role-filter {
+    .resident-directory-filter-select {
         width: 100%;
         min-height: 38px;
         flex: initial;
@@ -921,7 +918,7 @@
     }
 
     .resident-directory-top-bar p {
-        font-size: 10px;
+        font-size: 13px;
     }
 
     .resident-directory-panel-heading {
@@ -1007,7 +1004,7 @@
 .resident-directory-occupancy-eyebrow {
     margin: 0 0 6px;
     color: #563f6b;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 1.2px;
     text-transform: uppercase;
@@ -1041,7 +1038,7 @@
 
 .resident-directory-occupancy-figures dt {
     color: #857b8c;
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 700;
 }
 

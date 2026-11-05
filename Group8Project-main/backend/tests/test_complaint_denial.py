@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # no
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 import app.main  # noqa: E402, F401  (loads every model and route)
-from app.analytics.repositories.intelligence_repository import IntelligenceRepository  # noqa: E402
 from app.analytics.services.living_score_service import LivingScoreService  # noqa: E402
 from app.common.enums import ComplaintStatus, WorkOrderStatus  # noqa: E402
 from app.community.models.complaint import Complaint  # noqa: E402
@@ -179,13 +178,3 @@ def test_living_score_ignores_denied_complaints():
     assert service._score_community_health(make("denied")) == 100
     assert service._score_community_health(make("resolved", "denied")) == service._score_community_health(make("resolved"))
     assert service._score_community_health(make("submitted", "denied")) == service._score_community_health(make("submitted"))
-
-
-def test_intelligence_counts_denied_as_neither_open_nor_resolved(maker):
-    deny(maker)
-
-    async def run():
-        async with maker() as db:
-            return await IntelligenceRepository(db).complaint_counts([1])
-
-    assert asyncio.run(run()) == {"total": 2, "open": 0, "resolved": 1}

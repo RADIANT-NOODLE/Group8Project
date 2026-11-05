@@ -5,7 +5,7 @@ import { apiRequest } from './apiClient.js';
 
 /** Every account, newest first. The API sends snake_case records; callers read them as-is. */
 export async function listUsers() {
-  const payload = await apiRequest('/api/v1/users/');
+  const payload = await apiRequest('/api/v1/users');
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.users)) return payload.users;
   return [];

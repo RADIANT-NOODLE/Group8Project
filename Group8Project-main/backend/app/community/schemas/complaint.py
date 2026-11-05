@@ -25,6 +25,13 @@ class ComplaintCreate(BaseModel):
 
     _image_only = field_validator("photo_url")(validate_image_reference)
 
+    @field_validator("category")
+    @classmethod
+    def _other_says_what_it_is(cls, value: str) -> str:
+        if value.strip().lower().rstrip(": ") == "other":
+            raise ValueError("Please enter what the complaint is about.")
+        return value
+
 
 class ComplaintStatusUpdate(BaseModel):
     status: ComplaintStatus
