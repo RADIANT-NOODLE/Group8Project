@@ -161,7 +161,6 @@ const SHARED_PATHS = Object.freeze([
   '/announcements',
   '/community-announcements',
   '/notifications',
-  '/estate-health',
 ]);
 
 /** Screens that belong to one role's workspace. Keyed by role value, so the

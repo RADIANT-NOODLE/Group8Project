@@ -204,15 +204,6 @@ function Icon({ type }) {
             </>
         ),
 
-        analytics: (
-            <>
-                <path d="M3 3v18h18" />
-                <rect x="6" y="12" width="3.5" height="6" rx=".5" />
-                <rect x="11" y="8" width="3.5" height="10" rx=".5" />
-                <rect x="16" y="4" width="3.5" height="14" rx=".5" />
-            </>
-        ),
-
         profile: (
             <>
                 <circle cx="12" cy="8" r="4" />
@@ -262,7 +253,6 @@ const navigation = {
         { label: "My Complaints", path: "/complaints", icon: "complaint" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/announcements", icon: "announcement" },
-        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
     "Estate Agent": [
@@ -270,7 +260,6 @@ const navigation = {
         { label: "My Listings", path: "/agent-listings", icon: "property" },
         { label: "Edit Listings", path: "/agent-edit-listings", icon: "request" },
         { label: "Inquiries", path: "/agent-inquiries", icon: "complaint" },
-        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
     "HOA Admin": [
@@ -284,7 +273,6 @@ const navigation = {
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
-        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 
     /* =====================================================
@@ -304,7 +292,6 @@ const navigation = {
         { label: "Maintenance", path: "/maintenance", icon: "maintenance" },
         { label: "Service Provider Directory", path: "/providers", icon: "providers" },
         { label: "Community Announcements", path: "/community-announcements", icon: "announcement" },
-        { label: "Estate Health", path: "/estate-health", icon: "analytics" },
     ],
 };
 

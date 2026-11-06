@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getProperties, updateProperty } from "../../data/propertyStorage";
+import { apiRequest } from "../../services/apiClient";
 import { updateRequestProgress } from "../../services/propertyRequestApi";
 import { listMyListings, updateListing } from "../../services/listingApi";
 import { photoSrc } from "../../services/propertyApi";
@@ -31,6 +32,9 @@ function AgentListings() {
     });
 
     const [loadError, setLoadError] = useState("");
+    // the database's inquiries for this agent; null until they load, or if they can't
+    const [inquiries, setInquiries] = useState(null);
+    const [inquiriesFailed, setInquiriesFailed] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -55,6 +59,15 @@ function AgentListings() {
         }
 
         load();
+
+        apiRequest("/api/v1/inquiries")
+            .then((data) => {
+                if (!cancelled) setInquiries(Array.isArray(data) ? data : data?.items || []);
+            })
+            .catch((error) => {
+                console.error("Unable to load inquiries:", error);
+                if (!cancelled) setInquiriesFailed(true);
+            });
 
         // photos of already-published listings that never reached the public site
         if (currentUser?.id) {
@@ -132,7 +145,10 @@ function AgentListings() {
         "Owner not assigned";
 
     const getViews = ({ property }) => property?.listing?.views || 0;
-    const getInquiries = ({ property }) => property?.listing?.inquiries || 0;
+    const getInquiries = ({ request }) =>
+        (inquiries || []).filter(
+            (inquiry) => String(inquiry.property_id) === String(request.propertyId)
+        ).length;
     const getRequestStatus = ({ request }) => request.status || "Assigned";
 
     const totalListings = assignedListings.length;
@@ -141,14 +157,7 @@ function AgentListings() {
         (listing) => getListingStatus(listing) === "Published"
     ).length;
 
-    const underOffer = assignedListings.filter(
-        (listing) => getListingStatus(listing) === "Under Offer"
-    ).length;
-
-    const totalInquiries = assignedListings.reduce(
-        (total, listing) => total + Number(getInquiries(listing)),
-        0
-    );
+    const totalInquiries = inquiries?.length ?? 0;
 
     const handleView = ({ request, property }) => {
         setViewing({ request, property });
@@ -240,11 +249,6 @@ function AgentListings() {
                 <path d="m5 12 4 4L19 6" />
             </svg>
         ),
-        offers: (
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 7h14v12H5zM8 7V5h8v2M8 12h8" />
-            </svg>
-        ),
         inquiries: (
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 5h16v11H8l-4 4zM8 9h8M8 13h5" />
@@ -266,15 +270,13 @@ function AgentListings() {
             icon: icons.active,
         },
         {
-            label: "Under Offer",
-            value: underOffer,
-            description: "Pending sales",
-            icon: icons.offers,
-        },
-        {
             label: "Total Inquiries",
             value: totalInquiries,
-            description: "Buyer inquiries",
+            description: inquiriesFailed
+                ? "Could not load buyer inquiries"
+                : inquiries
+                    ? "Buyer inquiries"
+                    : "Loading buyer inquiries",
             icon: icons.inquiries,
         },
     ];
@@ -489,7 +491,7 @@ function AgentListings() {
                                                 </td>
 
                                                 <td>{getViews({ property })}</td>
-                                                <td>{getInquiries({ property })}</td>
+                                                <td>{getInquiries({ request, property })}</td>
 
                                                 <td>
                                                     <div className="agent-listings-actions">
@@ -569,10 +571,6 @@ function AgentListings() {
                             <div>
                                 <span>Published</span>
                                 <strong>{activeListings}</strong>
-                            </div>
-                            <div>
-                                <span>Under Offer</span>
-                                <strong>{underOffer}</strong>
                             </div>
                             <div>
                                 <span>Inquiries</span>

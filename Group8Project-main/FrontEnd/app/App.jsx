@@ -51,7 +51,6 @@ import Announcements from "./pages/Announcements/Announcements";
 /* AI */
 import Terms from "./pages/Terms";
 import Notifications from "./pages/Notifications/Notifications";
-import EstateHealth from "./pages/Analytics/EstateHealth";
 
 /* ESTATE AGENT */
 import AgentListings from "./pages/EstateAgent/AgentListings";
@@ -373,15 +372,6 @@ function App() {
                 />
 
                 {/* NOTIFICATION INBOX */}
-                {/* ESTATE HEALTH */}
-                <Route
-                  path="/estate-health"
-                  element={
-                    <ProtectedRoute>
-                      <EstateHealth />
-                    </ProtectedRoute>
-                  }
-                />
                 <Route
                   path="/notifications"
                   element={

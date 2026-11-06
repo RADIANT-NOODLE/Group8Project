@@ -500,7 +500,7 @@
 
 .agent-listings-summary {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1px;
     background: #e8e8eb;
 }
@@ -579,6 +579,10 @@
 
     .agent-listings-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .agent-listings-summary > div:last-child {
+        grid-column: 1 / -1;
     }
 }
 

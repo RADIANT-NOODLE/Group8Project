@@ -12,4 +12,4 @@ def test_intelligence_addresses_are_gone():
 
 def test_other_analytics_remain():
     status = TestClient(app).get("/api/v1/analytics/status").json()
-    assert status["endpoints"] == ["living-score", "estate-health"]
+    assert status["endpoints"] == ["living-score"]

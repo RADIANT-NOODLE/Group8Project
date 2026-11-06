@@ -30,13 +30,6 @@ const ICON_PATHS = {
             <path d="M9 21v-6h6v6" />
         </>
     ),
-    chart: (
-        <>
-            <path d="M4 19V5" />
-            <path d="M4 19h16" />
-            <path d="M7 15l4-4 3 2 5-6" />
-        </>
-    ),
     people: (
         <>
             <circle cx="9" cy="8" r="3" />
@@ -107,9 +100,9 @@ const FEATURES = [
         text: "Browse units for sale or rent, with photos, prices and details kept up to date by estate agents.",
     },
     {
-        icon: "chart",
-        title: "Estate health",
-        text: "Follow your estate's Living Score, see how each area is doing, and know where to focus first.",
+        icon: "key",
+        title: "Sale and rental requests",
+        text: "Ask to sell or rent your unit, follow each step of your request, and work with an agent assigned by your HOA.",
     },
     {
         icon: "people",
@@ -122,7 +115,7 @@ const ROLES = [
     {
         icon: "key",
         title: "Residents",
-        points: ["See how your estate is doing", "Request to sell or rent, and track progress", "Log complaints and maintenance"],
+        points: ["Stay up to date with announcements", "Request to sell or rent, and track progress", "Log complaints and maintenance"],
     },
     {
         icon: "briefcase",
@@ -183,7 +176,7 @@ function Home() {
                             <span> Stronger communities.</span>
                         </h1>
                         <p>
-                            VALORA brings property listings, estate health insights and
+                            VALORA brings property listings, sale and rental requests and
                             community management together for residents, estate agents
                             and HOA administrators.
                         </p>

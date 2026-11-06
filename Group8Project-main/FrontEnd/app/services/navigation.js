@@ -16,7 +16,6 @@ export const NAVIGATION_BY_ROLE = Object.freeze({
     Object.freeze({ label: 'My Complaints', path: '/complaints', icon: 'complaint' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
     Object.freeze({ label: 'Community Announcements', path: '/announcements', icon: 'announcement' }),
-    Object.freeze({ label: 'Estate Health', path: '/estate-health', icon: 'analytics' }),
   ]),
 
   [ROLES.estateAgent]: Object.freeze([
@@ -27,7 +26,6 @@ export const NAVIGATION_BY_ROLE = Object.freeze({
     Object.freeze({ label: 'AI Valuation', path: '/valuation', icon: 'valuation' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
     Object.freeze({ label: 'Community Announcements', path: '/announcements', icon: 'announcement' }),
-    Object.freeze({ label: 'Estate Health', path: '/estate-health', icon: 'analytics' }),
   ]),
 
   [ROLES.hoaAdmin]: Object.freeze([
@@ -39,7 +37,6 @@ export const NAVIGATION_BY_ROLE = Object.freeze({
     Object.freeze({ label: 'Maintenance', path: '/maintenance', icon: 'maintenance' }),
     Object.freeze({ label: 'Service Provider Directory', path: '/providers', icon: 'providers' }),
     Object.freeze({ label: 'Community Announcements', path: '/community-announcements', icon: 'announcement' }),
-    Object.freeze({ label: 'Estate Health', path: '/estate-health', icon: 'analytics' }),
   ]),
 
   /* A provider has no workspace yet (connection plan, Phase 4 item 6). */
